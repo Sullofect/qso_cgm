@@ -9,7 +9,7 @@ from PyAstronomy import pyasl
 rc('font', **{'family':'serif', 'serif':['Times New Roman']})
 rc('text', usetex=True)
 
-path = os.path.join(os.sep, 'Users', 'lzq', 'Desktop', 'redshifting', 'ESO_DEEP_offset_zapped.fits')
+path = os.path.join(os.sep, 'Users', 'lzq', 'Desktop', 'Data', 'CGM', 'ESO_DEEP_offset.fits')
 cube = Cube(path)
 
 # Calculate the white image
@@ -160,7 +160,7 @@ secaxins = axins.secondary_xaxis('top', functions=(obs2rest, rest2obs))
 secaxins.minorticks_on()
 secaxins.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=13)
 secaxins.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
-plt.savefig('/Users/lzq/Desktop/qso_cgm/qso_spectrum',  bbox_inches='tight')
+plt.savefig('/Users/lzq/Desktop/qso_cgm/qso_spectrum_new',  bbox_inches='tight')
 
 
 
