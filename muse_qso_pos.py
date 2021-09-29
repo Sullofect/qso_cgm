@@ -79,8 +79,8 @@ def model(wave_vac, z, sigma_kms, fluxOII, rOII3729_3727, a, b):
     wave_OII3727_obs = wave_OII3727_vac * (1 + z)
     wave_OII3729_obs = wave_OII3729_vac * (1 + z)
 
-    #     sigma_OII3727_A = np.sqrt((sigma_kms / c_kms * wave_OII3727_obs) ** 2 + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
-    #     sigma_OII3729_A = np.sqrt((sigma_kms / c_kms * wave_OII3729_obs) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
+    # sigma_OII3727_A = np.sqrt((sigma_kms / c_kms * wave_OII3727_obs) ** 2 + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
+    # sigma_OII3729_A = np.sqrt((sigma_kms / c_kms * wave_OII3729_obs) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
 
     sigma_OII3727_A = sigma_kms / c_kms * wave_OII3727_obs
     sigma_OII3729_A = sigma_kms / c_kms * wave_OII3729_obs
