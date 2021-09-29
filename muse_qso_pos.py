@@ -9,7 +9,7 @@ from PyAstronomy import pyasl
 rc('font', **{'family':'serif', 'serif':['Times New Roman']})
 rc('text', usetex=True)
 
-path = os.path.join(os.sep, 'Users', 'lzq', 'Desktop', 'Data', 'CGM', 'ESO_DEEP_offset.fits')
+path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits')
 cube = Cube(path)
 
 # Calculate the white image
@@ -21,7 +21,7 @@ plt.imshow(np.arcsinh(image_white.data), origin='lower', vmin=9, cmap='hot')
 cbar = plt.colorbar()
 cbar.set_label(r'$\mathrm{Arcsinh}$')
 # plt.axis('off')
-plt.savefig('/Users/lzq/Desktop/qso_cgm/qso_image.png', bbox_inches='tight')
+plt.savefig('/Users/lzq/Dropbox/qso_cgm/qso_image.png', bbox_inches='tight')
 
 # EE Curve
 EE_ape = cube.subcube_circle_aperture((p, q), 10, unit_center=None, unit_radius=None)
@@ -41,7 +41,7 @@ plt.tick_params(axis='both', which='major', direction='in', top='on', bottom='on
                 labelsize=20, size=5)
 plt.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
                 size=3)
-plt.savefig('/Users/lzq/Desktop/qso_cgm/ee_curve',  bbox_inches='tight')
+plt.savefig('/Users/lzq/Dropbox/qso_cgm/ee_curve', bbox_inches='tight')
 
 # Spectrum
 cube_ape = cube.aperture((p, q), 2, unit_center=None, unit_radius=None, is_sum=True)
@@ -160,7 +160,7 @@ secaxins = axins.secondary_xaxis('top', functions=(obs2rest, rest2obs))
 secaxins.minorticks_on()
 secaxins.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=13)
 secaxins.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
-plt.savefig('/Users/lzq/Desktop/qso_cgm/qso_spectrum_new',  bbox_inches='tight')
+plt.savefig('/Users/lzq/Dropbox/qso_cgm/qso_spectrum_new',  bbox_inches='tight')
 
 
 
