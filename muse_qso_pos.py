@@ -6,7 +6,7 @@ from mpdaf.obj import Cube
 from mpdaf.drs import PixTable
 from matplotlib import rc
 from PyAstronomy import pyasl
-rc('font', **{'family':'serif', 'serif':['Times New Roman']})
+rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 
 path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits')
