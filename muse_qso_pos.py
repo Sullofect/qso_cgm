@@ -79,11 +79,11 @@ def model(wave_vac, z, sigma_kms, fluxOII, rOII3729_3727, a, b):
     wave_OII3727_obs = wave_OII3727_vac * (1 + z)
     wave_OII3729_obs = wave_OII3729_vac * (1 + z)
 
-    # sigma_OII3727_A = np.sqrt((sigma_kms / c_kms * wave_OII3727_obs) ** 2 + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
-    # sigma_OII3729_A = np.sqrt((sigma_kms / c_kms * wave_OII3729_obs) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
+    sigma_OII3727_A = np.sqrt((sigma_kms / c_kms * wave_OII3727_obs) ** 2 + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
+    sigma_OII3729_A = np.sqrt((sigma_kms / c_kms * wave_OII3729_obs) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
 
-    sigma_OII3727_A = sigma_kms / c_kms * wave_OII3727_obs
-    sigma_OII3729_A = sigma_kms / c_kms * wave_OII3729_obs
+    # sigma_OII3727_A = sigma_kms / c_kms * wave_OII3727_obs
+    # sigma_OII3729_A = sigma_kms / c_kms * wave_OII3729_obs
 
     fluxOII3727 = fluxOII / (1 + rOII3729_3727)
     fluxOII3729 = fluxOII / (1 + 1.0 / rOII3729_3727)
@@ -103,8 +103,8 @@ flux_OII_guess = 42
 rOII3729_3727_guess = 100
 
 parameters = lmfit.Parameters()
-parameters.add_many(('sigma_kms', sigma_kms_guess, True, 10.0, 500.0, None),
-                    ('z', redshift_guess, True, None, None, None),
+parameters.add_many(('z', redshift_guess, True, None, None, None),
+                    ('sigma_kms', sigma_kms_guess, True, 10.0, 500.0, None),
                     ('fluxOII', flux_OII_guess, True, None, None, None),
                     ('rOII3729_3727', rOII3729_3727_guess, True, 0, 3, None),
                     ('a', 0.0, True, None, None, None),
@@ -164,6 +164,108 @@ plt.savefig('/Users/lzq/Dropbox/qso_cgm/qso_spectrum_new',  bbox_inches='tight')
 
 
 
+# Iron and continuum fitting
+cont_region_1 = np.where((wave_vac > 4435 * (1 + z)) * (wave_vac < 4700 * (1 + z)))
+wave_contr1_vac = wave_vac[cont_region_1]
+flux_contr1 = flux[cont_region_1]
+
+cont_region_2 = np.where((wave_vac > 5100 * (1 + z)) * (wave_vac < 5535 * (1 + z)))
+wave_contr2_vac = wave_vac[cont_region_2]
+flux_contr2 = flux[cont_region_2]
+
+wave_cont_vac = np.hstack((wave_contr1_vac, wave_contr1_vac))
+flux_cont = np.hstack((flux_contr1, flux_contr2))
+
+path = '/Users/lzq/Dropbox/Data/CGM/'
+fe_uv = np.genfromtxt(path + 'fe_uv.txt')
+fe_op = np.genfromtxt(path + 'fe_optical.txt')
+
+def Fe_flux_balmer(xval, p1, p2):
+    "Fit the optical FeII on the continuum from 3686 to 7484 A based on Vestergaard & Wilkes 2001"
+    yval = np.zeros_like(xval)
+
+    wave_Fe_balmer = 10 ** fe_op[:, 0]
+    flux_Fe_balmer = fe_op[:, 1] / 1e-17
+    ind = np.where((wave_Fe_balmer > 3686.) & (wave_Fe_balmer < 7484.), True, False)
+    wave_Fe_balmer = wave_Fe_balmer[ind]
+    flux_Fe_balmer = flux_Fe_balmer[ind]
+    Fe_FWHM = p2
+
+
+    xval_new = xval / (1.0 + z)
+    ind = np.where((xval_new > 3686.) & (xval_new < 7484.), True, False)
+    if np.sum(ind) > 100:
+        if Fe_FWHM < 900.0:
+            sig_conv = np.sqrt(910.0 ** 2 - 900.0 ** 2) / 2. / np.sqrt(2. * np.log(2.))
+        else:
+            sig_conv = np.sqrt(Fe_FWHM ** 2 - 900.0 ** 2) / 2. / np.sqrt(2. * np.log(2.))  # in km/s
+
+        # Get sigma in pixel space
+        sig_pix = sig_conv / 106.3  # 106.3 km/s is the dispersion for the BG92 FeII template
+
+        khalfsz = np.round(4 * sig_pix + 1, 0)
+        xx = np.arange(0, khalfsz * 2, 1) - khalfsz
+        kernel = np.exp(-xx ** 2 / (2 * sig_pix ** 2))
+        kernel = kernel / np.sum(kernel)
+
+        flux_Fe_conv = np.convolve(flux_Fe_balmer, kernel, 'same')
+
+        tck = interpolate.splrep(wave_Fe_balmer, flux_Fe_conv)
+
+        yval[ind] = p1 * interpolate.splev(xval_new[ind], tck)
+    return yval
+
+
+def continuum(xval, p1, p2, p3, p4):
+    return Fe_flux_balmer(xval, p1, p2) + p3 * wave_vac ** p4
+
+
+p1_guess = 0.63
+p2_guess = 1200
+p3_guess = 5
+p4_guess = 1
+
+parameters = lmfit.Parameters()
+parameters.add_many(('p1', p1_guess, True, None, None, None),
+                    ('p2', p2_guess, True, 0, 1200.0, None),
+                    ('p3', p3_guess, True, None, None, None),
+                    ('p4', p4_guess, True, 0, 3, None))
+spec_model = lmfit.Model(model, missing='drop')
+result = spec_model.fit(flux_cont, wave_vac=wave_cont_vac_vac, params=parameters)
+# print('Success = {}'.format(result.success))
+print(result.fit_report())
+
+p1 = result.best_values['p1']
+
+
+# def Fe_pa
 
 
 
+
+# class QsoFit:
+#     def __init__(self):
+#
+#
+#     def Fit(self, ):
+#         return
+
+
+
+
+    # def continuum(self, A, power):
+    #
+    # def Fe_pa
+
+
+"""
+Continuum components described by 14 parameters
+ pp[0]: norm_factor for the MgII Fe_template
+ pp[1]: FWHM for the MgII Fe_template
+ pp[2]: small shift of wavelength for the MgII Fe template
+ pp[3:5]: same as pp[0:2] but for the Hbeta/Halpha Fe template
+ pp[6]: norm_factor for continuum f_lambda = (lambda/3000.0)^{-alpha}
+ pp[7]: slope for the power-law continuum
+ pp[8:10]: norm, Te and Tau_e for the Balmer continuum at <3646 A
+ pp[11:13]: polynomial for the continuum
+"""
