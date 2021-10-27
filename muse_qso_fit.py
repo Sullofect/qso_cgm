@@ -241,9 +241,10 @@ q.Fit(name='HE0238-1904', nsmooth=1, and_or_mask=False, deredden=True, reject_ba
 fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
 ax.plot(q.wave * (1 + z), q.flux / (1 + z), color='k', label=r'$\mathrm{Data}$')
 ax.plot(q.wave * (1 + z), q.err / (1 + z), color='lightgrey', label=r'$\mathrm{err}$')
-ax.plot(q.wave * (1 + z), q.f_conti_model / (1 + z), 'c', lw=2, label=r'$\mathrm{Iron}$')
-ax.plot(q.wave * (1 + z), q.PL_poly_BC / (1 + z), 'orange', lw=2, label=r'$\mathrm{Continuum}$')
-ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z), 'b', label='Line', lw=2)
+ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z) + q.f_conti_model / (1 + z),
+        'b', label='Line')
+ax.plot(q.wave * (1 + z), q.f_conti_model / (1 + z), 'c', label=r'$\mathrm{Iron}$')
+ax.plot(q.wave * (1 + z), q.PL_poly_BC / (1 + z), 'orange', label=r'$\mathrm{Continuum}$')
 #ax.set_xlim(5200, 9300)
 #ax.set_ylim(0, 100)
 ax.minorticks_on()
