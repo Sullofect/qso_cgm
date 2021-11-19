@@ -18,7 +18,7 @@ from astropy.cosmology import FlatLambdaCDM
 warnings.filterwarnings("ignore")
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
-
+path_savefig = '/Users/lzq/Dropbox/Data/CGM_plots/'
 
 def rest2obs(x):
     return x * (1 + z)
@@ -133,14 +133,14 @@ secaxins = axins.secondary_xaxis('top', functions=(obs2rest, rest2obs))
 secaxins.minorticks_on()
 secaxins.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=13)
 secaxins.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
-fig.savefig('/Users/lzq/Dropbox/qso_cgm/qso_spec_fit_z', bbox_inches='tight')
+fig.savefig(path_savefig + 'qso_spec_fit_z', bbox_inches='tight')
 
 # Fit the Spectrum
-path = '../PyQSOFit/'
+path = '/Users/lzq/Dropbox/PyQSOFit/'
 path1 = path             # the path of the source code file and qsopar.fits
-path2 = '../qso_cgm/data/result/' # path of fitting results
-path3 = '../qso_cgm/data/QA_result/'   # path of figure
-path4 = '../PyQSOFit/sfddata/'             # path of dust reddening map
+path2 = '/Users/lzq/Dropbox/qso_cgm/data/result/' # path of fitting results
+path3 = '/Users/lzq/Dropbox/qso_cgm/data/QA_result/'   # path of figure
+path4 = '/Users/lzq/Dropbox/PyQSOFit/sfddata/'             # path of dust reddening map
 
 newdata = np.rec.array([(6564.61, 'Ha', 6400., 6800., 'Ha_br', 3, 5e-3, 0.004, 0.05, 0.015, 0, 0, 0, 0.05), \
                         # (6564.61, 'Ha', 6400., 6800., 'Ha_na', 1, 1e-3, 5e-4, 0.0017, 0.01, 1, 1, 0, 0.002),\
@@ -259,7 +259,7 @@ secax.set_xlabel(r'$\mathrm{Rest \mbox{-} frame \; Wavelength \; (\AA)}$', size=
 secax.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=20)
 secax.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
 ax.legend(prop={'size': 17}, framealpha=0, loc=3, fontsize=15)
-fig.savefig('/Users/lzq/Dropbox/qso_cgm/qso_spec_fit_lines', bbox_inches='tight')
+fig.savefig(path_savefig + 'qso_spec_fit_lines', bbox_inches='tight')
 
 # Plot the Hbeta broad Spectrum
 fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
@@ -279,7 +279,7 @@ secax.set_xlabel(r'$\mathrm{Rest \mbox{-} frame \; Wavelength \; (\AA)}$', size=
 secax.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=20)
 secax.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
 ax.legend(prop={'size': 17}, framealpha=0, loc=2, fontsize=15)
-fig.savefig('/Users/lzq/Dropbox/qso_cgm/qso_spec_Hbeta_broad', bbox_inches='tight')
+fig.savefig(path_savefig + 'qso_spec_Hbeta_broad', bbox_inches='tight')
 
 # Calcualte BH mass
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
