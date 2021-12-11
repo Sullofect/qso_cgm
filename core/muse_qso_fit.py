@@ -1,9 +1,7 @@
 import os
 import sys
-import glob
 import lmfit
 import warnings
-import matplotlib
 import numpy as np
 import astropy.units as u
 import matplotlib.pyplot as plt
@@ -13,7 +11,6 @@ from mpdaf.obj import Cube
 sys.path.append('/Users/lzq/Dropbox/PyQSOFit')
 from PyQSOFit import QSOFit
 from PyAstronomy import pyasl
-from mpdaf.drs import PixTable
 from astropy.cosmology import FlatLambdaCDM
 warnings.filterwarnings("ignore")
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
