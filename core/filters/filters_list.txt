@@ -1,0 +1,6 @@
+filters/HST_ACS_WFC.F814W.dat
+filters/CTIO_DECam.g.dat
+filters/CTIO_DECam.r.dat
+filters/CTIO_DECam.i.dat
+filters/CTIO_DECam.z.dat
+filters/CTIO_DECam.Y.dat

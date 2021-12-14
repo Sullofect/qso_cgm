@@ -1,14 +1,7 @@
 import os
-import aplpy
 import sfdmap
-import matplotlib
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import norm
-from mpdaf.obj import Cube
-from mpdaf.obj import mpdaf_WCS
 import astropy.io.fits as fits
-import pandas as pd
 import bagpipes as pipes
 from matplotlib import rc
 from matplotlib import cm
@@ -19,6 +12,8 @@ from astropy.wcs.utils import skycoord_to_pixel
 from astropy.wcs.utils import pixel_to_skycoord
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
+from mpdaf.obj import Cube
+from mpdaf.obj import WCS as mpdaf_WCS
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 
@@ -102,11 +97,11 @@ hdul = fits.open(path)  # open a FITS file
 hdr = hdul[1].header
 wcs = mpdaf_WCS(hdr)
 
-# Calculate the white image
-image_white = cube.sum(axis=0)
-p, q = image_white.peak()['p'], image_white.peak()['q']
-p_q = wcs.sky2pix(np.vstack((dec_final, ra_final)).T, nearest=True)
-p_gal, q_gal = p_q.T[0], p_q.T[1]
+# # Calculate the white image
+# image_white = cube.sum(axis=0)
+# p, q = image_white.peak()['p'], image_white.peak()['q']
+# p_q = wcs.sky2pix(np.vstack((dec_final, ra_final)).T, nearest=True)
+# p_gal, q_gal = p_q.T[0], p_q.T[1]
 
 Blues = cm.get_cmap('Blues', 256)
 Reds = cm.get_cmap('Reds', 256)
@@ -114,22 +109,22 @@ newcolors = Blues(np.linspace(0, 1, 256))
 newcolors_red = Reds(np.linspace(0, 1, 256))
 newcmp = ListedColormap(newcolors)
 
-plt.figure(figsize=(8, 5), dpi=300)
-plt.imshow(image_white.data, origin='lower', cmap=newcmp, norm=matplotlib.colors.LogNorm())
-cbar = plt.colorbar()
-# cbar.set_label(r'$\mathrm{Arcsinh}$')
-plt.contour(image_white.data, levels=[1e5, 1e6, 1e7, 1e8], colors=newcolors_red[200::30, :], linewidths=0.5, alpha=0.5,
-            norm=matplotlib.colors.LogNorm())
-
-plt.plot(q_gal, p_gal, 'o', color='brown', ms=7, alpha=0.4, markerfacecolor='None', markeredgecolor='red',
-         markeredgewidth=0.5)
-for i in range(len(row_final)):
-    plt.annotate(str(row_final[i]), (q_gal[i], p_gal[i]), fontsize=5)
-
-plt.axis('off')
-# plt.xlim(200, 250)
-# plt.ylim(200, 250)
-print(row_final)
+# plt.figure(figsize=(8, 5), dpi=300)
+# plt.imshow(image_white.data, origin='lower', cmap=newcmp, norm=matplotlib.colors.LogNorm())
+# cbar = plt.colorbar()
+# # cbar.set_label(r'$\mathrm{Arcsinh}$')
+# plt.contour(image_white.data, levels=[1e5, 1e6, 1e7, 1e8], colors=newcolors_red[200::30, :], linewidths=0.5, alpha=0.5,
+#             norm=matplotlib.colors.LogNorm())
+#
+# plt.plot(q_gal, p_gal, 'o', color='brown', ms=7, alpha=0.4, markerfacecolor='None', markeredgecolor='red',
+#          markeredgewidth=0.5)
+# for i in range(len(row_final)):
+#     plt.annotate(str(row_final[i]), (q_gal[i], p_gal[i]), fontsize=5)
+#
+# plt.axis('off')
+# # plt.xlim(200, 250)
+# # plt.ylim(200, 250)
+# print(row_final)
 
 
 # Getting photometry zero point
@@ -152,14 +147,6 @@ f_hb = fits.open(path_hb)
 w_hb = WCS(f_hb[1].header)
 x, y = skycoord_to_pixel(c, w_hb)
 
-# Calculate rotation
-coord_1 = SkyCoord(ra_final[10] + 0.0003, dec_final[10] + 0.01, unit="deg")
-coord_2 = SkyCoord(ra_final[10] + 0.0003, dec_final[10] + 0.015, unit="deg")
-
-x_r1, y_r1 = skycoord_to_pixel(coord_1, w_hb)
-x_r2, y_r2 = skycoord_to_pixel(coord_2, w_hb)
-angle = - np.arctan((y_r2 - y_r1) / (x_r2 - x_r1)) - np.pi / 2
-
 # Photometry
 data_pho = data_pho[idx]
 x_image = data_pho['X_IMAGE']
@@ -173,67 +160,8 @@ dmag_auto = data_pho['MAGERR_AUTO']
 
 # chech consistency
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
-data_hb =  fits.getdata(path_hb, 1, ignore_missing_end=True)
+data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
 
-
-import aplpy
-
-fig = plt.figure(figsize=(8, 8), dpi=300)
-
-gc = aplpy.FITSFigure(path_image, figure=fig, north=True)
-
-
-gc.show_colorscale(vmin=0, vmax=3, cmap=newcmp)
-gc.set_xaxis_coord_type('scalar')
-gc.set_yaxis_coord_type('scalar')
-gc.recenter(40.1359, -18.8643, width=0.02, height=0.02)
-gc.show_circles(ra_final, dec_final, 0.0002)
-
-
-# fig = plt.figure(figsize=(8, 8), dpi=300)
-# plot_extents = 0, 4500, 0, 4500
-# transform = Affine2D().rotate_deg(angle * 180 / np.pi)
-
-# helper = floating_axes.GridHelperCurveLinear(transform, plot_extents, grid_locator1=MaxNLocator(nbins=5),
-#                                              grid_locator2=MaxNLocator(nbins=5))
-# axarr = fig.add_subplot(111, axes_class=floating_axes.FloatingAxes, grid_helper=helper)
-# aux_ax = axarr.get_aux_axes(transform)
-
-# cax = aux_ax.imshow(data_image, origin='lower', vmin=0, vmax=3, cmap=newcmp, aspect='equal')
-# # aux_ax.arrow(x_r1, y_r1, x_r2 - x_r1, y_r2 - y_r1, head_width=50, head_length=50, linewidth=2, color='k', length_includes_head=True)
-# aux_ax.plot(x, y, 'o', color='brown', ms=5, alpha=0.4, markerfacecolor='None', markeredgecolor='red', markeredgewidth=0.5)
-# aux_ax.plot(x_image, y_image, 'o', color='brown', ms=3, alpha=0.4, markerfacecolor='None', markeredgecolor='k', markeredgewidth=0.5)
-# for i in range(len(row_final)):
-#    aux_ax.annotate(str(row_final[i]), (x_image[i], y_image[i]), fontsize=7)
-# # cbar = fig.colorbar(cax, ax=aux_ax)
-# # cbar.set_label(r'$\mathrm{Arcsinh}$')
-# axarr.axis["bottom"].set_visible(False)
-# axarr.axis["top"].set_visible(False)
-# axarr.axis["left"].set_visible(False)
-# axarr.axis["right"].set_visible(False)
-# # aux_ax.xaxis.set_view_interval(0, 5000, ignore=True)
-# # aux_ax.yaxis.set_view_interval(-5000, -3000, ignore=True)
-# aux_ax.set_xlim(0, 1000)
-# aux_ax.set_ylim(-5000, -3000)
-
-#
-# plt.figure(figsize=(10, 5), dpi=300)
-# plt.imshow(10 ** data_hb, origin='lower', vmin=0, vmax=3, cmap=newcmp)
-# cbar = plt.colorbar()
-# # cbar.set_label(r'$\mathrm{Arcsinh}$')
-# plt.plot(x, y, 'o', color='brown', ms=7, alpha=0.4, markerfacecolor='None', markeredgecolor='red', markeredgewidth=0.5)
-# plt.plot(x_image, y_image, 'o', color='brown', ms=5, alpha=0.4, markerfacecolor='None', markeredgecolor='k', markeredgewidth=0.5)
-# for i in range(len(row_final)):
-#     plt.annotate(str(row_final[i]), (x[i], y[i]), fontsize=7)
-# plt.xlim(2000, 4000)
-# plt.ylim(2500, 4000)
-
-
-# Filter and galaxy extinction
-
-# HST_filter_path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'data', 'CGM', 'filters', 'HST_filters_list.txt')
-# HST_filter = np.loadtxt(HST_filter_path)
-# print(HST_filter_path)
 
 dustmap_path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'PyQSOfit', 'sfddata')
 m = sfdmap.SFDMap(dustmap_path)
@@ -248,21 +176,11 @@ dmag_iso_dred = dmag_iso
 dmag_isocor_dred = dmag_isocor
 dmag_auto_dred = dmag_auto
 
-# Compare with Legacy survey
-# data = Table()
-# data["RA"] = ra_final
-# data["DEC"] = dec_final
-# data['ID'] = row_final
-# #data["NAME"] =  np.core.defchararray.add(np.char.mod('%d', row_final), np.repeat(np.array(['o']), len(row_final)))
-# #data["COLOR"] = np.repeat(np.array(['black']), len(row_final))
-# #data["RADIUS"] = np.repeat(np.array(['1']), len(row_final))
-# ascii.write(data, 'galaxys_list_xmatch.csv', format='csv', overwrite=True)
 
-
-gal_col = [r"Row", r"Ra", r"Dec", r"Mag_iso", r"Mag_isocor", r"Mag_auto"]
-gal_phot = np.stack([row_final, ra_final, dec_final, mag_iso_dred, mag_isocor_dred, mag_auto_dred], axis=1)
-Table_1 = pd.DataFrame(gal_phot, index=1 + np.arange(len(row_final)), columns=gal_col)
-Table_1
+# gal_col = [r"Row", r"Ra", r"Dec", r"Mag_iso", r"Mag_isocor", r"Mag_auto"]
+# gal_phot = np.stack([row_final, ra_final, dec_final, mag_iso_dred, mag_isocor_dred, mag_auto_dred], axis=1)
+# Table_1 = pd.DataFrame(gal_phot, index=1 + np.arange(len(row_final)), columns=gal_col)
+# Table_1
 
 path_pho_des = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'des_dr2_galaxys_pho.fits')
 data_pho_des = fits.getdata(path_pho_des, 1, ignore_missing_end=True)
@@ -292,8 +210,8 @@ print(col_ID[have_des_pho])
 mag_all = np.zeros((len(row_final), 6))
 dmag_all = mag_all.copy()
 mag_all[:, 0], dmag_all[:, 0] = mag_auto_dred, dmag_auto_dred
-mag_all[col_ID[have_des_pho], 1:] =  np.array([mag_g_dred, mag_r_dred, mag_i_dred, mag_z_dred, mag_Y_dred]).T
-dmag_all[col_ID[have_des_pho], 1:] =  np.array([dmag_g_dred, dmag_r_dred, dmag_i_dred, dmag_z_dred, dmag_Y_dred]).T
+mag_all[col_ID[have_des_pho], 1:] = np.array([mag_g_dred, mag_r_dred, mag_i_dred, mag_z_dred, mag_Y_dred]).T
+dmag_all[col_ID[have_des_pho], 1:] = np.array([dmag_g_dred, dmag_r_dred, dmag_i_dred, dmag_z_dred, dmag_Y_dred]).T
 
 
 mag_all = np.where((mag_all != 0) * (mag_all != 99), mag_all, np.inf)
@@ -342,7 +260,7 @@ def load_data(row):
     flux_err = spec['error'] * 1e-20
 
     spectrum = np.array([wave, flux, flux_err]).T
-    return bin(spectrum, 10), phot
+    return spectrum, phot
 # bin(spectrum, 5), phot
 # bin(spectrum, 10)
 # phot
@@ -350,84 +268,59 @@ def load_data(row):
 
 
 print(row_des)
-row_number = '36'
+row_number = '82'
 # filt_list=np.loadtxt("filters/filters_list.txt", dtype="str")
 galaxy = pipes.galaxy(row_number, load_data, filt_list=np.loadtxt("filters/filters_list.txt", dtype="str"))
-galaxy.plot()
+# galaxy.plot()
 
-dblplaw = {}
-dblplaw["tau"] = (0., 15.)
-dblplaw["alpha"] = (0.01, 1000.)
-dblplaw["beta"] = (0.01, 1000.)
-dblplaw["alpha_prior"] = "log_10"
-dblplaw["beta_prior"] = "log_10"
-dblplaw["massformed"] = (1., 15.)
-dblplaw["metallicity"] = (0.1, 2.)
-dblplaw["metallicity_prior"] = "log_10"
+exp = {}                                  # Tau-model star-formation history component
+exp["age"] = (0.01, 15.)                  # Vary age between 100 Myr and 15 Gyr. In practice
+                                          # the code automatically limits this to the age of
+                                          # the Universe at the observed redshift.
 
-nebular = {}
-nebular["logU"] = -3.
+exp["tau"] = (0.01, 8.0)                   # Vary tau between 300 Myr and 10 Gyr
+exp["massformed"] = (6.0, 13.0)             # vary log_10(M*/M_solar) between 1 and 15
+exp["metallicity"] = (0.01, 2.5)         # vary Z between 0 and 2.5 Z_oldsolar
 
-dust = {}
-dust["type"] = "CF00"
-dust["eta"] = 2.
-dust["Av"] = (0., 2.0)
-dust["n"] = (0.3, 2.5)
-dust["n_prior"] = "Gaussian"
-dust["n_prior_mu"] = 0.7
-dust["n_prior_sigma"] = 0.3
+dust = {}                                 # Dust component
+dust["type"] = "Calzetti"                 # Define the shape of the attenuation curve
+dust["Av"] = (0., 2.0)                     # Vary Av between 0 and 2 magnitudes
 
-fit_instructions = {}
-fit_instructions["redshift"] = z_final[np.where(row_final == float(row_number))]
-fit_instructions["t_bc"] = 0.01
-fit_instructions["dblplaw"] = dblplaw
-fit_instructions["nebular"] = nebular
-fit_instructions["dust"] = dust
-
-# exp = {}                                  # Tau-model star-formation history component
-# exp["age"] = (0.1, 15.)                   # Vary age between 100 Myr and 15 Gyr. In practice
-#                                           # the code automatically limits this to the age of
-#                                           # the Universe at the observed redshift.
-# exp["tau"] = (0.1, 10.)                   # Vary tau between 300 Myr and 10 Gyr
-# exp["massformed"] = (1., 15.)             # vary log_10(M*/M_solar) between 1 and 15
-# exp["metallicity"] = (0., 2.5)            # vary Z between 0 and 2.5 Z_oldsolar
-
-# dust = {}                                 # Dust component
-# dust["type"] = "Calzetti"                 # Define the shape of the attenuation curve
-# dust["Av"] = (0., 2.)                     # Vary Av between 0 and 2 magnitudes
+fit_instructions = {}                     # The fit instructions dictionary
+z_gal_i = z_final[np.where(row_final == float(row_number))]
+fit_instructions["redshift"] = (z_gal_i - 0.01, z_gal_i + 0.01)
+fit_instructions["redshift_prior"] = "Gaussian"
+fit_instructions["redshift_prior_mu"] = z_gal_i
+fit_instructions["redshift_prior_sigma"] = 0.01
 
 
-# fit_instructions = {}                     # The fit instructions dictionary
-# fit_instructions["redshift"] = z_final[np.where(row_final == float(row_number))] # Vary observed redshift from 0 to 10
-# fit_instructions["exponential"] = exp
-# fit_instructions["dust"] = dust
+fit_instructions["age_prior"] = 'log_10'
+fit_instructions["tau_prior"] = 'log_10'
+fit_instructions["massformed_prior"] = 'log_10'
+fit_instructions["metallicity_prior"] = 'log_10'
 
-# Velocity dispersion
+
 fit_instructions["veldisp"] = (1., 1000.)   #km/s
 fit_instructions["veldisp_prior"] = "log_10"
 
 calib = {}
 calib["type"] = "polynomial_bayesian"
-
-calib["0"] = (0.5, 1.5) # Zero order is centred on 1, at which point there is no change to the spectrum.
-calib["0_prior"] = "Gaussian"
-calib["0_prior_mu"] = 1.0
-calib["0_prior_sigma"] = 0.25
-
-calib["1"] = (-0.5, 0.5) # Subsequent orders are centred on zero.
-calib["1_prior"] = "Gaussian"
-calib["1_prior_mu"] = 0.
-calib["1_prior_sigma"] = 0.25
-
-calib["2"] = (-0.5, 0.5)
-calib["2_prior"] = "Gaussian"
-calib["2_prior_mu"] = 0.
-calib["2_prior_sigma"] = 0.25
-
+calib["0"] = (0.1, 20) # Zero order is centred on 1, at which point there is no change to the spectrum.
 fit_instructions["calib"] = calib
 
+noise = {}
+noise["type"] = "white_scaled"
+noise["scaling"] = (1., 10.)
+noise["scaling_prior"] = "log_10"
+fit_instructions["noise"] = noise
+
+
+fit_instructions["exponential"] = exp
+fit_instructions["dust"] = dust
+
+
 fit = pipes.fit(galaxy, fit_instructions)
-fit.fit(verbose=False)
+fit.fit(verbose=True)
 
 fig = fit.plot_spectrum_posterior(save=True, show=True)
 fig = fit.plot_sfh_posterior(save=True, show=True)
