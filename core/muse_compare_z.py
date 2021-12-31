@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import pandas as pd
 import numpy.ma as ma
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
@@ -114,15 +113,15 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
     name_ggp = name_qua[select_v]
     ql_ggp = ql_qua[select_v]
     ra_ggp, dec_ggp = ra_qua[select_v], dec_qua[select_v]
-    output = np.array([bins_ggp, row_ggp, ID_ggp, z_ggp, v_ggp, name_ggp, ql_ggp, ra_ggp, dec_ggp])
+    output = np.array([bins_ggp, row_ggp, ID_ggp, z_ggp, v_ggp, name_ggp, ql_ggp, ra_ggp, dec_ggp], dtype=object)
     return output
 
 
-parameter = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
-                      cat_will='ESO_DEEP_offset_zapped_objects.fits')
-bins_final = parameter[0]
-v_final = parameter[4]
-ql_final = parameter[6]
+ggp_info = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
+                     cat_will='ESO_DEEP_offset_zapped_objects.fits')
+bins_final = ggp_info[0]
+v_final = ggp_info[4]
+ql_final = ggp_info[6]
 
 # Plot the fitting
 select_v = np.where((v_final > -2000) * (v_final < 2000))
