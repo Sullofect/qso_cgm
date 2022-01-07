@@ -5,7 +5,7 @@ import numpy as np
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from mpdaf.obj import Cube
-from mpdaf.obj import mpdaf_WCS
+from mpdaf.obj import WCS as mpdaf_WCS
 from matplotlib import rc
 from matplotlib import cm
 from astropy.wcs import WCS
@@ -143,7 +143,7 @@ f_hb = fits.open(path_hb)
 w_hb = WCS(f_hb[1].header)
 x, y = skycoord_to_pixel(c, w_hb)
 
-# chech consistency
+# check consistency
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
 data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
 
@@ -169,10 +169,10 @@ gc.show_circles(ra_final, dec_final, 0.0002)
 # from acstools import acszpt
 # date = '2017-06-19'
 # detector = 'WFC'
-
+#
 # q = acszpt.Query(date=date, detector=detector)
 # zpt_table = q.fetch()
-
+#
 # print(zpt_table)
 #-------------------------------------------
 
