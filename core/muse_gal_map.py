@@ -13,6 +13,9 @@ from astropy.coordinates import SkyCoord
 from matplotlib.colors import ListedColormap
 from astropy.wcs.utils import skycoord_to_pixel
 from astropy.wcs.utils import pixel_to_skycoord
+from muse_gal_check_astrometry import offset
+from astropy.table import Table
+path_savetable = '/Users/lzq/Dropbox/Data/CGM_tables/'
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 
@@ -89,37 +92,38 @@ name_final = name_qua[select_z]
 ql_final = ql_qua[select_z]
 ra_final, dec_final = ra_qua[select_z], dec_qua[select_z]
 
-path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits')
-
-cube = Cube(path)
-hdul = fits.open(path)  # open a FITS file
-hdr = hdul[1].header
-wcs = mpdaf_WCS(hdr)
-
-# Calculate the white image
-image_white = cube.sum(axis=0)
-p, q = image_white.peak()['p'], image_white.peak()['q']
-p_q = wcs.sky2pix(np.vstack((dec_final, ra_final)).T, nearest=True)
-p_gal, q_gal = p_q.T[0], p_q.T[1]
-
+# Muse image
+# path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits')
+#
+# cube = Cube(path)
+# hdul = fits.open(path)  # open a FITS file
+# hdr = hdul[1].header
+# wcs = mpdaf_WCS(hdr)
+#
+# # Calculate the white image
+# image_white = cube.sum(axis=0)
+# p, q = image_white.peak()['p'], image_white.peak()['q']
+# p_q = wcs.sky2pix(np.vstack((dec_final, ra_final)).T, nearest=True)
+# p_gal, q_gal = p_q.T[0], p_q.T[1]
+#
 Blues = cm.get_cmap('Blues', 256)
 Reds = cm.get_cmap('Reds', 256)
 newcolors = Blues(np.linspace(0, 1, 256))
 newcolors_red = Reds(np.linspace(0, 1, 256))
 newcmp = ListedColormap(newcolors)
-
-plt.figure(figsize=(8, 5), dpi=300)
-plt.imshow(image_white.data, origin='lower', cmap=newcmp, norm=matplotlib.colors.LogNorm())
-cbar = plt.colorbar()
-# cbar.set_label(r'$\mathrm{Arcsinh}$')
-plt.contour(image_white.data, levels=[1e5, 1e6, 1e7, 1e8], colors=newcolors_red[200::30, :], linewidths=0.5, alpha=0.5,
-            norm=matplotlib.colors.LogNorm())
-plt.plot(q_gal, p_gal, 'o', color='brown', ms=7, alpha=0.4, markerfacecolor='None', markeredgecolor='red',
-         markeredgewidth=0.5)
-for i in range(len(row_final)):
-    plt.annotate(str(row_final[i]), (q_gal[i], p_gal[i]), fontsize=5)
-
-plt.axis('off')
+#
+# plt.figure(figsize=(8, 5), dpi=300)
+# plt.imshow(image_white.data, origin='lower', cmap=newcmp, norm=matplotlib.colors.LogNorm())
+# cbar = plt.colorbar()
+# # cbar.set_label(r'$\mathrm{Arcsinh}$')
+# plt.contour(image_white.data, levels=[1e5, 1e6, 1e7, 1e8], colors=newcolors_red[200::30, :], linewidths=0.5, alpha=0.5,
+#             norm=matplotlib.colors.LogNorm())
+# plt.plot(q_gal, p_gal, 'o', color='brown', ms=7, alpha=0.4, markerfacecolor='None', markeredgecolor='red',
+#          markeredgewidth=0.5)
+# for i in range(len(row_final)):
+#     plt.annotate(str(row_final[i]), (q_gal[i], p_gal[i]), fontsize=5)
+#
+# plt.axis('off')
 # plt.xlim(200, 250)
 # plt.ylim(200, 250)
 
@@ -133,8 +137,12 @@ data_pho = fits.getdata(path_pho, 1, ignore_missing_end=True)
 path_image = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'check.fits')
 data_image = fits.getdata(path_image, 1, ignore_missing_end=True)
 
-w_pho = WCS(fits.open(path_image)[1].header)
-catalog = pixel_to_skycoord(data_pho['X_IMAGE'], data_pho['Y_IMAGE'], w_pho)
+ra_pho = data_pho['ALPHAWIN_J2000']
+dec_pho = data_pho['DELTAWIN_J2000']
+
+# w_pho = WCS(fits.open(path_image)[1].header)
+# catalog = pixel_to_skycoord(data_pho['X_IMAGE'], data_pho['Y_IMAGE'], w_pho)
+catalog = SkyCoord(ra_pho, dec_pho, unit="deg")
 c = SkyCoord(ra_final, dec_final, unit="deg")
 idx, d2d, d3d = c.match_to_catalog_sky(catalog)
 
@@ -143,10 +151,11 @@ f_hb = fits.open(path_hb)
 w_hb = WCS(f_hb[1].header)
 x, y = skycoord_to_pixel(c, w_hb)
 
+ra_offset, dec_offset = offset()
+
 # check consistency
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
 data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
-
 
 fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_image, figure=fig, north=True)
@@ -154,7 +163,9 @@ gc.show_colorscale(vmin=0, vmax=3, cmap=newcmp)
 gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
 gc.recenter(40.1359, -18.8643, width=0.02, height=0.02)
-gc.show_circles(ra_final, dec_final, 0.0002)
+# gc.show_circles(ra_final, dec_final, 0.0002)
+gc.show_circles(ra_pho[idx] - ra_offset, dec_pho[idx] - dec_offset, 0.0002)
+# plt.show()
 
 #-------Create reg file for DS9-----------
 # galaxy_list = np.array([])
@@ -219,13 +230,14 @@ gc.show_circles(ra_final, dec_final, 0.0002)
 
 
 # Compare with Legacy survey
-# data = Table()
-# data["RA"] = ra_final
-# data["DEC"] = dec_final
-# data['ID'] = row_final
-# #data["NAME"] =  np.core.defchararray.add(np.char.mod('%d', row_final), np.repeat(np.array(['o']), len(row_final)))
-# #data["COLOR"] = np.repeat(np.array(['black']), len(row_final))
-# #data["RADIUS"] = np.repeat(np.array(['1']), len(row_final))
-# ascii.write(data, 'galaxys_list_xmatch.csv', format='csv', overwrite=True)
+from astropy.io import ascii
+data = Table()
+data["RA"] = ra_pho[idx] - ra_offset
+data["DEC"] = dec_pho[idx] - dec_offset
+data['ID'] = row_final
+#data["NAME"] =  np.core.defchararray.add(np.char.mod('%d', row_final), np.repeat(np.array(['o']), len(row_final)))
+#data["COLOR"] = np.repeat(np.array(['black']), len(row_final))
+#data["RADIUS"] = np.repeat(np.array(['1']), len(row_final))
+ascii.write(data, path_savetable + 'galaxys_list_xmatch.csv', format='csv', overwrite=True)
 
 

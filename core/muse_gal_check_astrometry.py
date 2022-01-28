@@ -16,6 +16,10 @@ from astropy.wcs.utils import skycoord_to_pixel
 from astropy.wcs.utils import pixel_to_skycoord
 path_savefig = '/Users/lzq/Dropbox/Data/CGM_plots/'
 
+def offset():
+    return np.mean(ra_pho[idx_total[sep_lim_total]] - ra_total[sep_lim_total]), \
+           np.mean(dec_pho[idx_total[sep_lim_total]] - dec_total[sep_lim_total])
+
 # Getting photometry zero point
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
 data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
@@ -87,7 +91,8 @@ gc.show_colorscale(vmin=0, vmax=3, cmap=newcmp)
 gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
 gc.recenter(40.1359, -18.8643, width=0.08, height=0.12)
-gc.show_circles(ra_total[sep_lim_total], dec_total[sep_lim_total], 0.0002)
+ra_offset, dec_offset = offset()
+gc.show_circles(ra_total[sep_lim_total] + ra_offset, dec_total[sep_lim_total] + dec_offset, 0.0002, facecolor='blue')
 gc.show_circles(ra_pho[idx_total[sep_lim_total]], dec_pho[idx_total[sep_lim_total]], 0.0002, facecolor='red')
 plt.savefig(path_savefig + 'HST_check', bbox_inches='tight')
 
@@ -118,3 +123,13 @@ axarr[1, 1].set_xlabel('dec')
 axarr[1, 1].set_ylabel(r'$\delta dec$')
 plt.savefig(path_savefig + 'coor_compare', bbox_inches='tight')
 # plt.show()
+
+# from astropy.table import Table
+# data = Table()
+# data["RA"] =
+# data["DEC"] = dec_final
+# data['ID'] = row_final
+# #data["NAME"] =  np.core.defchararray.add(np.char.mod('%d', row_final), np.repeat(np.array(['o']), len(row_final)))
+# #data["COLOR"] = np.repeat(np.array(['black']), len(row_final))
+# #data["RADIUS"] = np.repeat(np.array(['1']), len(row_final))
+# ascii.write(data, 'galaxys_list_xmatch.csv', format='csv', overwrite=True)
