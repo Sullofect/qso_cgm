@@ -23,6 +23,7 @@ def load_data(row):
     flux_err = flux_all_err[row_sort][0]
     phot = np.array([flux, flux_err]).T
 
+
     path_spe = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
                             row + '_' + str(ID_final[row_sort][0]) + '_' + name_final[row_sort][0] + '_spec1D.fits')
     spec = Table.read(path_spe)
@@ -44,6 +45,12 @@ z_final = ggp_info[3]
 name_final = ggp_info[5]
 ra_final = ggp_info[7]
 dec_final = ggp_info[8]
+
+print(ID_final)
+print(z_final)
+print(name_final)
+print(ra_final)
+print(dec_final)
 
 # Getting photometry zero point
 path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'HE0238-1904_sex.fits')
@@ -88,7 +95,7 @@ Table_pho["Mag_isocor_dred"] = mag_isocor_dred
 Table_pho["Mag_auto_dred"] = mag_auto_dred
 ascii.write(Table_pho, path_savetab + 'check_photometry.csv', format='ecsv', overwrite=True)
 
-path_pho_des = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'des_dr2_galaxys_pho.fits')
+path_pho_des = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'des_dr2_galaxys_pho_2.fits')
 data_pho_des = fits.getdata(path_pho_des, 1, ignore_missing_end=True)
 
 row_des = data_pho_des['t1_id']
@@ -104,12 +111,26 @@ dmag_i_dred = data_pho_des['magerr_auto_i']
 dmag_z_dred = data_pho_des['magerr_auto_z']
 dmag_Y_dred = data_pho_des['magerr_auto_Y']
 
+
 # Combine photometry
 col_ID = np.arange(len(row_final))
 have_des_pho = np.in1d(row_final, row_des)
-print(row_des)
-print(row_final)
-print(col_ID[have_des_pho])
+# print(row_des)
+# print(row_final)
+# print(col_ID[have_des_pho])
+
+offset = mag_i_dred - mag_auto_dred[col_ID[have_des_pho]]
+mag_g_dred -= offset
+mag_r_dred -= offset
+mag_i_dred -= offset
+mag_z_dred -= offset
+mag_Y_dred -= offset
+
+print(mag_g_dred)
+print(mag_r_dred)
+print(mag_i_dred)
+print(mag_z_dred)
+print(mag_Y_dred)
 
 mag_all = np.zeros((len(row_final), 6))
 dmag_all = mag_all.copy()
@@ -117,17 +138,28 @@ mag_all[:, 0], dmag_all[:, 0] = mag_auto_dred, dmag_auto_dred
 mag_all[col_ID[have_des_pho], 1:] = np.array([mag_g_dred, mag_r_dred, mag_i_dred, mag_z_dred, mag_Y_dred]).T
 dmag_all[col_ID[have_des_pho], 1:] = np.array([dmag_g_dred, dmag_r_dred, dmag_i_dred, dmag_z_dred, dmag_Y_dred]).T
 
-
+#
 mag_all = np.where((mag_all != 0) * (mag_all != 99), mag_all, np.inf)
 dmag_all = np.where((dmag_all != 0) * (dmag_all != 99), dmag_all, 0)
 
-flux_all = 10 ** ((23.9 - mag_all) / 2.5) # microjanskys
+# remove invalid entry
+# bad Y band
+bad_Y = np.array([35, 93, 164])
+mask_Y = np.in1d(row_final, bad_Y)
+mag_all[col_ID[mask_Y], 5] = np.inf
+dmag_all[col_ID[mask_Y], 5] = 0
+# print(row_final)
+# print(col_ID[mask_Y])
+# print(mag_all)
+# print(dmag_all)
+
+flux_all = 10 ** ((23.9 - mag_all) / 2.5)  # microjanskys
 flux_all_err = flux_all * np.log(10) * dmag_all / 2.5
 flux_all_err = np.where(flux_all_err != 0, flux_all_err, 99)
+#
 
-
-for i in ['93', '120', '129', '134', '140', '141', '149', '162', '164', '179', '181', '182']:
-    row_number = i
+for i in [36, 93]:
+    row_number = str(i)
     galaxy = pipes.galaxy(row_number, load_data, filt_list=np.loadtxt("filters/filters_list.txt", dtype="str"))
     # galaxy.plot()
 
@@ -156,7 +188,7 @@ for i in ['93', '120', '129', '134', '140', '141', '149', '162', '164', '179', '
     fit_instructions["massformed_prior"] = 'log_10'
     fit_instructions["metallicity_prior"] = 'log_10'
 
-    fit_instructions["veldisp"] = (1., 1000.)  # km/s
+    fit_instructions["veldisp"] = (50., 200.)  # km/s
     fit_instructions["veldisp_prior"] = "log_10"
 
     calib = {}
@@ -173,7 +205,7 @@ for i in ['93', '120', '129', '134', '140', '141', '149', '162', '164', '179', '
     fit_instructions["exponential"] = exp
     fit_instructions["dust"] = dust
 
-    fit = pipes.fit(galaxy, fit_instructions)
+    fit = pipes.fit(galaxy, fit_instructions, run='Trial_3')
     fit.fit(verbose=True)
 
     fit.plot_spectrum_posterior(save=True, show=True)
