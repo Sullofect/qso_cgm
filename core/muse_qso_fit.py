@@ -95,6 +95,7 @@ result = spec_model.fit(flux_OII, wave_vac=wave_OII_vac, params=parameters)
 # print('Success = {}'.format(result.success))
 # print(result.fit_report())
 z = result.best_values['z']
+print(z)
 
 # Plot the Spectrum
 fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
@@ -286,5 +287,5 @@ L_5100 = 4 * np.pi * d_l ** 2 * float(q.conti_result[13]) * (5100.0/3000.0) ** f
 waveL_5100 = 5100 * L_5100
 L_bol = 9.26 * waveL_5100 * 1e-17
 log_M_BH = np.log10((fwhm/1000) ** 2 * (waveL_5100 * 1e-17/1e44) ** 0.5) + 6.91
-print('logM_Blackhole is ', log_M_BH)
-print('Bolometric Luminosity is', L_bol)
+print('logM_Blackhole is ', log_M_BH, 'solar mass')
+print('Bolometric Luminosity is', L_bol, 'erg/s')

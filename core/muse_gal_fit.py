@@ -53,7 +53,7 @@ print(ra_final)
 print(dec_final)
 
 # Getting photometry zero point
-path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'HE0238-1904_sex.fits')
+path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'HE0238-1904_sex_test1.fits')
 data_pho = fits.getdata(path_pho, 1, ignore_missing_end=True)
 path_image = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'check.fits')
 
@@ -119,7 +119,11 @@ have_des_pho = np.in1d(row_final, row_des)
 # print(row_final)
 # print(col_ID[have_des_pho])
 
-offset = mag_i_dred - mag_auto_dred[col_ID[have_des_pho]]
+# determine if blended or not
+mag_hst_dred = mag_iso_dred
+dmag_hst_dred = dmag_iso_dred
+
+offset = mag_i_dred - mag_hst_dred[col_ID[have_des_pho]]
 mag_g_dred -= offset
 mag_r_dred -= offset
 mag_i_dred -= offset
@@ -134,7 +138,7 @@ print(mag_Y_dred)
 
 mag_all = np.zeros((len(row_final), 6))
 dmag_all = mag_all.copy()
-mag_all[:, 0], dmag_all[:, 0] = mag_auto_dred, dmag_auto_dred
+mag_all[:, 0], dmag_all[:, 0] = mag_hst_dred, dmag_hst_dred
 mag_all[col_ID[have_des_pho], 1:] = np.array([mag_g_dred, mag_r_dred, mag_i_dred, mag_z_dred, mag_Y_dred]).T
 dmag_all[col_ID[have_des_pho], 1:] = np.array([dmag_g_dred, dmag_r_dred, dmag_i_dred, dmag_z_dred, dmag_Y_dred]).T
 
@@ -158,7 +162,7 @@ flux_all_err = flux_all * np.log(10) * dmag_all / 2.5
 flux_all_err = np.where(flux_all_err != 0, flux_all_err, 99)
 #
 
-for i in [36, 93]:
+for i in [4, 88, 162]:
     row_number = str(i)
     galaxy = pipes.galaxy(row_number, load_data, filt_list=np.loadtxt("filters/filters_list.txt", dtype="str"))
     # galaxy.plot()
@@ -170,7 +174,8 @@ for i in [36, 93]:
 
     exp["tau"] = (0.01, 8.0)  # Vary tau between 300 Myr and 10 Gyr
     exp["massformed"] = (6.0, 13.0)  # vary log_10(M*/M_solar) between 1 and 15
-    exp["metallicity"] = (0.01, 2.5)  # vary Z between 0 and 2.5 Z_oldsolar
+    exp["metallicity"] = 1
+    # (0.01, 1)  # vary Z between 0 and 2.5 Z_oldsolar
 
     dust = {}  # Dust component
     dust["type"] = "Calzetti"  # Define the shape of the attenuation curve
@@ -186,14 +191,30 @@ for i in [36, 93]:
     fit_instructions["age_prior"] = 'log_10'
     fit_instructions["tau_prior"] = 'log_10'
     fit_instructions["massformed_prior"] = 'log_10'
-    fit_instructions["metallicity_prior"] = 'log_10'
+    # fit_instructions["metallicity_prior"] = 'log_10'
 
-    fit_instructions["veldisp"] = (50., 200.)  # km/s
+    fit_instructions["veldisp"] = (50., 1000.)  # km/s
     fit_instructions["veldisp_prior"] = "log_10"
 
     calib = {}
     calib["type"] = "polynomial_bayesian"
     calib["0"] = (0.1, 20)  # Zero order is centred on 1, at which point there is no change to the spectrum.
+
+    # calib["0"] = (0.5, 1.5)  # Zero order is centred on 1, at which point there is no change to the spectrum.
+    # calib["0_prior"] = "Gaussian"
+    # calib["0_prior_mu"] = 1.0
+    # calib["0_prior_sigma"] = 0.25
+    #
+    # calib["1"] = (-0.5, 0.5)  # Subsequent orders are centred on zero.
+    # calib["1_prior"] = "Gaussian"
+    # calib["1_prior_mu"] = 0.
+    # calib["1_prior_sigma"] = 0.25
+    #
+    # calib["2"] = (-0.5, 0.5)
+    # calib["2_prior"] = "Gaussian"
+    # calib["2_prior_mu"] = 0.
+    # calib["2_prior_sigma"] = 0.25
+
     fit_instructions["calib"] = calib
 
     noise = {}
@@ -205,7 +226,7 @@ for i in [36, 93]:
     fit_instructions["exponential"] = exp
     fit_instructions["dust"] = dust
 
-    fit = pipes.fit(galaxy, fit_instructions, run='Trial_3')
+    fit = pipes.fit(galaxy, fit_instructions, run='Trial_4')
     fit.fit(verbose=True)
 
     fit.plot_spectrum_posterior(save=True, show=True)

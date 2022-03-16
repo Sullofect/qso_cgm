@@ -134,21 +134,21 @@ normalization = np.sum(nums) * 200
 
 # Plot
 rv = np.linspace(-2000, 2000, 1000)
-plt.figure(figsize=(8, 5), dpi=300)
-plt.vlines(0, 0, 11, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
-plt.hist(v_final[np.where(ql_final == 1)], bins=bins_final, facecolor='blue', histtype='stepfilled', alpha=0.5,
-         label=r'$ \mathrm{Quality} = 1$')
-plt.hist(v_final[np.where(ql_final == 2)], bins=bins_final, facecolor='brown', histtype='stepfilled', alpha=0.5,
-         label=r'$ \mathrm{Quality} = 2$')
-plt.plot(rv, normalization * norm.pdf(rv, mu, scale), '-r', lw=2, alpha=0.5,
-         label=r'$\mu = $ ' + str("{0:.0f}".format(mu)) + r'$\mathrm{km/s}$, ' + '\n' + r'$\sigma = $ ' +
-               str("{0:.0f}".format(scale)) + r'$\mathrm{km/s}$')
-plt.xlim(-2000, 2000)
-plt.ylim(0, 11)
-plt.minorticks_on()
-plt.xlabel(r'$\Delta v [\mathrm{km \; s^{-1}}]$', size=20)
-plt.ylabel(r'$\mathrm{Numbers}$', size=20)
-plt.tick_params(axis='both', which='major', direction='in', bottom='on', top='on', left='on', right='on', size=5, labelsize=20)
-plt.tick_params(axis='both', which='minor', direction='in', bottom='on', top='on', left='on', right='on', size=3)
-plt.legend(prop={'size': 17}, framealpha=0, loc=1, fontsize=15)
-plt.savefig(path_savefig + 'galaxy_velocity', bbox_inches='tight')
+# plt.figure(figsize=(8, 5), dpi=300)
+# plt.vlines(0, 0, 11, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
+# plt.hist(v_final[np.where(ql_final == 1)], bins=bins_final, facecolor='blue', histtype='stepfilled', alpha=0.5,
+#          label=r'$ \mathrm{Quality} = 1$')
+# plt.hist(v_final[np.where(ql_final == 2)], bins=bins_final, facecolor='brown', histtype='stepfilled', alpha=0.5,
+#          label=r'$ \mathrm{Quality} = 2$')
+# plt.plot(rv, normalization * norm.pdf(rv, mu, scale), '-r', lw=2, alpha=0.5,
+#          label=r'$\mu = $ ' + str("{0:.0f}".format(mu)) + r'$\mathrm{km/s}$, ' + '\n' + r'$\sigma = $ ' +
+#                str("{0:.0f}".format(scale)) + r'$\mathrm{km/s}$')
+# plt.xlim(-2000, 2000)
+# plt.ylim(0, 11)
+# plt.minorticks_on()
+# plt.xlabel(r'$\Delta v [\mathrm{km \; s^{-1}}]$', size=20)
+# plt.ylabel(r'$\mathrm{Numbers}$', size=20)
+# plt.tick_params(axis='both', which='major', direction='in', bottom='on', top='on', left='on', right='on', size=5, labelsize=20)
+# plt.tick_params(axis='both', which='minor', direction='in', bottom='on', top='on', left='on', right='on', size=3)
+# plt.legend(prop={'size': 17}, framealpha=0, loc=1, fontsize=15)
+# plt.savefig(path_savefig + 'galaxy_velocity', bbox_inches='tight')
