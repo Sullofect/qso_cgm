@@ -188,6 +188,18 @@ gc.show_circles(ra_pho[idx] - ra_offset, dec_pho[idx] - dec_offset, 0.0002)
 #-------------------------------------------
 
 
+#----Compare with Legacy survey--------------------
+from astropy.io import ascii
+data = Table()
+data["RA"] = ra_pho[idx] - ra_offset
+data["DEC"] = dec_pho[idx] - dec_offset
+data['ID'] = row_final
+#data["NAME"] =  np.core.defchararray.add(np.char.mod('%d', row_final), np.repeat(np.array(['o']), len(row_final)))
+#data["COLOR"] = np.repeat(np.array(['black']), len(row_final))
+#data["RADIUS"] = np.repeat(np.array(['1']), len(row_final))
+ascii.write(data, path_savetable + 'galaxys_list_xmatch.csv', format='csv', overwrite=True)
+#-------------------------------------------
+
 # fig = plt.figure(figsize=(8, 8), dpi=300)
 # plot_extents = 0, 4500, 0, 4500
 # transform = Affine2D().rotate_deg(angle * 180 / np.pi)
@@ -228,16 +240,5 @@ gc.show_circles(ra_pho[idx] - ra_offset, dec_pho[idx] - dec_offset, 0.0002)
 # plt.xlim(2000, 4000)
 # plt.ylim(2500, 4000)
 
-
-# Compare with Legacy survey
-from astropy.io import ascii
-data = Table()
-data["RA"] = ra_pho[idx] - ra_offset
-data["DEC"] = dec_pho[idx] - dec_offset
-data['ID'] = row_final
-#data["NAME"] =  np.core.defchararray.add(np.char.mod('%d', row_final), np.repeat(np.array(['o']), len(row_final)))
-#data["COLOR"] = np.repeat(np.array(['black']), len(row_final))
-#data["RADIUS"] = np.repeat(np.array(['1']), len(row_final))
-ascii.write(data, path_savetable + 'galaxys_list_xmatch.csv', format='csv', overwrite=True)
 
 

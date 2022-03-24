@@ -17,10 +17,10 @@ for sp, co in zip(iter_spe(cube), iter_spe(continuum)):
 
 cube.unmask()
 continuum.unmask()
-cube_OIII = cube - continuum
+cube_OIII_5008 = cube - continuum
 
-cube_OIII_line = cube_OIII.select_lambda(8140, 8160)
-image_OIII_line = cube_OIII_line.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2  # put into SB units
+cube_OIII_5008_line = cube_OIII_5008.select_lambda(8140, 8160)
+image_OIII_5008_line = cube_OIII_5008_line.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2  # put into SB units
 
-cube_OIII.write('/Users/lzq/Dropbox/Data/CGM/CUBE_OIII_line_offset.fits')
-image_OIII_line.write('/Users/lzq/Dropbox/Data/CGM/image_OIII_line_SB_offset.fits')
+cube_OIII_5008.write('/Users/lzq/Dropbox/Data/CGM/CUBE_OIII_5008_line_offset.fits')
+image_OIII_5008_line.write('/Users/lzq/Dropbox/Data/CGM/image_OIII_5008_line_SB_offset.fits')
