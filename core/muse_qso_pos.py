@@ -1,4 +1,4 @@
-%matplotlib inline
+# %matplotlib inline
 import os
 import glob
 import sys
@@ -34,17 +34,17 @@ cbar.set_label(r'$\mathrm{Arcsinh}$')
 plt.savefig(path_savefig + 'qso_image.png', bbox_inches='tight')
 
 # EE Curve
-EE_ape = cube.subcube_circle_aperture((p, q), 10, unit_center=None, unit_radius=None)
+EE_ape = cube.subcube_circle_aperture((p, q), 10, unit_center=None)
 source_100 = EE_ape[350, :, :]  # change to wavelength instead of index
-radius_100, ee_100 = source_100.eer_curve(unit_center=None, unit_radius=None)
+radius_100, ee_100 = source_100.eer_curve(unit_center=None)
 source_200 = EE_ape[3000, :, :]
-radius_200, ee_200 = source_200.eer_curve(unit_center=None, unit_radius=None)
+radius_200, ee_200 = source_200.eer_curve(unit_center=None)
 
 # Make the EE plot
 plt.figure(figsize=(8, 5), dpi=300)
 plt.plot(radius_100, ee_100)
 plt.plot(radius_200, ee_200)
-plt.xlabel(r'$\mathrm{Pixels}$', size=20)
+plt.xlabel(r'$\mathrm{Arcseconds}$', size=20)
 plt.ylabel(r'$\mathrm{Ratio}$', size=20)
 plt.minorticks_on()
 plt.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',

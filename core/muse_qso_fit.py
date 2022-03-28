@@ -64,7 +64,7 @@ image_white = cube.sum(axis=0)
 p, q = image_white.peak()['p'], image_white.peak()['q']
 
 # Spectrum
-cube_ape = cube.aperture((p, q), 2, unit_center=None, unit_radius=None, is_sum=True)
+cube_ape = cube.aperture((p, q), 3, unit_center=None, is_sum=True)
 wave_vac = pyasl.airtovac2(cube_ape.wave.coord())  # convert air wavelength to vacuum
 flux = cube_ape.data * 1e-3
 flux_err = np.sqrt(cube_ape.var) * 1e-3
@@ -102,7 +102,7 @@ fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
 ax.plot(wave_vac, flux, color='k')
 ax.plot(wave_vac, flux_err, color='lightgrey')
 ax.set_xlim(5200, 9300)
-ax.set_ylim(0, 100)
+# ax.set_ylim(0, 100)
 ax.minorticks_on()
 ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; (\AA)}$', size=20)
 ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
@@ -121,7 +121,7 @@ axins = ax.inset_axes([0.71, 0.61, 0.27, 0.3])
 axins.plot(wave_OII_vac, flux_OII, color='black', drawstyle='steps-mid')
 axins.plot(wave_OII_vac, result.best_fit, color='red')
 axins.set_xlim(6060, 6085)
-axins.set_ylim(55, 59)
+# axins.set_ylim(55, 59)
 axins.minorticks_on()
 axins.set_ylabel(r'${f}_{\lambda}$', size=15)
 axins.text(6062, 58, r'$\mathrm{[O\;II]}$', size=13)
