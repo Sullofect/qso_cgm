@@ -157,22 +157,22 @@ ra_offset, dec_offset = offset()
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
 data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
 
-fig = plt.figure(figsize=(8, 8), dpi=300)
-gc = aplpy.FITSFigure(path_image, figure=fig, north=True)
-gc.show_colorscale(vmin=0, vmax=3, cmap=newcmp)
-gc.set_xaxis_coord_type('scalar')
-gc.set_yaxis_coord_type('scalar')
-gc.recenter(40.1359, -18.8643, width=0.02, height=0.02)
-# gc.show_circles(ra_final, dec_final, 0.0002)
-gc.show_circles(ra_pho[idx] - ra_offset, dec_pho[idx] - dec_offset, 0.0002)
+# fig = plt.figure(figsize=(8, 8), dpi=300)
+# gc = aplpy.FITSFigure(path_image, figure=fig, north=True)
+# gc.show_colorscale(vmin=0, vmax=3, cmap=newcmp)
+# gc.set_xaxis_coord_type('scalar')
+# gc.set_yaxis_coord_type('scalar')
+# gc.recenter(40.1359, -18.8643, width=0.02, height=0.02)
+# # gc.show_circles(ra_final, dec_final, 0.0002)
+# gc.show_circles(ra_pho[idx] - ra_offset, dec_pho[idx] - dec_offset, 0.0002)
 # plt.show()
 
 #-------Create reg file for DS9-----------
 # galaxy_list = np.array([])
 # for i in range(len(ra_final)):
 #     galaxy_list = np.hstack((galaxy_list, np.array(['fk5; circle(' + str(ra_final[i]) + ', '
-#                                                     + str(dec_final[i]) + ', 1") ' + ' # text = "' + str(row_final[i])
-#                                                    + '"'])))
+#                                                     + str(dec_final[i]) + ', 1") ' + ' # text = {' + str(row_final[i])
+#                                                    + '}'])))
 # np.savetxt('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg', galaxy_list, fmt='%s')
 # -------------------------------------------
 
