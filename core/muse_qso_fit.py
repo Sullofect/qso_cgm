@@ -36,21 +36,21 @@ def getSigma_MUSE(wave):
 
 
 # Define the model fit function
-def model(wave_vac, z, sigma_kms, fluxOII, rOII3729_3727, a, b):
+def model(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, a, b):
     wave_OII3727_obs = wave_OII3727_vac * (1 + z)
     wave_OII3729_obs = wave_OII3729_vac * (1 + z)
 
     sigma_OII3727_A = np.sqrt((sigma_kms / c_kms * wave_OII3727_obs) ** 2 + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
     sigma_OII3729_A = np.sqrt((sigma_kms / c_kms * wave_OII3729_obs) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
 
-    fluxOII3727 = fluxOII / (1 + rOII3729_3727)
-    fluxOII3729 = fluxOII / (1 + 1.0 / rOII3729_3727)
+    flux_OII3727 = flux_OII / (1 + r_OII3729_3727)
+    flux_OII3729 = flux_OII / (1 + 1.0 / r_OII3729_3727)
 
-    peakOII3727 = fluxOII3727 / np.sqrt(2 * sigma_OII3727_A ** 2 * np.pi)
-    peakOII3729 = fluxOII3729 / np.sqrt(2 * sigma_OII3729_A ** 2 * np.pi)
+    peak_OII3727 = flux_OII3727 / np.sqrt(2 * sigma_OII3727_A ** 2 * np.pi)
+    peak_OII3729 = flux_OII3729 / np.sqrt(2 * sigma_OII3729_A ** 2 * np.pi)
 
-    OII3727_gaussian = peakOII3727 * np.exp(-(wave_vac - wave_OII3727_obs) ** 2 / 2 / sigma_OII3727_A ** 2)
-    OII3729_gaussian = peakOII3729 * np.exp(-(wave_vac - wave_OII3729_obs) ** 2 / 2 / sigma_OII3729_A ** 2)
+    OII3727_gaussian = peak_OII3727 * np.exp(-(wave_vac - wave_OII3727_obs) ** 2 / 2 / sigma_OII3727_A ** 2)
+    OII3729_gaussian = peak_OII3729 * np.exp(-(wave_vac - wave_OII3729_obs) ** 2 / 2 / sigma_OII3729_A ** 2)
 
     return OII3727_gaussian + OII3729_gaussian + a * wave_vac + b
 
@@ -81,13 +81,13 @@ flux_OII = flux[OII_region]
 redshift_guess = 0.63
 sigma_kms_guess = 150.0
 flux_OII_guess = 42
-rOII3729_3727_guess = 100
+r_OII3729_3727_guess = 100
 
 parameters = lmfit.Parameters()
 parameters.add_many(('z', redshift_guess, True, None, None, None),
                     ('sigma_kms', sigma_kms_guess, True, 10.0, 500.0, None),
-                    ('fluxOII', flux_OII_guess, True, None, None, None),
-                    ('rOII3729_3727', rOII3729_3727_guess, True, 0, 3, None),
+                    ('flux_OII', flux_OII_guess, True, None, None, None),
+                    ('r_OII3729_3727', r_OII3729_3727_guess, True, 0, 3, None),
                     ('a', 0.0, True, None, None, None),
                     ('b', 100, True, None, None, None))
 spec_model = lmfit.Model(model, missing='drop')
