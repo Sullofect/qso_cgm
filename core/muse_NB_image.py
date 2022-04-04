@@ -47,9 +47,12 @@ ratio = (1 * u.radian).to(u.arcsec).value
 arcsec_15 = (15 * d_l / ratio).to(u.kpc).value
 # print(arcsec_15)
 
-path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_OII_line_SB_offset_revised.fits')
-path_OIII_4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_OIII_4960_line_SB_offset_revised.fits')
-path_OIII_5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_OIII_5008_line_SB_offset_revised.fits')
+path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                        'image_OII_line_SB_offset_revised.fits')
+path_OIII_4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                              'image_OIII_4960_line_SB_offset_revised.fits')
+path_OIII_5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                              'image_OIII_5008_line_SB_offset_revised.fits')
 
 fig = plt.figure(figsize=(16, 8), dpi=300)
 plt.subplots_adjust(wspace=0.)
@@ -71,7 +74,7 @@ gc.scalebar.set_font_size(15)
 gc.ticks.hide()
 gc.tick_labels.hide()
 gc.axis_labels.hide()
-gc.add_label(0.95, 0.97, r'[OII]', size=15, relative=True)
+gc.add_label(0.95, 0.97, r'[O II]', size=15, relative=True)
 xw, yw = gc.pixel2world(195, 150)
 gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
 gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
@@ -122,14 +125,11 @@ gc.scalebar.set_font_size(15)
 gc.ticks.hide()
 gc.tick_labels.hide()
 gc.axis_labels.hide()
-gc.add_label(0.90, 0.97, r'[OIII 5008]', size=15, relative=True)
+gc.add_label(0.90, 0.97, r'[O III]', size=15, relative=True)
 xw, yw = gc.pixel2world(195, 150)
 gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
 gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
 gc.add_label(0.9775, 0.85, r'N', size=15, relative=True)
 gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Narrow_band_image_talk.pdf', bbox_inches='tight')
-
-
-
 

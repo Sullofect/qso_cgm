@@ -141,8 +141,8 @@ rv = np.linspace(-2000, 2000, 1000)
 # plt.hist(v_final[np.where(ql_final == 2)], bins=bins_final, facecolor='brown', histtype='stepfilled', alpha=0.5,
 #          label=r'$ \mathrm{Quality} = 2$')
 # plt.plot(rv, normalization * norm.pdf(rv, mu, scale), '-r', lw=2, alpha=0.5,
-#          label=r'$\mu = $ ' + str("{0:.0f}".format(mu)) + r'$\mathrm{km/s}$, ' + '\n' + r'$\sigma = $ ' +
-#                str("{0:.0f}".format(scale)) + r'$\mathrm{km/s}$')
+#          label=r'$\mu = \, $' + str("{0:.0f}".format(mu)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+#                str("{0:.0f}".format(scale)) + r'$\mathrm{\, km/s}$')
 # plt.xlim(-2000, 2000)
 # plt.ylim(0, 11)
 # plt.minorticks_on()
