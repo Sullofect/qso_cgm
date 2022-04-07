@@ -71,8 +71,9 @@ for i in range(size):
     for j in range(size):
         wave_OII_vac = pyasl.airtovac2(cube_OII.wave.coord())
         flux_OII = cube_OII[:, i, j].data * 1e-3
+        flux_OII_err = np.sqrt(cube_OII[:, i, j].var) * 1e-3
         spec_model = lmfit.Model(model, missing='drop')
-        result = spec_model.fit(flux_OII, wave_vac=wave_OII_vac, params=parameters)
+        result = spec_model.fit(flux_OII, wave_vac=wave_OII_vac, params=parameters, weights=1 / flux_OII_err)
 
         #
         z, sigma, flux = result.best_values['z'], result.best_values['sigma_kms'], result.best_values['flux_OII']
