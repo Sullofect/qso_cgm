@@ -1,5 +1,4 @@
 import os
-import aplpy
 import lmfit
 import numpy as np
 import astropy.io.fits as fits
@@ -53,9 +52,12 @@ flux_fit, dflux_fit = np.zeros((size, size)), np.zeros((size, size))
 a_fit, b_fit = np.zeros((size, size)), np.zeros((size, size))
 da_fit, db_fit = np.zeros((size, size)), np.zeros((size, size))
 
+#
+wave_OIII_vac = pyasl.airtovac2(cube_OIII.wave.coord())
+
+#
 for i in range(size):
     for j in range(size):
-        wave_OIII_vac = pyasl.airtovac2(cube_OIII.wave.coord())
         flux_OIII = cube_OIII[:, i, j].data * 1e-3
         flux_OIII_err = np.sqrt(cube_OIII[:, i, j].var) * 1e-3
         spec_model = lmfit.Model(model, missing='drop')
