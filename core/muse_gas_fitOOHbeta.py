@@ -80,14 +80,16 @@ def model_OIII5008(wave_vac, z, sigma_kms, flux_OIII5008, a, b):
     return OIII5008_gaussian + a * wave_vac + b
 
 
-def model_all(wave_vac, z, sigma_kms_OII, sigma_kms_Hbeta, sigma_kms_OIII4960, sigma_kms_OIII5008, flux_OII,
-              flux_Hbeta, flux_OIII4960, flux_OIII5008, r_OII3729_3727, a_OII, b_OII, a_Hbeta, b_Hbeta,
-              a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008):
+# def model_all(wave_vac, z, sigma_kms_OII, sigma_kms_Hbeta, sigma_kms_OIII4960, sigma_kms_OIII5008, flux_OII,
+#               flux_Hbeta, flux_OIII4960, flux_OIII5008, r_OII3729_3727, a_OII, b_OII, a_Hbeta, b_Hbeta,
+#               a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008):
+def model_all(wave_vac, z, sigma_kms, flux_OII, flux_Hbeta, flux_OIII5008, r_OII3729_3727, a_OII, b_OII, a_Hbeta,
+              b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008):
 
-    m_OII = model_OII(wave_vac[0], z, sigma_kms_OII, flux_OII, r_OII3729_3727, a_OII, b_OII)
-    m_Hbeta = model_Hbeta(wave_vac[1], z, sigma_kms_Hbeta, flux_Hbeta, a_Hbeta, b_Hbeta)
-    m_OIII4960 = model_OIII4960(wave_vac[2], z, sigma_kms_OIII4960, flux_OIII4960, a_OIII4960, b_OIII4960)
-    m_OIII5008 = model_OIII5008(wave_vac[3], z, sigma_kms_OIII5008, flux_OIII5008, a_OIII5008, b_OIII5008)
+    m_OII = model_OII(wave_vac[0], z, sigma_kms, flux_OII, r_OII3729_3727, a_OII, b_OII)
+    m_Hbeta = model_Hbeta(wave_vac[1], z, sigma_kms, flux_Hbeta, a_Hbeta, b_Hbeta)
+    m_OIII4960 = model_OIII4960(wave_vac[2], z, sigma_kms, flux_OIII5008 / 3, a_OIII4960, b_OIII4960)
+    m_OIII5008 = model_OIII5008(wave_vac[3], z, sigma_kms, flux_OIII5008, a_OIII5008, b_OIII5008)
     return np.hstack((m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
 
 # Fitting the narrow band image profile
@@ -99,10 +101,10 @@ cube_OII = Cube(path_cube_OII)
 cube_Hbeta = Cube(path_cube_Hbeta)
 cube_OIII4960 = Cube(path_cube_OIII4960)
 cube_OIII5008 = Cube(path_cube_OIII5008)
-cube_OII = cube_OII.subcube((80, 100), 30, unit_center=None, unit_size=None)
-cube_Hbeta = cube_Hbeta.subcube((80, 100), 30, unit_center=None, unit_size=None)
-cube_OIII4960 = cube_OIII4960.subcube((80, 100), 30, unit_center=None, unit_size=None)
-cube_OIII5008 = cube_OIII5008.subcube((80, 100), 30, unit_center=None, unit_size=None)
+# cube_OII = cube_OII.subcube((80, 100), 10, unit_center=None, unit_size=None)
+# cube_Hbeta = cube_Hbeta.subcube((80, 100), 10, unit_center=None, unit_size=None)
+# cube_OIII4960 = cube_OIII4960.subcube((80, 100), 10, unit_center=None, unit_size=None)
+# cube_OIII5008 = cube_OIII5008.subcube((80, 100), 10, unit_center=None, unit_size=None)
 cube_OIII5008[0, :, :].write('/Users/lzq/Dropbox/Data/CGM/image_OOHbeta_fitline.fits')
 
 redshift_guess = 0.63
@@ -111,32 +113,29 @@ sigma_kms_guess = 150.0
 r_OII3729_3727_guess = 2
 
 parameters = lmfit.Parameters()
-parameters.add_many(('z', redshift_guess, True, 0.5, 0.7, None),
-                    ('sigma_kms_OII', sigma_kms_guess, True, 10.0, 500.0, None),
-                    ('sigma_kms_Hbeta', sigma_kms_guess, True, 10.0, 500.0, None),
-                    ('sigma_kms_OIII4960', sigma_kms_guess, True, 10.0, 500.0, None),
-                    ('sigma_kms_OIII5008', sigma_kms_guess, True, 10.0, 500.0, None),
+parameters.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
+                    ('sigma_kms', sigma_kms_guess, True, 10, 500, None),
                     ('flux_OII', 0.01, True, None, None, None),
                     ('flux_Hbeta', 0.02, True, None, None, None),
-                    ('flux_OIII4960', 0.03, True, None, None, None),
-                    ('flux_OIII5008', 0.1, True, None, None, None),
-                    ('r_OII3729_3727', r_OII3729_3727_guess, True, 0, 3, None),
-                    ('a_OII', 0.0, True, None, None, None),
-                    ('b_OII', 100, True, None, None, None),
-                    ('a_Hbeta', 0.0, True, None, None, None),
-                    ('b_Hbeta', 100, True, None, None, None),
-                    ('a_OIII4960', 0.0, True, None, None, None),
-                    ('b_OIII4960', 100, True, None, None, None),
-                    ('a_OIII5008', 0.0, True, None, None, None),
-                    ('b_OIII5008', 100, True, None, None, None))
+                    ('flux_OIII5008', 0.1, True, None, None, None), #
+                    ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
+                    ('a_OII', 0.0, False, None, None, None),
+                    ('b_OII', 0.0, False, None, None, None),
+                    ('a_Hbeta', 0.0, False, None, None, None),
+                    ('b_Hbeta', 0.0, False, None, None, None),
+                    ('a_OIII4960', 0.0, False, None, None, None),
+                    ('b_OIII4960', 0.0, False, None, None, None),
+                    ('a_OIII5008', 0.0, False, None, None, None),
+                    ('b_OIII5008', 0.0, False, None, None, None))
 
 
 num_lines = 4
 size = np.shape(cube_OII)[1]
+fit_success = np.zeros((size, size))
 r_fit, dr_fit = np.zeros((size, size)), np.zeros((size, size))
 z_fit, dz_fit = np.zeros((size, size)), np.zeros((size, size))
-sigma_fit, dsigma_fit = np.zeros((num_lines, size, size)), np.zeros((num_lines, size, size))
-flux_fit, dflux_fit = np.zeros((num_lines, size, size)), np.zeros((num_lines, size, size))
+sigma_fit, dsigma_fit = np.zeros((size, size)), np.zeros((size, size))
+flux_fit, dflux_fit = np.zeros((3, size, size)), np.zeros((3, size, size))
 a_fit, b_fit = np.zeros((num_lines, size, size)), np.zeros((num_lines, size, size))
 da_fit, db_fit = np.zeros((num_lines, size, size)), np.zeros((num_lines, size, size))
 
@@ -145,7 +144,7 @@ wave_OII_vac = pyasl.airtovac2(cube_OII.wave.coord())
 wave_Hbeta_vac = pyasl.airtovac2(cube_Hbeta.wave.coord())
 wave_OIII4960_vac = pyasl.airtovac2(cube_OIII4960.wave.coord())
 wave_OIII5008_vac = pyasl.airtovac2(cube_OIII5008.wave.coord())
-wave_vac_all = np.array([wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac])
+wave_vac_all = np.array([wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
 
 #
 flux_OII, flux_Hbeta = cube_OII.data * 1e-3, cube_Hbeta.data * 1e-3
@@ -172,15 +171,15 @@ for i in range(size):
 
         # Load parameter
         z, dz = result.best_values['z'], result.params['z'].stderr
-        sigma_OII, dsigma_OII = result.best_values['sigma_kms_OII'], result.params['sigma_kms_OII'].stderr
-        sigma_Hbeta, dsigma_Hbeta = result.best_values['sigma_kms_Hbeta'], result.params['sigma_kms_Hbeta'].stderr
-        sigma_OIII4960, dsigma_OIII4960 = result.best_values['sigma_kms_OIII4960'], \
-                                          result.params['sigma_kms_OIII4960'].stderr
-        sigma_OIII5008, dsigma_OIII5008 = result.best_values['sigma_kms_OIII5008'], \
-                                          result.params['sigma_kms_OIII5008'].stderr
+        sigma, dsigma = result.best_values['sigma_kms'], result.params['sigma_kms'].stderr
+        # sigma_Hbeta, dsigma_Hbeta = result.best_values['sigma_kms_Hbeta'], result.params['sigma_kms_Hbeta'].stderr
+        # sigma_OIII4960, dsigma_OIII4960 = result.best_values['sigma_kms_OIII4960'], \
+        #                                   result.params['sigma_kms_OIII4960'].stderr
+        # sigma_OIII5008, dsigma_OIII5008 = result.best_values['sigma_kms_OIII5008'], \
+        #                                   result.params['sigma_kms_OIII5008'].stderr
         flux_OII, dflux_OII = result.best_values['flux_OII'], result.params['flux_OII'].stderr
         flux_Hbeta, dflux_Hbeta = result.best_values['flux_Hbeta'], result.params['flux_Hbeta'].stderr
-        flux_OIII4960, dflux_OIII4960 = result.best_values['flux_OIII4960'], result.params['flux_OIII4960'].stderr
+        # flux_OIII4960, dflux_OIII4960 = result.best_values['flux_OIII4960'], result.params['flux_OIII4960'].stderr
         flux_OIII5008, dflux_OIII5008 = result.best_values['flux_OIII5008'], result.params['flux_OIII5008'].stderr
         r_OII, dr_OII = result.best_values['r_OII3729_3727'], result.params['r_OII3729_3727'].stderr
 
@@ -202,10 +201,13 @@ for i in range(size):
         #
         z_fit[i, j], dz_fit[i, j] = z, dz
         r_fit[i, j], dr_fit[i, j] = r_OII, dr_OII
-        sigma_fit[:, i, j] = [sigma_OII, sigma_Hbeta, sigma_OIII4960, sigma_OIII5008]
-        dsigma_fit[:, i, j] = [dsigma_OII, dsigma_Hbeta, dsigma_OIII4960, dsigma_OIII5008]
-        flux_fit[:, i, j] = [flux_OII, flux_Hbeta, flux_OIII4960, flux_OIII5008]
-        dflux_fit[:, i, j] = [dflux_OII, dflux_Hbeta, dflux_OIII4960, dflux_OIII5008]
+        fit_success[i, j] = result.success
+        sigma_fit[i, j] = sigma
+        dsigma_fit[i, j] = dsigma
+        # sigma_fit[:, i, j] = [sigma_OII, sigma_Hbeta, sigma_OIII4960, sigma_OIII5008]
+        # dsigma_fit[:, i, j] = [dsigma_OII, dsigma_Hbeta, dsigma_OIII4960, dsigma_OIII5008]
+        flux_fit[:, i, j] = [flux_OII, flux_Hbeta, flux_OIII5008]
+        dflux_fit[:, i, j] = [dflux_OII, dflux_Hbeta, dflux_OIII5008]
         a_fit[:, i, j] = [a_OII, a_Hbeta, a_OIII4960, a_OIII5008]
         da_fit[:, i, j] = [da_OII, da_Hbeta, da_OIII4960, da_OIII5008]
         b_fit[:, i, j] = [b_OII, b_Hbeta, b_OIII4960, b_OIII5008]
@@ -223,11 +225,9 @@ v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
 # Table_info_err['dsigma_fit'], Table_info_err['dflux_fit'], Table_info_err['dr_fit'] = dsigma_fit, dflux_fit, dr_fit
 # Table_info.write('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info.fits', format='fits')
 # Table_info_err.write('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_err.fits', format='fits')
-info = np.array([z_fit, r_fit, sigma_fit[0], sigma_fit[1], sigma_fit[2], sigma_fit[3],
-                 flux_fit[0], flux_fit[1], flux_fit[2], flux_fit[3], a_fit[0], a_fit[1],
-                 a_fit[2], a_fit[3], b_fit[0], b_fit[1], b_fit[2], b_fit[3]])
-info_err = np.array([dz_fit, dr_fit, dsigma_fit[0], dsigma_fit[1], dsigma_fit[2], dsigma_fit[3],
-                    dflux_fit[0], dflux_fit[1], dflux_fit[2], dflux_fit[3], da_fit[0], da_fit[1],
+info = np.array([z_fit, r_fit, fit_success, sigma_fit, flux_fit[0], flux_fit[1], flux_fit[2], a_fit[0], a_fit[1], a_fit[2],
+                 a_fit[3], b_fit[0], b_fit[1], b_fit[2], b_fit[3]])
+info_err = np.array([dz_fit, dr_fit, dsigma_fit, dflux_fit[0], dflux_fit[1], dflux_fit[2], da_fit[0], da_fit[1],
                     da_fit[2], da_fit[3], db_fit[0], db_fit[1], db_fit[2], db_fit[3]])
 # print(np.shape(info))
 # info_err = np.array([dz_fit, dsigma_fit, dflux_fit, dr_fit, da_fit, db_fit])

@@ -40,24 +40,27 @@ def ConvertFits(filename=None, table=None):
 
 def PlotMap(line='OIII', check=False, snr_thr=3, row=None, z=None, ra=None, dec=None):
     # Load OIII
-    path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit' + line + '_info_test.fits')
-    path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit' + line + '_info_err_test.fits')
+    path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit' + line + '_info.fits')
+    path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit' + line + '_info_err.fits')
     fit_info = fits.getdata(path_fit_info, 0, ignore_missing_end=True)
     fit_info_err = fits.getdata(path_fit_info_err, 0, ignore_missing_end=True)
 
     if line == 'OOHbeta':
-        [z_fit, r_fit, sigma_fit_OII, sigma_fit_Hbeta, sigma_fit_OIII4960, sigma_fit_OIII5008,
-         flux_fit_OII, flux_fit_Hbeta, flux_fit_OIII4960, flux_fit_OIII5008, a_fit_OII, a_fit_Hbeta,
+        # [z_fit, r_fit, sigma_fit_OII, sigma_fit_Hbeta, sigma_fit_OIII4960, sigma_fit_OIII5008,
+        #  flux_fit_OII, flux_fit_Hbeta, flux_fit_OIII4960, flux_fit_OIII5008, a_fit_OII, a_fit_Hbeta,
+        #  a_fit_OIII4960, a_fit_OIII5008, b_fit_OII, b_fit_Hbeta, b_fit_OIII4960, b_fit_OIII5008] = fit_info
+        # [dz_fit, dr_fit, dsigma_fit_OII, dsigma_fit_Hbeta, dsigma_fit_OIII4960, dsigma_fit_OIII5008,
+        #  dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII4960, dflux_fit_OIII5008, da_fit_OII, da_fit_Hbeta,
+        #  da_fit_OIII4960, da_fit_OIII5008, db_fit_OII, db_fit_Hbeta, db_fit_OIII4960, db_fit_OIII5008] = fit_info_err
+
+        [z_fit, r_fit, fit_success, sigma_fit, flux_fit_OII, flux_fit_Hbeta, flux_fit_OIII5008, a_fit_OII, a_fit_Hbeta,
          a_fit_OIII4960, a_fit_OIII5008, b_fit_OII, b_fit_Hbeta, b_fit_OIII4960, b_fit_OIII5008] = fit_info
-        [dz_fit, dr_fit, dsigma_fit_OII, dsigma_fit_Hbeta, dsigma_fit_OIII4960, dsigma_fit_OIII5008,
-         dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII4960, dflux_fit_OIII5008, da_fit_OII, da_fit_Hbeta,
+        [dz_fit, dr_fit, dsigma_fit, dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII5008, da_fit_OII, da_fit_Hbeta,
          da_fit_OIII4960, da_fit_OIII5008, db_fit_OII, db_fit_Hbeta, db_fit_OIII4960, db_fit_OIII5008] = fit_info_err
     else:
     # Load data
         [z_fit, sigma_fit, flux_fit, a, b] = fit_info
         [dz_fit, dsigma_fit, dflux_fit, da, db] = fit_info_err
-    # print(z_fit)
-    # print(flux_fit / dflux_fit)
     z_qso = 0.6282144177077355
     v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
     v_gal = 3e5 * (z - z_qso) / (1 + z_qso)
@@ -69,11 +72,9 @@ def PlotMap(line='OIII', check=False, snr_thr=3, row=None, z=None, ra=None, dec=
         plt.show()
 
     if line == 'OOHbeta':
-        print(line)
-        flux_stack = np.stack((flux_fit_OII, flux_fit_Hbeta, flux_fit_OIII4960, flux_fit_OIII5008), axis=0)
-        dflux_stack = np.stack((dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII4960, dflux_fit_OIII5008), axis=0)
+        flux_stack = np.stack((flux_fit_OII, flux_fit_Hbeta, flux_fit_OIII5008), axis=0)
+        dflux_stack = np.stack((dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII5008), axis=0)
         fit_max = np.amax(flux_stack / dflux_stack, axis=0)
-        print(np.shape(flux_fit_OII))
         v_fit = np.where((fit_max > snr_thr), v_fit, np.nan)
         ConvertFits(filename='image_' + line + '_fitline', table=v_fit)
 
@@ -115,7 +116,8 @@ def PlotMap(line='OIII', check=False, snr_thr=3, row=None, z=None, ra=None, dec=
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=15, relative=True)
     elif line == 'OII':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=15, relative=True)
-
+    elif line == 'OOHbeta':
+        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[OOH \beta]}} - v_{\mathrm{qso}}$', size=15, relative=True)
     xw, yw = gc.pixel2world(195, 150)
     gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
     gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
@@ -145,4 +147,4 @@ dec_final = dec_final[select_gal]
 # run
 # PlotMap(line='OII', snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
 # PlotMap(line='OIII', snr_thr=3, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
-PlotMap(line='OOHbeta', snr_thr=-np.inf, check=True, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
+PlotMap(line='OOHbeta', snr_thr=4, check=False, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
