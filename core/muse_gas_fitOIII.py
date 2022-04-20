@@ -39,13 +39,14 @@ sigma_kms_guess = 150.0
 flux_OIII5008_guess = 42
 
 parameters = lmfit.Parameters()
-parameters.add_many(('z', redshift_guess, True, 0.5, 0.7, None),
+parameters.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                     ('sigma_kms', sigma_kms_guess, True, 10.0, 500.0, None),
                     ('flux_OIII5008', flux_OIII5008_guess, True, None, None, None),
-                    ('a', 0.0, True, None, None, None),
-                    ('b', 100, True, None, None, None))
+                    ('a', 0.0, False, None, None, None),
+                    ('b', 0.0, False, None, None, None))
 
 size = np.shape(cube_OIII)[1]
+fit_success = np.zeros((size, size))
 z_fit, dz_fit = np.zeros((size, size)), np.zeros((size, size))
 sigma_fit, dsigma_fit = np.zeros((size, size)), np.zeros((size, size))
 flux_fit, dflux_fit = np.zeros((size, size)), np.zeros((size, size))
@@ -56,7 +57,7 @@ da_fit, db_fit = np.zeros((size, size)), np.zeros((size, size))
 wave_OIII_vac = pyasl.airtovac2(cube_OIII.wave.coord())
 
 #
-for i in range(size):
+for i in range(size):  # i = p (y), j = q (x)
     for j in range(size):
         flux_OIII = cube_OIII[:, i, j].data * 1e-3
         flux_OIII_err = np.sqrt(cube_OIII[:, i, j].var) * 1e-3
@@ -75,6 +76,7 @@ for i in range(size):
         #         plt.show()
 
         #
+        fit_success[i, j] = result.success
         z_fit[i, j], dz_fit[i, j] = z, dz
         sigma_fit[i, j], dsigma_fit[i, j] = sigma, dsigma
         flux_fit[i, j], dflux_fit[i, j] = flux, dflux

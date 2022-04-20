@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 from matplotlib import cm
 from astropy import units as u
+from astropy.convolution import convolve
 from astropy.cosmology import FlatLambdaCDM
 from matplotlib.colors import ListedColormap
+from astropy.convolution import Gaussian2DKernel
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
@@ -24,9 +26,12 @@ newcmp = ListedColormap(newcolors)
 
 
 # Convert Fits file into correct form
-def ConvertFits(filename='image_OIII_5008_line_SB_offset'):
+def ConvertFits(filename='image_OIII_5008_line_SB_offset', smooth=True):
     path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', filename + '.fits')
     data, hdr = fits.getdata(path, 1, header=True)
+    if smooth is True:
+        kernel = Gaussian2DKernel(x_stddev=5.0, x_size=5, y_size=5)
+        data = convolve(data, kernel)
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data, overwrite=True)
     data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', 0, header=True)
     hdr1['BITPIX'], hdr1['NAXIS'], hdr1['NAXIS1'], hdr1['NAXIS2'] = hdr['BITPIX'], hdr['NAXIS'], hdr['NAXIS1'], hdr['NAXIS2']
@@ -36,7 +41,8 @@ def ConvertFits(filename='image_OIII_5008_line_SB_offset'):
     hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] =  hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
     # Rescale the data by 1e17
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data1 * 1e17, hdr1, overwrite=True)
-# ConvertFits(filename='image_OII_line_SB_offset')
+ConvertFits(filename='image_OII_line_SB_offset')
+ConvertFits(filename='image_OIII_5008_line_SB_offset')
 
 
 # QSO property
@@ -54,11 +60,12 @@ path_OIII_4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
 path_OIII_5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
                               'image_OIII_5008_line_SB_offset_revised.fits')
 
+
 fig = plt.figure(figsize=(16, 8), dpi=300)
 plt.subplots_adjust(wspace=0.)
 gc = aplpy.FITSFigure(path_OII, figure=fig, subplot=(1, 2, 1), north=True)
 gc.set_system_latex(True)
-gc.show_colorscale(vmin=0, vmax=1.5, cmap=newcmp)
+gc.show_colorscale(vmin=0.2, vmax=3, cmap=newcmp)
 gc.add_colorbar()
 gc.ticks.set_length(30)
 # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
@@ -109,7 +116,7 @@ gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
 
 gc = aplpy.FITSFigure(path_OIII_5008, figure=fig, subplot=(1, 2, 2), north=True)
 gc.set_system_latex(True)
-gc.show_colorscale(cmap=newcmp)
+gc.show_colorscale(vmin=0, vmax=15, cmap=newcmp)
 gc.add_colorbar()
 gc.ticks.set_length(30)
 # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
@@ -131,5 +138,5 @@ gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
 gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
 gc.add_label(0.9775, 0.85, r'N', size=15, relative=True)
 gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
-fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Narrow_band_image_talk.pdf', bbox_inches='tight')
+fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Narrow_band_image.png', bbox_inches='tight')
 

@@ -101,10 +101,10 @@ cube_OII = Cube(path_cube_OII)
 cube_Hbeta = Cube(path_cube_Hbeta)
 cube_OIII4960 = Cube(path_cube_OIII4960)
 cube_OIII5008 = Cube(path_cube_OIII5008)
-# cube_OII = cube_OII.subcube((80, 100), 10, unit_center=None, unit_size=None)
-# cube_Hbeta = cube_Hbeta.subcube((80, 100), 10, unit_center=None, unit_size=None)
-# cube_OIII4960 = cube_OIII4960.subcube((80, 100), 10, unit_center=None, unit_size=None)
-# cube_OIII5008 = cube_OIII5008.subcube((80, 100), 10, unit_center=None, unit_size=None)
+cube_OII = cube_OII.subcube((80, 100), 70, unit_center=None, unit_size=None)
+cube_Hbeta = cube_Hbeta.subcube((80, 100), 70, unit_center=None, unit_size=None)
+cube_OIII4960 = cube_OIII4960.subcube((80, 100), 70, unit_center=None, unit_size=None)
+cube_OIII5008 = cube_OIII5008.subcube((80, 100), 70, unit_center=None, unit_size=None)
 cube_OIII5008[0, :, :].write('/Users/lzq/Dropbox/Data/CGM/image_OOHbeta_fitline.fits')
 
 redshift_guess = 0.63
@@ -117,7 +117,7 @@ parameters.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                     ('sigma_kms', sigma_kms_guess, True, 10, 500, None),
                     ('flux_OII', 0.01, True, None, None, None),
                     ('flux_Hbeta', 0.02, True, None, None, None),
-                    ('flux_OIII5008', 0.1, True, None, None, None), #
+                    ('flux_OIII5008', 0.1, True, None, None, None),
                     ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
                     ('a_OII', 0.0, False, None, None, None),
                     ('b_OII', 0.0, False, None, None, None),
@@ -146,28 +146,44 @@ wave_OIII4960_vac = pyasl.airtovac2(cube_OIII4960.wave.coord())
 wave_OIII5008_vac = pyasl.airtovac2(cube_OIII5008.wave.coord())
 wave_vac_all = np.array([wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
 
-#
-flux_OII, flux_Hbeta = cube_OII.data * 1e-3, cube_Hbeta.data * 1e-3
-flux_OIII4960, flux_OIII5008 = cube_OIII4960.data * 1e-3, cube_OIII5008.data * 1e-3
-flux_OII_err, flux_Hbeta_err = np.sqrt(cube_OII.var) * 1e-3, np.sqrt(cube_Hbeta.var) * 1e-3
-flux_OIII4960_err = np.sqrt(cube_OIII4960.var) * 1e-3
-flux_OIII5008_err = np.sqrt(cube_OIII5008.var) * 1e-3
-flux_all = np.vstack((flux_OII, flux_Hbeta, flux_OIII4960, flux_OIII5008))
-flux_err_all = np.vstack((flux_OII_err, flux_Hbeta_err, flux_OIII4960_err, flux_OIII5008_err))
+# Data of each pixel
+# flux_OII, flux_Hbeta = cube_OII.data * 1e-3, cube_Hbeta.data * 1e-3
+# flux_OIII4960, flux_OIII5008 = cube_OIII4960.data * 1e-3, cube_OIII5008.data * 1e-3
+# flux_OII_err, flux_Hbeta_err = np.sqrt(cube_OII.var) * 1e-3, np.sqrt(cube_Hbeta.var) * 1e-3
+# flux_OIII4960_err = np.sqrt(cube_OIII4960.var) * 1e-3
+# flux_OIII5008_err = np.sqrt(cube_OIII5008.var) * 1e-3
+# flux_all = np.vstack((flux_OII, flux_Hbeta, flux_OIII4960, flux_OIII5008))
+# flux_err_all = np.vstack((flux_OII_err, flux_Hbeta_err, flux_OIII4960_err, flux_OIII5008_err))
 
 #
-for i in range(size):
+for i in range(size):  # i = p (y), j = q (x)
     for j in range(size):
-        # flux_OII, flux_Hbeta = cube_OII[:, i, j].data * 1e-3, cube_OII[:, i, j].data * 1e-3
-        # flux_OIII4960, flux_OIII5008 = cube_OIII4960[:, i, j].data * 1e-3, cube_OIII5008[:, i, j].data * 1e-3
-        # flux_OII_err, flux_Hbeta_err = np.sqrt(cube_OII[:, i, j].var) * 1e-3, np.sqrt(cube_Hbeta[:, i, j].var) * 1e-3
-        # flux_OIII4960_err = np.sqrt(cube_OIII4960[:, i, j].var) * 1e-3
-        # flux_OIII5008_err = np.sqrt(cube_OIII5008[:, i, j].var) * 1e-3
-        # flux_all = np.hstack((flux_OII, flux_Hbeta, flux_OIII4960, flux_OIII5008))
-        # flux_err_all = np.hstack((flux_OII_err, flux_Hbeta_err, flux_OIII4960_err, flux_OIII5008_err))
+        # For an aperture
+        subcube_OII = cube_OII.subcube_circle_aperture((i, j), 1, unit_center=None)
+        subcube_Hbeta = cube_Hbeta.subcube_circle_aperture((i, j), 1, unit_center=None)
+        subcube_OIII4960 = cube_OIII4960.subcube_circle_aperture((i, j), 1, unit_center=None)
+        subcube_OIII5008 = cube_OIII5008.subcube_circle_aperture((i, j), 1, unit_center=None)  # 1"
+
+        subcube_OII_sum = subcube_OII.mean(axis=(1, 2))
+        subcube_Hbeta_sum = subcube_Hbeta.mean(axis=(1, 2))
+        subcube_OIII4960_sum = subcube_OIII4960.mean(axis=(1, 2))
+        subcube_OIII5008_sum = subcube_OIII5008.mean(axis=(1, 2))
+
+        flux_OII, flux_Hbeta = subcube_OII_sum.data * 1e-3, subcube_Hbeta_sum.data * 1e-3
+        flux_OIII4960, flux_OIII5008 = subcube_OIII4960_sum.data * 1e-3, subcube_OIII5008_sum.data * 1e-3
+        flux_OII_err, flux_Hbeta_err = np.sqrt(subcube_OII_sum.var) * 1e-3, np.sqrt(subcube_Hbeta_sum.var) * 1e-3
+        flux_OIII4960_err = np.sqrt(subcube_OIII4960_sum.var) * 1e-3
+        flux_OIII5008_err = np.sqrt(subcube_OIII5008_sum.var) * 1e-3
+        flux_all = np.hstack((flux_OII, flux_Hbeta, flux_OIII4960, flux_OIII5008))
+        flux_err_all = np.hstack((flux_OII_err, flux_Hbeta_err, flux_OIII4960_err, flux_OIII5008_err))
+
         spec_model = lmfit.Model(model_all, missing='drop')
-        result = spec_model.fit(data=flux_all[:, i, j], wave_vac=wave_vac_all, params=parameters,
-                                weights=1 / flux_err_all[:, i, j])
+        # For single pixel
+        # result = spec_model.fit(data=flux_all[:, i, j], wave_vac=wave_vac_all, params=parameters,
+        #                         weights=1 / flux_err_all[:, i, j])
+        # For an aperture
+        result = spec_model.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters,
+                                weights=1 / flux_err_all)
 
         # Load parameter
         z, dz = result.best_values['z'], result.params['z'].stderr

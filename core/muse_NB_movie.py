@@ -23,6 +23,7 @@ newcolors = Blues(np.linspace(0, 1, 256))
 newcolors_red = Reds(np.linspace(0, 1, 256))
 newcmp = ListedColormap(newcolors)
 
+
 # Convert Fits file into correct form
 def ConvertFits(filename='image_OIII_5008_line_SB_offset'):
     path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', filename + '.fits')

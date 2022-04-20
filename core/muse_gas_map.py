@@ -24,24 +24,38 @@ newcolors_red = Reds(np.linspace(0, 1, 256))
 newcmp = ListedColormap(newcolors)
 
 
+#
 def ConvertFits(filename=None, table=None):
     path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', filename + '.fits')
     data, hdr = fits.getdata(path, 1, header=True)
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', table, overwrite=True)
     data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', 0, header=True)
-    hdr1['BITPIX'], hdr1['NAXIS'], hdr1['NAXIS1'], hdr1['NAXIS2'] = hdr['BITPIX'], hdr['NAXIS'], hdr['NAXIS1'], hdr['NAXIS2']
-    hdr1['CRPIX1'], hdr1['CRPIX2'], hdr1['CTYPE1'], hdr1['CTYPE2'] = hdr['CRPIX1'], hdr['CRPIX2'], hdr['CTYPE1'], hdr['CTYPE2']
-    hdr1['CRVAL1'], hdr1['CRVAL2'], hdr1['LONPOLE'], hdr1['LATPOLE'] = hdr['CRVAL1'], hdr['CRVAL2'], hdr['LONPOLE'], hdr['LATPOLE']
-    hdr1['CSYER1'], hdr1['CSYER2'], hdr1['MJDREF'], hdr1['RADESYS'] = hdr['CSYER1'], hdr['CSYER2'], hdr['MJDREF'], hdr['RADESYS']
+    hdr1['BITPIX'], hdr1['NAXIS'], hdr1['NAXIS1'], hdr1['NAXIS2'] = hdr['BITPIX'], hdr['NAXIS'], \
+                                                                    hdr['NAXIS1'], hdr['NAXIS2']
+    hdr1['CRPIX1'], hdr1['CRPIX2'], hdr1['CTYPE1'], hdr1['CTYPE2'] = hdr['CRPIX1'], hdr['CRPIX2'], \
+                                                                     hdr['CTYPE1'], hdr['CTYPE2']
+    hdr1['CRVAL1'], hdr1['CRVAL2'], hdr1['LONPOLE'], hdr1['LATPOLE'] = hdr['CRVAL1'], hdr['CRVAL2'], \
+                                                                       hdr['LONPOLE'], hdr['LATPOLE']
+    hdr1['CSYER1'], hdr1['CSYER2'], hdr1['MJDREF'], hdr1['RADESYS'] = hdr['CSYER1'], hdr['CSYER2'], \
+                                                                      hdr['MJDREF'], hdr['RADESYS']
     hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] = hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
     # Rescale the data by 1e17
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data1, hdr1, overwrite=True)
 
 
-def PlotMap(line='OIII', check=False, snr_thr=3, row=None, z=None, ra=None, dec=None):
+#
+def PlotMap(line='OIII', check=False, test=True, snr_thr=3, row=None, z=None, ra=None, dec=None):
     # Load OIII
-    path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit' + line + '_info.fits')
-    path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit' + line + '_info_err.fits')
+    if test is True:
+        path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                                     'fit' + line + '_info_test.fits')
+        path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                                         'fit' + line + '_info_err_test.fits')
+    else:
+        path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                                     'fit' + line + '_info.fits')
+        path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                                         'fit' + line + '_info_err.fits')
     fit_info = fits.getdata(path_fit_info, 0, ignore_missing_end=True)
     fit_info_err = fits.getdata(path_fit_info_err, 0, ignore_missing_end=True)
 
@@ -57,10 +71,13 @@ def PlotMap(line='OIII', check=False, snr_thr=3, row=None, z=None, ra=None, dec=
          a_fit_OIII4960, a_fit_OIII5008, b_fit_OII, b_fit_Hbeta, b_fit_OIII4960, b_fit_OIII5008] = fit_info
         [dz_fit, dr_fit, dsigma_fit, dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII5008, da_fit_OII, da_fit_Hbeta,
          da_fit_OIII4960, da_fit_OIII5008, db_fit_OII, db_fit_Hbeta, db_fit_OIII4960, db_fit_OIII5008] = fit_info_err
+    elif line == 'OII':
+        [z_fit, sigma_fit, flux_fit, fit_success, r_fit, a_fit, b_fit] = fit_info
+        [dz_fit, dsigma_fit, dflux_fit, dr_fit, da_fit, db_fit] = fit_info_err
     else:
     # Load data
-        [z_fit, sigma_fit, flux_fit, a, b] = fit_info
-        [dz_fit, dsigma_fit, dflux_fit, da, db] = fit_info_err
+        [z_fit, sigma_fit, flux_fit, fit_success, a_fit, b_fit] = fit_info
+        [dz_fit, dsigma_fit, dflux_fit, da_fit, db_fit] = fit_info_err
     z_qso = 0.6282144177077355
     v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
     v_gal = 3e5 * (z - z_qso) / (1 + z_qso)
@@ -145,6 +162,6 @@ ra_final = ra_final[select_gal]
 dec_final = dec_final[select_gal]
 
 # run
-# PlotMap(line='OII', snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
+# PlotMap(line='OII', check=False, snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
 # PlotMap(line='OIII', snr_thr=3, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
-PlotMap(line='OOHbeta', snr_thr=4, check=False, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
+PlotMap(line='OOHbeta', snr_thr=4, check=True, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
