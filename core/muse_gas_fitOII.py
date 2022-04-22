@@ -42,7 +42,7 @@ def model(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, a, b):
 # Fitting the narrow band image profile
 path_cube_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset.fits')
 cube_OII = Cube(path_cube_OII)
-# cube_OII = cube_OII.subcube((80, 100), 70, unit_center=None, unit_size=None)
+cube_OII = cube_OII.subcube((80, 100), 50, unit_center=None, unit_size=None)
 cube_OII[0, :, :].write('/Users/lzq/Dropbox/Data/CGM/image_OII_fitline.fits')
 
 redshift_guess = 0.63
@@ -54,7 +54,7 @@ parameters = lmfit.Parameters()
 parameters.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                     ('sigma_kms', sigma_kms_guess, True, 10.0, 500.0, None),
                     ('flux_OII', flux_OII_guess, True, None, None, None),
-                    ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
+                    ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, 1.6, None),
                     ('a', 0.0, False, None, None, None),
                     ('b', 0.0, False, None, None, None))
 
@@ -105,5 +105,5 @@ v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
 
 info = np.array([z_fit, sigma_fit, flux_fit, fit_success, r_fit, a_fit, b_fit])
 info_err = np.array([dz_fit, dsigma_fit, dflux_fit, dr_fit, da_fit, db_fit])
-fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOII_info_test.fits', info, overwrite=True)
-fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOII_info_err_test.fits', info_err, overwrite=True)
+fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOII_info_test1.fits', info, overwrite=True)
+fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOII_info_err_test1.fits', info_err, overwrite=True)
