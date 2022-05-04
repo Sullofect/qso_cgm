@@ -44,7 +44,8 @@ def ConvertFits(filename=None, table=None):
 
 
 #
-def PlotMap(line='OIII', check=False, test=True, snr_thr=3, row=None, z=None, ra=None, dec=None):
+def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True, snr_thr=3, row=None, z=None,
+            ra=None, dec=None):
     # Load OIII
     if test is True:
         path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
@@ -53,9 +54,9 @@ def PlotMap(line='OIII', check=False, test=True, snr_thr=3, row=None, z=None, ra
                                          'fit' + line + '_info_err_test.fits')
     else:
         path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
-                                     'fit' + line + '_info.fits')
+                                     'fit' + line + '_info_' + method + method_spe + '.fits')
         path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
-                                         'fit' + line + '_info_err.fits')
+                                         'fit' + line + '_info_err_' + method + method_spe + '.fits')
     fit_info = fits.getdata(path_fit_info, 0, ignore_missing_end=True)
     fit_info_err = fits.getdata(path_fit_info_err, 0, ignore_missing_end=True)
 
@@ -140,7 +141,8 @@ def PlotMap(line='OIII', check=False, test=True, snr_thr=3, row=None, z=None, ra
     gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
     gc.add_label(0.9775, 0.85, r'N', size=15, relative=True)
     gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map.png', bbox_inches='tight')
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + method_spe
+                + '.png', bbox_inches='tight')
 
 
 # Load galxies infomation
@@ -164,4 +166,5 @@ dec_final = dec_final[select_gal]
 # run
 # PlotMap(line='OII', check=False, snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
 # PlotMap(line='OIII', snr_thr=3, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
-PlotMap(line='OOHbeta', snr_thr=4, check=True, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
+PlotMap(line='OOHbeta', method='voronoi', method_spe='20', test=False, snr_thr=4, check=True, row=row_final,
+        z=z_final, ra=ra_final, dec=dec_final)

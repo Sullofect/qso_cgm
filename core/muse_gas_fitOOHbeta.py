@@ -95,7 +95,7 @@ def model_all(wave_vac, z, sigma_kms, flux_OII, flux_Hbeta, flux_OIII5008, r_OII
     return np.hstack((m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
 
 
-def FitLines(method=None, radius=70, sn_vor=30):
+def FitLines(method=None, method_spe=None, radius=80, sn_vor=30, radius_aper=1):
     # Fitting the narrow band image profile
     path_cube_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset.fits')
     path_cube_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_Hbeta_line_offset.fits')
@@ -106,10 +106,10 @@ def FitLines(method=None, radius=70, sn_vor=30):
     cube_OIII4960 = Cube(path_cube_OIII4960)
     cube_OIII5008 = Cube(path_cube_OIII5008)
     if radius is not None:
-        cube_OII = cube_OII.subcube((80, 100), radius, unit_center=None, unit_size=None)
-        cube_Hbeta = cube_Hbeta.subcube((80, 100), radius, unit_center=None, unit_size=None)
-        cube_OIII4960 = cube_OIII4960.subcube((80, 100), radius, unit_center=None, unit_size=None)
-        cube_OIII5008 = cube_OIII5008.subcube((80, 100), radius, unit_center=None, unit_size=None)
+        cube_OII = cube_OII.subcube((90, 110), radius, unit_center=None, unit_size=None)
+        cube_Hbeta = cube_Hbeta.subcube((90, 110), radius, unit_center=None, unit_size=None)
+        cube_OIII4960 = cube_OIII4960.subcube((90, 110), radius, unit_center=None, unit_size=None)
+        cube_OIII5008 = cube_OIII5008.subcube((90, 110), radius, unit_center=None, unit_size=None)
     cube_OIII5008[0, :, :].write('/Users/lzq/Dropbox/Data/CGM/image_OOHbeta_fitline.fits')
 
     redshift_guess = 0.63
@@ -167,17 +167,18 @@ def FitLines(method=None, radius=70, sn_vor=30):
         sn_array = np.array([signal, noise]).T.reshape(-1, 2)
         binNum, x_gen, y_gen, x_bar, y_bar, sn, nPixels, scale = voronoi_2d_binning(xy_array[:, 0], xy_array[:, 1],
                                                                                     sn_array[:, 0], sn_array[:, 1],
-                                                                                    sn_vor, plot=1, quiet=1)
+                                                                                    sn_vor, pixelsize=size ** 2,
+                                                                                    plot=1, quiet=1)
     for l in range(size ** 2):
         i, j = xy_array[l, 0], xy_array[l, 1]
         spec_model = lmfit.Model(model_all, missing='drop')
 
         if method == 'aperture':
             # For an aperture
-            subcube_OII = cube_OII.subcube_circle_aperture((i, j), 1, unit_center=None)
-            subcube_Hbeta = cube_Hbeta.subcube_circle_aperture((i, j), 1, unit_center=None)
-            subcube_OIII4960 = cube_OIII4960.subcube_circle_aperture((i, j), 1, unit_center=None)
-            subcube_OIII5008 = cube_OIII5008.subcube_circle_aperture((i, j), 1, unit_center=None)  # 1"
+            subcube_OII = cube_OII.subcube_circle_aperture((i, j), radius_aper, unit_center=None)  # Unit in arcsec
+            subcube_Hbeta = cube_Hbeta.subcube_circle_aperture((i, j), radius_aper, unit_center=None)
+            subcube_OIII4960 = cube_OIII4960.subcube_circle_aperture((i, j), radius_aper, unit_center=None)
+            subcube_OIII5008 = cube_OIII5008.subcube_circle_aperture((i, j), radius_aper, unit_center=None)
 
             subcube_OII_sum = subcube_OII.mean(axis=(1, 2))
             subcube_Hbeta_sum = subcube_Hbeta.mean(axis=(1, 2))
@@ -242,87 +243,19 @@ def FitLines(method=None, radius=70, sn_vor=30):
         da_fit[:, i, j] = [da_OII, da_Hbeta, da_OIII4960, da_OIII5008]
         b_fit[:, i, j] = [b_OII, b_Hbeta, b_OIII4960, b_OIII5008]
         db_fit[:, i, j] = [db_OII, db_Hbeta, db_OIII4960, db_OIII5008]
-    # else:
-    #     # Other binning
-    #     for i in range(size):  # i = p (y), j = q (x)
-    #         for j in range(size):
-    #             spec_model = lmfit.Model(model_all, missing='drop')
-    #             if method == 'aperture':
-    #                 # For an aperture
-    #                 subcube_OII = cube_OII.subcube_circle_aperture((i, j), 1, unit_center=None)
-    #                 subcube_Hbeta = cube_Hbeta.subcube_circle_aperture((i, j), 1, unit_center=None)
-    #                 subcube_OIII4960 = cube_OIII4960.subcube_circle_aperture((i, j), 1, unit_center=None)
-    #                 subcube_OIII5008 = cube_OIII5008.subcube_circle_aperture((i, j), 1, unit_center=None)  # 1"
-    #
-    #                 subcube_OII_sum = subcube_OII.mean(axis=(1, 2))
-    #                 subcube_Hbeta_sum = subcube_Hbeta.mean(axis=(1, 2))
-    #                 subcube_OIII4960_sum = subcube_OIII4960.mean(axis=(1, 2))
-    #                 subcube_OIII5008_sum = subcube_OIII5008.mean(axis=(1, 2))
-    #
-    #                 flux_OII, flux_Hbeta = subcube_OII_sum.data * 1e-3, subcube_Hbeta_sum.data * 1e-3
-    #                 flux_OIII4960, flux_OIII5008 = subcube_OIII4960_sum.data * 1e-3, subcube_OIII5008_sum.data * 1e-3
-    #                 flux_OII_err, flux_Hbeta_err = np.sqrt(subcube_OII_sum.var) * 1e-3, np.sqrt(subcube_Hbeta_sum.var)\
-    #                                                * 1e-3
-    #                 flux_OIII4960_err = np.sqrt(subcube_OIII4960_sum.var) * 1e-3
-    #                 flux_OIII5008_err = np.sqrt(subcube_OIII5008_sum.var) * 1e-3
-    #                 flux_all = np.hstack((flux_OII, flux_Hbeta, flux_OIII4960, flux_OIII5008))
-    #                 flux_err_all = np.hstack((flux_OII_err, flux_Hbeta_err, flux_OIII4960_err, flux_OIII5008_err))
-    #
-    #                 result = spec_model.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters,
-    #                                         weights=1 / flux_err_all)
-    #
-    #             elif method == 'pixel':
-    #                 result = spec_model.fit(data=flux_all[:, i, j], wave_vac=wave_vac_all, params=parameters,
-    #                                         weights=1 / flux_err_all[:, i, j])
 
-                # # Load parameter
-                # z, dz = result.best_values['z'], result.params['z'].stderr
-                # sigma, dsigma = result.best_values['sigma_kms'], result.params['sigma_kms'].stderr
-                # # sigma_Hbeta, dsigma_Hbeta = result.best_values['sigma_kms_Hbeta'], result.params['sigma_kms_Hbeta'].stderr
-                # # sigma_OIII4960, dsigma_OIII4960 = result.best_values['sigma_kms_OIII4960'], \
-                # #                                   result.params['sigma_kms_OIII4960'].stderr
-                # # sigma_OIII5008, dsigma_OIII5008 = result.best_values['sigma_kms_OIII5008'], \
-                # #                                   result.params['sigma_kms_OIII5008'].stderr
-                # flux_OII, dflux_OII = result.best_values['flux_OII'], result.params['flux_OII'].stderr
-                # flux_Hbeta, dflux_Hbeta = result.best_values['flux_Hbeta'], result.params['flux_Hbeta'].stderr
-                # # flux_OIII4960, dflux_OIII4960 = result.best_values['flux_OIII4960'], result.params['flux_OIII4960'].stderr
-                # flux_OIII5008, dflux_OIII5008 = result.best_values['flux_OIII5008'], result.params['flux_OIII5008'].stderr
-                # r_OII, dr_OII = result.best_values['r_OII3729_3727'], result.params['r_OII3729_3727'].stderr
-                #
-                # a_OII, da_OII = result.best_values['a_OII'], result.params['a_OII'].stderr
-                # b_OII, db_OII = result.best_values['b_OII'], result.params['b_OII'].stderr
-                # a_Hbeta, da_Hbeta = result.best_values['a_Hbeta'], result.params['a_Hbeta'].stderr
-                # b_Hbeta, db_Hbeta = result.best_values['b_Hbeta'], result.params['b_Hbeta'].stderr
-                # a_OIII4960, da_OIII4960 = result.best_values['a_OIII4960'], result.params['a_OIII4960'].stderr
-                # b_OIII4960, db_OIII4960 = result.best_values['b_OIII4960'], result.params['b_OIII4960'].stderr
-                # a_OIII5008, da_OIII5008 = result.best_values['a_OIII5008'], result.params['a_OIII5008'].stderr
-                # b_OIII5008, db_OIII5008 = result.best_values['b_OIII5008'], result.params['b_OIII5008'].stderr
-                # #
-                # z_fit[i, j], dz_fit[i, j] = z, dz
-                # r_fit[i, j], dr_fit[i, j] = r_OII, dr_OII
-                # fit_success[i, j] = result.success
-                # sigma_fit[i, j] = sigma
-                # dsigma_fit[i, j] = dsigma
-                # # sigma_fit[:, i, j] = [sigma_OII, sigma_Hbeta, sigma_OIII4960, sigma_OIII5008]
-                # # dsigma_fit[:, i, j] = [dsigma_OII, dsigma_Hbeta, dsigma_OIII4960, dsigma_OIII5008]
-                # flux_fit[:, i, j] = [flux_OII, flux_Hbeta, flux_OIII5008]
-                # dflux_fit[:, i, j] = [dflux_OII, dflux_Hbeta, dflux_OIII5008]
-                # a_fit[:, i, j] = [a_OII, a_Hbeta, a_OIII4960, a_OIII5008]
-                # da_fit[:, i, j] = [da_OII, da_Hbeta, da_OIII4960, da_OIII5008]
-                # b_fit[:, i, j] = [b_OII, b_Hbeta, b_OIII4960, b_OIII5008]
-                # db_fit[:, i, j] = [db_OII, db_Hbeta, db_OIII4960, db_OIII5008]
-    return z_fit, dz_fit, r_fit, dr_fit, fit_success, sigma_fit, dsigma_fit, flux_fit, dflux_fit, \
-           a_fit, da_fit, b_fit, db_fit
+        # Save the fitting param
+        z_qso = 0.6282144177077355
+        v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
+        info = np.array([z_fit, r_fit, fit_success, sigma_fit, flux_fit[0], flux_fit[1], flux_fit[2], a_fit[0],
+                         a_fit[1], a_fit[2], a_fit[3], b_fit[0], b_fit[1], b_fit[2], b_fit[3]])
+        info_err = np.array([dz_fit, dr_fit, dsigma_fit, dflux_fit[0], dflux_fit[1], dflux_fit[2], da_fit[0], da_fit[1],
+                             da_fit[2], da_fit[3], db_fit[0], db_fit[1], db_fit[2], db_fit[3]])
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_' + method + method_spe + '.fits', info,
+                     overwrite=True)
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_err_' + method + method_spe + '.fits', info_err,
+                     overwrite=True)
 
 
 # Save the fitting param
-z_fit, dz_fit, r_fit, dr_fit, fit_success, sigma_fit, dsigma_fit, flux_fit, dflux_fit, a_fit, da_fit, b_fit, db_fit \
-    = FitLines(method='pixel', radius=40)
-z_qso = 0.6282144177077355
-v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
-info = np.array([z_fit, r_fit, fit_success, sigma_fit, flux_fit[0], flux_fit[1], flux_fit[2], a_fit[0], a_fit[1], a_fit[2],
-                 a_fit[3], b_fit[0], b_fit[1], b_fit[2], b_fit[3]])
-info_err = np.array([dz_fit, dr_fit, dsigma_fit, dflux_fit[0], dflux_fit[1], dflux_fit[2], da_fit[0], da_fit[1],
-                    da_fit[2], da_fit[3], db_fit[0], db_fit[1], db_fit[2], db_fit[3]])
-fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_test.fits', info, overwrite=True)
-fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_err_test.fits', info_err, overwrite=True)
+FitLines(method='voronoi', method_spe='20', radius=80, sn_vor=20)

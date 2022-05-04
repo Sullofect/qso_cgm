@@ -6,6 +6,7 @@ import lmfit
 import warnings
 import numpy as np
 import matplotlib
+from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from mpdaf.obj import Cube
 from mpdaf.drs import PixTable
@@ -26,24 +27,35 @@ cube = Cube(path)
 image_white = cube.sum(axis=0)
 p, q = image_white.peak()['p'], image_white.peak()['q']
 
-plt.figure(figsize=(8, 5), dpi=300)
-plt.imshow(np.arcsinh(image_white.data), origin='lower', vmin=9, cmap='hot')
-cbar = plt.colorbar()
-cbar.set_label(r'$\mathrm{Arcsinh}$')
-# plt.axis('off')
-plt.savefig(path_savefig + 'qso_image.png', bbox_inches='tight')
+# plt.figure(figsize=(8, 5), dpi=300)
+# plt.imshow(np.arcsinh(image_white.data), origin='lower', vmin=9, cmap='hot')
+# cbar = plt.colorbar()
+# cbar.set_label(r'$\mathrm{Arcsinh}$')
+# # plt.axis('off')
+# plt.savefig(path_savefig + 'qso_image.png', bbox_inches='tight')
 
 # EE Curve
-EE_ape = cube.subcube_circle_aperture((p, q), 10, unit_center=None)
+wave = pyasl.airtovac2(cube.wave.coord())
+EE_ape = cube.subcube_circle_aperture((p, q), 10, unit_center=None) # Arcsec
 source_100 = EE_ape[350, :, :]  # change to wavelength instead of index
 radius_100, ee_100 = source_100.eer_curve(unit_center=None)
 source_200 = EE_ape[3000, :, :]
 radius_200, ee_200 = source_200.eer_curve(unit_center=None)
 
+# Determine the seeing
+ee_max_100 = np.max(ee_100)
+ee_max_200 = np.max(ee_200)
+f_100 = interp1d(ee_100, radius_100)
+f_200 = interp1d(ee_200, radius_200)
+print(f_100(ee_max_100 * 0.5))
+print(f_200(ee_max_200 * 0.5))
+
 # Make the EE plot
 plt.figure(figsize=(8, 5), dpi=300)
-plt.plot(radius_100, ee_100)
-plt.plot(radius_200, ee_200)
+plt.plot(radius_100, ee_100, label=r'$\lambda = $' + str(wave[350]))
+plt.plot(radius_200, ee_200, label=r'$\lambda = $' + str(wave[3000]))
+plt.vlines(f_100(ee_max_100), ymin=0, ymax=1)
+plt.vlines(f_200(ee_max_200), ymin=0, ymax=1)
 plt.xlabel(r'$\mathrm{Arcseconds}$', size=20)
 plt.ylabel(r'$\mathrm{Ratio}$', size=20)
 plt.minorticks_on()
