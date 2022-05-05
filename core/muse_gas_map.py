@@ -166,5 +166,5 @@ dec_final = dec_final[select_gal]
 # run
 # PlotMap(line='OII', check=False, snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
 # PlotMap(line='OIII', snr_thr=3, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
-PlotMap(line='OOHbeta', method='voronoi', method_spe='20', test=False, snr_thr=4, check=True, row=row_final,
+PlotMap(line='OOHbeta', method='voronoi', method_spe='10', test=False, snr_thr=2, check=False, row=row_final,
         z=z_final, ra=ra_final, dec=dec_final)

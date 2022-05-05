@@ -36,7 +36,7 @@ p, q = image_white.peak()['p'], image_white.peak()['q']
 
 # EE Curve
 wave = pyasl.airtovac2(cube.wave.coord())
-EE_ape = cube.subcube_circle_aperture((p, q), 10, unit_center=None) # Arcsec
+EE_ape = cube.subcube_circle_aperture((p, q), 10, unit_center=None)  # in arcsec
 source_100 = EE_ape[350, :, :]  # change to wavelength instead of index
 radius_100, ee_100 = source_100.eer_curve(unit_center=None)
 source_200 = EE_ape[3000, :, :]
@@ -50,12 +50,19 @@ f_200 = interp1d(ee_200, radius_200)
 print(f_100(ee_max_100 * 0.5))
 print(f_200(ee_max_200 * 0.5))
 
+# Compute FWHM
+fwhm = image_white.fwhm((p, q), radius=5, unit_center=None)
+print(fwhm)
+
+# Fit gaussian
+gfit = EE_ape.sum(axis=0).gauss_fit(plot=False)
+
 # Make the EE plot
 plt.figure(figsize=(8, 5), dpi=300)
 plt.plot(radius_100, ee_100, label=r'$\lambda = $' + str(wave[350]))
 plt.plot(radius_200, ee_200, label=r'$\lambda = $' + str(wave[3000]))
-plt.vlines(f_100(ee_max_100), ymin=0, ymax=1)
-plt.vlines(f_200(ee_max_200), ymin=0, ymax=1)
+plt.vlines(f_100(ee_max_100 * 0.5), ymin=0, ymax=1)
+plt.vlines(f_200(ee_max_200 * 0.5), ymin=0, ymax=1)
 plt.xlabel(r'$\mathrm{Arcseconds}$', size=20)
 plt.ylabel(r'$\mathrm{Ratio}$', size=20)
 plt.minorticks_on()

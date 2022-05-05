@@ -1,6 +1,5 @@
 import os
 import lmfit
-import vorbin
 import numpy as np
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
@@ -258,4 +257,4 @@ def FitLines(method=None, method_spe=None, radius=80, sn_vor=30, radius_aper=1):
 
 
 # Save the fitting param
-FitLines(method='voronoi', method_spe='20', radius=80, sn_vor=20)
+FitLines(method='aperture', method_spe='05', radius=80, radius_aper=0.3, sn_vor=10)
