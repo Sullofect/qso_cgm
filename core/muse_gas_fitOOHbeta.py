@@ -174,22 +174,16 @@ def FitLines(method=None, method_spe=None, radius=80, sn_vor=30, radius_aper=1):
 
         if method == 'aperture':
             # For an aperture
-            subcube_OII = cube_OII.subcube_circle_aperture((i, j), radius_aper, unit_center=None)  # Unit in arcsec
-            subcube_Hbeta = cube_Hbeta.subcube_circle_aperture((i, j), radius_aper, unit_center=None)
-            subcube_OIII4960 = cube_OIII4960.subcube_circle_aperture((i, j), radius_aper, unit_center=None)
-            subcube_OIII5008 = cube_OIII5008.subcube_circle_aperture((i, j), radius_aper, unit_center=None)
+            spe_OII = cube_OII.aperture((i, j), radius_aper, unit_center=None, is_sum=False)  # Unit in arcsec
+            spe_Hbeta = cube_Hbeta.aperture((i, j), radius_aper, unit_center=None, is_sum=False)
+            spe_OIII4960 = cube_OIII4960.aperture((i, j), radius_aper, unit_center=None, is_sum=False)
+            spe_OIII5008 = cube_OIII5008.aperture((i, j), radius_aper, unit_center=None, is_sum=False)
 
-            subcube_OII_sum = subcube_OII.mean(axis=(1, 2))
-            subcube_Hbeta_sum = subcube_Hbeta.mean(axis=(1, 2))
-            subcube_OIII4960_sum = subcube_OIII4960.mean(axis=(1, 2))
-            subcube_OIII5008_sum = subcube_OIII5008.mean(axis=(1, 2))
-
-            flux_OII, flux_Hbeta = subcube_OII_sum.data * 1e-3, subcube_Hbeta_sum.data * 1e-3
-            flux_OIII4960, flux_OIII5008 = subcube_OIII4960_sum.data * 1e-3, subcube_OIII5008_sum.data * 1e-3
-            flux_OII_err, flux_Hbeta_err = np.sqrt(subcube_OII_sum.var) * 1e-3, \
-                                           np.sqrt(subcube_Hbeta_sum.var) * 1e-3
-            flux_OIII4960_err = np.sqrt(subcube_OIII4960_sum.var) * 1e-3
-            flux_OIII5008_err = np.sqrt(subcube_OIII5008_sum.var) * 1e-3
+            flux_OII, flux_Hbeta = spe_OII.data * 1e-3, spe_Hbeta.data * 1e-3
+            flux_OIII4960, flux_OIII5008 = spe_OIII4960.data * 1e-3, spe_OIII5008.data * 1e-3
+            flux_OII_err, flux_Hbeta_err = np.sqrt(spe_OII.var) * 1e-3, np.sqrt(spe_Hbeta.var) * 1e-3
+            flux_OIII4960_err = np.sqrt(spe_OIII4960.var) * 1e-3
+            flux_OIII5008_err = np.sqrt(spe_OIII5008.var) * 1e-3
             flux_all = np.hstack((flux_OII, flux_Hbeta, flux_OIII4960, flux_OIII5008))
             flux_err_all = np.hstack((flux_OII_err, flux_Hbeta_err, flux_OIII4960_err, flux_OIII5008_err))
 
@@ -202,8 +196,8 @@ def FitLines(method=None, method_spe=None, radius=80, sn_vor=30, radius_aper=1):
         elif method == 'voronoi':
             ll = np.where(binNum == binNum[l])
             ii, jj = xy_array[ll, 0], xy_array[ll, 1]
-            result = spec_model.fit(data=flux_all[:, ii, jj].mean(axis=(1, 2)), wave_vac=wave_vac_all,
-                                    params=parameters, weights=1 / flux_err_all[:, ii, jj].mean(axis=(1, 2)))
+            result = spec_model.fit(data=flux_all[:, ii, jj].sum(axis=(1, 2)), wave_vac=wave_vac_all,
+                                    params=parameters, weights=1 / (flux_err_all[:, ii, jj] ** 2).sum(axis=(1, 2)))
 
         # Load parameter
         z, dz = result.best_values['z'], result.params['z'].stderr

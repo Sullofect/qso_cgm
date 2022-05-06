@@ -47,12 +47,12 @@ ee_max_100 = np.max(ee_100)
 ee_max_200 = np.max(ee_200)
 f_100 = interp1d(ee_100, radius_100)
 f_200 = interp1d(ee_200, radius_200)
-print(f_100(ee_max_100 * 0.5))
-print(f_200(ee_max_200 * 0.5))
+print(f_100(ee_max_100 * 0.5) * 2)
+print(f_200(ee_max_200 * 0.5) * 2)
 
 # Compute FWHM
-fwhm = image_white.fwhm((p, q), radius=5, unit_center=None)
-print(fwhm)
+fwhm = source_100.fwhm((source_100.peak()['p'], source_100.peak()['q']), radius=5, unit_center=None)
+print(fwhm * 2)
 
 # Fit gaussian
 gfit = EE_ape.sum(axis=0).gauss_fit(plot=False)
