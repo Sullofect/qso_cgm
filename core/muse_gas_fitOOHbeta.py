@@ -15,6 +15,7 @@ rc('text', usetex=True)
 def getSigma_MUSE(wave):
     return (5.866e-8 * wave ** 2 - 9.187e-4 * wave + 6.04) / 2.355
 
+
 def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, a, b):
     # Constants
     c_kms = 2.998e5
@@ -162,12 +163,27 @@ def FitLines(method=None, method_spe=None, radius=80, sn_vor=30, radius_aper=1):
 
     if method == 'voronoi':
         # Voronoi binning
-        signal, noise = np.max(flux_all, axis=0), np.mean(flux_err_all, axis=0)
-        sn_array = np.array([signal, noise]).T.reshape(-1, 2)
+        # Signal
+        OIII5008_data = cube_OIII5008.select_lambda(8140, 8180).data * 1e-3
+        OIII5008_sig = np.sum(OIII5008_data, axis=0)
+
+        # Noise #1
+        OIII5008_err = np.sqrt(cube_OIII5008.select_lambda(8140, 8180).var) * 1e-3
+        OIII5008_err_int = np.sqrt(np.sum(OIII5008_err ** 2, axis=0))
+
+        # # Noise #2
+        OIII5008_std = np.std(cube_OIII5008.select_lambda(8180, 8200).data * 1e-3, axis=0) \
+                       * np.sqrt(np.shape(OIII5008_data)[0])
+        #
+        sn_array_1 = np.array([OIII5008_sig, OIII5008_err_int]).T.reshape(-1, 2)
+        sn_array_2 = np.array([OIII5008_sig, OIII5008_std]).T.reshape(-1, 2)
+
         binNum, x_gen, y_gen, x_bar, y_bar, sn, nPixels, scale = voronoi_2d_binning(xy_array[:, 0], xy_array[:, 1],
-                                                                                    sn_array[:, 0], sn_array[:, 1],
-                                                                                    sn_vor, pixelsize=size ** 2,
-                                                                                    plot=1, quiet=1)
+                                                                                    sn_array_1[:, 0],
+                                                                                    sn_array_1[:, 1], sn_vor,
+                                                                                    pixelsize=1,
+                                                                                    quiet=1)
+
     for l in range(size ** 2):
         i, j = xy_array[l, 0], xy_array[l, 1]
         spec_model = lmfit.Model(model_all, missing='drop')
@@ -197,8 +213,8 @@ def FitLines(method=None, method_spe=None, radius=80, sn_vor=30, radius_aper=1):
             ll = np.where(binNum == binNum[l])
             ii, jj = xy_array[ll, 0], xy_array[ll, 1]
             result = spec_model.fit(data=flux_all[:, ii, jj].sum(axis=(1, 2)), wave_vac=wave_vac_all,
-                                    params=parameters, weights=1 / (flux_err_all[:, ii, jj] ** 2).sum(axis=(1, 2)))
-
+                                    params=parameters,
+                                    weights=1 / np.sqrt((flux_err_all[:, ii, jj] ** 2).sum(axis=(1, 2))))
         # Load parameter
         z, dz = result.best_values['z'], result.params['z'].stderr
         sigma, dsigma = result.best_values['sigma_kms'], result.params['sigma_kms'].stderr
@@ -251,4 +267,4 @@ def FitLines(method=None, method_spe=None, radius=80, sn_vor=30, radius_aper=1):
 
 
 # Save the fitting param
-FitLines(method='aperture', method_spe='05', radius=80, radius_aper=0.3, sn_vor=10)
+FitLines(method='aperture', method_spe='0.7', radius=None, radius_aper=0.7, sn_vor=7)
