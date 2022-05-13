@@ -25,11 +25,15 @@ newcmp = ListedColormap(newcolors)
 
 
 #
-def ConvertFits(filename=None, table=None):
+def ConvertFits(filename=None, table=None, sigma_v=False):
     path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', filename + '.fits')
     data, hdr = fits.getdata(path, 1, header=True)
-    fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', table, overwrite=True)
-    data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', 0, header=True)
+    if sigma_v is True:
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_sigma_v_revised.fits', table, overwrite=True)
+        data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/' + filename + '_sigma_v_revised.fits', 0, header=True)
+    elif sigma_v is False:
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', table, overwrite=True)
+        data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', 0, header=True)
     hdr1['BITPIX'], hdr1['NAXIS'], hdr1['NAXIS1'], hdr1['NAXIS2'] = hdr['BITPIX'], hdr['NAXIS'], \
                                                                     hdr['NAXIS1'], hdr['NAXIS2']
     hdr1['CRPIX1'], hdr1['CRPIX2'], hdr1['CTYPE1'], hdr1['CTYPE2'] = hdr['CRPIX1'], hdr['CRPIX2'], \
@@ -39,8 +43,10 @@ def ConvertFits(filename=None, table=None):
     hdr1['CSYER1'], hdr1['CSYER2'], hdr1['MJDREF'], hdr1['RADESYS'] = hdr['CSYER1'], hdr['CSYER2'], \
                                                                       hdr['MJDREF'], hdr['RADESYS']
     hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] = hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
-    # Rescale the data by 1e17
-    fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data1, hdr1, overwrite=True)
+    if sigma_v is True:
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_sigma_v_revised.fits', data1, hdr1, overwrite=True)
+    elif sigma_v is False:
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data1, hdr1, overwrite=True)
 
 
 #
@@ -54,9 +60,9 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
                                          'fit' + line + '_info_err_test.fits')
     else:
         path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
-                                     'fit' + line + '_info_' + method + method_spe + '.fits')
+                                     'fit' + line + '_info_' + method + '_' + method_spe + '.fits')
         path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
-                                         'fit' + line + '_info_err_' + method + method_spe + '.fits')
+                                         'fit' + line + '_info_err_' + method + '_' + method_spe + '.fits')
     fit_info = fits.getdata(path_fit_info, 0, ignore_missing_end=True)
     fit_info_err = fits.getdata(path_fit_info_err, 0, ignore_missing_end=True)
 
@@ -79,6 +85,7 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     # Load data
         [z_fit, sigma_fit, flux_fit, fit_success, a_fit, b_fit] = fit_info
         [dz_fit, dsigma_fit, dflux_fit, da_fit, db_fit] = fit_info_err
+
     z_qso = 0.6282144177077355
     v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
     v_gal = 3e5 * (z - z_qso) / (1 + z_qso)
@@ -94,14 +101,18 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
         dflux_stack = np.stack((dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII5008), axis=0)
         fit_max = np.amax(flux_stack / dflux_stack, axis=0)
         v_fit = np.where((fit_max > snr_thr), v_fit, np.nan)
+        sigma_fit = np.where((fit_max > snr_thr), sigma_fit, np.nan)
         ConvertFits(filename='image_' + line + '_fitline', table=v_fit)
+        ConvertFits(filename='image_' + line + '_fitline', table=sigma_fit, sigma_v=True)
 
     else:
         # Final data
         v_fit = np.where((flux_fit / dflux_fit > snr_thr), v_fit, np.nan)
+        sigma_fit = np.where((flux_fit / dflux_fit > snr_thr), sigma_fit, np.nan)
         ConvertFits(filename='image_' + line + '_fitline', table=v_fit)
+        ConvertFits(filename='image_' + line + '_fitline', table=sigma_fit, sigma_v=True)
 
-    # Plot
+    # Plot velocity map
     fig = plt.figure(figsize=(8, 8), dpi=300)
     path_dv = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_' + line + '_fitline_revised.fits')
     gc = aplpy.FITSFigure(path_dv, figure=fig, north=True)
@@ -141,8 +152,53 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
     gc.add_label(0.9775, 0.85, r'N', size=15, relative=True)
     gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + method_spe
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' +  method_spe
                 + '.png', bbox_inches='tight')
+
+    # Plot sigma map
+    fig = plt.figure(figsize=(8, 8), dpi=300)
+    path_sigma_v = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_' + line
+                           + '_fitline_sigma_v_revised.fits')
+    gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
+    gc.set_system_latex(True)
+    gc.show_colorscale(vmin=0, vmax=200, cmap='hot')
+    gc.add_colorbar()
+    gc.ticks.set_length(30)
+    gc.show_markers(40.1359, -18.8643, facecolors='none', marker='*', c='none', edgecolors='k', linewidths=0.5, s=250)
+    # gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
+    # gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
+    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
+    gc.colorbar.set_location('bottom')
+    gc.colorbar.set_pad(0.)
+    gc.colorbar.set_axis_label_text(r'$\mathrm{\sigma_v \; [km \, s^{-1}]}$')
+    gc.colorbar.set_font(size=15)
+    gc.colorbar.set_axis_label_font(size=15)
+    gc.add_scalebar(length=15 * u.arcsecond)
+    gc.scalebar.set_corner('top left')
+    gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+    gc.scalebar.set_font_size(15)
+    gc.ticks.hide()
+    gc.tick_labels.hide()
+    gc.axis_labels.hide()
+
+    # for i in range(len(row)):
+    #     gc.add_label(ra[i] + 0.00014, dec[i] - 0.00008, "{0:.0f}".format(v_gal[i]), size=10, horizontalalignment='right'
+    #                  , verticalalignment='bottom')
+    # label
+    if line == 'OIII':
+        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=15, relative=True)
+    elif line == 'OII':
+        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=15, relative=True)
+    elif line == 'OOHbeta':
+        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[OOH \beta]}} - v_{\mathrm{qso}}$', size=15, relative=True)
+    xw, yw = gc.pixel2world(195, 150)
+    gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
+    gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
+    gc.add_label(0.9775, 0.85, r'N', size=15, relative=True)
+    gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_sigma_v_map_' + method + '_' +  method_spe
+                + '.png', bbox_inches='tight')
+
 
 
 # Load galxies infomation
@@ -166,5 +222,5 @@ dec_final = dec_final[select_gal]
 # run
 # PlotMap(line='OII', check=False, snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
 # PlotMap(line='OIII', snr_thr=3, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
-PlotMap(line='OOHbeta', method='aperture', method_spe='0.7', test=False, snr_thr=2, check=False, row=row_final,
+PlotMap(line='OOHbeta', method='aperture', method_spe='0.7', test=False, snr_thr=5, check=False, row=row_final,
         z=z_final, ra=ra_final, dec=dec_final)

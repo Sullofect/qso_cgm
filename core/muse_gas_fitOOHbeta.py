@@ -260,11 +260,11 @@ def FitLines(method=None, method_spe=None, radius=80, sn_vor=30, radius_aper=1):
                          a_fit[1], a_fit[2], a_fit[3], b_fit[0], b_fit[1], b_fit[2], b_fit[3]])
         info_err = np.array([dz_fit, dr_fit, dsigma_fit, dflux_fit[0], dflux_fit[1], dflux_fit[2], da_fit[0], da_fit[1],
                              da_fit[2], da_fit[3], db_fit[0], db_fit[1], db_fit[2], db_fit[3]])
-        fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_' + method + method_spe + '.fits', info,
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_' + method  + '_' + method_spe + '.fits', info,
                      overwrite=True)
-        fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_err_' + method + method_spe + '.fits', info_err,
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_err_' + method + '_' + method_spe + '.fits', info_err,
                      overwrite=True)
 
 
 # Save the fitting param
-FitLines(method='aperture', method_spe='0.7', radius=None, radius_aper=0.7, sn_vor=7)
+FitLines(method='voronoi', method_spe='20', radius=100, radius_aper=0.7, sn_vor=20)
