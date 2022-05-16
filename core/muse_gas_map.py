@@ -9,6 +9,9 @@ from matplotlib import cm
 from astropy import units as u
 from muse_compare_z import compare_z
 from matplotlib.colors import ListedColormap
+import palettable.colorbrewer.sequential as sequential
+import palettable.scientific.sequential as sequential_s
+import palettable.colorbrewer.diverging as diverging
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
@@ -161,7 +164,7 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
                            + '_fitline_sigma_v_revised.fits')
     gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
     gc.set_system_latex(True)
-    gc.show_colorscale(vmin=0, vmax=200, cmap='hot')
+    gc.show_colorscale(vmin=0, vmax=200, cmap=sequential_s.Devon_18.mpl_colormap)
     gc.add_colorbar()
     gc.ticks.set_length(30)
     gc.show_markers(40.1359, -18.8643, facecolors='none', marker='*', c='none', edgecolors='k', linewidths=0.5, s=250)
@@ -170,7 +173,7 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.)
-    gc.colorbar.set_axis_label_text(r'$\mathrm{\sigma_v \; [km \, s^{-1}]}$')
+    gc.colorbar.set_axis_label_text(r'$\mathrm{\sigma \; [km \, s^{-1}]}$')
     gc.colorbar.set_font(size=15)
     gc.colorbar.set_axis_label_font(size=15)
     gc.add_scalebar(length=15 * u.arcsecond)
