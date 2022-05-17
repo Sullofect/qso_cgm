@@ -11,6 +11,7 @@ from muse_compare_z import compare_z
 from matplotlib.colors import ListedColormap
 import palettable.colorbrewer.sequential as sequential
 import palettable.scientific.sequential as sequential_s
+import palettable.cmocean.sequential as sequential_c
 import palettable.colorbrewer.diverging as diverging
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -123,13 +124,14 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.show_colorscale(vmin=-300, vmax=300, cmap='coolwarm')
     gc.add_colorbar()
     gc.ticks.set_length(30)
-    gc.show_markers(40.1359, -18.8643, facecolors='none', marker='*', c='none', edgecolors='k', linewidths=0.5, s=250)
+    gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
+                    linewidths=0.5, s=250)
     gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
     gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.)
-    gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta v \; [km \, s^{-1}]}$')
+    gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
     gc.colorbar.set_font(size=15)
     gc.colorbar.set_axis_label_font(size=15)
     gc.add_scalebar(length=15 * u.arcsecond)
@@ -149,7 +151,8 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     elif line == 'OII':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=15, relative=True)
     elif line == 'OOHbeta':
-        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[OOH \beta]}} - v_{\mathrm{qso}}$', size=15, relative=True)
+        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II O \, III H \beta]}} - v_{\mathrm{qso}}$', size=15,
+                     relative=True)
     xw, yw = gc.pixel2world(195, 150)
     gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
     gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
@@ -164,16 +167,17 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
                            + '_fitline_sigma_v_revised.fits')
     gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
     gc.set_system_latex(True)
-    gc.show_colorscale(vmin=0, vmax=200, cmap=sequential_s.Devon_18.mpl_colormap)
+    gc.show_colorscale(vmin=0, vmax=200, cmap=sequential_s.Acton_6.mpl_colormap)
     gc.add_colorbar()
     gc.ticks.set_length(30)
-    gc.show_markers(40.1359, -18.8643, facecolors='none', marker='*', c='none', edgecolors='k', linewidths=0.5, s=250)
+    gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
+                    linewidths=0.5, s=250)
     # gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
     # gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.)
-    gc.colorbar.set_axis_label_text(r'$\mathrm{\sigma \; [km \, s^{-1}]}$')
+    gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
     gc.colorbar.set_font(size=15)
     gc.colorbar.set_axis_label_font(size=15)
     gc.add_scalebar(length=15 * u.arcsecond)
@@ -188,12 +192,13 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     #     gc.add_label(ra[i] + 0.00014, dec[i] - 0.00008, "{0:.0f}".format(v_gal[i]), size=10, horizontalalignment='right'
     #                  , verticalalignment='bottom')
     # label
-    if line == 'OIII':
-        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=15, relative=True)
-    elif line == 'OII':
-        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=15, relative=True)
-    elif line == 'OOHbeta':
-        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[OOH \beta]}} - v_{\mathrm{qso}}$', size=15, relative=True)
+    # if line == 'OIII':
+    #     gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=15, relative=True)
+    # elif line == 'OII':
+    #     gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=15, relative=True)
+    # elif line == 'OOHbeta':
+    #     gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II O \, III H \beta]}} - v_{\mathrm{qso}}$', size=15,
+    #                  relative=True)
     xw, yw = gc.pixel2world(195, 150)
     gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
     gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
@@ -222,8 +227,14 @@ z_final = z_final[select_gal]
 ra_final = ra_final[select_gal]
 dec_final = dec_final[select_gal]
 
+# Calculate the offset between MUSE and HST
+ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
+ra_qso_hst, dec_qso_hst = 40.1359, -18.8643
+ra_final = ra_final - (ra_qso_hst - ra_qso_muse)
+dec_final = dec_final - (dec_qso_hst - dec_qso_muse)
+
 # run
 # PlotMap(line='OII', check=False, snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
 # PlotMap(line='OIII', snr_thr=3, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
-PlotMap(line='OOHbeta', method='aperture', method_spe='0.7', test=False, snr_thr=5, check=False, row=row_final,
+PlotMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, check=False, row=row_final,
         z=z_final, ra=ra_final, dec=dec_final)

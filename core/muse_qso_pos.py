@@ -26,7 +26,8 @@ cube = Cube(path)
 # Calculate the white image
 image_white = cube.sum(axis=0)
 p, q = image_white.peak()['p'], image_white.peak()['q']
-
+y, x = image_white.peak()['y'], image_white.peak()['x']
+print(y, x)
 # plt.figure(figsize=(8, 5), dpi=300)
 # plt.imshow(np.arcsinh(image_white.data), origin='lower', vmin=9, cmap='hot')
 # cbar = plt.colorbar()
