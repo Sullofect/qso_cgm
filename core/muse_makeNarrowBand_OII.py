@@ -75,9 +75,9 @@ dec_final = dec_final[select_gal]
 
 # Calculate the offset between MUSE and HST
 ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
-ra_qso_hst, dec_qso_hst = 40.1359, -18.8643
-ra_final = ra_final - (ra_qso_hst - ra_qso_muse)
-dec_final = dec_final - (dec_qso_hst - dec_qso_muse)
+# ra_qso_hst, dec_qso_hst = 40.1359, -18.8643
+# ra_final = ra_final - (ra_qso_hst - ra_qso_muse)  # Wrong!!!
+# dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
 for i in range(8):
     fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -107,6 +107,7 @@ for i in range(8):
                                     r's^{-1} \; arcsec^{-2}]}$')
     gc.colorbar.set_font(size=15)
     gc.colorbar.set_axis_label_font(size=15)
+    # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.add_scalebar(length=15 * u.arcsecond)
     gc.scalebar.set_corner('top left')
     gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")

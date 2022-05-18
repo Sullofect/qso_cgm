@@ -123,6 +123,7 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.set_system_latex(True)
     gc.show_colorscale(vmin=-300, vmax=300, cmap='coolwarm')
     gc.add_colorbar()
+    # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
     gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
                     linewidths=0.5, s=250)
@@ -169,6 +170,7 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.set_system_latex(True)
     gc.show_colorscale(vmin=0, vmax=200, cmap=sequential_s.Acton_6.mpl_colormap)
     gc.add_colorbar()
+    # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
     gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
                     linewidths=0.5, s=250)
@@ -229,9 +231,9 @@ dec_final = dec_final[select_gal]
 
 # Calculate the offset between MUSE and HST
 ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
-ra_qso_hst, dec_qso_hst = 40.1359, -18.8643
-ra_final = ra_final - (ra_qso_hst - ra_qso_muse)
-dec_final = dec_final - (dec_qso_hst - dec_qso_muse)
+# ra_qso_hst, dec_qso_hst = 40.1359, -18.8643
+# ra_final = ra_final - (ra_qso_hst - ra_qso_muse)  # Wrong!!!
+# dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
 # run
 # PlotMap(line='OII', check=False, snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
