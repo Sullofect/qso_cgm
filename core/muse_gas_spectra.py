@@ -1,35 +1,35 @@
 import os
-import aplpy
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from astropy.io import ascii
 from PyAstronomy import pyasl
 from mpdaf.obj import Cube, WCS, WaveCoord, iter_spe
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list.reg')
-region = np.loadtxt(path_hb)
-ra_array = region[:, 0]
-dec_array = region[:, 1]
-radius_array = region[:, 2]
-# text_array =
+# region = np.loadtxt(path_hb, usecols=[0, 1, 2])
+ra_array = np.loadtxt(path_hb, usecols=[0, 1, 2])[:, 0]
+dec_array = np.loadtxt(path_hb, usecols=[0, 1, 2])[:, 1]
+radius_array = np.loadtxt(path_hb, usecols=[0, 1, 2])[:, 2]
+text_array = np.loadtxt(path_hb, dtype=str, usecols=[3])
 
 # path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits_SUBTRACTED.fits')
 path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset.fits')
 path_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_Hbeta_line_offset.fits')
-path_OIII_4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_4960_line_offset.fits')
-path_OIII_5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_5008_line_offset.fits')
+path_OIII4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_4960_line_offset.fits')
+path_OIII5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_5008_line_offset.fits')
 
 cube_OII = Cube(path_OII)
 cube_Hbeta = Cube(path_Hbeta)
-cube_OIII_4960 = Cube(path_OIII_4960)
-cube_OIII_5008 = Cube(path_OIII_5008)
+cube_OIII4960 = Cube(path_OIII4960)
+cube_OIII5008 = Cube(path_OIII5008)
 wave_OII = pyasl.airtovac2(cube_OII.wave.coord())
 wave_Hbeta = pyasl.airtovac2(cube_Hbeta.wave.coord())
-wave_OIII_4960 = pyasl.airtovac2(cube_OIII_4960.wave.coord())
-wave_OIII_5008 = pyasl.airtovac2(cube_OIII_5008.wave.coord())
-wave_stack = np.hstack((wave_OII, wave_Hbeta, wave_OIII_4960, wave_OIII_5008))
+wave_OIII4960 = pyasl.airtovac2(cube_OIII4960.wave.coord())
+wave_OIII5008 = pyasl.airtovac2(cube_OIII5008.wave.coord())
+wave_stack = np.hstack((wave_OII, wave_Hbeta, wave_OIII4960, wave_OIII5008))
 
 fig, axarr = plt.subplots(len(ra_array), 2, figsize=(10, len(ra_array) * 5), sharey=False, dpi=300)
 fig.subplots_adjust(hspace=0.1)
@@ -38,23 +38,23 @@ fig.subplots_adjust(wspace=0.18)
 for i in range(len(ra_array)):
     spe_OII_i = cube_OII.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)  # Unit in arcsec
     spe_Hbeta_i = cube_Hbeta.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
-    spe_OIII_4960_i = cube_OIII_4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
-    spe_OIII_5008_i = cube_OIII_5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
+    spe_OIII4960_i = cube_OIII4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
+    spe_OIII5008_i = cube_OIII5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
 
 
     flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
     flux_Hbeta_i, flux_Hbeta_err_i = spe_Hbeta_i.data * 1e-3, np.sqrt(spe_Hbeta_i.var) * 1e-3
-    flux_OIII_4960_i, flux_OIII_4960_err_i = spe_OIII_4960_i.data * 1e-3, np.sqrt(spe_OIII_4960_i.var) * 1e-3
-    flux_OIII_5008_i, flux_OIII_5008_err_i = spe_OIII_5008_i.data * 1e-3, np.sqrt(spe_OIII_5008_i.var) * 1e-3
-    flux_stack = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII_4960_i, flux_OIII_5008_i))
-    flux_err_stack = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII_4960_err_i, flux_OIII_5008_err_i))
+    flux_OIII4960_i, flux_OIII4960_err_i = spe_OIII4960_i.data * 1e-3, np.sqrt(spe_OIII4960_i.var) * 1e-3
+    flux_OIII5008_i, flux_OIII5008_err_i = spe_OIII5008_i.data * 1e-3, np.sqrt(spe_OIII5008_i.var) * 1e-3
+    flux_stack = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
+    flux_err_stack = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
 
     axarr[i, 0].plot(wave_stack, flux_stack, color='k', lw=1)
     axarr[i, 0].plot(wave_stack, flux_err_stack, color='lightgrey')
     axarr[i, 1].plot(wave_stack, flux_stack, color='k', lw=1)
     axarr[i, 1].plot(wave_stack, flux_err_stack, color='lightgrey')
-    axarr[i, 0].set_title('spot' + str(i), x=0.2, y=0.85, size=20)
+    axarr[i, 0].set_title(text_array[i], x=0.2, y=0.85, size=20)
     axarr[i, 0].set_xlim(5900, 6300)
     axarr[i, 1].set_xlim(7800, 8200)
     axarr[i, 0].spines['right'].set_visible(False)
