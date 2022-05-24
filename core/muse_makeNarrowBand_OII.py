@@ -94,7 +94,7 @@ for i in range(8):
     path_subcube = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_make_OII_NB_revised.fits')
     gc = aplpy.FITSFigure(path_subcube, figure=fig, north=True, animated=True)
     gc.set_system_latex(True)
-    gc.show_colorscale(vmin=0, vmid=0.2, vmax=3.0, cmap=newcmp, stretch='arcsinh')
+    gc.show_colorscale(vmin=0, vmid=0.2, vmax=5.0, cmap=newcmp, stretch='arcsinh')
     gc.add_colorbar()
     gc.ticks.set_length(30)
     gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='none', edgecolors='k', linewidths=0.5,
@@ -103,6 +103,7 @@ for i in range(8):
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.0)
+    gc.colorbar.set_ticks([1, 2, 3, 4])
     gc.colorbar.set_axis_label_text(r'$\mathrm{Surface \; Brightness \; [10^{-17} \; erg \; cm^{-2} \; '
                                     r's^{-1} \; arcsec^{-2}]}$')
     gc.colorbar.set_font(size=15)

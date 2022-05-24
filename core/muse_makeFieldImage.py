@@ -42,8 +42,8 @@ def ConvertFits(filename=None, smooth=True):
     # Rescale the data by 1e17
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data1 * 1e17, hdr1, overwrite=True)
 
-ConvertFits(filename='image_OII_line_SB_offset')
-ConvertFits(filename='image_OIII_5008_line_SB_offset')
+ConvertFits(filename='image_OII_line_SB_offset', smooth=False)
+ConvertFits(filename='image_OIII_5008_line_SB_offset', smooth=False)
 
 #
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
@@ -82,12 +82,13 @@ fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
 gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
-gc.show_contour(path_OII_SB, levels=[0.55, 1.0, 1.5], colors='blue', linewidths=1)
-gc.show_contour(path_OIII_SB, levels=[0.55, 1.0, 1.5], colors='red', linewidths=1)
+gc.show_contour(path_OII_SB, levels=[0.35, 0.5, 1.0, 1.5], colors='blue', linewidths=1, smooth=3)
+gc.show_contour(path_OIII_SB, levels=[0.35, 0.5, 1.0, 1.5], colors='red', linewidths=1, smooth=3)
 gc.recenter(40.1359, -18.8643, width=40 / 3600, height=40 / 3600) # 0.02 / 0.01 40''
 gc.set_system_latex(True)
 gc.show_colorscale(cmap='Greys')
 gc.add_colorbar()
+gc.colorbar.set_ticks([0])
 gc.colorbar.set_location('bottom')
 gc.colorbar.set_pad(0.0)
 # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')

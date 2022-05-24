@@ -131,6 +131,7 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
     gc.colorbar.set_location('bottom')
+    gc.colorbar.set_ticks([-200, -100, 0, 100, 200])
     gc.colorbar.set_pad(0.)
     gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
     gc.colorbar.set_font(size=15)
@@ -152,7 +153,7 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     elif line == 'OII':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=15, relative=True)
     elif line == 'OOHbeta':
-        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II O \, III H \beta]}} - v_{\mathrm{qso}}$', size=15,
+        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{line}} - v_{\mathrm{qso}}$', size=15,
                      relative=True)
     xw, yw = gc.pixel2world(195, 150)
     gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
@@ -179,6 +180,7 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.)
+    gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
     gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
     gc.colorbar.set_font(size=15)
     gc.colorbar.set_axis_label_font(size=15)
