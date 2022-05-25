@@ -49,14 +49,13 @@ path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_
 path_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_Hbeta_line_offset.fits')
 path_OIII4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_4960_line_offset.fits')
 path_OIII5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_5008_line_offset.fits')
-path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list.reg')
+path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list_revised.reg')
 
 # Sampled region
-# region = np.loadtxt(path_hb, usecols=[0, 1, 2])
-ra_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 0]
-dec_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 1]
-radius_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 2]
-text_array = np.loadtxt(path_region, dtype=str, usecols=[3])
+ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 # Muse Cube
 cube_OII = Cube(path_OII)

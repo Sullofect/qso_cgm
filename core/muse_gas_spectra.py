@@ -89,12 +89,12 @@ def model_all(wave_vac, z, sigma_kms, flux_OII, flux_Hbeta, flux_OIII5008, r_OII
 
 
 
-path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list.reg')
+path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list_revised.reg')
 # region = np.loadtxt(path_hb, usecols=[0, 1, 2])
-ra_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 0]
-dec_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 1]
-radius_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 2]
-text_array = np.loadtxt(path_region, dtype=str, usecols=[3])
+ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 # path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits_SUBTRACTED.fits')
 path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset.fits')
@@ -236,6 +236,6 @@ for i in range(len(ra_array)):
         axarr[i, 1].tick_params(axis='x', which='both', labelbottom=False)
 # axarr[len(ra_array) - 1, 0].set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
 # axarr[len(ra_array) - 1, 0].xaxis.set_label_coords(1.15, -0.1)
-fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.05)
+fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
 fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.05)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/spectra_gas.png', bbox_inches='tight')

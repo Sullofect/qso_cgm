@@ -79,6 +79,13 @@ ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
 # ra_final = ra_final - (ra_qso_hst - ra_qso_muse)  # Wrong!!!
 # dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
+#
+path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list.reg')
+ra_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 0]
+dec_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 1]
+radius_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 2]
+text_array = np.loadtxt(path_region, dtype=str, usecols=[3])
+
 for i in range(6):
     fig = plt.figure(figsize=(8, 8), dpi=300)
     wave_i = 8140 + 5 * i
@@ -94,17 +101,17 @@ for i in range(6):
     path_subcube = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_make_OIII_NB_revised.fits')
     gc = aplpy.FITSFigure(path_subcube, figure=fig, north=True, animated=True)
     gc.set_system_latex(True)
-    gc.show_colorscale(vmin=0, vmid=0.3, vmax=10.0, cmap=newcmp, stretch='arcsinh')
+    gc.show_colorscale(vmin=0, vmid=0.3, vmax=20.0, cmap=newcmp, stretch='arcsinh')
     gc.add_colorbar()
     # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
     gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='none', edgecolors='k', linewidths=0.5,
                     s=250)
-    gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
+    # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
+    gc.show_regions('/Users/lzq/Dropbox/Data/CGM/gas_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.0)
-    gc.colorbar.set_ticks([2, 4, 6, 8])
+    gc.colorbar.set_ticks([2, 4, 6, 8, 10])
     gc.colorbar.set_axis_label_text(r'$\mathrm{Surface \; Brightness \; [10^{-17} \; erg \; cm^{-2} \; '
                                     r's^{-1} \; arcsec^{-2}]}$')
     gc.colorbar.set_font(size=15)
