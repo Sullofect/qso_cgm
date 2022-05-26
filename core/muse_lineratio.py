@@ -8,6 +8,7 @@ import scipy.integrate as integrate
 import palettable.scientific.sequential as sequential_s
 from matplotlib import rc
 from matplotlib import cm
+from astropy.io import ascii
 from PyAstronomy import pyasl
 from astropy import units as u
 from matplotlib.colors import ListedColormap
@@ -148,7 +149,7 @@ for i in range(len(ra_array)):
     spe_OIII4960_i = cube_OIII4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
     spe_OIII5008_i = cube_OIII5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
 
-
+    # Load the data
     flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
     flux_Hbeta_i, flux_Hbeta_err_i = spe_Hbeta_i.data * 1e-3, np.sqrt(spe_Hbeta_i.var) * 1e-3
     flux_OIII4960_i, flux_OIII4960_err_i = spe_OIII4960_i.data * 1e-3, np.sqrt(spe_OIII4960_i.var) * 1e-3
@@ -156,20 +157,81 @@ for i in range(len(ra_array)):
     flux_all = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
     flux_err_all = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
-    # Direct integration for every pixel
+    # Direct integrations
     line_OII_i = integrate.simps(flux_OII_i, axis=0)
     line_Hbeta_i = integrate.simps(flux_Hbeta_i, axis=0)
     line_OIII4960_i = integrate.simps(flux_OIII4960_i, axis=0)
     line_OIII5008_i = integrate.simps(flux_OIII5008_i, axis=0)
 
+    # Error
+
+
+    #
     OIII_OII_array[i] = line_OIII5008_i / line_OII_i
     OIII_Hbeta_array[i] = line_OIII5008_i / line_Hbeta_i
 
-plt.figure(figsize=(5, 5), dpi=300)
-plt.plot(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), '.')
-plt.xlabel(r'$\mathrm{log[O \, III] / H \, \beta}$')
-plt.ylabel(r'$\mathrm{log[O \, III] / [O \, II]}$')
-plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatio_region.png', bbox_inches='tight')
 
+# Load grid
+path_df = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                       'iteramodel_dustfreeAGN_Z1.0_n100.txt_grid1.txt')
+path_dy = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                       'iteramodel_dustyAGN_Z1.0_n100.txt_grid1.txt')
+
+grid_df = np.loadtxt(path_df, encoding="ISO-8859-1")
+grid_dy = np.loadtxt(path_dy, encoding="ISO-8859-1")
+
+alpha_df, alpha_dy = grid_df[:, 0], grid_dy[:, 0]
+logu_df, logu_dy = grid_df[:, 1], grid_dy[:, 1]
+OIII_Hbeta_df, OIII_Hbeta_dy = grid_df[:, 2], grid_dy[:, 2]
+OIII_OII_df, OIII_OII_dy = grid_df[:, 4] / grid_df[:, 5], grid_dy[:, 4] / grid_df[:, 5]
+
+OIII_Hbeta_df_mat, OIII_Hbeta_dy_mat = OIII_Hbeta_df.reshape((4, 13)), OIII_Hbeta_dy.reshape((4, 13))
+OIII_OII_df_mat, OIII_OII_dy_mat = OIII_OII_df.reshape((4, 13)), OIII_OII_dy.reshape((4, 13))
+
+fig, axarr = plt.subplots(1, 2, figsize=(12, 6), dpi=300, sharex=True, sharey=True)
+fig.subplots_adjust(wspace=0)
+# Fill between
+x_1, x_2 = np.log10(OIII_Hbeta_df_mat), np.log10(OIII_Hbeta_dy_mat)
+y_1, y_2 = np.log10(OIII_OII_df_mat), np.log10(OIII_OII_dy_mat)
+y_1_sort, y_2_sort = np.sort(y_1, axis=1), np.sort(y_2, axis=1)
+x_1_sort, x_2_sort = np.take_along_axis(x_1, np.argsort(y_1, axis=1), axis=1), \
+                     np.take_along_axis(x_2, np.argsort(y_2, axis=1), axis=1)
+axarr[0].fill(np.hstack((x_1_sort[0, :], x_1_sort[1, ::-1])), np.hstack((y_1_sort[0, :], y_1_sort[1, ::-1])),
+              color='red', alpha=0.2)
+axarr[0].fill(np.hstack((x_1_sort[1, :], x_1_sort[2, ::-1])), np.hstack((y_1_sort[1, :], y_1_sort[2, ::-1])),
+              color='red', alpha=0.4)
+axarr[0].fill(np.hstack((x_1_sort[2, 2:], x_1_sort[3, ::-1][2:])), np.hstack((y_1_sort[2, 2:], y_1_sort[3, ::-1][2:])),
+              color='red', alpha=0.6)
+axarr[1].fill(np.hstack((x_2_sort[0, :], x_2_sort[1, ::-1])), np.hstack((y_2_sort[0, :], y_2_sort[1, ::-1])),
+              color='red', alpha=0.2)
+axarr[1].fill(np.hstack((x_2_sort[1, :], x_2_sort[2, ::-1])), np.hstack((y_2_sort[1, :], y_2_sort[2, ::-1])),
+              color='red', alpha=0.4)
+axarr[1].fill(np.hstack((x_2_sort[2, 2:], x_2_sort[3, ::-1][2:])), np.hstack((y_2_sort[2, 2:], y_2_sort[3, ::-1][2:])),
+              color='red', alpha=0.6)
+
+# Plot Data
+axarr[0].plot(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), '.', color='blue', ms=5)
+axarr[1].plot(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), '.', color='blue', ms=5)
+
+axarr[0].plot(np.log10(OIII_Hbeta_df), np.log10(OIII_OII_df), '.r', ms=3)
+axarr[0].plot(np.log10(OIII_Hbeta_df_mat), np.log10(OIII_OII_df_mat), '-', color='red', lw=1, alpha=0.3)
+axarr[1].plot(np.log10(OIII_Hbeta_dy), np.log10(OIII_OII_dy), '.r', ms=3)
+axarr[1].plot(np.log10(OIII_Hbeta_dy_mat), np.log10(OIII_OII_dy_mat), '-', color='red', lw=1, alpha=0.3)
+
+fig.supxlabel(r'$\mathrm{log([O \, III]\lambda5008 / H\beta)}$', size=20, y=0.02)
+fig.supylabel(r'$\mathrm{log([O \, III]\lambda5008  / [O \, II] \lambda \lambda 3727,29)}$', size=20, x=0.05)
+axarr[0].minorticks_on()
+axarr[1].minorticks_on()
+axarr[0].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
+                    labelsize=20, size=5)
+axarr[0].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
+                    size=3)
+axarr[1].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
+                    labelsize=20, size=5)
+axarr[1].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
+                    size=3)
+# axarr[0].set_xlim(-0.2, 1.7)
+# axarr[0].set_ylim(-1.2, 1.2)
+plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatio_region.png', bbox_inches='tight')
 
 
