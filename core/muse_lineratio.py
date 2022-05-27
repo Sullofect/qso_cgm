@@ -77,10 +77,10 @@ flux_OIII4960_err = np.sqrt(cube_OIII4960.var) * 1e-3
 flux_OIII5008_err = np.sqrt(cube_OIII5008.var) * 1e-3
 
 # Direct integration for every pixel
-line_OII = integrate.simps(flux_OII, axis=0)
-line_Hbeta =  integrate.simps(flux_Hbeta, axis=0)
-line_OIII4960 = integrate.simps(flux_OIII4960, axis=0)
-line_OIII5008 = integrate.simps(flux_OIII5008, axis=0)
+line_OII = 1.25 * integrate.simps(flux_OII, axis=0)
+line_Hbeta = 1.25 * integrate.simps(flux_Hbeta, axis=0)
+line_OIII4960 = 1.25 * integrate.simps(flux_OIII4960, axis=0)
+line_OIII5008 = 1.25 * integrate.simps(flux_OIII5008, axis=0)
 
 ConvertFits(filename='image_OOHbeta_fitline', table=np.log10(line_OIII5008 / line_OII))
 
@@ -141,8 +141,9 @@ fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatioMap_OIII_Hbeta.png', bbo
 
 
 # Calculate line ratio in sample region
-OIII_OII_array = np.zeros(len(ra_array))
-OIII_Hbeta_array = np.zeros(len(ra_array))
+OIII_OII_array, OIII_OII_err_array = np.zeros(len(ra_array)), np.zeros(len(ra_array))
+OIII_Hbeta_array, OIII_Hbeta_err_array = np.zeros(len(ra_array)), np.zeros(len(ra_array))
+OIII_array, Hbeta_sigma_array = np.zeros(len(ra_array)), np.zeros(len(ra_array))
 for i in range(len(ra_array)):
     spe_OII_i = cube_OII.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)  # Unit in arcsec
     spe_Hbeta_i = cube_Hbeta.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
@@ -158,18 +159,25 @@ for i in range(len(ra_array)):
     flux_err_all = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
     # Direct integrations
-    line_OII_i = integrate.simps(flux_OII_i, axis=0)
-    line_Hbeta_i = integrate.simps(flux_Hbeta_i, axis=0)
-    line_OIII4960_i = integrate.simps(flux_OIII4960_i, axis=0)
-    line_OIII5008_i = integrate.simps(flux_OIII5008_i, axis=0)
-
+    line_OII_i = 1.25 * integrate.simps(flux_OII_i)
+    line_Hbeta_i = 1.25 * integrate.simps(flux_Hbeta_i)
+    line_OIII4960_i = 1.25 * integrate.simps(flux_OIII4960_i)
+    line_OIII5008_i = 1.25 * integrate.simps(flux_OIII5008_i)
+    OIII_array[i] = line_OIII5008_i
     # Error
-
+    error_OII_i = np.sqrt(1.25 * integrate.simps(flux_OII_err_i ** 2))
+    error_Hbeta_i = np.sqrt(1.25 * integrate.simps(flux_Hbeta_err_i ** 2))
+    error_OIII4960_i = np.sqrt(1.25 * integrate.simps(flux_OIII4960_err_i ** 2))
+    error_OIII5008_i = np.sqrt(1.25 * integrate.simps(flux_OIII5008_err_i ** 2))
 
     #
+    Hbeta_sigma_array[i] = error_Hbeta_i
     OIII_OII_array[i] = line_OIII5008_i / line_OII_i
+    OIII_OII_err_array[i] = (line_OIII5008_i / line_OII_i) *\
+                            np.sqrt((error_OIII5008_i / line_OIII5008_i) ** 2 + (error_OII_i / line_OII_i) ** 2)
     OIII_Hbeta_array[i] = line_OIII5008_i / line_Hbeta_i
-
+    OIII_Hbeta_err_array[i] = (line_OIII5008_i / line_Hbeta_i) *\
+                            np.sqrt((error_OIII5008_i / line_OIII5008_i) ** 2 + (error_Hbeta_i / line_Hbeta_i) ** 2)
 
 # Load grid
 path_df = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
@@ -197,11 +205,11 @@ y_1_sort, y_2_sort = np.sort(y_1, axis=1), np.sort(y_2, axis=1)
 x_1_sort, x_2_sort = np.take_along_axis(x_1, np.argsort(y_1, axis=1), axis=1), \
                      np.take_along_axis(x_2, np.argsort(y_2, axis=1), axis=1)
 axarr[0].fill(np.hstack((x_1_sort[0, :], x_1_sort[1, ::-1])), np.hstack((y_1_sort[0, :], y_1_sort[1, ::-1])),
-              color='red', alpha=0.2)
+              color='grey', alpha=0.2)
 axarr[0].fill(np.hstack((x_1_sort[1, :], x_1_sort[2, ::-1])), np.hstack((y_1_sort[1, :], y_1_sort[2, ::-1])),
-              color='red', alpha=0.4)
+              color='grey', alpha=0.4)
 axarr[0].fill(np.hstack((x_1_sort[2, 2:], x_1_sort[3, ::-1][2:])), np.hstack((y_1_sort[2, 2:], y_1_sort[3, ::-1][2:])),
-              color='red', alpha=0.6)
+              color='grey', alpha=0.6)
 axarr[1].fill(np.hstack((x_2_sort[0, :], x_2_sort[1, ::-1])), np.hstack((y_2_sort[0, :], y_2_sort[1, ::-1])),
               color='red', alpha=0.2)
 axarr[1].fill(np.hstack((x_2_sort[1, :], x_2_sort[2, ::-1])), np.hstack((y_2_sort[1, :], y_2_sort[2, ::-1])),
@@ -210,26 +218,37 @@ axarr[1].fill(np.hstack((x_2_sort[2, 2:], x_2_sort[3, ::-1][2:])), np.hstack((y_
               color='red', alpha=0.6)
 
 # Plot Data
-axarr[0].plot(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), '.', color='blue', ms=5)
-axarr[1].plot(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), '.', color='blue', ms=5)
-
-axarr[0].plot(np.log10(OIII_Hbeta_df), np.log10(OIII_OII_df), '.r', ms=3)
-axarr[0].plot(np.log10(OIII_Hbeta_df_mat), np.log10(OIII_OII_df_mat), '-', color='red', lw=1, alpha=0.3)
-axarr[1].plot(np.log10(OIII_Hbeta_dy), np.log10(OIII_OII_dy), '.r', ms=3)
-axarr[1].plot(np.log10(OIII_Hbeta_dy_mat), np.log10(OIII_OII_dy_mat), '-', color='red', lw=1, alpha=0.3)
+# axarr[0].plot(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), '.', color='blue', ms=5)
+# axarr[1].plot(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), '.', color='blue', ms=5)
+OIII_Hbeta_err_array_log = OIII_Hbeta_err_array / np.log(10) / OIII_Hbeta_array
+OIII_OII_err_array_log = OIII_OII_err_array / np.log(10) / OIII_OII_array
+OIII_Hbeta_sigma = OIII_array / Hbeta_sigma_array
+OIII_Hbeta_3sigma_err = (OIII_array / (3 * Hbeta_sigma_array)) - OIII_Hbeta_sigma
+OIII_Hbeta_3sigma_err_log = OIII_Hbeta_3sigma_err / np.log(10) / OIII_Hbeta_sigma
+axarr[0].errorbar(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), yerr=OIII_OII_err_array_log,
+                  xerr=OIII_Hbeta_err_array_log, fmt='.k', capsize=2, elinewidth=1, mfc='k', ms=10)
+axarr[0].errorbar(np.log10(OIII_Hbeta_sigma)[-1], np.log10(OIII_OII_array)[-1],
+                  yerr=OIII_OII_err_array_log[-1], xerr=OIII_Hbeta_3sigma_err_log[-1], fmt='.k',
+                  capsize=2, elinewidth=1, mfc='red', ms=10)
+axarr[1].errorbar(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), yerr=OIII_OII_err_array_log,
+                  xerr=OIII_Hbeta_err_array_log, fmt='.k', capsize=2, elinewidth=1, mfc='k', ms=10)
+# axarr[0].plot(np.log10(OIII_Hbeta_df), np.log10(OIII_OII_df), '.r', ms=3)
+axarr[0].plot(np.log10(OIII_Hbeta_df_mat), np.log10(OIII_OII_df_mat), '-', color='grey', lw=1, alpha=0.3)
+# axarr[1].plot(np.log10(OIII_Hbeta_dy), np.log10(OIII_OII_dy), '.r', ms=3)
+axarr[1].plot(np.log10(OIII_Hbeta_dy_mat), np.log10(OIII_OII_dy_mat), '-', color='grey', lw=1, alpha=0.3)
 
 fig.supxlabel(r'$\mathrm{log([O \, III]\lambda5008 / H\beta)}$', size=20, y=0.02)
 fig.supylabel(r'$\mathrm{log([O \, III]\lambda5008  / [O \, II] \lambda \lambda 3727,29)}$', size=20, x=0.05)
 axarr[0].minorticks_on()
 axarr[1].minorticks_on()
 axarr[0].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
-                    labelsize=20, size=5)
+                     labelsize=20, size=5)
 axarr[0].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
-                    size=3)
+                     size=3)
 axarr[1].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
-                    labelsize=20, size=5)
+                     labelsize=20, size=5)
 axarr[1].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
-                    size=3)
+                     size=3)
 # axarr[0].set_xlim(-0.2, 1.7)
 # axarr[0].set_ylim(-1.2, 1.2)
 plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatio_region.png', bbox_inches='tight')
