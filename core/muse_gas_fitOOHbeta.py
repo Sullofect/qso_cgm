@@ -253,17 +253,17 @@ def FitLines(method=None, method_spe=None, radius=80, sn_vor=30, radius_aper=1):
         b_fit[:, i, j] = [b_OII, b_Hbeta, b_OIII4960, b_OIII5008]
         db_fit[:, i, j] = [db_OII, db_Hbeta, db_OIII4960, db_OIII5008]
 
-        # Save the fitting param
-        z_qso = 0.6282144177077355
-        v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
-        info = np.array([z_fit, r_fit, fit_success, sigma_fit, flux_fit[0], flux_fit[1], flux_fit[2], a_fit[0],
-                         a_fit[1], a_fit[2], a_fit[3], b_fit[0], b_fit[1], b_fit[2], b_fit[3]])
-        info_err = np.array([dz_fit, dr_fit, dsigma_fit, dflux_fit[0], dflux_fit[1], dflux_fit[2], da_fit[0], da_fit[1],
-                             da_fit[2], da_fit[3], db_fit[0], db_fit[1], db_fit[2], db_fit[3]])
-        fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_' + method  + '_' + method_spe + '.fits', info,
-                     overwrite=True)
-        fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_err_' + method + '_' + method_spe + '.fits', info_err,
-                     overwrite=True)
+    # Save the fitting param
+    z_qso = 0.6282144177077355
+    v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
+    info = np.array([z_fit, r_fit, fit_success, sigma_fit, flux_fit[0], flux_fit[1], flux_fit[2], a_fit[0],
+                     a_fit[1], a_fit[2], a_fit[3], b_fit[0], b_fit[1], b_fit[2], b_fit[3]])
+    info_err = np.array([dz_fit, dr_fit, dsigma_fit, dflux_fit[0], dflux_fit[1], dflux_fit[2], da_fit[0], da_fit[1],
+                         da_fit[2], da_fit[3], db_fit[0], db_fit[1], db_fit[2], db_fit[3]])
+    fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_' + method + '_' + method_spe + '.fits', info,
+                 overwrite=True)
+    fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOOHbeta_info_err_' + method + '_' + method_spe + '.fits', info_err,
+                 overwrite=True)
 
 
 # Save the fitting param

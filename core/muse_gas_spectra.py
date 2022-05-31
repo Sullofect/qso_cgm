@@ -1,6 +1,7 @@
 import os
 import lmfit
 import numpy as np
+import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from PyAstronomy import pyasl
@@ -88,15 +89,13 @@ def model_all(wave_vac, z, sigma_kms, flux_OII, flux_Hbeta, flux_OIII5008, r_OII
     return np.hstack((m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
 
 
-
+# Read region file
 path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list_revised.reg')
-# region = np.loadtxt(path_hb, usecols=[0, 1, 2])
 ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
 dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-# path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits_SUBTRACTED.fits')
 path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset.fits')
 path_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_Hbeta_line_offset.fits')
 path_OIII4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_4960_line_offset.fits')
@@ -139,13 +138,13 @@ fig, axarr = plt.subplots(len(ra_array), 2, figsize=(10, len(ra_array) * 2.5),
                           gridspec_kw={'width_ratios': [1, 3]}, dpi=300)
 fig.subplots_adjust(hspace=0)
 fig.subplots_adjust(wspace=0.1)
+flux_info = np.zeros((len(ra_array), 6))
 # axarr = axarr.ravel()
 for i in range(len(ra_array)):
     spe_OII_i = cube_OII.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)  # Unit in arcsec
     spe_Hbeta_i = cube_Hbeta.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
     spe_OIII4960_i = cube_OIII4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
     spe_OIII5008_i = cube_OIII5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
-
 
     flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
     flux_Hbeta_i, flux_Hbeta_err_i = spe_Hbeta_i.data * 1e-3, np.sqrt(spe_Hbeta_i.var) * 1e-3
@@ -157,7 +156,7 @@ for i in range(len(ra_array)):
     spec_model = lmfit.Model(model_all, missing='drop')
     result = spec_model.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters,
                             weights=1 / flux_err_all)
-
+    
     # Load fitted result
     z, dz = result.best_values['z'], result.params['z'].stderr
     sigma, dsigma = result.best_values['sigma_kms'], result.params['sigma_kms'].stderr
@@ -175,6 +174,8 @@ for i in range(len(ra_array)):
     a_OIII5008, da_OIII5008 = result.best_values['a_OIII5008'], result.params['a_OIII5008'].stderr
     b_OIII5008, db_OIII5008 = result.best_values['b_OIII5008'], result.params['b_OIII5008'].stderr
 
+    # Save the fitted result
+    flux_info[i, :] = np.array([flux_OII, flux_Hbeta, flux_OIII5008, dflux_OII, dflux_Hbeta, dflux_OIII5008])
 
     axarr[i, 0].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
                                                r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
@@ -208,17 +209,6 @@ for i in range(len(ra_array)):
     axarr[i, 1].annotate(text=r'$\mathrm{[O \, III]} \\ \mathrm{\quad 5008}$', xy=(0.7, 0.65),
                          xycoords='axes fraction', size=20)
 
-    # Make diagonal lines
-    # d = .015  # how big to make the diagonal lines in axes coordinates
-    # # arguments to pass plot, just so we don't keep repeating them
-    # kwargs = dict(transform=axarr[i, 0].transAxes, color='k', clip_on=False)
-    # axarr[i, 0].plot((1 - d, 1 + d), (-d, +d), **kwargs)
-    # axarr[i, 0].plot((1 - d, 1 + d), (1 - d, 1 + d), **kwargs)
-    #
-    # kwargs.update(transform=axarr[i, 1].transAxes)  # switch to the bottom axes
-    # axarr[i, 1].plot((-d, +d), (1 - d, 1 + d), **kwargs)
-    # axarr[i, 1].plot((-d, +d), (-d, +d), **kwargs)
-
     axarr[i, 0].minorticks_on()
     axarr[i, 1].minorticks_on()
     axarr[i, 0].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right=False,
@@ -234,8 +224,7 @@ for i in range(len(ra_array)):
     if i != len(ra_array) - 1:
         axarr[i, 0].tick_params(axis='x', which='both', labelbottom=False)
         axarr[i, 1].tick_params(axis='x', which='both', labelbottom=False)
-# axarr[len(ra_array) - 1, 0].set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
-# axarr[len(ra_array) - 1, 0].xaxis.set_label_coords(1.15, -0.1)
+fits.writeto('/Users/lzq/Dropbox/Data/CGM/line_profile_selected_region.fits', flux_info, overwrite=True)
 fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
 fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.05)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/spectra_gas.png', bbox_inches='tight')

@@ -8,7 +8,6 @@ import scipy.integrate as integrate
 import palettable.scientific.sequential as sequential_s
 from matplotlib import rc
 from matplotlib import cm
-from astropy.io import ascii
 from PyAstronomy import pyasl
 from astropy import units as u
 from matplotlib.colors import ListedColormap
@@ -27,7 +26,7 @@ newcolors = Blues(np.linspace(0, 1, 256))
 newcolors_red = Reds(np.linspace(0, 1, 256))
 newcmp = ListedColormap(newcolors)
 
-#
+
 def ConvertFits(filename=None, table=None):
     path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', filename + '.fits')
     data, hdr = fits.getdata(path, 1, header=True)
@@ -45,7 +44,7 @@ def ConvertFits(filename=None, table=None):
 
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_lineratio.fits', data1, hdr1, overwrite=True)
 
-# path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits_SUBTRACTED.fits')
+
 path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset.fits')
 path_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_Hbeta_line_offset.fits')
 path_OIII4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_4960_line_offset.fits')
@@ -82,21 +81,17 @@ line_Hbeta = 1.25 * integrate.simps(flux_Hbeta, axis=0)
 line_OIII4960 = 1.25 * integrate.simps(flux_OIII4960, axis=0)
 line_OIII5008 = 1.25 * integrate.simps(flux_OIII5008, axis=0)
 
+# Fig 1
 ConvertFits(filename='image_OOHbeta_fitline', table=np.log10(line_OIII5008 / line_OII))
-
 fig = plt.figure(figsize=(8, 8), dpi=300)
 path_lr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_lineratio.fits')
 gc = aplpy.FITSFigure(path_lr, figure=fig, north=True)
 gc.set_system_latex(True)
 gc.show_colorscale(vmin=-1, vmax=2, cmap=sequential_s.Buda_8.mpl_colormap)
 gc.add_colorbar()
-# gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
 gc.ticks.set_length(30)
 gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
                 linewidths=0.5, s=250)
-# gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-# gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
-# gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
 gc.colorbar.set_location('bottom')
 gc.colorbar.set_pad(0.)
 gc.colorbar.set_axis_label_text(r'$\mathrm{log[O \, III] / [O \, II]}$')
@@ -111,6 +106,7 @@ gc.tick_labels.hide()
 gc.axis_labels.hide()
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatioMap_OIII_OII.png', bbox_inches='tight')
 
+# Fig 2
 ConvertFits(filename='image_OOHbeta_fitline', table=np.log10(line_OIII5008 / line_Hbeta))
 fig = plt.figure(figsize=(8, 8), dpi=300)
 path_lr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_lineratio.fits')
@@ -118,13 +114,9 @@ gc = aplpy.FITSFigure(path_lr, figure=fig, north=True)
 gc.set_system_latex(True)
 gc.show_colorscale(vmin=-1, vmax=2, cmap=sequential_s.Buda_8.mpl_colormap)
 gc.add_colorbar()
-# gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
 gc.ticks.set_length(30)
 gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
                 linewidths=0.5, s=250)
-# gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-# gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
-# gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
 gc.colorbar.set_location('bottom')
 gc.colorbar.set_pad(0.)
 gc.colorbar.set_axis_label_text(r'$\mathrm{log[O \, III] / H \, \beta}$')
@@ -138,6 +130,76 @@ gc.ticks.hide()
 gc.tick_labels.hide()
 gc.axis_labels.hide()
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatioMap_OIII_Hbeta.png', bbox_inches='tight')
+
+# Compared with the fitted result
+line = 'OOHbeta'
+path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                             'fit' + line + '_info_aperture_1.0.fits')
+path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+                                 'fit' + line + '_info_err_aperture_1.0.fits')
+fit_info = fits.getdata(path_fit_info, 0, ignore_missing_end=True)
+fit_info_err = fits.getdata(path_fit_info_err, 0, ignore_missing_end=True)
+
+
+[z_fit, r_fit, fit_success, sigma_fit, flux_fit_OII, flux_fit_Hbeta, flux_fit_OIII5008, a_fit_OII, a_fit_Hbeta,
+ a_fit_OIII4960, a_fit_OIII5008, b_fit_OII, b_fit_Hbeta, b_fit_OIII4960, b_fit_OIII5008] = fit_info
+[dz_fit, dr_fit, dsigma_fit, dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII5008, da_fit_OII, da_fit_Hbeta,
+ da_fit_OIII4960, da_fit_OIII5008, db_fit_OII, db_fit_Hbeta, db_fit_OIII4960, db_fit_OIII5008] = fit_info_err
+
+line_OII_fitted = 1.25 * flux_fit_OII
+line_Hbeta_fitted = 1.25 * flux_fit_Hbeta
+line_OIII4960_fitted = 1.25 * flux_fit_OIII5008 / 3
+line_OIII5008_fitted = 1.25 * flux_fit_OIII5008
+
+# Fig 3
+ConvertFits(filename='image_OOHbeta_fitline', table=np.log10(line_OIII5008_fitted / line_OII_fitted))
+fig = plt.figure(figsize=(8, 8), dpi=300)
+path_lr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_lineratio.fits')
+gc = aplpy.FITSFigure(path_lr, figure=fig, north=True)
+gc.set_system_latex(True)
+gc.show_colorscale(vmin=-1, vmax=2, cmap=sequential_s.Buda_8.mpl_colormap)
+gc.add_colorbar()
+gc.ticks.set_length(30)
+gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
+                linewidths=0.5, s=250)
+gc.colorbar.set_location('bottom')
+gc.colorbar.set_pad(0.)
+gc.colorbar.set_axis_label_text(r'$\mathrm{log[O \, III] / [O \, II]}$')
+gc.colorbar.set_font(size=15)
+gc.colorbar.set_axis_label_font(size=15)
+gc.add_scalebar(length=15 * u.arcsecond)
+gc.scalebar.set_corner('top left')
+gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+gc.scalebar.set_font_size(15)
+gc.ticks.hide()
+gc.tick_labels.hide()
+gc.axis_labels.hide()
+fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatioMap_OIII_OII_fitted.png', bbox_inches='tight')
+
+# Fig 4
+ConvertFits(filename='image_OOHbeta_fitline', table=np.log10(line_OIII5008_fitted / line_Hbeta_fitted))
+fig = plt.figure(figsize=(8, 8), dpi=300)
+path_lr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_lineratio.fits')
+gc = aplpy.FITSFigure(path_lr, figure=fig, north=True)
+gc.set_system_latex(True)
+gc.show_colorscale(vmin=-1, vmax=2, cmap=sequential_s.Buda_8.mpl_colormap)
+gc.add_colorbar()
+gc.ticks.set_length(30)
+gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
+                linewidths=0.5, s=250)
+gc.colorbar.set_location('bottom')
+gc.colorbar.set_pad(0.)
+gc.colorbar.set_axis_label_text(r'$\mathrm{log[O \, III] / H \, \beta}$')
+gc.colorbar.set_font(size=15)
+gc.colorbar.set_axis_label_font(size=15)
+gc.add_scalebar(length=15 * u.arcsecond)
+gc.scalebar.set_corner('top left')
+gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+gc.scalebar.set_font_size(15)
+gc.ticks.hide()
+gc.tick_labels.hide()
+gc.axis_labels.hide()
+fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatioMap_OIII_Hbeta_fitted.png', bbox_inches='tight')
 
 
 # Calculate line ratio in sample region
@@ -178,6 +240,22 @@ for i in range(len(ra_array)):
     OIII_Hbeta_array[i] = line_OIII5008_i / line_Hbeta_i
     OIII_Hbeta_err_array[i] = (line_OIII5008_i / line_Hbeta_i) *\
                             np.sqrt((error_OIII5008_i / line_OIII5008_i) ** 2 + (error_Hbeta_i / line_Hbeta_i) ** 2)
+# Load fitted result
+path_fit_info_sr= os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'line_profile_selected_region.fits')
+data_fit_info_sr = fits.getdata(path_fit_info_sr, 0, ignore_missing_end=True)
+flux_OII_sr, flux_Hbeta_sr, flux_OIII5008_sr = data_fit_info_sr[:, 0], data_fit_info_sr[:, 1], data_fit_info_sr[:, 2]
+dflux_OII_sr, dflux_Hbeta_sr, dflux_OIII5008_sr = data_fit_info_sr[:, 3], data_fit_info_sr[:, 4], data_fit_info_sr[:, 5]
+
+# Fitted result
+OIII_Hbeta_fitted = flux_OIII5008_sr / flux_Hbeta_sr
+OIII_Hbeta_err_fitted = (flux_OIII5008_sr / flux_Hbeta_sr) *\
+                            np.sqrt((dflux_OIII5008_sr / flux_OIII5008_sr) ** 2 + (dflux_Hbeta_sr / flux_Hbeta_sr) ** 2)
+OIII_Hbeta_err_fitted_log = OIII_Hbeta_err_fitted / np.log(10) / OIII_Hbeta_fitted
+
+OIII_OII_fitted = flux_OIII5008_sr / flux_OII_sr
+OIII_OII_err_fitted = (flux_OIII5008_sr / flux_OII_sr) *\
+                            np.sqrt((dflux_OIII5008_sr / flux_OIII5008_sr) ** 2 + (dflux_OII_sr / flux_OII_sr) ** 2)
+OIII_OII_err_fitted_log = OIII_OII_err_fitted / np.log(10) / OIII_OII_fitted
 
 # Load grid
 path_df = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
@@ -198,6 +276,7 @@ OIII_OII_df_mat, OIII_OII_dy_mat = OIII_OII_df.reshape((4, 13)), OIII_OII_dy.res
 
 fig, axarr = plt.subplots(1, 2, figsize=(12, 6), dpi=300, sharex=True, sharey=True)
 fig.subplots_adjust(wspace=0)
+
 # Fill between
 x_1, x_2 = np.log10(OIII_Hbeta_df_mat), np.log10(OIII_Hbeta_dy_mat)
 y_1, y_2 = np.log10(OIII_OII_df_mat), np.log10(OIII_OII_dy_mat)
@@ -218,20 +297,23 @@ axarr[1].fill(np.hstack((x_2_sort[2, 2:], x_2_sort[3, ::-1][2:])), np.hstack((y_
               color='red', alpha=0.6)
 
 # Plot Data
-# axarr[0].plot(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), '.', color='blue', ms=5)
-# axarr[1].plot(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), '.', color='blue', ms=5)
 OIII_Hbeta_err_array_log = OIII_Hbeta_err_array / np.log(10) / OIII_Hbeta_array
 OIII_OII_err_array_log = OIII_OII_err_array / np.log(10) / OIII_OII_array
 OIII_Hbeta_sigma = OIII_array / Hbeta_sigma_array
 OIII_Hbeta_3sigma_err = (OIII_array / (3 * Hbeta_sigma_array)) - OIII_Hbeta_sigma
 OIII_Hbeta_3sigma_err_log = OIII_Hbeta_3sigma_err / np.log(10) / OIII_Hbeta_sigma
+
 axarr[0].errorbar(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), yerr=OIII_OII_err_array_log,
                   xerr=OIII_Hbeta_err_array_log, fmt='.k', capsize=2, elinewidth=1, mfc='k', ms=10)
-axarr[0].errorbar(np.log10(OIII_Hbeta_sigma)[-1], np.log10(OIII_OII_array)[-1],
-                  yerr=OIII_OII_err_array_log[-1], xerr=OIII_Hbeta_3sigma_err_log[-1], fmt='.k',
-                  capsize=2, elinewidth=1, mfc='red', ms=10)
+axarr[0].errorbar(np.log10(OIII_Hbeta_fitted), np.log10(OIII_OII_fitted), yerr=OIII_OII_err_fitted_log,
+                  xerr=OIII_Hbeta_err_fitted_log, fmt='.k', capsize=2, elinewidth=1, mfc='orange', ms=10)
+# axarr[0].errorbar(np.log10(OIII_Hbeta_sigma)[-1], np.log10(OIII_OII_array)[-1],
+#                   yerr=OIII_OII_err_array_log[-1], xerr=OIII_Hbeta_3sigma_err_log[-1], fmt='.k',
+#                   capsize=2, elinewidth=1, mfc='red', ms=10)
 axarr[1].errorbar(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), yerr=OIII_OII_err_array_log,
                   xerr=OIII_Hbeta_err_array_log, fmt='.k', capsize=2, elinewidth=1, mfc='k', ms=10)
+axarr[1].errorbar(np.log10(OIII_Hbeta_fitted), np.log10(OIII_OII_fitted), yerr=OIII_OII_err_fitted_log,
+                  xerr=OIII_Hbeta_err_fitted_log, fmt='.k', capsize=2, elinewidth=1, mfc='orange', ms=10)
 # axarr[0].plot(np.log10(OIII_Hbeta_df), np.log10(OIII_OII_df), '.r', ms=3)
 axarr[0].plot(np.log10(OIII_Hbeta_df_mat), np.log10(OIII_OII_df_mat), '-', color='grey', lw=1, alpha=0.3)
 # axarr[1].plot(np.log10(OIII_Hbeta_dy), np.log10(OIII_OII_dy), '.r', ms=3)
@@ -252,5 +334,4 @@ axarr[1].tick_params(axis='both', which='minor', direction='in', top='on', botto
 # axarr[0].set_xlim(-0.2, 1.7)
 # axarr[0].set_ylim(-1.2, 1.2)
 plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatio_region.png', bbox_inches='tight')
-
 
