@@ -5,13 +5,9 @@ import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
-from matplotlib import cm
-from astropy.table import Table
-from PyAstronomy import pyasl
+from astropy import units as u
 from muse_compare_z import compare_z
 from astropy.convolution import convolve
-from astropy import units as u
-from astropy.cosmology import FlatLambdaCDM
 from astropy.convolution import Gaussian2DKernel
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -19,6 +15,7 @@ mpl.rcParams['xtick.direction'] = 'in'
 mpl.rcParams['ytick.direction'] = 'in'
 mpl.rcParams['xtick.major.size'] = 10
 mpl.rcParams['ytick.major.size'] = 10
+
 
 # Convert Fits file into correct form
 def ConvertFits(filename=None, smooth=True):
@@ -41,6 +38,7 @@ def ConvertFits(filename=None, smooth=True):
 
     # Rescale the data by 1e17
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data1 * 1e17, hdr1, overwrite=True)
+
 
 ConvertFits(filename='image_OII_line_SB_offset', smooth=False)
 ConvertFits(filename='image_OIII_5008_line_SB_offset', smooth=False)
@@ -84,7 +82,7 @@ gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
 gc.show_contour(path_OII_SB, levels=[0.35, 0.5, 1.0, 4], colors='blue', linewidths=1, smooth=3)
 gc.show_contour(path_OIII_SB, levels=[0.35, 0.5, 1.0, 4], colors='red', linewidths=1, smooth=3)
-gc.recenter(40.1359, -18.8643, width=40 / 3600, height=40 / 3600) # 0.02 / 0.01 40''
+gc.recenter(40.1359, -18.8643, width=40 / 3600, height=40 / 3600)  # 0.02 / 0.01 40''
 gc.set_system_latex(True)
 gc.show_colorscale(cmap='Greys')
 gc.add_colorbar()

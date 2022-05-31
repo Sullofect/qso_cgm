@@ -125,8 +125,8 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.add_colorbar()
     # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
-    gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
-                    linewidths=0.5, s=250)
+    gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='red', edgecolors='k',
+                    linewidths=0.5, s=400)
     gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
     gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
@@ -173,8 +173,8 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.add_colorbar()
     # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
-    gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='none', edgecolors='k',
-                    linewidths=0.5, s=250)
+    gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='red', edgecolors='k',
+                    linewidths=0.5, s=400)
     # gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
     # gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')

@@ -156,7 +156,7 @@ for i in range(len(ra_array)):
     spec_model = lmfit.Model(model_all, missing='drop')
     result = spec_model.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters,
                             weights=1 / flux_err_all)
-    
+
     # Load fitted result
     z, dz = result.best_values['z'], result.params['z'].stderr
     sigma, dsigma = result.best_values['sigma_kms'], result.params['sigma_kms'].stderr

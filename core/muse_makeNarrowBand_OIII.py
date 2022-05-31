@@ -105,10 +105,10 @@ for i in range(6):
     gc.add_colorbar()
     # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
-    gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='none', edgecolors='k', linewidths=0.5,
-                    s=250)
+    gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='red', edgecolors='k', linewidths=0.5,
+                    s=400)
     # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-    gc.show_regions('/Users/lzq/Dropbox/Data/CGM/gas_list.reg')
+    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/gas_list.reg', edgecolor='k')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.0)
     gc.colorbar.set_ticks([2, 4, 6, 8, 10])
