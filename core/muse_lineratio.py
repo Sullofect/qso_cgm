@@ -299,19 +299,45 @@ axarr[1].fill(np.hstack((x_2_sort[2, 2:], x_2_sort[3, ::-1][2:])), np.hstack((y_
 # Plot Data
 OIII_Hbeta_err_array_log = OIII_Hbeta_err_array / np.log(10) / OIII_Hbeta_array
 OIII_OII_err_array_log = OIII_OII_err_array / np.log(10) / OIII_OII_array
-OIII_Hbeta_sigma = OIII_array / Hbeta_sigma_array
-OIII_Hbeta_3sigma_err = (OIII_array / (3 * Hbeta_sigma_array)) - OIII_Hbeta_sigma
-OIII_Hbeta_3sigma_err_log = OIII_Hbeta_3sigma_err / np.log(10) / OIII_Hbeta_sigma
+OIII_Hbeta_3sigma = OIII_array / (3 * Hbeta_sigma_array)
+OIII_Hbeta_3sigma_fitted = flux_OIII5008_sr / (3 * dflux_Hbeta_sr)
+# OIII_Hbeta_3sigma_err = (OIII_array / (3 * Hbeta_sigma_array)) - OIII_Hbeta_3sigma
+# OIII_Hbeta_3sigma_err_log = OIII_Hbeta_3sigma_err / np.log(10) / OIII_Hbeta_3sigma
+print(OIII_Hbeta_array)
+for i, ival in enumerate(OIII_Hbeta_array):
+    axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_array)[i] + 0.1, np.log10(OIII_OII_array)[i] - 0.8),
+                      size=10, color='red', verticalalignment='top', horizontalalignment='right')
+    axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_fitted)[i] + 0.1, np.log10(OIII_OII_fitted)[i] - 0.8),
+                      size=10, color='orange', verticalalignment='top', horizontalalignment='right')
+    if ival <= 0:
+        axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_3sigma)[i] + 0.1, np.log10(OIII_OII_array)[i] - 0.8) ,
+                          color='red', size=10, verticalalignment='top', horizontalalignment='right')
+        axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_3sigma_fitted)[i] + 0.1,
+                                             np.log10(OIII_OII_fitted)[i] - 0.8),
+                          color='orange', size=10, verticalalignment='top', horizontalalignment='right')
+        axarr[0].errorbar(np.log10(OIII_Hbeta_3sigma)[i], np.log10(OIII_OII_array)[i], fmt='.k', capsize=2,
+                          elinewidth=1, mfc='red', xuplims=True, ms=10, yerr=OIII_OII_err_array_log[i],
+                          xerr=[[0.0], [0]])
+        axarr[0].errorbar(np.log10(OIII_Hbeta_3sigma_fitted)[i], np.log10(OIII_OII_fitted)[i], fmt='.k', capsize=2,
+                          elinewidth=1, mfc='orange', xuplims=True, ms=10, yerr=OIII_OII_err_fitted_log[i],
+                          xerr=[[0.0], [0]])
+        axarr[0].arrow(np.log10(OIII_Hbeta_3sigma)[i], np.log10(OIII_OII_array)[i], dx=-0.5, dy=0,
+                       facecolor='red', width=0.005, head_width=0.05, head_length=0.08)
+        axarr[0].arrow(np.log10(OIII_Hbeta_3sigma_fitted)[i], np.log10(OIII_OII_fitted)[i], dx=-0.5, dy=0,
+                       facecolor='orange', width=0.005, head_width=0.05, head_length=0.08)
+        # axarr[1].errorbar(np.log10(OIII_Hbeta_3sigma)[i], np.log10(OIII_OII_array)[i], fmt='.k', capsize=2,
+        #                   elinewidth=1, mfc='red', xuplims=True, ms=10, yerr=OIII_OII_err_array_log[i],
+        #                   xerr=[[0.5], [0]])
+
 
 axarr[0].errorbar(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), yerr=OIII_OII_err_array_log,
-                  xerr=OIII_Hbeta_err_array_log, fmt='.k', capsize=2, elinewidth=1, mfc='k', ms=10)
+                  xerr=OIII_Hbeta_err_array_log, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
 axarr[0].errorbar(np.log10(OIII_Hbeta_fitted), np.log10(OIII_OII_fitted), yerr=OIII_OII_err_fitted_log,
                   xerr=OIII_Hbeta_err_fitted_log, fmt='.k', capsize=2, elinewidth=1, mfc='orange', ms=10)
-# axarr[0].errorbar(np.log10(OIII_Hbeta_sigma)[-1], np.log10(OIII_OII_array)[-1],
-#                   yerr=OIII_OII_err_array_log[-1], xerr=OIII_Hbeta_3sigma_err_log[-1], fmt='.k',
-#                   capsize=2, elinewidth=1, mfc='red', ms=10)
+
+
 axarr[1].errorbar(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), yerr=OIII_OII_err_array_log,
-                  xerr=OIII_Hbeta_err_array_log, fmt='.k', capsize=2, elinewidth=1, mfc='k', ms=10)
+                  xerr=OIII_Hbeta_err_array_log, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
 axarr[1].errorbar(np.log10(OIII_Hbeta_fitted), np.log10(OIII_OII_fitted), yerr=OIII_OII_err_fitted_log,
                   xerr=OIII_Hbeta_err_fitted_log, fmt='.k', capsize=2, elinewidth=1, mfc='orange', ms=10)
 # axarr[0].plot(np.log10(OIII_Hbeta_df), np.log10(OIII_OII_df), '.r', ms=3)
