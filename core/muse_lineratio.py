@@ -307,27 +307,37 @@ print(OIII_Hbeta_array)
 for i, ival in enumerate(OIII_Hbeta_array):
     axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_array)[i] + 0.1, np.log10(OIII_OII_array)[i] - 0.8),
                       size=10, color='red', verticalalignment='top', horizontalalignment='right')
-    axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_fitted)[i] + 0.1, np.log10(OIII_OII_fitted)[i] - 0.8),
-                      size=10, color='orange', verticalalignment='top', horizontalalignment='right')
     if ival <= 0:
         axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_3sigma)[i] + 0.1, np.log10(OIII_OII_array)[i] - 0.8) ,
                           color='red', size=10, verticalalignment='top', horizontalalignment='right')
-        axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_3sigma_fitted)[i] + 0.1,
-                                             np.log10(OIII_OII_fitted)[i] - 0.8),
-                          color='orange', size=10, verticalalignment='top', horizontalalignment='right')
         axarr[0].errorbar(np.log10(OIII_Hbeta_3sigma)[i], np.log10(OIII_OII_array)[i], fmt='.k', capsize=2,
                           elinewidth=1, mfc='red', xuplims=True, ms=10, yerr=OIII_OII_err_array_log[i],
                           xerr=[[0.0], [0]])
+        axarr[0].arrow(np.log10(OIII_Hbeta_3sigma)[i], np.log10(OIII_OII_array)[i], dx=-0.5, dy=0,
+                       facecolor='red', width=0.005, head_width=0.05, head_length=0.08)
+        axarr[1].errorbar(np.log10(OIII_Hbeta_3sigma)[i], np.log10(OIII_OII_array)[i], fmt='.k', capsize=2,
+                          elinewidth=1, mfc='red', xuplims=True, ms=10, yerr=OIII_OII_err_array_log[i],
+                          xerr=[[0.0], [0]])
+        axarr[1].arrow(np.log10(OIII_Hbeta_3sigma)[i], np.log10(OIII_OII_array)[i], dx=-0.5, dy=0,
+                       facecolor='red', width=0.005, head_width=0.05, head_length=0.08)
+
+for i, ival in enumerate(OIII_Hbeta_fitted):
+    axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_fitted)[i] + 0.1, np.log10(OIII_OII_fitted)[i] - 0.8),
+                      size=10, color='orange', verticalalignment='top', horizontalalignment='right')
+    if ival <= 0:
+        axarr[0].annotate(text_array[i], xy=(np.log10(OIII_Hbeta_3sigma_fitted)[i] + 0.1,
+                                             np.log10(OIII_OII_fitted)[i] - 0.8),
+                          color='orange', size=10, verticalalignment='top', horizontalalignment='right')
         axarr[0].errorbar(np.log10(OIII_Hbeta_3sigma_fitted)[i], np.log10(OIII_OII_fitted)[i], fmt='.k', capsize=2,
                           elinewidth=1, mfc='orange', xuplims=True, ms=10, yerr=OIII_OII_err_fitted_log[i],
                           xerr=[[0.0], [0]])
-        axarr[0].arrow(np.log10(OIII_Hbeta_3sigma)[i], np.log10(OIII_OII_array)[i], dx=-0.5, dy=0,
-                       facecolor='red', width=0.005, head_width=0.05, head_length=0.08)
         axarr[0].arrow(np.log10(OIII_Hbeta_3sigma_fitted)[i], np.log10(OIII_OII_fitted)[i], dx=-0.5, dy=0,
                        facecolor='orange', width=0.005, head_width=0.05, head_length=0.08)
-        # axarr[1].errorbar(np.log10(OIII_Hbeta_3sigma)[i], np.log10(OIII_OII_array)[i], fmt='.k', capsize=2,
-        #                   elinewidth=1, mfc='red', xuplims=True, ms=10, yerr=OIII_OII_err_array_log[i],
-        #                   xerr=[[0.5], [0]])
+        axarr[1].errorbar(np.log10(OIII_Hbeta_3sigma_fitted)[i], np.log10(OIII_OII_fitted)[i], fmt='.k', capsize=2,
+                          elinewidth=1, mfc='orange', xuplims=True, ms=10, yerr=OIII_OII_err_fitted_log[i],
+                          xerr=[[0.0], [0]])
+        axarr[1].arrow(np.log10(OIII_Hbeta_3sigma_fitted)[i], np.log10(OIII_OII_fitted)[i], dx=-0.5, dy=0,
+                       facecolor='orange', width=0.005, head_width=0.05, head_length=0.08)
 
 
 axarr[0].errorbar(np.log10(OIII_Hbeta_array), np.log10(OIII_OII_array), yerr=OIII_OII_err_array_log,
@@ -357,7 +367,7 @@ axarr[1].tick_params(axis='both', which='major', direction='in', top='on', botto
                      labelsize=20, size=5)
 axarr[1].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
                      size=3)
-# axarr[0].set_xlim(-0.2, 1.7)
-# axarr[0].set_ylim(-1.2, 1.2)
+axarr[0].set_xlim(-0.6, 1.4)
+axarr[0].set_ylim(-2, 1)
 plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatio_region.png', bbox_inches='tight')
 
