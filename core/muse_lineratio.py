@@ -201,8 +201,25 @@ gc.tick_labels.hide()
 gc.axis_labels.hide()
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatioMap_OIII_Hbeta_fitted.png', bbox_inches='tight')
 
-
 # Calculate line ratio in sample region
+
+# Load background variance estimate
+path_bg_wave = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'bg_wave_info.fits')
+path_bg_std = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'bg_std_info.fits')
+bg_wave = fits.getdata(path_bg_wave, 0, ignore_missing_end=True)
+bg_std, bg_mad_std = fits.getdata(path_bg_std, 0, ignore_missing_end=True)[0], \
+                     fits.getdata(path_bg_std, 0, ignore_missing_end=True)[1]
+Hbeta_intersect, bg_wave_ind, Hbeta_wave_ind = np.intersect1d(bg_wave, cube_Hbeta.wave.coord(), return_indices=True)
+Hbeta_bg_std = bg_std[bg_wave_ind]
+Hbeta_bg_mad_std = bg_mad_std[bg_wave_ind]
+print(Hbeta_bg_std)
+print(Hbeta_bg_mad_std)
+print(np.sqrt(cube_Hbeta[:, 10, 10].var) * 1e-3)
+plt.figure()
+plt.plot(bg_wave[bg_wave_ind], Hbeta_bg_std, '-b')
+plt.plot(bg_wave[bg_wave_ind], np.sqrt(cube_Hbeta[:, 10, 10].var) * 1e-3, '-r')
+plt.show()
+
 OIII_OII_array, OIII_OII_err_array = np.zeros(len(ra_array)), np.zeros(len(ra_array))
 OIII_Hbeta_array, OIII_Hbeta_err_array = np.zeros(len(ra_array)), np.zeros(len(ra_array))
 OIII_array, Hbeta_sigma_array = np.zeros(len(ra_array)), np.zeros(len(ra_array))
@@ -220,12 +237,16 @@ for i in range(len(ra_array)):
     flux_all = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
     flux_err_all = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
+    # redefine Hbeta error
+    # flux_Hbeta_err_i = np.sqrt(flux_Hbeta_err_i ** 2 + Hbeta_bg_mad_std ** 2)
+
     # Direct integrations
     line_OII_i = 1.25 * integrate.simps(flux_OII_i)
     line_Hbeta_i = 1.25 * integrate.simps(flux_Hbeta_i)
     line_OIII4960_i = 1.25 * integrate.simps(flux_OIII4960_i)
     line_OIII5008_i = 1.25 * integrate.simps(flux_OIII5008_i)
     OIII_array[i] = line_OIII5008_i
+
     # Error
     error_OII_i = np.sqrt(1.25 * integrate.simps(flux_OII_err_i ** 2))
     error_Hbeta_i = np.sqrt(1.25 * integrate.simps(flux_Hbeta_err_i ** 2))
@@ -236,15 +257,18 @@ for i in range(len(ra_array)):
     Hbeta_sigma_array[i] = error_Hbeta_i
     OIII_OII_array[i] = line_OIII5008_i / line_OII_i
     OIII_OII_err_array[i] = (line_OIII5008_i / line_OII_i) *\
-                            np.sqrt((error_OIII5008_i / line_OIII5008_i) ** 2 + (error_OII_i / line_OII_i) ** 2)
+                             np.sqrt((error_OIII5008_i / line_OIII5008_i) ** 2 + (error_OII_i / line_OII_i) ** 2)
     OIII_Hbeta_array[i] = line_OIII5008_i / line_Hbeta_i
     OIII_Hbeta_err_array[i] = (line_OIII5008_i / line_Hbeta_i) *\
-                            np.sqrt((error_OIII5008_i / line_OIII5008_i) ** 2 + (error_Hbeta_i / line_Hbeta_i) ** 2)
+                              np.sqrt((error_OIII5008_i / line_OIII5008_i) ** 2 + (error_Hbeta_i / line_Hbeta_i) ** 2)
 # Load fitted result
-path_fit_info_sr= os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'line_profile_selected_region.fits')
+path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'line_profile_selected_region.fits')
 data_fit_info_sr = fits.getdata(path_fit_info_sr, 0, ignore_missing_end=True)
 flux_OII_sr, flux_Hbeta_sr, flux_OIII5008_sr = data_fit_info_sr[:, 0], data_fit_info_sr[:, 1], data_fit_info_sr[:, 2]
 dflux_OII_sr, dflux_Hbeta_sr, dflux_OIII5008_sr = data_fit_info_sr[:, 3], data_fit_info_sr[:, 4], data_fit_info_sr[:, 5]
+
+# Redefine Hbeta error
+# dflux_Hbeta_sr = np.sqrt(dflux_Hbeta_sr ** 2 + (1.25 * integrate.simps(Hbeta_bg_mad_std ** 2)))
 
 # Fitted result
 OIII_Hbeta_fitted = flux_OIII5008_sr / flux_Hbeta_sr
