@@ -209,15 +209,20 @@ path_bg_std = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'bg
 bg_wave = fits.getdata(path_bg_wave, 0, ignore_missing_end=True)
 bg_std, bg_mad_std = fits.getdata(path_bg_std, 0, ignore_missing_end=True)[0], \
                      fits.getdata(path_bg_std, 0, ignore_missing_end=True)[1]
+bg_median = fits.getdata(path_bg_std, 0, ignore_missing_end=True)[2]
 Hbeta_intersect, bg_wave_ind, Hbeta_wave_ind = np.intersect1d(bg_wave, cube_Hbeta.wave.coord(), return_indices=True)
 Hbeta_bg_std = bg_std[bg_wave_ind]
 Hbeta_bg_mad_std = bg_mad_std[bg_wave_ind]
+Hbeta_bg_median = bg_median[bg_wave_ind]
 print(Hbeta_bg_std)
 print(Hbeta_bg_mad_std)
 print(np.sqrt(cube_Hbeta[:, 10, 10].var) * 1e-3)
 plt.figure()
-plt.plot(bg_wave[bg_wave_ind], Hbeta_bg_std, '-b')
-plt.plot(bg_wave[bg_wave_ind], np.sqrt(cube_Hbeta[:, 10, 10].var) * 1e-3, '-r')
+# plt.plot(bg_wave[bg_wave_ind], Hbeta_bg_std, '-b')
+# plt.plot(bg_wave[bg_wave_ind], np.sqrt(cube_Hbeta[:, 10, 10].var) * 1e-3, '-r')
+plt.plot(bg_wave[bg_wave_ind], Hbeta_bg_median, '-b')
+plt.plot(bg_wave[bg_wave_ind], cube_Hbeta[:, 20, 20].data * 1e-3, '-r')
+plt.plot(bg_wave[bg_wave_ind], cube_Hbeta[:, 20, 20].data * 1e-3 - Hbeta_bg_median, '-k')
 plt.show()
 
 OIII_OII_array, OIII_OII_err_array = np.zeros(len(ra_array)), np.zeros(len(ra_array))
@@ -237,7 +242,8 @@ for i in range(len(ra_array)):
     flux_all = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
     flux_err_all = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
-    # redefine Hbeta error
+    # redefine Hbeta error or subtracted by median
+    flux_Hbeta_i = flux_Hbeta_i - Hbeta_bg_median
     # flux_Hbeta_err_i = np.sqrt(flux_Hbeta_err_i ** 2 + Hbeta_bg_mad_std ** 2)
 
     # Direct integrations
@@ -267,7 +273,8 @@ data_fit_info_sr = fits.getdata(path_fit_info_sr, 0, ignore_missing_end=True)
 flux_OII_sr, flux_Hbeta_sr, flux_OIII5008_sr = data_fit_info_sr[:, 0], data_fit_info_sr[:, 1], data_fit_info_sr[:, 2]
 dflux_OII_sr, dflux_Hbeta_sr, dflux_OIII5008_sr = data_fit_info_sr[:, 3], data_fit_info_sr[:, 4], data_fit_info_sr[:, 5]
 
-# Redefine Hbeta error
+# Redefine Hbeta error or subtracted by median
+flux_Hbeta_sr = flux_Hbeta_sr - (1.25 * integrate.simps(Hbeta_bg_median))
 # dflux_Hbeta_sr = np.sqrt(dflux_Hbeta_sr ** 2 + (1.25 * integrate.simps(Hbeta_bg_mad_std ** 2)))
 
 # Fitted result
@@ -393,5 +400,5 @@ axarr[1].tick_params(axis='both', which='minor', direction='in', top='on', botto
                      size=3)
 axarr[0].set_xlim(-0.6, 1.4)
 axarr[0].set_ylim(-2, 1)
-plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatio_region.png', bbox_inches='tight')
+plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatio_region_cor.png', bbox_inches='tight')
 

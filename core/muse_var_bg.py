@@ -40,6 +40,7 @@ ksel_OIII = np.where(data_seg_wl > 0)
 
 std_array = np.zeros(np.shape(cube)[0] - 1)
 mad_std_array = np.zeros(np.shape(cube)[0] - 1)
+median_array = np.zeros(np.shape(cube)[0] - 1)
 for i in range(np.shape(cube)[0] - 1):
     image = cube[i, :, :]
     image.mask_selection(ksel_wl)
@@ -52,9 +53,10 @@ for i in range(np.shape(cube)[0] - 1):
     # print(i)
     std_array[i] = np.nanstd(flux)
     mad_std_array[i] = mad_std(flux, ignore_nan=True)
+    median_array[i] = np.nanmedian(flux)
 
 print(len(wave[:-1]))
 print(len(std_array))
-bg_var_info = np.array([std_array, mad_std_array])
+bg_var_info = np.array([std_array, mad_std_array, median_array])
 fits.writeto('/Users/lzq/Dropbox/Data/CGM/bg_std_info.fits', bg_var_info, overwrite=True)
 fits.writeto('/Users/lzq/Dropbox/Data/CGM/bg_wave_info.fits', wave[:-1], overwrite=True)
