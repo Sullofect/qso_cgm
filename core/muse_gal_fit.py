@@ -3,6 +3,7 @@ import numpy as np
 import astropy.io.fits as fits
 import bagpipes as pipes
 from muse_compare_z import compare_z
+from muse_kc import app2abs
 from matplotlib import rc
 from PyAstronomy import pyasl
 from astropy.wcs import WCS
@@ -10,6 +11,10 @@ from astropy.wcs.utils import pixel_to_skycoord
 from astropy.io import ascii
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, '/Users/lzq/Dropbox/pyobs/')
+from kcorrect import apptoabs
 path_savetab = '/Users/lzq/Dropbox/Data/CGM_tables/'
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -160,6 +165,11 @@ flux_all = 10 ** ((23.9 - mag_all) / 2.5)  # microjanskys
 flux_all_err = flux_all * np.log(10) * dmag_all / 2.5
 flux_all_err = np.where(flux_all_err != 0, flux_all_err, 99)
 #
+
+print('M_abs is ', app2abs(m_app=mag_hst_dred[0], z=z_final[0], model='S0', filter_e='Bessell_B.dat',
+                           filter_o='ACS_f814W.dat'))
+
+print('M_abs_sean is ', apptoabs(mag_hst_dred[0], 'S0', 'Bessell_B', 'ACS_f814W', z_final[0]))
 
 for i in [93]:
     row_number = str(i)
