@@ -183,7 +183,7 @@ print('M_abs_sean is ', apptoabs(mag_hst_dred[0], 'S0', 'Bessell_B', 'ACS_f814W'
 # bad: 64
 # bad: 80 need Legacy Surveys g r z
 # bad: 81 still blended
-for i in [5, 6, 7]:
+for i in [5]:
     row_number = str(i)
     galaxy = pipes.galaxy(row_number, load_data, filt_list=np.loadtxt("filters/filters_list.txt", dtype="str"))
     # galaxy.plot()
