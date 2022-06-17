@@ -12,7 +12,6 @@ from astropy.io import ascii
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 import sys
-# insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '/Users/lzq/Dropbox/pyobs/')
 from kcorrect import apptoabs
 path_savetab = '/Users/lzq/Dropbox/Data/CGM_tables/'
@@ -57,9 +56,11 @@ print(ra_final)
 print(dec_final)
 
 # Getting photometry zero point
-path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'HE0238-1904_sex_test1.fits')
+path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'gal_81',
+                        'HE0238-1904_sex_gal_81.fits')
 data_pho = fits.getdata(path_pho, 1, ignore_missing_end=True)
-path_image = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'check_seg_test1.fits')
+path_image = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'gal_81',
+                          'check_seg_gal_81.fits')
 
 w_pho = WCS(fits.open(path_image)[2].header)
 catalog = pixel_to_skycoord(data_pho['X_IMAGE'], data_pho['Y_IMAGE'], w_pho)
@@ -124,8 +125,8 @@ have_des_pho = np.in1d(row_final, row_des)
 # print(col_ID[have_des_pho])
 
 # determine if blended or not
-mag_hst_dred = mag_iso_dred
-dmag_hst_dred = dmag_iso_dred + 0.1  # Add systematic error
+mag_hst_dred = mag_auto_dred
+dmag_hst_dred = dmag_auto_dred + 0.1
 
 offset = mag_i_dred - mag_hst_dred[col_ID[have_des_pho]]
 mag_g_dred -= offset
@@ -166,17 +167,12 @@ flux_all_err = flux_all * np.log(10) * dmag_all / 2.5
 flux_all_err = np.where(flux_all_err != 0, flux_all_err, 99)
 #
 
-# print('M_abs is ', app2abs(m_app=mag_hst_dred[0], z=z_final[0], model='S0', filter_e='Bessell_B.dat',
-#                            filter_o='ACS_f814W.dat'))
-#
-# print('M_abs_sean is ', apptoabs(mag_hst_dred[0], 'S0', 'Bessell_B', 'ACS_f814W', z_final[0]))
+print('M_abs is ', app2abs(m_app=mag_hst_dred[0], z=z_final[0], model='S0', filter_e='Bessell_B.dat',
+                           filter_o='ACS_f814W.dat'))
 
-M_abs_array = np.zeros(len(mag_hst_dred))
-for i in range(len(mag_hst_dred)):
-    M_abs_array[i] = app2abs(m_app=mag_hst_dred[i], z=z_final[i], model='Scd', filter_e='Bessell_B.dat',
-                             filter_o='ACS_f814W.dat')
-print(mag_hst_dred)
-print(M_abs_array)
+print('M_abs_sean is ', apptoabs(mag_hst_dred[0], 'S0', 'Bessell_B', 'ACS_f814W', z_final[0]))
+
+
 # Good: 1, 13, 35, 62, 78, 92, 164, 179: Done!
 # Good rerun: 120, 134, 141
 # Good but with iso: 4, 88, 162
@@ -188,7 +184,7 @@ print(M_abs_array)
 # bad: 64
 # bad: 80 need Legacy Surveys g r z
 # bad: 81 still blended
-for i in [4, 88, 162]:
+for i in [81]:
     row_number = str(i)
     galaxy = pipes.galaxy(row_number, load_data, filt_list=np.loadtxt("filters/filters_list.txt", dtype="str"))
     # galaxy.plot()
