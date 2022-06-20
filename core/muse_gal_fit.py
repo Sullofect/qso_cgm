@@ -24,15 +24,19 @@ rc('text', usetex=True)
 
 
 def load_data(row):
-    global ID_final, name_final, flux_all, flux_all_err
+    global ID_final, row_final, name_final, flux_all, flux_all_err, qls
     row_sort = np.where(row_final == float(row))
 
     flux = flux_all[row_sort][0]
     flux_err = flux_all_err[row_sort][0]
     phot = np.array([flux, flux_err]).T
-
-    path_spe = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
-                            row + '_' + str(ID_final[row_sort][0]) + '_' + name_final[row_sort][0] + '_spec1D.fits')
+    if qls is True:
+        path_spe = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting',
+                                'Subtracted_ESO_DEEP_offset_zapped_spec1D', row + '_' + str(ID_final[row_sort][0])
+                                + '_' + name_final[row_sort][0] + '_spec1D.fits')
+    elif qls is False:
+        path_spe = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
+                                row + '_' + str(ID_final[row_sort][0]) + '_' + name_final[row_sort][0] + '_spec1D.fits')
     spec = Table.read(path_spe)
     spec = spec[spec['mask'] == 1]
 
@@ -49,7 +53,7 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
     global mag_i_dred, mag_g_dred, mag_r_dred, mag_z_dred, mag_Y_dred, \
            dmag_i_dred, dmag_g_dred, dmag_r_dred, dmag_z_dred, dmag_Y_dred, \
            mag_iso_dred, dmag_iso_dred, mag_auto_dred,dmag_auto_dred, \
-           row_final, col_ID, z_final, ID_final, name_final, flux_all, flux_all_err
+           row_final, col_ID, z_final, ID_final, name_final, flux_all, flux_all_err, qls
 
     if flux_hst == 'iso':
         mag_hst_dred = mag_iso_dred
@@ -65,11 +69,11 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
     mag_z_dred -= offset
     mag_Y_dred -= offset
 
-    print(mag_g_dred)
-    print(mag_r_dred)
-    print(mag_i_dred)
-    print(mag_z_dred)
-    print(mag_Y_dred)
+    # print(mag_g_dred)
+    # print(mag_r_dred)
+    # print(mag_i_dred)
+    # print(mag_z_dred)
+    # print(mag_Y_dred)
 
     mag_all = np.zeros((len(row_final), 6))
     dmag_all = mag_all.copy()
@@ -102,8 +106,12 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
     #
     # print('M_abs_sean is ', apptoabs(mag_hst_dred[0], 'S0', 'Bessell_B', 'ACS_f814W', z_final[0]))
 
-    M_abs_array = np.zeros(len(mag_hst_dred))
-    for i in range(len(mag_hst_dred)):
+    M_abs_array = np.zeros(len(gal_num))
+    for i in range(len(gal_num)):
+        M_abs_array[i] = app2abs(m_app=mag_hst_dred[i], z=z_final[i], model='Scd', filter_e='Bessell_B',
+                                 filter_o='ACS_f814W')
+        M_abs_array[i] = app2abs(m_app=mag_hst_dred[i], z=z_final[i], model='Scd', filter_e='Bessell_B',
+                                 filter_o='ACS_f814W')
         M_abs_array[i] = app2abs(m_app=mag_hst_dred[i], z=z_final[i], model='Scd', filter_e='Bessell_B',
                                  filter_o='ACS_f814W')
     print(mag_hst_dred)
@@ -188,14 +196,16 @@ row_final = ggp_info[1]
 ID_final = ggp_info[2]
 z_final = ggp_info[3]
 name_final = ggp_info[5]
+ql_final = ggp_info[6]
 ra_final = ggp_info[7]
 dec_final = ggp_info[8]
 
-print(ID_final)
-print(z_final)
-print(name_final)
-print(ra_final)
-print(dec_final)
+# print(ID_final)
+# print(z_final)
+# print(name_final)
+# print(ra_final)
+# print(dec_final)
+# print(ql_final)
 
 # Getting photometry zero point
 path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'gal_all',
@@ -220,11 +230,20 @@ dmag_isocor = data_pho['MAGERR_ISOCOR']
 mag_auto = data_pho['MAG_AUTO']
 dmag_auto = data_pho['MAGERR_AUTO']
 
+# Add num=181 diffraction subtracted photometry
+ds_sort = np.where(row_final == 181)
+mag_iso[ds_sort] = 25.937 - 2.5 * np.log10(12.636047 - 6.021952)  # 181 total=12.636047, diffraction=6.021952
+mag_auto[ds_sort] = 25.937 - 2.5 * np.log10(12.636047 - 6.021952)
+
 # Extinction
 m_ex = 0.049
 mag_iso_dred = mag_iso - m_ex
 mag_isocor_dred = mag_isocor - m_ex
 mag_auto_dred = mag_auto - m_ex
+
+print(row_final)
+print(mag_iso_dred)
+print(mag_auto_dred)
 
 dmag_iso_dred = dmag_iso
 dmag_isocor_dred = dmag_isocor
@@ -271,10 +290,11 @@ have_des_pho = np.in1d(row_final, row_des)
 # Good but with iso and v_max=200: 36 : Done!
 # Good with more calibration: 57: Done!
 # Good with more calibration and isor: 82: Done!
-# Good but with Quasar light subtraction: 5, 6, 7, 83, 181 182
+# Good but with Quasar light subtraction: 5, 6, 7, 83, 181 182 : Done!
 # bad: 64: dont need separate script!: Done!
-# bad: 80 need Legacy Surveys g r z: dont need separate script!
-# bad: 81 still blended: dont need separate script!
+# bad: 80 need Legacy Surveys g r z: dont need separate script!: Done!
+# bad: 81 still blended: dont need separate script!: Done!
+
 
 # gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179],
 #         run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
@@ -282,5 +302,8 @@ have_des_pho = np.in1d(row_final, row_des)
 # gal_fit(gal_num=[20, 27, 93], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=200)
 # gal_fit(gal_num=[36], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=200)
 # gal_fit(gal_num=[57], run_name='Trial_5', flux_hst='auto', cal='2', v_min=50, v_max=200)
+# gal_fit(gal_num=[64], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+# gal_fit(gal_num=[80, 81], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[82], run_name='Trial_5', flux_hst='iso', cal='2', v_min=50, v_max=200)
-gal_fit(gal_num=[64], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+qls=True
+gal_fit(gal_num=[6, 7, 83, 181, 182], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
