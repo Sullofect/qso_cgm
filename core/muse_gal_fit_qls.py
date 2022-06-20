@@ -57,10 +57,11 @@ print(ra_final)
 print(dec_final)
 
 # Getting photometry zero point
-path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'HE0238-1904_sex_test1.fits')
+path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'gal_all',
+                        'HE0238-1904_sex_gal_all.fits')
 data_pho = fits.getdata(path_pho, 1, ignore_missing_end=True)
-path_image = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'check_seg_test1.fits')
-
+path_image = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'gal_all',
+                          'check_seg_gal_all.fits')
 w_pho = WCS(fits.open(path_image)[2].header)
 catalog = pixel_to_skycoord(data_pho['X_IMAGE'], data_pho['Y_IMAGE'], w_pho)
 c = SkyCoord(ra_final, dec_final, unit="deg")
@@ -99,7 +100,7 @@ Table_pho["Mag_isocor_dred"] = mag_isocor_dred
 Table_pho["Mag_auto_dred"] = mag_auto_dred
 ascii.write(Table_pho, path_savetab + 'check_photometry.csv', format='ecsv', overwrite=True)
 
-path_pho_des = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'des_dr2_galaxys_pho_2.fits')
+path_pho_des = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'des_dr2_galaxys_pho_final.fits')
 data_pho_des = fits.getdata(path_pho_des, 1, ignore_missing_end=True)
 
 row_des = data_pho_des['t1_id']
@@ -124,8 +125,8 @@ have_des_pho = np.in1d(row_final, row_des)
 # print(col_ID[have_des_pho])
 
 # determine if blended or not
-mag_hst_dred = mag_auto_dred
-dmag_hst_dred = dmag_auto_dred + 0.1
+mag_hst_dred = mag_iso_dred
+dmag_hst_dred = dmag_iso_dred + 0.1  # Add systematic error: 0.1 mag
 
 offset = mag_i_dred - mag_hst_dred[col_ID[have_des_pho]]
 mag_g_dred -= offset
@@ -166,24 +167,29 @@ flux_all_err = flux_all * np.log(10) * dmag_all / 2.5
 flux_all_err = np.where(flux_all_err != 0, flux_all_err, 99)
 #
 
-print('M_abs is ', app2abs(m_app=mag_hst_dred[0], z=z_final[0], model='S0', filter_e='Bessell_B.dat',
-                           filter_o='ACS_f814W.dat'))
+# print('M_abs is ', app2abs(m_app=mag_hst_dred[0], z=z_final[0], model='S0', filter_e='Bessell_B.dat',
+#                            filter_o='ACS_f814W.dat'))
+#
+# print('M_abs_sean is ', apptoabs(mag_hst_dred[0], 'S0', 'Bessell_B', 'ACS_f814W', z_final[0]))
 
-print('M_abs_sean is ', apptoabs(mag_hst_dred[0], 'S0', 'Bessell_B', 'ACS_f814W', z_final[0]))
-
-
+M_abs_array = np.zeros(len(mag_hst_dred))
+for i in range(len(mag_hst_dred)):
+    M_abs_array[i] = app2abs(m_app=mag_hst_dred[i], z=z_final[i], model='Scd', filter_e='Bessell_B.dat',
+                             filter_o='ACS_f814W.dat')
+print(mag_hst_dred)
+print(M_abs_array)
 # Good: 1, 13, 35, 62, 78, 92, 164, 179: Done!
-# Good rerun: 120, 134, 141
-# Good but with iso: 4, 88, 162
-# Good but with v_max=200: 20, 27, 93
-# Good but with iso and v_max=200: 36,
-# Good with more calibration: 57
-# Good with more calibration and isor: 82
+# Good rerun: 120, 134, 141: Done!
+# Good but with iso: 4, 88, 162 : Done!
+# Good but with v_max=200: 20, 27, 93 : Done!
+# Good but with iso and v_max=200: 36 : Done!
+# Good with more calibration: 57: Done!
+# Good with more calibration and isor: 82: Done!
 # Good but with Quasar light subtraction: 5, 6, 7, 83, 181 182
-# bad: 64
-# bad: 80 need Legacy Surveys g r z
-# bad: 81 still blended
-for i in [5]:
+# bad: 64: dont need separate script!
+# bad: 80 need Legacy Surveys g r z: dont need separate script!
+# bad: 81 still blended: dont need separate script!
+for i in [82]:
     row_number = str(i)
     galaxy = pipes.galaxy(row_number, load_data, filt_list=np.loadtxt("filters/filters_list.txt", dtype="str"))
     # galaxy.plot()

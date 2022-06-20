@@ -1,15 +1,13 @@
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 import astropy.units as u
 from scipy.interpolate import interp1d
 from scipy.integrate import simps, trapz
 from astropy.cosmology import FlatLambdaCDM
 
 
-
 def load_filter(filtername=None):
-    filter_info = np.loadtxt('/Users/lzq/Dropbox/Data/CGM/filters_kcor/' + filtername)
+    filter_info = np.loadtxt(os.environ['PYOBS'] + 'data/kcorrect/filters/' + filtername + '.dat')
     filter = np.zeros(len(filter_info[:, 0]), dtype={'names': ('wave', 'transmission'), 'formats': (float, float)})
     filter['wave'] = filter_info[:, 0]
     filter['transmission'] = filter_info[:, 1]
@@ -21,9 +19,6 @@ def rebin_filter(filter=None, wave_new=None):
     filter_rebinned = np.zeros(len(wave_new), dtype={'names':('wave', 'transmission'), 'formats':(float, float)})
     filter_rebinned['wave'] = wave_new
     filter_rebinned['transmission'] = filter_interp(wave_new)
-    # plt.plot(filter_rebinned['wave'], filter_rebinned['transmission'], '-')
-    # plt.xlim(filter['wave'].min(), filter['wave'].max())
-    # plt.show()
     return filter_rebinned
 
 
@@ -39,13 +34,10 @@ def rebin_filter_nu(filter=None, nu_new=None):
 def load_template(model=None):
     filename = os.environ['PYOBS'] + 'data/kcorrect/templates/' + model + '.npy'
     template = np.load(filename)
-
     return template
 
 
 def KC(z=None, model=None, filter_o=None, filter_e=None):
-    c_A = 2.9979e18
-
     # Load the filter and template
     filter_e_info = load_filter(filtername=filter_e)
     filter_o_info = load_filter(filtername=filter_o)
