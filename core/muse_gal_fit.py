@@ -55,6 +55,10 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
            mag_iso_dred, dmag_iso_dred, mag_auto_dred,dmag_auto_dred, \
            row_final, col_ID, z_final, ID_final, name_final, flux_all, flux_all_err, qls
 
+    # Combine photometry
+    col_ID = np.arange(len(row_final))
+    have_des_pho = np.in1d(row_final, row_des)
+
     if flux_hst == 'iso':
         mag_hst_dred = mag_iso_dred
         dmag_hst_dred = dmag_iso_dred + dflux_hst_sys  # Add systematic error: 0.1 mag
@@ -85,37 +89,24 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
     mag_all = np.where((mag_all != 0) * (mag_all != 99), mag_all, np.inf)
     dmag_all = np.where((dmag_all != 0) * (dmag_all != 99), dmag_all, 0)
 
-    # remove invalid entry
-    # bad Y band
+    # remove invalid entry bad Y band
     bad_Y = np.array([35, 93, 164])
     mask_Y = np.in1d(row_final, bad_Y)
     mag_all[col_ID[mask_Y], 5] = np.inf
     dmag_all[col_ID[mask_Y], 5] = 0
-    # print(row_final)
-    # print(col_ID[mask_Y])
-    # print(mag_all)
-    # print(dmag_all)
 
     flux_all = 10 ** ((23.9 - mag_all) / 2.5)  # microjanskys
     flux_all_err = flux_all * np.log(10) * dmag_all / 2.5
     flux_all_err = np.where(flux_all_err != 0, flux_all_err, 99)
-    #
 
-    # print('M_abs is ', app2abs(m_app=mag_hst_dred[0], z=z_final[0], model='S0', filter_e='Bessell_B.dat',
-    #                            filter_o='ACS_f814W.dat'))
-    #
-    # print('M_abs_sean is ', apptoabs(mag_hst_dred[0], 'S0', 'Bessell_B', 'ACS_f814W', z_final[0]))
-
-    M_abs_array = np.zeros(len(gal_num))
     for i in range(len(gal_num)):
-        M_abs_array[i] = app2abs(m_app=mag_hst_dred[i], z=z_final[i], model='Scd', filter_e='Bessell_B',
-                                 filter_o='ACS_f814W')
-        M_abs_array[i] = app2abs(m_app=mag_hst_dred[i], z=z_final[i], model='Scd', filter_e='Bessell_B',
-                                 filter_o='ACS_f814W')
-        M_abs_array[i] = app2abs(m_app=mag_hst_dred[i], z=z_final[i], model='Scd', filter_e='Bessell_B',
-                                 filter_o='ACS_f814W')
-    print(mag_hst_dred)
-    print(M_abs_array)
+        gal_num_sort = np.where(row_final == gal_num[i])
+        print(str(gal_num[i]), 'M_S0 is', str(app2abs(m_app=mag_hst_dred[gal_num_sort], z=z_final[gal_num_sort],
+                                              model='S0', filter_e='Bessell_B', filter_o='ACS_f814W')))
+        print(str(gal_num[i]), 'M_Scd is', str(app2abs(m_app=mag_hst_dred[gal_num_sort], z=z_final[gal_num_sort],
+                                               model='Scd', filter_e='Bessell_B', filter_o='ACS_f814W')))
+        print(str(gal_num[i]), 'M_irr is', str(app2abs(m_app=mag_hst_dred[gal_num_sort], z=z_final[gal_num_sort],
+                                               model='irregular', filter_e='Bessell_B', filter_o='ACS_f814W')))
     for i in gal_num:
         row_number = str(i)
         galaxy = pipes.galaxy(row_number, load_data, filt_list=np.loadtxt("filters/filters_list.txt", dtype="str"))
@@ -201,6 +192,7 @@ ra_final = ggp_info[7]
 dec_final = ggp_info[8]
 
 # print(ID_final)
+print(row_final)
 # print(z_final)
 # print(name_final)
 # print(ra_final)
@@ -241,24 +233,23 @@ mag_iso_dred = mag_iso - m_ex
 mag_isocor_dred = mag_isocor - m_ex
 mag_auto_dred = mag_auto - m_ex
 
-print(row_final)
-print(mag_iso_dred)
-print(mag_auto_dred)
-
 dmag_iso_dred = dmag_iso
 dmag_isocor_dred = dmag_isocor
 dmag_auto_dred = dmag_auto
 
-Table_pho = Table()
-Table_pho["Row"] = row_final
-Table_pho["Image Number"] = number
-Table_pho['Ra'] = ra_final
-Table_pho["Dec"] = dec_final
-Table_pho["Mag_iso_dred"] = mag_iso_dred
-Table_pho["Mag_isocor_dred"] = mag_isocor_dred
-Table_pho["Mag_auto_dred"] = mag_auto_dred
-ascii.write(Table_pho, path_savetab + 'check_photometry.csv', format='ecsv', overwrite=True)
+# Check photometry
+# Table_pho = Table()
+# Table_pho["Row"] = row_final
+# Table_pho["Image Number"] = number
+# Table_pho['Ra'] = ra_final
+# Table_pho["Dec"] = dec_final
+# Table_pho["Mag_iso_dred"] = mag_iso_dred
+# Table_pho["Mag_isocor_dred"] = mag_isocor_dred
+# Table_pho["Mag_auto_dred"] = mag_auto_dred
+# ascii.write(Table_pho, path_savetab + 'check_photometry.csv', format='ecsv', overwrite=True)
 
+
+# Load DES data
 path_pho_des = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'des_dr2_galaxys_pho_final.fits')
 data_pho_des = fits.getdata(path_pho_des, 1, ignore_missing_end=True)
 
@@ -276,13 +267,6 @@ dmag_z_dred = data_pho_des['magerr_auto_z']
 dmag_Y_dred = data_pho_des['magerr_auto_Y']
 
 
-# Combine photometry
-col_ID = np.arange(len(row_final))
-have_des_pho = np.in1d(row_final, row_des)
-# print(row_des)
-# print(row_final)
-# print(col_ID[have_des_pho])
-
 # Good: 1, 13, 35, 62, 78, 92, 164, 179: Done!
 # Good rerun: 120, 134, 141: Done!
 # Good but with iso: 4, 88, 162 : Done!
@@ -295,7 +279,7 @@ have_des_pho = np.in1d(row_final, row_des)
 # bad: 80 need Legacy Surveys g r z: dont need separate script!: Done!
 # bad: 81 still blended: dont need separate script!: Done!
 
-
+# qls=False
 # gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179],
 #         run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[4, 88, 162], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=1000)
@@ -306,4 +290,4 @@ have_des_pho = np.in1d(row_final, row_des)
 # gal_fit(gal_num=[80, 81], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[82], run_name='Trial_5', flux_hst='iso', cal='2', v_min=50, v_max=200)
 qls=True
-gal_fit(gal_num=[6, 7, 83, 181, 182], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+gal_fit(gal_num=[5, 6, 7, 83, 181, 182], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)

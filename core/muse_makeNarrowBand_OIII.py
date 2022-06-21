@@ -80,11 +80,11 @@ ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
 # dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
 #
-path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list.reg')
-ra_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 0]
-dec_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 1]
-radius_array = np.loadtxt(path_region, usecols=[0, 1, 2])[:, 2]
-text_array = np.loadtxt(path_region, dtype=str, usecols=[3])
+# path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list_revised.reg')
+# ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+# dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+# radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+# text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 for i in range(6):
     fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -105,8 +105,8 @@ for i in range(6):
     gc.add_colorbar()
     # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
-    gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='red', edgecolors='k', linewidths=0.5,
-                    s=400)
+    gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
+                    linewidths=0.5, s=400)
     # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/gas_list.reg', edgecolor='k')
     gc.colorbar.set_location('bottom')
