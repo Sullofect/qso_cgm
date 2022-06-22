@@ -71,7 +71,7 @@ dec_final = dec_final[select_gal]
 
 # Calculate the offset between MUSE and HST
 ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
-ra_qso_hst, dec_qso_hst = 40.1359, -18.8643
+ra_qso_hst, dec_qso_hst = 40.1359, -18.8643  # Wrong!!!
 # ra_final = ra_final - (ra_qso_hst - ra_qso_muse)  # Wrong!!!
 # dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 

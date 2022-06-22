@@ -8,7 +8,6 @@ from matplotlib import rc
 from PyAstronomy import pyasl
 from astropy.wcs import WCS
 from astropy.wcs.utils import pixel_to_skycoord
-from astropy.io import ascii
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 
@@ -24,7 +23,7 @@ rc('text', usetex=True)
 
 
 def load_data(row):
-    global ID_final, row_final, name_final, flux_all, flux_all_err, qls
+    global ID_final, row_final, name_final, flux_all, flux_all_err, qls, spectrum_exists
     row_sort = np.where(row_final == float(row))
 
     flux = flux_all[row_sort][0]
@@ -35,8 +34,9 @@ def load_data(row):
                                 'Subtracted_ESO_DEEP_offset_zapped_spec1D', row + '_' + str(ID_final[row_sort][0])
                                 + '_' + name_final[row_sort][0] + '_spec1D.fits')
     elif qls is False:
-        path_spe = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
-                                row + '_' + str(ID_final[row_sort][0]) + '_' + name_final[row_sort][0] + '_spec1D.fits')
+        path_spe = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting',
+                                'ESO_DEEP_offset_zapped_spec1D', row + '_' + str(ID_final[row_sort][0])
+                                + '_' + name_final[row_sort][0] + '_spec1D.fits')
     spec = Table.read(path_spe)
     spec = spec[spec['mask'] == 1]
 
@@ -45,7 +45,11 @@ def load_data(row):
     flux_err = spec['error'] * 1e-20
 
     spectrum = np.array([wave, flux, flux_err]).T
-    return spectrum, phot
+
+    if spectrum_exists is False:
+        return phot
+    elif spectrum_exists is True:
+        return spectrum, phot
 
 
 # determine if blended or not
@@ -53,7 +57,7 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
     global mag_i_dred, mag_g_dred, mag_r_dred, mag_z_dred, mag_Y_dred, \
            dmag_i_dred, dmag_g_dred, dmag_r_dred, dmag_z_dred, dmag_Y_dred, \
            mag_iso_dred, dmag_iso_dred, mag_auto_dred,dmag_auto_dred, \
-           row_final, col_ID, z_final, ID_final, name_final, flux_all, flux_all_err, qls
+           row_final, col_ID, z_final, ID_final, name_final, flux_all, flux_all_err, qls, spectrum_exists
 
     # Combine photometry
     col_ID = np.arange(len(row_final))
@@ -109,7 +113,8 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
                                                model='irregular', filter_e='Bessell_B', filter_o='ACS_f814W')))
     for i in gal_num:
         row_number = str(i)
-        galaxy = pipes.galaxy(row_number, load_data, filt_list=np.loadtxt("filters/filters_list.txt", dtype="str"))
+        galaxy = pipes.galaxy(row_number, load_data, spectrum_exists=spectrum_exists,
+                              filt_list=np.loadtxt("filters/filters_list.txt", dtype="str"))
         # galaxy.plot()
 
         exp = {}  # Tau-model star-formation history component
@@ -183,16 +188,11 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
 # Load data
 ggp_info = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
                      cat_will='ESO_DEEP_offset_zapped_objects.fits')
-row_final = ggp_info[1]
-ID_final = ggp_info[2]
-z_final = ggp_info[3]
-name_final = ggp_info[5]
-ql_final = ggp_info[6]
-ra_final = ggp_info[7]
-dec_final = ggp_info[8]
+row_final, ID_final, z_final = ggp_info[1], ggp_info[2], ggp_info[3]
+name_final, ql_final, ra_final, dec_final = ggp_info[5], ggp_info[6], ggp_info[7], ggp_info[8]
 
 # print(ID_final)
-print(row_final)
+# print(row_final)
 # print(z_final)
 # print(name_final)
 # print(ra_final)
@@ -212,15 +212,10 @@ idx, d2d, d3d = c.match_to_catalog_sky(catalog)
 
 # Photometry
 data_pho = data_pho[idx]
-number = data_pho['NUMBER']
-x_image = data_pho['X_IMAGE']
-y_image = data_pho['Y_IMAGE']
-mag_iso = data_pho['MAG_ISO']
-dmag_iso = data_pho['MAGERR_ISO']
-mag_isocor = data_pho['MAG_ISOCOR']
-dmag_isocor = data_pho['MAGERR_ISOCOR']
-mag_auto = data_pho['MAG_AUTO']
-dmag_auto = data_pho['MAGERR_AUTO']
+number, x_image, y_image = data_pho['NUMBER'], data_pho['X_IMAGE'], data_pho['Y_IMAGE']
+mag_iso, dmag_iso = data_pho['MAG_ISO'], data_pho['MAGERR_ISO']
+mag_isocor, dmag_isocor = data_pho['MAG_ISOCOR'], data_pho['MAGERR_ISOCOR']
+mag_auto, dmag_auto = data_pho['MAG_AUTO'], data_pho['MAGERR_AUTO']
 
 # Add num=181 diffraction subtracted photometry
 ds_sort = np.where(row_final == 181)
@@ -266,7 +261,7 @@ dmag_i_dred = data_pho_des['magerr_auto_i']
 dmag_z_dred = data_pho_des['magerr_auto_z']
 dmag_Y_dred = data_pho_des['magerr_auto_Y']
 
-
+# Summary
 # Good: 1, 13, 35, 62, 78, 92, 164, 179: Done!
 # Good rerun: 120, 134, 141: Done!
 # Good but with iso: 4, 88, 162 : Done!
@@ -279,7 +274,8 @@ dmag_Y_dred = data_pho_des['magerr_auto_Y']
 # bad: 80 need Legacy Surveys g r z: dont need separate script!: Done!
 # bad: 81 still blended: dont need separate script!: Done!
 
-# qls=False
+# Both info
+# qls, spectrum_exists = False, True
 # gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179],
 #         run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[4, 88, 162], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=1000)
@@ -289,5 +285,16 @@ dmag_Y_dred = data_pho_des['magerr_auto_Y']
 # gal_fit(gal_num=[64], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[80, 81], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[82], run_name='Trial_5', flux_hst='iso', cal='2', v_min=50, v_max=200)
-qls=True
-gal_fit(gal_num=[5, 6, 7, 83, 181, 182], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+# qls = True
+# gal_fit(gal_num=[5, 6, 7, 83, 181, 182], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+
+
+# Photometry only for 1, 4, 13, 35, 36, 57, 62, 64, 80, 82, 88, 93, 120, 134, 141, 164
+qls, spectrum_exists = False, False
+gal_fit(gal_num=[1, 13, 35, 62, 120, 134, 141, 164], run_name='Trial_6', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+gal_fit(gal_num=[4, 88], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=1000)
+gal_fit(gal_num=[36], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=200)
+gal_fit(gal_num=[57], run_name='Trial_6', flux_hst='auto', cal='2', v_min=50, v_max=200)
+gal_fit(gal_num=[64], run_name='Trial_6', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+gal_fit(gal_num=[80], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=1000)
+gal_fit(gal_num=[82], run_name='Trial_6', flux_hst='iso', cal='2', v_min=50, v_max=200)
