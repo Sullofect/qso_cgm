@@ -53,7 +53,8 @@ def load_data(row):
 
 
 # determine if blended or not
-def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1, cal='0', v_min=50, v_max=1000):
+def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_sys=0.1, cal='0', v_min=50, v_max=1000,
+            prior='log'):
     global mag_i_dred, mag_g_dred, mag_r_dred, mag_z_dred, mag_Y_dred, \
            dmag_i_dred, dmag_g_dred, dmag_r_dred, dmag_z_dred, dmag_Y_dred, \
            mag_iso_dred, dmag_iso_dred, mag_auto_dred,dmag_auto_dred, \
@@ -65,10 +66,10 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
 
     if flux_hst == 'iso':
         mag_hst_dred = mag_iso_dred
-        dmag_hst_dred = dmag_iso_dred + dflux_hst_sys  # Add systematic error: 0.1 mag
+        dmag_hst_dred = dmag_iso_dred + dflux_sys  # Add systematic error: 0.1 mag
     else:
         mag_hst_dred = mag_auto_dred
-        dmag_hst_dred = dmag_auto_dred + dflux_hst_sys  # Add systematic error: 0.1 mag
+        dmag_hst_dred = dmag_auto_dred + dflux_sys  # Add systematic error: 0.1 mag
 
     offset = mag_i_dred - mag_hst_dred[col_ID[have_des_pho]]
     mag_g_dred -= offset
@@ -87,9 +88,11 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
     dmag_all = mag_all.copy()
     mag_all[:, 0], dmag_all[:, 0] = mag_hst_dred, dmag_hst_dred
     mag_all[col_ID[have_des_pho], 1:] = np.array([mag_g_dred, mag_r_dred, mag_i_dred, mag_z_dred, mag_Y_dred]).T
-    dmag_all[col_ID[have_des_pho], 1:] = np.array([dmag_g_dred, dmag_r_dred, dmag_i_dred, dmag_z_dred, dmag_Y_dred]).T
+    dmag_all[col_ID[have_des_pho], 1:] = np.array([dmag_g_dred + dflux_sys, dmag_r_dred + dflux_sys,
+                                                   dmag_i_dred + dflux_sys, dmag_z_dred + dflux_sys,
+                                                   dmag_Y_dred + dflux_sys]).T  # Add systematic error: 0.1 mag
 
-    #
+    # Remove invalid DES photometry
     mag_all = np.where((mag_all != 0) * (mag_all != 99), mag_all, np.inf)
     dmag_all = np.where((dmag_all != 0) * (dmag_all != 99), dmag_all, 0)
 
@@ -101,16 +104,17 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
 
     flux_all = 10 ** ((23.9 - mag_all) / 2.5)  # microjanskys
     flux_all_err = flux_all * np.log(10) * dmag_all / 2.5
-    flux_all_err = np.where(flux_all_err != 0, flux_all_err, 99)
+    flux_all_err = np.where(flux_all_err != 0, flux_all_err, np.inf)
 
-    for i in range(len(gal_num)):
-        gal_num_sort = np.where(row_final == gal_num[i])
-        print(str(gal_num[i]), 'M_S0 is', str(app2abs(m_app=mag_hst_dred[gal_num_sort], z=z_final[gal_num_sort],
-                                              model='S0', filter_e='Bessell_B', filter_o='ACS_f814W')))
-        print(str(gal_num[i]), 'M_Scd is', str(app2abs(m_app=mag_hst_dred[gal_num_sort], z=z_final[gal_num_sort],
-                                               model='Scd', filter_e='Bessell_B', filter_o='ACS_f814W')))
-        print(str(gal_num[i]), 'M_irr is', str(app2abs(m_app=mag_hst_dred[gal_num_sort], z=z_final[gal_num_sort],
-                                               model='irregular', filter_e='Bessell_B', filter_o='ACS_f814W')))
+    # Deterime the absolute magnitude
+    # for i in gal_num:
+    #     gal_num_sort = np.where(row_final == i)
+    #     print(str(i), 'M_S0 is', str(app2abs(m_app=mag_hst_dred[gal_num_sort], z=z_final[gal_num_sort],
+    #                                           model='S0', filter_e='Bessell_B', filter_o='ACS_f814W')))
+    #     print(str(i), 'M_Scd is', str(app2abs(m_app=mag_hst_dred[gal_num_sort], z=z_final[gal_num_sort],
+    #                                            model='Scd', filter_e='Bessell_B', filter_o='ACS_f814W')))
+    #     print(str(i), 'M_irr is', str(app2abs(m_app=mag_hst_dred[gal_num_sort], z=z_final[gal_num_sort],
+    #                                            model='irregular', filter_e='Bessell_B', filter_o='ACS_f814W')))
     for i in gal_num:
         row_number = str(i)
         galaxy = pipes.galaxy(row_number, load_data, spectrum_exists=spectrum_exists,
@@ -138,13 +142,22 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
         fit_instructions["redshift_prior_mu"] = z_gal_i
         fit_instructions["redshift_prior_sigma"] = 0.0001
 
-        fit_instructions["age_prior"] = 'log_10'
-        fit_instructions["tau_prior"] = 'log_10'
-        fit_instructions["massformed_prior"] = 'log_10'
-        # fit_instructions["metallicity_prior"] = 'log_10'
-
+        # Velocity
         fit_instructions["veldisp"] = (v_min, v_max)  # km/s
-        fit_instructions["veldisp_prior"] = "log_10"
+
+        if prior == 'log':
+            fit_instructions["age_prior"] = 'log_10'
+            fit_instructions["tau_prior"] = 'log_10'
+            fit_instructions["massformed_prior"] = 'log_10'
+            # fit_instructions["metallicity_prior"] = 'log_10'
+            fit_instructions["veldisp_prior"] = 'log_10'
+        elif prior == 'uniform':
+            fit_instructions["age_prior"] = 'uniform'
+            fit_instructions["tau_prior"] = 'uniform'
+            fit_instructions["massformed_prior"] = 'uniform'
+            # fit_instructions["metallicity_prior"] = 'uniform'
+            fit_instructions["veldisp_prior"] = 'uniform'
+
 
         calib = {}
         calib["type"] = "polynomial_bayesian"
@@ -171,7 +184,10 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
         noise = {}
         noise["type"] = "white_scaled"
         noise["scaling"] = (1., 10.)
-        noise["scaling_prior"] = "log_10"
+        if prior == 'log':
+            noise["scaling_prior"] = "log_10"
+        elif prior == 'uniform':
+            noise["scaling_prior"] = "uniform"
         fit_instructions["noise"] = noise
 
         fit_instructions["exponential"] = exp
@@ -179,10 +195,12 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_hst_sys=0.1
 
         fit = pipes.fit(galaxy, fit_instructions, run=run_name)
         fit.fit(verbose=True)
-
-        fit.plot_spectrum_posterior(save=True, show=True)
+        if spectrum_exists is True:
+            fit.plot_spectrum_posterior(save=True, show=True)
         fit.plot_sfh_posterior(save=True, show=True)
         fit.plot_corner(save=True, show=True)
+        print(str(i), np.percentile(fit.posterior.samples["stellar_mass"], [16, 50, 84]))
+        print(str(i), np.percentile(np.log10(fit.posterior.samples["mass_weighted_age"]), [16, 50, 84]))
 
 
 # Load data
@@ -203,10 +221,7 @@ name_final, ql_final, ra_final, dec_final = ggp_info[5], ggp_info[6], ggp_info[7
 path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'gal_all',
                         'HE0238-1904_sex_gal_all.fits')
 data_pho = fits.getdata(path_pho, 1, ignore_missing_end=True)
-path_image = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'gal_all',
-                          'check_seg_gal_all.fits')
-w_pho = WCS(fits.open(path_image)[2].header)
-catalog = pixel_to_skycoord(data_pho['X_IMAGE'], data_pho['Y_IMAGE'], w_pho)
+catalog = SkyCoord(data_pho['AlPHAWIN_J2000'], data_pho['DELTAWIN_J2000'], unit="deg")
 c = SkyCoord(ra_final, dec_final, unit="deg")
 idx, d2d, d3d = c.match_to_catalog_sky(catalog)
 
@@ -274,7 +289,7 @@ dmag_Y_dred = data_pho_des['magerr_auto_Y']
 # bad: 80 need Legacy Surveys g r z: dont need separate script!: Done!
 # bad: 81 still blended: dont need separate script!: Done!
 
-# Both info
+# Trial 5: Both info
 # qls, spectrum_exists = False, True
 # gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179],
 #         run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
@@ -286,15 +301,46 @@ dmag_Y_dred = data_pho_des['magerr_auto_Y']
 # gal_fit(gal_num=[80, 81], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[82], run_name='Trial_5', flux_hst='iso', cal='2', v_min=50, v_max=200)
 # qls = True
-# gal_fit(gal_num=[5, 6, 7, 83, 181, 182], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+# gal_fit(gal_num=[5, 7, 83, 181, 182], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
 
 
-# Photometry only for 1, 4, 13, 35, 36, 57, 62, 64, 80, 82, 88, 93, 120, 134, 141, 164
-qls, spectrum_exists = False, False
-gal_fit(gal_num=[1, 13, 35, 62, 120, 134, 141, 164], run_name='Trial_6', flux_hst='auto', cal='0', v_min=50, v_max=1000)
-gal_fit(gal_num=[4, 88], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=1000)
-gal_fit(gal_num=[36], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=200)
-gal_fit(gal_num=[57], run_name='Trial_6', flux_hst='auto', cal='2', v_min=50, v_max=200)
-gal_fit(gal_num=[64], run_name='Trial_6', flux_hst='auto', cal='0', v_min=50, v_max=1000)
-gal_fit(gal_num=[80], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=1000)
-gal_fit(gal_num=[82], run_name='Trial_6', flux_hst='iso', cal='2', v_min=50, v_max=200)
+# Trial 6: Photometry only for 1, 4, 13, 35, 36, 57, 62, 64, 80, 82, 88, 93, 120, 134, 141, 164
+# qls, spectrum_exists = False, False
+# gal_fit(gal_num=[1, 13, 35, 62, 120, 134, 141, 164], run_name='Trial_6', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+# gal_fit(gal_num=[4, 88], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=1000)
+# gal_fit(gal_num=[93], run_name='Trial_6', flux_hst='auto', cal='0', v_min=50, v_max=200)
+# gal_fit(gal_num=[36], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=200)
+# gal_fit(gal_num=[57], run_name='Trial_6', flux_hst='auto', cal='2', v_min=50, v_max=200)
+# gal_fit(gal_num=[64], run_name='Trial_6', flux_hst='auto', cal='0', v_min=50, v_max=1000)
+# gal_fit(gal_num=[80], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=1000)
+# gal_fit(gal_num=[82], run_name='Trial_6', flux_hst='iso', cal='2', v_min=50, v_max=200)
+
+# Trial 7: Uniform prior
+# qls, spectrum_exists = False, True
+# gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179],
+#         run_name='Trial_7', flux_hst='auto', cal='0', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[4, 88, 162], run_name='Trial_7', flux_hst='iso', cal='0', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[20, 27, 93], run_name='Trial_7', flux_hst='auto', cal='0', v_min=50, v_max=200, prior='uniform')
+# gal_fit(gal_num=[36], run_name='Trial_7', flux_hst='iso', cal='0', v_min=50, v_max=200, prior='uniform')
+# gal_fit(gal_num=[57], run_name='Trial_7', flux_hst='auto', cal='2', v_min=50, v_max=200, prior='uniform')
+# gal_fit(gal_num=[64], run_name='Trial_7', flux_hst='auto', cal='0', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[80, 81], run_name='Trial_7', flux_hst='iso', cal='0', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[82], run_name='Trial_7', flux_hst='iso', cal='2', v_min=50, v_max=200, prior='uniform')
+# qls = True
+# gal_fit(gal_num=[5, 7, 83, 181, 182], run_name='Trial_7', flux_hst='auto', cal='0',
+#         v_min=50, v_max=1000, prior='uniform')
+
+# Trial 8: Inflate all errors + Uniform prior + calibration
+qls, spectrum_exists = False, True
+gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179], run_name='Trial_8', flux_hst='auto', cal='2',
+        v_min=50, v_max=1000, prior='uniform')
+gal_fit(gal_num=[4, 88, 162], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
+gal_fit(gal_num=[20, 27, 93], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=200, prior='uniform')
+gal_fit(gal_num=[36], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=200, prior='uniform')
+gal_fit(gal_num=[57], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=200, prior='uniform')
+gal_fit(gal_num=[64], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
+gal_fit(gal_num=[80, 81], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
+gal_fit(gal_num=[82], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=200, prior='uniform')
+qls = True
+gal_fit(gal_num=[5, 7, 83, 181, 182], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000,
+        prior='uniform')
