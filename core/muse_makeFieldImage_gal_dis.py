@@ -13,8 +13,8 @@ rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
 mpl.rcParams['ytick.direction'] = 'in'
-mpl.rcParams['xtick.major.size'] = 10
-mpl.rcParams['ytick.major.size'] = 10
+mpl.rcParams['xtick.major.size'] = 5
+mpl.rcParams['ytick.major.size'] = 5
 
 #
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
@@ -24,6 +24,7 @@ data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
 # Load galxies infomation
 ggp_info = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
                      cat_will='ESO_DEEP_offset_zapped_objects.fits')
+bins_final = ggp_info[0]
 row_final = ggp_info[1]
 ID_final = ggp_info[2]
 z_final = ggp_info[3]
@@ -61,10 +62,8 @@ gc.add_colorbar()
 gc.colorbar.set_ticks([0])
 gc.colorbar.set_location('bottom')
 gc.colorbar.set_pad(0.0)
-# gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
 gc.colorbar.hide()
 gc.ticks.set_length(30)
-# gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
 gc.add_scalebar(length=15 * u.arcsecond)
 gc.scalebar.set_corner('top left')
 gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
@@ -82,6 +81,32 @@ gc.add_label(0.87, 0.97, r'$\mathrm{ACS+F814W}$', color='k', size=15, relative=T
 xw, yw = 40.1246000, -18.8589960
 gc.show_arrows(xw, yw, -0.0001 * yw, 0, color='k')
 gc.show_arrows(xw, yw, 0, -0.0001 * yw, color='k')
+line = np.array([[40.1297385, 40.1425178], [-18.8584641, -18.8710056]])
+gc.show_lines([line], color='k', alpha=0.3, linestyle='--')
+
+
+# Determine whcih galaxy is below the line
+vector_ra = ra_final - line[0, 0]
+vector_dec = dec_final - line[1, 0]
+vector_line = np.array([line[0, 1] - line[0, 0], line[1, 1] - line[1, 0]])
+value = np.cross(np.vstack((vector_ra, vector_dec)).T,  vector_line)
+value_sort = value < 0
+row_above, row_below = row_final[value_sort], row_final[np.invert(value_sort)]
+v_above, v_below = v_gal[value_sort], v_gal[np.invert(value_sort)]
+
+# Second axis
+axins = fig.add_axes([0.165, 0.16, 0.15, 0.15], zorder=1000)
+axins.hist(v_above, bins=np.arange(-600, 1800, 200), facecolor='red', histtype='stepfilled', alpha=0.5)
+axins.set_xlim(-600, 1600)
+# axins.set_xticks(-600, )
+
+axins = fig.add_axes([0.72, 0.16, 0.15, 0.15], zorder=1000)
+# axins.hist(v_above, bins=bins_final, facecolor='red', histtype='stepfilled', alpha=0.5)
+axins.hist(v_below, bins=np.arange(-400, 400, 200), facecolor='blue', histtype='stepfilled', alpha=0.5)
+axins.set_xlim(-400, 200)
+axins.set_ylim(0, 10)
+axins.set_xticks([-400, -200, 0, 200])
+axins.set_yticks([0, 2, 4, 6, 8, 10])
 gc.add_label(0.98, 0.85, r'N', size=15, relative=True)
 gc.add_label(0.88, 0.734, r'E', size=15, relative=True)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis.png', bbox_inches='tight')

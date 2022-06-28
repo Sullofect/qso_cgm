@@ -104,7 +104,7 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_sys=0.1, ca
 
     flux_all = 10 ** ((23.9 - mag_all) / 2.5)  # microjanskys
     flux_all_err = flux_all * np.log(10) * dmag_all / 2.5
-    flux_all_err = np.where(flux_all_err != 0, flux_all_err, np.inf)
+    flux_all_err = np.where(flux_all_err != 0, flux_all_err, 99)
 
     # Deterime the absolute magnitude
     # for i in gal_num:
@@ -296,10 +296,10 @@ dmag_Y_dred = data_pho_des['magerr_auto_Y']
 # gal_fit(gal_num=[4, 88, 162], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[20, 27, 93], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=200)
 # gal_fit(gal_num=[36], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=200)
-# gal_fit(gal_num=[57], run_name='Trial_5', flux_hst='auto', cal='2', v_min=50, v_max=200)
+# gal_fit(gal_num=[57], run_name='Trial_5', flux_hst='auto', cal='2', v_min=50, v_max=1000)
 # gal_fit(gal_num=[64], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[80, 81], run_name='Trial_5', flux_hst='iso', cal='0', v_min=50, v_max=1000)
-# gal_fit(gal_num=[82], run_name='Trial_5', flux_hst='iso', cal='2', v_min=50, v_max=200)
+# gal_fit(gal_num=[82], run_name='Trial_5', flux_hst='iso', cal='2', v_min=50, v_max=1000)
 # qls = True
 # gal_fit(gal_num=[5, 7, 83, 181, 182], run_name='Trial_5', flux_hst='auto', cal='0', v_min=50, v_max=1000)
 
@@ -310,10 +310,10 @@ dmag_Y_dred = data_pho_des['magerr_auto_Y']
 # gal_fit(gal_num=[4, 88], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[93], run_name='Trial_6', flux_hst='auto', cal='0', v_min=50, v_max=200)
 # gal_fit(gal_num=[36], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=200)
-# gal_fit(gal_num=[57], run_name='Trial_6', flux_hst='auto', cal='2', v_min=50, v_max=200)
+# gal_fit(gal_num=[57], run_name='Trial_6', flux_hst='auto', cal='2', v_min=50, v_max=1000)
 # gal_fit(gal_num=[64], run_name='Trial_6', flux_hst='auto', cal='0', v_min=50, v_max=1000)
 # gal_fit(gal_num=[80], run_name='Trial_6', flux_hst='iso', cal='0', v_min=50, v_max=1000)
-# gal_fit(gal_num=[82], run_name='Trial_6', flux_hst='iso', cal='2', v_min=50, v_max=200)
+# gal_fit(gal_num=[82], run_name='Trial_6', flux_hst='iso', cal='2', v_min=50, v_max=1000)
 
 # Trial 7: Uniform prior
 # qls, spectrum_exists = False, True
@@ -322,25 +322,25 @@ dmag_Y_dred = data_pho_des['magerr_auto_Y']
 # gal_fit(gal_num=[4, 88, 162], run_name='Trial_7', flux_hst='iso', cal='0', v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[20, 27, 93], run_name='Trial_7', flux_hst='auto', cal='0', v_min=50, v_max=200, prior='uniform')
 # gal_fit(gal_num=[36], run_name='Trial_7', flux_hst='iso', cal='0', v_min=50, v_max=200, prior='uniform')
-# gal_fit(gal_num=[57], run_name='Trial_7', flux_hst='auto', cal='2', v_min=50, v_max=200, prior='uniform')
+# gal_fit(gal_num=[57], run_name='Trial_7', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[64], run_name='Trial_7', flux_hst='auto', cal='0', v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[80, 81], run_name='Trial_7', flux_hst='iso', cal='0', v_min=50, v_max=1000, prior='uniform')
-# gal_fit(gal_num=[82], run_name='Trial_7', flux_hst='iso', cal='2', v_min=50, v_max=200, prior='uniform')
+# gal_fit(gal_num=[82], run_name='Trial_7', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
 # qls = True
 # gal_fit(gal_num=[5, 7, 83, 181, 182], run_name='Trial_7', flux_hst='auto', cal='0',
 #         v_min=50, v_max=1000, prior='uniform')
 
 # Trial 8: Inflate all errors + Uniform prior + calibration
 qls, spectrum_exists = False, True
-gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179], run_name='Trial_8', flux_hst='auto', cal='2',
-        v_min=50, v_max=1000, prior='uniform')
-gal_fit(gal_num=[4, 88, 162], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
-gal_fit(gal_num=[20, 27, 93], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=200, prior='uniform')
-gal_fit(gal_num=[36], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=200, prior='uniform')
-gal_fit(gal_num=[57], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=200, prior='uniform')
-gal_fit(gal_num=[64], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
-gal_fit(gal_num=[80, 81], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
-gal_fit(gal_num=[82], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=200, prior='uniform')
-qls = True
-gal_fit(gal_num=[5, 7, 83, 181, 182], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000,
-        prior='uniform')
+# gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179], run_name='Trial_8', flux_hst='auto', cal='2',
+#         v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[4, 88, 162], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[20, 27, 93], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=200, prior='uniform')
+# gal_fit(gal_num=[36], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=200, prior='uniform')
+gal_fit(gal_num=[57], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[64], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[80, 81], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
+gal_fit(gal_num=[82], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
+# qls = True
+# gal_fit(gal_num=[5, 7, 83, 181, 182], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000,
+#         prior='uniform')
