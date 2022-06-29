@@ -54,7 +54,7 @@ def ConvertFits(filename=None, table=None, sigma_v=False):
 
 
 #
-def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True, snr_thr=3, row=None, z=None,
+def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True, snr_thr=3, v_thr=300, row=None, z=None,
             ra=None, dec=None):
     # Load OIII
     if test is True:
@@ -106,6 +106,8 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
         fit_max = np.amax(flux_stack / dflux_stack, axis=0)
         v_fit = np.where((fit_max > snr_thr), v_fit, np.nan)
         sigma_fit = np.where((fit_max > snr_thr), sigma_fit, np.nan)
+        sigma_fit = np.where((v_fit < v_thr), sigma_fit, np.nan)
+        v_fit = np.where((v_fit < v_thr), v_fit, np.nan)
         ConvertFits(filename='image_' + line + '_fitline', table=v_fit)
         ConvertFits(filename='image_' + line + '_fitline', table=sigma_fit, sigma_v=True)
 
@@ -113,6 +115,8 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
         # Final data
         v_fit = np.where((flux_fit / dflux_fit > snr_thr), v_fit, np.nan)
         sigma_fit = np.where((flux_fit / dflux_fit > snr_thr), sigma_fit, np.nan)
+        sigma_fit = np.where((v_fit < v_thr), sigma_fit, np.nan)
+        v_fit = np.where((v_fit < v_thr), v_fit, np.nan)
         ConvertFits(filename='image_' + line + '_fitline', table=v_fit)
         ConvertFits(filename='image_' + line + '_fitline', table=sigma_fit, sigma_v=True)
 
@@ -123,10 +127,10 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.set_system_latex(True)
     gc.show_colorscale(vmin=-300, vmax=300, cmap='coolwarm')
     gc.add_colorbar()
-    # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
     gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=400)
+    gc.show_markers(ra, dec, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
     gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
     gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
@@ -144,9 +148,9 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.tick_labels.hide()
     gc.axis_labels.hide()
 
-    for i in range(len(row)):
-        gc.add_label(ra[i] + 0.00014, dec[i] - 0.00008, "{0:.0f}".format(v_gal[i]), size=10, horizontalalignment='right'
-                     , verticalalignment='bottom')
+    # for i in range(len(row)):
+    #     gc.add_label(ra[i] + 0.00014, dec[i] - 0.00008, "{0:.0f}".format(v_gal[i]), size=10, horizontalalignment='right'
+    #                  , verticalalignment='bottom')
     # label
     if line == 'OIII':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=15, relative=True)
@@ -171,7 +175,6 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.set_system_latex(True)
     gc.show_colorscale(vmin=0, vmax=200, cmap=sequential_s.Acton_6.mpl_colormap)
     gc.add_colorbar()
-    # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
     gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='lightgrey',
                     edgecolors='k', linewidths=0.5, s=400)
@@ -223,7 +226,9 @@ ra_final = ggp_info[7]
 dec_final = ggp_info[8]
 
 col_ID = np.arange(len(row_final))
-select_array = np.sort(np.array([6, 7, 181, 182, 80, 81, 82, 179, 4, 5, 64]))
+# select_array = np.sort(np.array([6, 7, 181, 182, 80, 81, 82, 83, 179, 4, 5, 64]))
+select_array = np.sort(np.array([1, 4, 5, 6, 7, 13, 20, 27, 35, 36, 57, 62, 64, 68, 72, 78, 80, 81, 82, 83, 88, 92,
+                                 93, 120, 129, 134, 140, 141, 149, 162, 164, 179, 181, 182]))
 select_gal = np.in1d(row_final, select_array)
 row_final = row_final[select_gal]
 z_final = z_final[select_gal]
@@ -239,5 +244,5 @@ ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
 # run
 # PlotMap(line='OII', check=False, snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
 # PlotMap(line='OIII', snr_thr=3, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
-PlotMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, check=False, row=row_final,
+PlotMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, v_thr=np.inf, check=False, row=row_final,
         z=z_final, ra=ra_final, dec=dec_final)

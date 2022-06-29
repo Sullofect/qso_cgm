@@ -89,13 +89,7 @@ def model_all(wave_vac, z, sigma_kms, flux_OII, flux_Hbeta, flux_OIII5008, r_OII
     return np.hstack((m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
 
 
-# Read region file
-path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list_revised.reg')
-ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
-dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
-radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
-text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
-
+# Read Data
 path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset.fits')
 path_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_Hbeta_line_offset.fits')
 path_OIII4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_4960_line_offset.fits')
@@ -134,97 +128,115 @@ parameters.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                     ('b_OIII5008', 0.0, False, None, None, None))
 
 
-fig, axarr = plt.subplots(len(ra_array), 2, figsize=(10, len(ra_array) * 2.5),
-                          gridspec_kw={'width_ratios': [1, 3]}, dpi=300)
-fig.subplots_adjust(hspace=0)
-fig.subplots_adjust(wspace=0.1)
-flux_info = np.zeros((len(ra_array), 6))
-# axarr = axarr.ravel()
-for i in range(len(ra_array)):
-    spe_OII_i = cube_OII.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)  # Unit in arcsec
-    spe_Hbeta_i = cube_Hbeta.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
-    spe_OIII4960_i = cube_OIII4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
-    spe_OIII5008_i = cube_OIII5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
+# Def Plot function
+def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_1'):
+    global cube_OII, cube_Hbeta, cube_OIII4960, cube_OIII5008, wave_vac_stack, wave_vac_all
+    fig, axarr = plt.subplots(len(ra_array), 2, figsize=(10, len(ra_array) * 2.5),
+                              gridspec_kw={'width_ratios': [1, 3]}, dpi=300)
+    fig.subplots_adjust(hspace=0)
+    fig.subplots_adjust(wspace=0.1)
+    flux_info = np.zeros((len(ra_array), 6))
+    # axarr = axarr.ravel()
+    for i in range(len(ra_array)):
+        spe_OII_i = cube_OII.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)  # Unit in arcsec
+        spe_Hbeta_i = cube_Hbeta.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
+        spe_OIII4960_i = cube_OIII4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
+        spe_OIII5008_i = cube_OIII5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
 
-    flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
-    flux_Hbeta_i, flux_Hbeta_err_i = spe_Hbeta_i.data * 1e-3, np.sqrt(spe_Hbeta_i.var) * 1e-3
-    flux_OIII4960_i, flux_OIII4960_err_i = spe_OIII4960_i.data * 1e-3, np.sqrt(spe_OIII4960_i.var) * 1e-3
-    flux_OIII5008_i, flux_OIII5008_err_i = spe_OIII5008_i.data * 1e-3, np.sqrt(spe_OIII5008_i.var) * 1e-3
-    flux_all = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
-    flux_err_all = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
+        flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
+        flux_Hbeta_i, flux_Hbeta_err_i = spe_Hbeta_i.data * 1e-3, np.sqrt(spe_Hbeta_i.var) * 1e-3
+        flux_OIII4960_i, flux_OIII4960_err_i = spe_OIII4960_i.data * 1e-3, np.sqrt(spe_OIII4960_i.var) * 1e-3
+        flux_OIII5008_i, flux_OIII5008_err_i = spe_OIII5008_i.data * 1e-3, np.sqrt(spe_OIII5008_i.var) * 1e-3
+        flux_all = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
+        flux_err_all = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
-    spec_model = lmfit.Model(model_all, missing='drop')
-    result = spec_model.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters,
-                            weights=1 / flux_err_all)
+        spec_model = lmfit.Model(model_all, missing='drop')
+        result = spec_model.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters,
+                                weights=1 / flux_err_all)
 
-    # Load fitted result
-    z, dz = result.best_values['z'], result.params['z'].stderr
-    sigma, dsigma = result.best_values['sigma_kms'], result.params['sigma_kms'].stderr
-    flux_OII, dflux_OII = result.best_values['flux_OII'], result.params['flux_OII'].stderr
-    flux_Hbeta, dflux_Hbeta = result.best_values['flux_Hbeta'], result.params['flux_Hbeta'].stderr
-    flux_OIII5008, dflux_OIII5008 = result.best_values['flux_OIII5008'], result.params['flux_OIII5008'].stderr
-    r_OII, dr_OII = result.best_values['r_OII3729_3727'], result.params['r_OII3729_3727'].stderr
+        # Load fitted result
+        z, dz = result.best_values['z'], result.params['z'].stderr
+        sigma, dsigma = result.best_values['sigma_kms'], result.params['sigma_kms'].stderr
+        flux_OII, dflux_OII = result.best_values['flux_OII'], result.params['flux_OII'].stderr
+        flux_Hbeta, dflux_Hbeta = result.best_values['flux_Hbeta'], result.params['flux_Hbeta'].stderr
+        flux_OIII5008, dflux_OIII5008 = result.best_values['flux_OIII5008'], result.params['flux_OIII5008'].stderr
+        r_OII, dr_OII = result.best_values['r_OII3729_3727'], result.params['r_OII3729_3727'].stderr
 
-    a_OII, da_OII = result.best_values['a_OII'], result.params['a_OII'].stderr
-    b_OII, db_OII = result.best_values['b_OII'], result.params['b_OII'].stderr
-    a_Hbeta, da_Hbeta = result.best_values['a_Hbeta'], result.params['a_Hbeta'].stderr
-    b_Hbeta, db_Hbeta = result.best_values['b_Hbeta'], result.params['b_Hbeta'].stderr
-    a_OIII4960, da_OIII4960 = result.best_values['a_OIII4960'], result.params['a_OIII4960'].stderr
-    b_OIII4960, db_OIII4960 = result.best_values['b_OIII4960'], result.params['b_OIII4960'].stderr
-    a_OIII5008, da_OIII5008 = result.best_values['a_OIII5008'], result.params['a_OIII5008'].stderr
-    b_OIII5008, db_OIII5008 = result.best_values['b_OIII5008'], result.params['b_OIII5008'].stderr
+        a_OII, da_OII = result.best_values['a_OII'], result.params['a_OII'].stderr
+        b_OII, db_OII = result.best_values['b_OII'], result.params['b_OII'].stderr
+        a_Hbeta, da_Hbeta = result.best_values['a_Hbeta'], result.params['a_Hbeta'].stderr
+        b_Hbeta, db_Hbeta = result.best_values['b_Hbeta'], result.params['b_Hbeta'].stderr
+        a_OIII4960, da_OIII4960 = result.best_values['a_OIII4960'], result.params['a_OIII4960'].stderr
+        b_OIII4960, db_OIII4960 = result.best_values['b_OIII4960'], result.params['b_OIII4960'].stderr
+        a_OIII5008, da_OIII5008 = result.best_values['a_OIII5008'], result.params['a_OIII5008'].stderr
+        b_OIII5008, db_OIII5008 = result.best_values['b_OIII5008'], result.params['b_OIII5008'].stderr
 
-    # Save the fitted result
-    flux_info[i, :] = np.array([flux_OII, flux_Hbeta, flux_OIII5008, dflux_OII, dflux_Hbeta, dflux_OIII5008])
+        # Save the fitted result
+        flux_info[i, :] = np.array([flux_OII, flux_Hbeta, flux_OIII5008, dflux_OII, dflux_Hbeta, dflux_OIII5008])
 
-    axarr[i, 0].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
-                                               r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
-                                               b_OIII4960, a_OIII5008, b_OIII5008), '-r')
-    axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', lw=1)
-    axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey')
-    axarr[i, 1].plot(wave_vac_stack, flux_all, color='k', lw=1)
-    axarr[i, 1].plot(wave_vac_stack, flux_err_all, color='lightgrey')
-    axarr[i, 1].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
-                                               r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
-                                               b_OIII4960, a_OIII5008, b_OIII5008), '-r')
-    axarr[i, 0].set_title(text_array[i], x=0.2, y=0.75, size=20)
-    axarr[i, 0].set_xlim(6020, 6120)
-    axarr[i, 1].set_xlim(7900, 8200)
-    axarr[i, 0].spines['right'].set_visible(False)
-    axarr[i, 1].spines['left'].set_visible(False)
+        axarr[i, 0].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
+                                                   r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
+                                                   b_OIII4960, a_OIII5008, b_OIII5008), '-r')
+        axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', lw=1)
+        axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey')
+        axarr[i, 1].plot(wave_vac_stack, flux_all, color='k', lw=1)
+        axarr[i, 1].plot(wave_vac_stack, flux_err_all, color='lightgrey')
+        axarr[i, 1].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
+                                                   r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
+                                                   b_OIII4960, a_OIII5008, b_OIII5008), '-r')
+        axarr[i, 0].set_title(text_array[i], x=0.2, y=0.75, size=20)
+        axarr[i, 0].set_xlim(6020, 6120)
+        axarr[i, 1].set_xlim(7900, 8200)
+        axarr[i, 0].spines['right'].set_visible(False)
+        axarr[i, 1].spines['left'].set_visible(False)
 
-    # Mark line info
-    lines = (1 + z) * np.array([3727.092, 3729.8754960, 4862.721, 4960.295, 5008.239])
-    axarr[i, 0].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
-                       colors='grey')
-    axarr[i, 1].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
-                       colors='grey')
-    axarr[i, 0].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
-    axarr[i, 1].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
-    axarr[i, 0].annotate(text=r'$\mathrm{[O \, II]} \\ \mathrm{3927, \, 29}$', xy=(0.55, 0.65),
-                         xycoords='axes fraction', size=20)
-    axarr[i, 1].annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
-    axarr[i, 1].annotate(text=r'$\mathrm{[O \, III]}  \\ \mathrm{\quad 4960}$', xy=(0.45, 0.65),
-                         xycoords='axes fraction', size=20)
-    axarr[i, 1].annotate(text=r'$\mathrm{[O \, III]} \\ \mathrm{\quad 5008}$', xy=(0.7, 0.65),
-                         xycoords='axes fraction', size=20)
+        # Mark line info
+        lines = (1 + z) * np.array([3727.092, 3729.8754960, 4862.721, 4960.295, 5008.239])
+        axarr[i, 0].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
+                           colors='grey')
+        axarr[i, 1].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
+                           colors='grey')
+        axarr[i, 0].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
+        axarr[i, 1].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
+        if flux_Hbeta_i.max() > flux_OIII5008_i.max():
+            axarr[i, 0].set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
+            axarr[i, 1].set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
+        axarr[i, 0].annotate(text=r'$\mathrm{[O \, II]} \\ \mathrm{3927, \, 29}$', xy=(0.55, 0.65),
+                             xycoords='axes fraction', size=20)
+        axarr[i, 1].annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
+        axarr[i, 1].annotate(text=r'$\mathrm{[O \, III]}  \\ \mathrm{\quad 4960}$', xy=(0.45, 0.65),
+                             xycoords='axes fraction', size=20)
+        axarr[i, 1].annotate(text=r'$\mathrm{[O \, III]} \\ \mathrm{\quad 5008}$', xy=(0.7, 0.65),
+                             xycoords='axes fraction', size=20)
 
-    axarr[i, 0].minorticks_on()
-    axarr[i, 1].minorticks_on()
-    axarr[i, 0].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right=False,
-                            labelsize=20, size=5)
-    axarr[i, 0].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right=False,
-                            size=3)
-    axarr[i, 0].tick_params(axis='y', which='both', right=False, labelright=False)
-    axarr[i, 1].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False, right='on',
-                            labelsize=20, size=5)
-    axarr[i, 1].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False, right='on',
-                            size=3)
-    axarr[i, 1].tick_params(axis='y', which='both', left=False, labelleft=False)
-    if i != len(ra_array) - 1:
-        axarr[i, 0].tick_params(axis='x', which='both', labelbottom=False)
-        axarr[i, 1].tick_params(axis='x', which='both', labelbottom=False)
-fits.writeto('/Users/lzq/Dropbox/Data/CGM/line_profile_selected_region.fits', flux_info, overwrite=True)
-fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
-fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.05)
-fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/spectra_gas.png', bbox_inches='tight')
+        axarr[i, 0].minorticks_on()
+        axarr[i, 1].minorticks_on()
+        axarr[i, 0].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right=False,
+                                labelsize=20, size=5)
+        axarr[i, 0].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right=False,
+                                size=3)
+        axarr[i, 0].tick_params(axis='y', which='both', right=False, labelright=False)
+        axarr[i, 1].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False, right='on',
+                                labelsize=20, size=5)
+        axarr[i, 1].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False, right='on',
+                                size=3)
+        axarr[i, 1].tick_params(axis='y', which='both', left=False, labelleft=False)
+        if i != len(ra_array) - 1:
+            axarr[i, 0].tick_params(axis='x', which='both', labelbottom=False)
+            axarr[i, 1].tick_params(axis='x', which='both', labelbottom=False)
+    fits.writeto('/Users/lzq/Dropbox/Data/CGM/line_profile_selected_region.fits', flux_info, overwrite=True)
+    fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
+    fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.05)
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '.png', bbox_inches='tight')
+
+
+# Plot the data
+# Read region file
+path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list_revised.reg')
+ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
+
+PlotGasSpectra(ra_array[:7], dec_array[:7], radius_array[:7], text_array[:7], figname='spectra_gas_P1')
+PlotGasSpectra(ra_array[7:], dec_array[7:], radius_array[7:], text_array[7:], figname='spectra_gas_P2')

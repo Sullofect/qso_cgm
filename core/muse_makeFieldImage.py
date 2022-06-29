@@ -62,7 +62,9 @@ ra_final = ggp_info[7]
 dec_final = ggp_info[8]
 
 col_ID = np.arange(len(row_final))
-select_array = np.sort(np.array([6, 7, 181, 182, 80, 81, 82, 179, 4, 5, 64]))
+# select_array = np.sort(np.array([6, 7, 181, 182, 80, 81, 82, 83, 179, 4, 5, 64]))
+select_array = np.sort(np.array([1, 4, 5, 6, 7, 13, 20, 27, 35, 36, 57, 62, 64, 68, 72, 78, 80, 81, 82, 83, 88, 92,
+                                 93, 120, 129, 134, 140, 141, 149, 162, 164, 179, 181, 182]))
 select_gal = np.in1d(row_final, select_array)
 row_final = row_final[select_gal]
 z_final = z_final[select_gal]

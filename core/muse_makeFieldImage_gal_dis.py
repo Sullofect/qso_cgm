@@ -5,6 +5,7 @@ import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from scipy.stats import norm
 from astropy import units as u
 from muse_compare_z import compare_z
 from astropy.convolution import convolve
@@ -56,6 +57,7 @@ gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
 gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
 gc.recenter(40.1359, -18.8643, width=80/3600, height=80/3600)  # 0.02 / 0.01 40''
+gc.show_rectangles(40.1359, -18.8643, width=40/3600, height=40/3600, color='k', linestyle='--')
 gc.set_system_latex(True)
 gc.show_colorscale(cmap='Greys')
 gc.add_colorbar()
@@ -81,8 +83,10 @@ gc.add_label(0.87, 0.97, r'$\mathrm{ACS+F814W}$', color='k', size=15, relative=T
 xw, yw = 40.1246000, -18.8589960
 gc.show_arrows(xw, yw, -0.0001 * yw, 0, color='k')
 gc.show_arrows(xw, yw, 0, -0.0001 * yw, color='k')
-line = np.array([[40.1297385, 40.1425178], [-18.8584641, -18.8710056]])
+line = np.array([[40.1300330, 40.1417710], [-18.8587229, -18.8698312]])
 gc.show_lines([line], color='k', alpha=0.3, linestyle='--')
+gc.add_label(0.98, 0.85, r'N', size=15, relative=True)
+gc.add_label(0.88, 0.734, r'E', size=15, relative=True)
 
 
 # Determine whcih galaxy is below the line
@@ -94,19 +98,58 @@ value_sort = value < 0
 row_above, row_below = row_final[value_sort], row_final[np.invert(value_sort)]
 v_above, v_below = v_gal[value_sort], v_gal[np.invert(value_sort)]
 
-# Second axis
-axins = fig.add_axes([0.165, 0.16, 0.15, 0.15], zorder=1000)
-axins.hist(v_above, bins=np.arange(-600, 1800, 200), facecolor='red', histtype='stepfilled', alpha=0.5)
-axins.set_xlim(-600, 1600)
-# axins.set_xticks(-600, )
 
-axins = fig.add_axes([0.72, 0.16, 0.15, 0.15], zorder=1000)
-# axins.hist(v_above, bins=bins_final, facecolor='red', histtype='stepfilled', alpha=0.5)
-axins.hist(v_below, bins=np.arange(-400, 400, 200), facecolor='blue', histtype='stepfilled', alpha=0.5)
-axins.set_xlim(-400, 200)
-axins.set_ylim(0, 10)
-axins.set_xticks([-400, -200, 0, 200])
-axins.set_yticks([0, 2, 4, 6, 8, 10])
-gc.add_label(0.98, 0.85, r'N', size=15, relative=True)
-gc.add_label(0.88, 0.734, r'E', size=15, relative=True)
+# Plot the fitting
+mu_all, scale_all = norm.fit(v_gal)
+mu_above, scale_above = norm.fit(v_above)
+mu_below, scale_below = norm.fit(v_below)
+
+# Normalization
+nums, v_edge = np.histogram(v_gal, bins=bins_final)
+normalization_all = np.sum(nums) * 200
+nums, v_edge = np.histogram(v_above, bins=bins_final)
+normalization_above = np.sum(nums) * 200
+nums, v_edge = np.histogram(v_below, bins=bins_final)
+normalization_below = np.sum(nums) * 200
+
+# Plot
+rv = np.linspace(-2000, 2000, 1000)
+axins = fig.add_axes([0.62, 0.17, 0.25, 0.15], zorder=1000)
+# plt.figure(figsize=(8, 5), dpi=300)
+axins.vlines(0, 0, 11, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
+axins.hist(v_gal, bins=bins_final, color='k', histtype='step', label=r'$\mathrm{v_{all}}$')
+axins.hist(v_above, bins=bins_final, facecolor='red', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{above}}$')
+axins.hist(v_below, bins=bins_final, facecolor='blue', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{below}}$')
+axins.plot(rv, normalization_all * norm.pdf(rv, mu_all, scale_all), '-k', lw=1, alpha=0.5,
+           label=r'$\mu = \, $' + str("{0:.0f}".format(mu_all)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+                 str("{0:.0f}".format(scale_all)) + r'$\mathrm{\, km/s}$')
+axins.plot(rv, normalization_above * norm.pdf(rv, mu_above, scale_above), '-r', lw=1, alpha=0.5,
+           label=r'$\mu = \, $' + str("{0:.0f}".format(mu_above)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+                 str("{0:.0f}".format(scale_above)) + r'$\mathrm{\, km/s}$')
+axins.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=1, alpha=0.5,
+           label=r'$\mu = \, $' + str("{0:.0f}".format(mu_below)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+                 str("{0:.0f}".format(scale_below)) + r'$\mathrm{\, km/s}$')
+axins.set_xlim(-2000, 2000)
+axins.set_ylim(0, 11)
+# axins.minorticks_on()
+axins.set_xlabel(r'$\Delta v [\mathrm{km \; s^{-1}}]$', size=5, labelpad=0)
+axins.set_ylabel(r'$\mathrm{Numbers}$', size=5, labelpad=0)
+axins.tick_params(axis='both', which='major', direction='in', bottom='on', top='on', left='on', right='on', size=3,
+                  labelsize=7)
+axins.tick_params(axis='both', which='minor', direction='in', bottom='on', top='on', left='on', right='on', size=3)
+axins.legend(prop={'size': 5}, framealpha=0, loc=2, fontsize=15)
+
+# # Second axis
+# axins = fig.add_axes([0.165, 0.16, 0.15, 0.15], zorder=1000)
+# axins.hist(v_above, bins=np.arange(-600, 1800, 200), facecolor='red', histtype='stepfilled', alpha=0.5)
+# axins.set_xlim(-600, 1600)
+# # axins.set_xticks(-600, )
+#
+# axins = fig.add_axes([0.72, 0.16, 0.15, 0.15], zorder=1000)
+# # axins.hist(v_above, bins=bins_final, facecolor='red', histtype='stepfilled', alpha=0.5)
+# axins.hist(v_below, bins=np.arange(-400, 400, 200), facecolor='blue', histtype='stepfilled', alpha=0.5)
+# axins.set_xlim(-400, 200)
+# axins.set_ylim(0, 10)
+# axins.set_xticks([-400, -200, 0, 200])
+# axins.set_yticks([0, 2, 4, 6, 8, 10])
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis.png', bbox_inches='tight')
