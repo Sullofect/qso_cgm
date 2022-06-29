@@ -8,6 +8,7 @@ from matplotlib import rc
 from matplotlib import cm
 from astropy.table import Table
 from PyAstronomy import pyasl
+from muse_compare_z import compare_z
 from astropy import units as u
 from astropy.cosmology import FlatLambdaCDM
 from matplotlib.colors import ListedColormap
@@ -24,60 +25,136 @@ newcolors = Blues(np.linspace(0, 1, 256))
 newcolors_red = Reds(np.linspace(0, 1, 256))
 newcmp = ListedColormap(newcolors)
 
+def LoadGalData(row=None, qls=False):
+    global ID_final, row_final, name_final
+    row_sort = np.where(row_final == row)
+    if qls is True:
+        path_spe = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting',
+                                'Subtracted_ESO_DEEP_offset_zapped_spec1D', str(row) + '_' + str(ID_final[row_sort][0])
+                                + '_' + name_final[row_sort][0] + '_spec1D.fits')
+    elif qls is False:
+        path_spe = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting',
+                                'ESO_DEEP_offset_zapped_spec1D', str(row) + '_' + str(ID_final[row_sort][0])
+                                + '_' + name_final[row_sort][0] + '_spec1D.fits')
+    spec = Table.read(path_spe)
+    # spec = spec[spec['mask'] == 1]
 
-path_1 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
-                      '1_20002_J024034.53-185135.09_spec1D.fits')
-spec = Table.read(path_1)
-wave_1 = pyasl.vactoair2(spec['wave'])
-flux_1 = spec['flux'] * 1e-3
-model_1 = spec['model'] * 1e-3
-flux_err_1 = spec['error'] * 1e-3
+    wave = pyasl.vactoair2(spec['wave'])
+    flux = spec['flux'] * 1e-3
+    flux_err = spec['error'] * 1e-3
+    model = spec['model'] * 1e-3
+    return wave, flux, flux_err, model
 
-path_2 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
-                      '64_271_J024032.03-185139.81_spec1D.fits')
-spec = Table.read(path_2)
-wave_2 = pyasl.vactoair2(spec['wave'])
-flux_2 = spec['flux'] * 1e-3
-model_2 = spec['model'] * 1e-3
-flux_err_2 = spec['error'] * 1e-3
-
-path_3 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
-                      '88_301_J024030.95-185143.68_spec1D.fits')
-spec = Table.read(path_3)
-wave_3 = pyasl.vactoair2(spec['wave'])
-flux_3 = spec['flux'] * 1e-3
-model_3 = spec['model'] * 1e-3
-flux_err_3 = spec['error'] * 1e-3
-
+# Example
+# path_1 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
+#                       '1_20002_J024034.53-185135.09_spec1D.fits')
+# spec = Table.read(path_1)
+# wave_1 = pyasl.vactoair2(spec['wave'])
+# flux_1 = spec['flux'] * 1e-3
+# model_1 = spec['model'] * 1e-3
+# flux_err_1 = spec['error'] * 1e-3
 #
-fig, axarr = plt.subplots(3, 1, figsize=(10, 15), sharex=True, dpi=300)
-plt.subplots_adjust(hspace=0.1)
-axarr[0].plot(wave_1, flux_1, color='k', lw=1)
-axarr[0].plot(wave_1, model_1, color='r', lw=1)
-axarr[0].plot(wave_1, flux_err_1, color='lightgrey')
-axarr[1].plot(wave_2, flux_2, color='k', lw=1)
-axarr[1].plot(wave_2, model_2, color='r', lw=1)
-axarr[1].plot(wave_2, flux_err_2, color='lightgrey')
-axarr[2].plot(wave_3, flux_3, color='k', lw=1)
-axarr[2].plot(wave_3, model_3, color='r', lw=1)
-axarr[2].plot(wave_3, flux_err_3, color='lightgrey')
-axarr[0].set_title('G1', x=0.1, y=0.85, size=20)
-axarr[1].set_title('G64', x=0.1, y=0.85, size=20)
-axarr[2].set_title('G88', x=0.1, y=0.85, size=20)
-axarr[0].minorticks_on()
-axarr[1].minorticks_on()
-axarr[2].minorticks_on()
-axarr[2].set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
-axarr[0].set_ylabel(r'${f}_{\lambda}$', size=20)
-axarr[1].set_ylabel(r'${f}_{\lambda}$', size=20)
-axarr[2].set_ylabel(r'${f}_{\lambda}$', size=20)
-axarr[0].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
-axarr[0].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-axarr[1].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
-axarr[1].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-axarr[2].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
-axarr[2].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/QSP_lunch_talk.png', bbox_inches='tight')
+# path_2 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
+#                       '64_271_J024032.03-185139.81_spec1D.fits')
+# spec = Table.read(path_2)
+# wave_2 = pyasl.vactoair2(spec['wave'])
+# flux_2 = spec['flux'] * 1e-3
+# model_2 = spec['model'] * 1e-3
+# flux_err_2 = spec['error'] * 1e-3
+#
+# path_3 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D',
+#                       '88_301_J024030.95-185143.68_spec1D.fits')
+# spec = Table.read(path_3)
+# wave_3 = pyasl.vactoair2(spec['wave'])
+# flux_3 = spec['flux'] * 1e-3
+# model_3 = spec['model'] * 1e-3
+# flux_err_3 = spec['error'] * 1e-3
+
+
+def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
+    global z_final
+    fig, axarr = plt.subplots(len(row_array), 1, figsize=(10, 2.5 * len(row_array)), sharex=True, dpi=300)
+    plt.subplots_adjust(hspace=0.1)
+
+    for i in range(len(row_array)):
+        row_sort = np.where(row_final == row_array[i])
+        z_i = z_final[row_sort]
+        wave_i, flux_i, flux_err_i, model_i = LoadGalData(row=row_array[i], qls=qls)
+        axarr[i].plot(wave_i, flux_i, color='k', lw=1)
+        axarr[i].plot(wave_i, model_i, color='r', lw=1)
+        axarr[i].plot(wave_i, flux_err_i, color='lightgrey')
+        axarr[i].set_title('G' + str(row_array[i]), x=0.1, y=0.85, size=20)
+        axarr[i].annotate(text=r'$\mathrm{[O \, II]} \\ \mathrm{3927, \, 29}$', xy=(0.55, 0.65),
+                          xycoords='axes fraction', size=20)
+        axarr[i].annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
+        axarr[i].annotate(text=r'$\mathrm{[O \, III]}  \\ \mathrm{\quad 4960}$', xy=(0.45, 0.65),
+                          xycoords='axes fraction', size=20)
+        axarr[i].annotate(text=r'$\mathrm{[O \, III]} \\ \mathrm{\quad 5008}$', xy=(0.7, 0.65),
+                          xycoords='axes fraction', size=20)
+        lines = (1 + z_i) * np.array([3727.092, 3729.8754960, 4862.721, 4960.295, 5008.239])
+        axarr[i].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
+                        colors='grey')
+        axarr[i].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
+                        colors='grey')
+        # axarr[i].set_xlim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
+        axarr[i].set_ylim(0, flux_i.max() + 0.1)
+    fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
+    fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.05)
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '.png', bbox_inches='tight')
+
+# Load info
+ggp_info = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
+                     cat_will='ESO_DEEP_offset_zapped_objects.fits')
+bins_final = ggp_info[0]
+row_final = ggp_info[1]
+ID_final = ggp_info[2]
+z_final = ggp_info[3]
+name_final = ggp_info[5]
+ql_final = ggp_info[6]
+ra_final = ggp_info[7]
+dec_final = ggp_info[8]
+
+col_ID = np.arange(len(row_final))
+select_array = np.sort(np.array([1, 4, 5, 6, 7, 13, 20, 27, 35, 36, 57, 62, 64, 68, 72, 78, 80, 81, 82, 83, 88, 92,
+                                 93, 120, 129, 134, 140, 141, 149, 162, 164, 179, 181, 182]))  # No row=11
+select_gal = np.in1d(row_final, select_array)
+row_final = row_final[select_gal]
+ID_final = ID_final[select_gal]
+name_final = name_final[select_gal]
+z_final = z_final[select_gal]
+ra_final = ra_final[select_gal]
+dec_final = dec_final[select_gal]
+
+PlotGalSpectra(row_array=[1, 64, 88], )
+#
+# fig, axarr = plt.subplots(3, 1, figsize=(10, 15), sharex=True, dpi=300)
+# plt.subplots_adjust(hspace=0.1)
+# axarr[0].plot(wave_1, flux_1, color='k', lw=1)
+# axarr[0].plot(wave_1, model_1, color='r', lw=1)
+# axarr[0].plot(wave_1, flux_err_1, color='lightgrey')
+# axarr[1].plot(wave_2, flux_2, color='k', lw=1)
+# axarr[1].plot(wave_2, model_2, color='r', lw=1)
+# axarr[1].plot(wave_2, flux_err_2, color='lightgrey')
+# axarr[2].plot(wave_3, flux_3, color='k', lw=1)
+# axarr[2].plot(wave_3, model_3, color='r', lw=1)
+# axarr[2].plot(wave_3, flux_err_3, color='lightgrey')
+# axarr[0].set_title('G1', x=0.1, y=0.85, size=20)
+# axarr[1].set_title('G64', x=0.1, y=0.85, size=20)
+# axarr[2].set_title('G88', x=0.1, y=0.85, size=20)
+# axarr[0].minorticks_on()
+# axarr[1].minorticks_on()
+# axarr[2].minorticks_on()
+# axarr[2].set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
+# axarr[0].set_ylabel(r'${f}_{\lambda}$', size=20)
+# axarr[1].set_ylabel(r'${f}_{\lambda}$', size=20)
+# axarr[2].set_ylabel(r'${f}_{\lambda}$', size=20)
+# axarr[0].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
+# axarr[0].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+# axarr[1].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
+# axarr[1].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+# axarr[2].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
+# axarr[2].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+# fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/QSP_lunch_talk.png', bbox_inches='tight')
 
 #
 # path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
