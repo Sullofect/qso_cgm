@@ -178,9 +178,9 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                                                    r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
                                                    b_OIII4960, a_OIII5008, b_OIII5008), '-r')
         axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', lw=1)
-        axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey')
+        axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
         axarr[i, 1].plot(wave_vac_stack, flux_all, color='k', lw=1)
-        axarr[i, 1].plot(wave_vac_stack, flux_err_all, color='lightgrey')
+        axarr[i, 1].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
         axarr[i, 1].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
                                                    r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
                                                    b_OIII4960, a_OIII5008, b_OIII5008), '-r')

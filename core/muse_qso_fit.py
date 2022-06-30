@@ -78,6 +78,10 @@ OII_region = np.where((wave_vac > 6050) * (wave_vac < 6100))
 wave_OII_vac = wave_vac[OII_region]
 flux_OII = flux[OII_region]
 
+Hbeta_region = np.where((wave_vac > 7600) * (wave_vac < 8300))
+wave_Hbeta_vac = wave_vac[Hbeta_region]
+flux_Hbeta = flux[Hbeta_region]
+
 redshift_guess = 0.63
 sigma_kms_guess = 150.0
 flux_OII_guess = 42
@@ -97,41 +101,41 @@ result = spec_model.fit(flux_OII, wave_vac=wave_OII_vac, params=parameters)
 z = result.best_values['z']
 print(z)
 
-# Plot the Spectrum
-fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
-ax.plot(wave_vac, flux, color='k')
-ax.plot(wave_vac, flux_err, color='lightgrey')
-ax.set_xlim(5200, 9300)
-# ax.set_ylim(0, 100)
-ax.minorticks_on()
-ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; (\AA)}$', size=20)
-ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
-ax.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
-ax.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-
-# Second axis
-secax = ax.secondary_xaxis('top', functions=(obs2rest, rest2obs))
-secax.minorticks_on()
-secax.set_xlabel(r'$\mathrm{Rest \mbox{-} frame \; Wavelength \; (\AA)}$', size=20)
-secax.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=20)
-secax.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
-
-# Second axis
-axins = ax.inset_axes([0.71, 0.61, 0.27, 0.3])
-axins.plot(wave_OII_vac, flux_OII, color='black', drawstyle='steps-mid')
-axins.plot(wave_OII_vac, result.best_fit, color='red')
-axins.set_xlim(6060, 6085)
-# axins.set_ylim(55, 59)
-axins.minorticks_on()
-axins.set_ylabel(r'${f}_{\lambda}$', size=15)
-axins.text(6062, 262, r'$\mathrm{[O\;II]}$', size=13)
-axins.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=13, size=5)
-axins.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-secaxins = axins.secondary_xaxis('top', functions=(obs2rest, rest2obs))
-secaxins.minorticks_on()
-secaxins.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=13)
-secaxins.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
-fig.savefig(path_savefig + 'qso_spec_fit_z', bbox_inches='tight')
+# # Plot the Spectrum
+# fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
+# ax.plot(wave_vac, flux, color='k')
+# ax.plot(wave_vac, flux_err, color='lightgrey')
+# ax.set_xlim(5200, 9300)
+# # ax.set_ylim(0, 100)
+# ax.minorticks_on()
+# ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; (\AA)}$', size=20)
+# ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
+# ax.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
+# ax.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+#
+# # Second axis
+# secax = ax.secondary_xaxis('top', functions=(obs2rest, rest2obs))
+# secax.minorticks_on()
+# secax.set_xlabel(r'$\mathrm{Rest \mbox{-} frame \; Wavelength \; (\AA)}$', size=20)
+# secax.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=20)
+# secax.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
+#
+# # Second axis
+# axins = ax.inset_axes([0.71, 0.61, 0.27, 0.3])
+# axins.plot(wave_OII_vac, flux_OII, color='black', drawstyle='steps-mid')
+# axins.plot(wave_OII_vac, result.best_fit, color='red')
+# axins.set_xlim(6060, 6085)
+# # axins.set_ylim(55, 59)
+# axins.minorticks_on()
+# axins.set_ylabel(r'${f}_{\lambda}$', size=15)
+# axins.text(6062, 262, r'$\mathrm{[O\;II]}$', size=13)
+# axins.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=13, size=5)
+# axins.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+# secaxins = axins.secondary_xaxis('top', functions=(obs2rest, rest2obs))
+# secaxins.minorticks_on()
+# secaxins.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=13)
+# secaxins.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
+# fig.savefig(path_savefig + 'qso_spec_fit_z', bbox_inches='tight')
 
 # Fit the Spectrum
 path = '/Users/lzq/Dropbox/PyQSOFit/'
@@ -236,48 +240,117 @@ q.Fit(name='HE0238-1904', nsmooth=1, and_or_mask=False, deredden=True, reject_ba
 
 
 # Plot the Spectrum
-fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
-ax.plot(q.wave * (1 + z), q.flux / (1 + z), color='k', label=r'$\mathrm{Data}$')
-ax.plot(q.wave * (1 + z), q.err / (1 + z), color='lightgrey', label=r'$\mathrm{err}$')
-ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z) + q.f_conti_model / (1 + z),
-        'b', label='Line')
-ax.plot(q.wave * (1 + z), q.f_conti_model / (1 + z), 'c', label=r'$\mathrm{Iron}$')
-ax.plot(q.wave * (1 + z), q.PL_poly_BC / (1 + z), 'orange', label=r'$\mathrm{Continuum}$')
-#ax.set_xlim(5200, 9300)
-#ax.set_ylim(0, 100)
-ax.minorticks_on()
-ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; (\AA)}$', size=20)
-ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
-ax.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
-ax.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-
-secax = ax.secondary_xaxis('top', functions=(obs2rest, rest2obs))
-secax.minorticks_on()
-secax.set_xlabel(r'$\mathrm{Rest \mbox{-} frame \; Wavelength \; (\AA)}$', size=20)
-secax.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=20)
-secax.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
-ax.legend(prop={'size': 17}, framealpha=0, loc=3, fontsize=15)
-fig.savefig(path_savefig + 'qso_spec_fit_lines', bbox_inches='tight')
+# fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
+# ax.plot(q.wave * (1 + z), q.flux / (1 + z), color='k', label=r'$\mathrm{Data}$')
+# ax.plot(q.wave * (1 + z), q.err / (1 + z), color='lightgrey', label=r'$\mathrm{err}$')
+# ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z) + q.f_conti_model / (1 + z),
+#         'b', label='Line')
+# ax.plot(q.wave * (1 + z), q.f_conti_model / (1 + z), 'c', label=r'$\mathrm{Iron}$')
+# ax.plot(q.wave * (1 + z), q.PL_poly_BC / (1 + z), 'orange', label=r'$\mathrm{Continuum}$')
+# #ax.set_xlim(5200, 9300)
+# #ax.set_ylim(0, 100)
+# ax.minorticks_on()
+# ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; (\AA)}$', size=20)
+# ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
+# ax.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
+# ax.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+#
+# secax = ax.secondary_xaxis('top', functions=(obs2rest, rest2obs))
+# secax.minorticks_on()
+# secax.set_xlabel(r'$\mathrm{Rest \mbox{-} frame \; Wavelength \; (\AA)}$', size=20)
+# secax.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=20)
+# secax.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
+# ax.legend(prop={'size': 17}, framealpha=0, loc=3, fontsize=15)
+# fig.savefig(path_savefig + 'qso_spec_fit_lines', bbox_inches='tight')
 
 # Plot the Hbeta broad Spectrum
-fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
-ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z), 'b', label=r'$\mathrm{Broad} + \mathrm{Narrow}$', lw=2)
-ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result[0:9]) / (1 + z), 'r', label=r'$\mathrm{Broad}$', lw=2)
+# fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
+# ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z), 'b', label=r'$\mathrm{Broad} + \mathrm{Narrow}$', lw=2)
+# ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result[0:9]) / (1 + z), 'r', label=r'$\mathrm{Broad}$', lw=2)
+#
+# ax.set_xlim(7500, 8500)
+# ax.minorticks_on()
+# ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; (\AA)}$', size=20)
+# ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
+# ax.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
+# ax.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+#
+# secax = ax.secondary_xaxis('top', functions=(obs2rest, rest2obs))
+# secax.minorticks_on()
+# secax.set_xlabel(r'$\mathrm{Rest \mbox{-} frame \; Wavelength \; (\AA)}$', size=20)
+# secax.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=20)
+# secax.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
+# ax.legend(prop={'size': 17}, framealpha=0, loc=2, fontsize=15)
+# fig.savefig(path_savefig + 'qso_spec_Hbeta_broad', bbox_inches='tight')
 
-ax.set_xlim(7500, 8500)
+# Paper's plot
+# Plot the Spectrum
+fig, ax = plt.subplots(1, 1, figsize=(16, 4), dpi=300)
+ax.plot(q.wave * (1 + z), q.flux / (1 + z), lw=1, color='k', label=r'$\mathrm{Data}$')
+ax.plot(q.wave * (1 + z), q.err / (1 + z), lw=1, color='lightgrey', label=r'$\mathrm{err}$')
+# ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z) + q.f_conti_model / (1 + z),
+#         'b', label='Line')
+# ax.plot(q.wave * (1 + z), q.f_conti_model / (1 + z), 'c', label=r'$\mathrm{Iron}$')
+ax.plot(q.wave * (1 + z), q.PL_poly_BC / (1 + z), '--', color='purple', label=r'$\mathrm{Continuum}$')
+ax.set_xlim(5200, 9300)
+ax.set_ylim(-20, 480)
 ax.minorticks_on()
 ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; (\AA)}$', size=20)
 ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
 ax.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
 ax.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+ax.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.22, 0.8), xycoords='axes fraction', size=20)
+ax.annotate(text=r'$\mathrm{H\beta}$', xy=(0.65, 0.8), xycoords='axes fraction', size=20)
+ax.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.697, 0.8),
+            xycoords='axes fraction', size=20)
+ax.fill_between([6060, 6080], [-20, -20], [480, 480], color='lightgrey', alpha=0.5)
+ax.fill_between([7750, 8270], [-20, -20], [480, 480], color='lightgrey', alpha=0.5)
+ax.fill_between([8050, 8270], [-20, -20], [480, 480], color='lightgrey', alpha=0.7)
 
+# Second axis
 secax = ax.secondary_xaxis('top', functions=(obs2rest, rest2obs))
 secax.minorticks_on()
 secax.set_xlabel(r'$\mathrm{Rest \mbox{-} frame \; Wavelength \; (\AA)}$', size=20)
 secax.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=20)
 secax.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
-ax.legend(prop={'size': 17}, framealpha=0, loc=2, fontsize=15)
-fig.savefig(path_savefig + 'qso_spec_Hbeta_broad', bbox_inches='tight')
+
+# Second plot
+axins = ax.inset_axes([0.055, 0.10, 0.15, 0.3])
+axins.plot(wave_OII_vac, flux_OII, color='black', drawstyle='steps-mid')
+axins.plot(wave_OII_vac, result.best_fit, color='red')
+axins.set_xlim(6060, 6085)
+# axins.set_ylim(55, 59)
+axins.minorticks_on()
+axins.set_ylabel(r'${f}_{\lambda}$', size=15)
+axins.text(6061, 262, r'$\mathrm{[O\;II]}$', size=13)
+axins.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=13, size=5)
+axins.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+# secaxins = axins.secondary_xaxis('top', functions=(obs2rest, rest2obs))
+# secaxins.minorticks_on()
+# secaxins.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=13)
+# secaxins.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
+
+# Third plot
+axins = ax.inset_axes([0.82, 0.63, 0.15, 0.3])
+axins.plot(q.wave * (1 + z), q.flux / (1 + z), lw=1, color='black', drawstyle='steps-mid')
+axins.plot(q.wave * (1 + z), q.PL_poly_BC / (1 + z), '--', color='purple', label=r'$\mathrm{Continuum}$')
+axins.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z) + q.f_conti_model / (1 + z), 'red',
+           label=r'$\mathrm{Broad} + \mathrm{Narrow}$',)
+# axins.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result[0:9]) / (1 + z), 'r',
+#            label=r'$\mathrm{Broad}$', lw=2)
+axins.set_xlim(7750, 8250)
+axins.set_ylim(100, 300)
+axins.minorticks_on()
+axins.set_ylabel(r'${f}_{\lambda}$', size=15)
+axins.text(7800, 250, r'$\mathrm{H\beta}$', size=13)
+axins.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=13, size=5)
+axins.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+# secaxins = axins.secondary_xaxis('top', functions=(obs2rest, rest2obs))
+# secaxins.minorticks_on()
+# secaxins.tick_params(axis='x', which='major', direction='in', top='on', size=5, labelsize=13)
+# secaxins.tick_params(axis='x', which='minor', direction='in', top='on', size=3)
+fig.savefig(path_savefig + 'spectra_qso', bbox_inches='tight')
+
 
 # Calcualte BH mass
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)

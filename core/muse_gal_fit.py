@@ -40,7 +40,7 @@ def load_data(row):
     spec = Table.read(path_spe)
     spec = spec[spec['mask'] == 1]
 
-    wave = pyasl.vactoair2(spec['wave'])
+    wave = pyasl.vactoair2(spec['wave'])  # Bagpipe want air wavelength
     flux = spec['flux'] * 1e-20
     flux_err = spec['error'] * 1e-20
 

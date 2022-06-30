@@ -14,10 +14,6 @@ from astropy.cosmology import FlatLambdaCDM
 from matplotlib.colors import ListedColormap
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
-mpl.rcParams['xtick.direction'] = 'in'
-mpl.rcParams['ytick.direction'] = 'in'
-mpl.rcParams['xtick.major.size'] = 10
-mpl.rcParams['ytick.major.size'] = 10
 
 Blues = cm.get_cmap('Blues', 256)
 Reds = cm.get_cmap('Reds', 256)
@@ -39,7 +35,7 @@ def LoadGalData(row=None, qls=False):
     spec = Table.read(path_spe)
     # spec = spec[spec['mask'] == 1]
 
-    wave = pyasl.vactoair2(spec['wave'])
+    wave = spec['wave']  # in vacuum
     flux = spec['flux'] * 1e-3
     flux_err = spec['error'] * 1e-3
     model = spec['model'] * 1e-3
@@ -74,7 +70,7 @@ def LoadGalData(row=None, qls=False):
 def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
     global z_final
     fig, axarr = plt.subplots(len(row_array), 1, figsize=(10, 2.5 * len(row_array)), sharex=True, dpi=300)
-    plt.subplots_adjust(hspace=0.1)
+    plt.subplots_adjust(hspace=0.0)
 
     for i in range(len(row_array)):
         row_sort = np.where(row_final == row_array[i])
@@ -82,25 +78,28 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
         wave_i, flux_i, flux_err_i, model_i = LoadGalData(row=row_array[i], qls=qls)
         axarr[i].plot(wave_i, flux_i, color='k', lw=1)
         axarr[i].plot(wave_i, model_i, color='r', lw=1)
-        axarr[i].plot(wave_i, flux_err_i, color='lightgrey')
-        axarr[i].set_title('G' + str(row_array[i]), x=0.1, y=0.85, size=20)
-        axarr[i].annotate(text=r'$\mathrm{[O \, II]} \\ \mathrm{3927, \, 29}$', xy=(0.55, 0.65),
+        axarr[i].plot(wave_i, flux_err_i, color='lightgrey', lw=1)
+        axarr[i].set_title('G' + str(row_array[i]), x=0.1, y=0.80, size=20)
+        axarr[0].annotate(text=r'$\mathrm{[O \, II]} \\ \mathrm{3927, \, 29}$', xy=(0.15, 0.65),
                           xycoords='axes fraction', size=20)
-        axarr[i].annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
-        axarr[i].annotate(text=r'$\mathrm{[O \, III]}  \\ \mathrm{\quad 4960}$', xy=(0.45, 0.65),
+        axarr[0].annotate(text=r'$\mathrm{Ca \, II \, K, H}$', xy=(0.4, 0.65), xycoords='axes fraction', size=20)
+        axarr[0].annotate(text=r'$\mathrm{H\beta}$', xy=(0.65, 0.65), xycoords='axes fraction', size=20)
+        axarr[0].annotate(text=r'$\mathrm{[O \, III]}  \\ \mathrm{4960, \, 5008}$', xy=(0.80, 0.65),
                           xycoords='axes fraction', size=20)
-        axarr[i].annotate(text=r'$\mathrm{[O \, III]} \\ \mathrm{\quad 5008}$', xy=(0.7, 0.65),
-                          xycoords='axes fraction', size=20)
-        lines = (1 + z_i) * np.array([3727.092, 3729.8754960, 4862.721, 4960.295, 5008.239])
-        axarr[i].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
-                        colors='grey')
-        axarr[i].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
-                        colors='grey')
-        # axarr[i].set_xlim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
-        axarr[i].set_ylim(0, flux_i.max() + 0.1)
-    fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
-    fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.05)
+        lines = (1 + z_i) * np.array([3727.092, 3729.8754960, 3934.777, 3969.588, 4862.721, 4960.295, 5008.239])
+        axarr[i].vlines(lines, lw=1, ymin=[-5, -5, -5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100, 100, 100],
+                        linestyles='dashed', colors='grey')
+        axarr[i].set_xlim(4800, 9200)
+        axarr[i].set_ylim(-0.1, flux_i.max() + 0.1)
+        axarr[i].minorticks_on()
+        axarr[i].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
+                             labelsize=20, size=5)
+        axarr[i].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
+                             size=3)
+    fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
+    fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '.png', bbox_inches='tight')
+
 
 # Load info
 ggp_info = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
