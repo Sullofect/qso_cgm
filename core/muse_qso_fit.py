@@ -286,7 +286,7 @@ q.Fit(name='HE0238-1904', nsmooth=1, and_or_mask=False, deredden=True, reject_ba
 # Paper's plot
 # Plot the Spectrum
 fig, ax = plt.subplots(1, 1, figsize=(16, 4), dpi=300)
-ax.plot(q.wave * (1 + z), q.flux / (1 + z), lw=1, color='k', label=r'$\mathrm{Data}$')
+ax.plot(q.wave * (1 + z), q.flux / (1 + z), lw=1, color='k', drawstyle='steps-mid', label=r'$\mathrm{Data}$')
 ax.plot(q.wave * (1 + z), q.err / (1 + z), lw=1, color='lightgrey', label=r'$\mathrm{err}$')
 # ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z) + q.f_conti_model / (1 + z),
 #         'b', label='Line')

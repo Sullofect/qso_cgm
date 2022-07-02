@@ -174,12 +174,12 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         # Save the fitted result
         flux_info[i, :] = np.array([flux_OII, flux_Hbeta, flux_OIII5008, dflux_OII, dflux_Hbeta, dflux_OIII5008])
 
+        axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', drawstyle='steps-mid', lw=1)
+        axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
         axarr[i, 0].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
                                                    r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
                                                    b_OIII4960, a_OIII5008, b_OIII5008), '-r')
-        axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', lw=1)
-        axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
-        axarr[i, 1].plot(wave_vac_stack, flux_all, color='k', lw=1)
+        axarr[i, 1].plot(wave_vac_stack, flux_all, color='k', drawstyle='steps-mid', lw=1)
         axarr[i, 1].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
         axarr[i, 1].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
                                                    r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
@@ -201,13 +201,10 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         if flux_Hbeta_i.max() > flux_OIII5008_i.max():
             axarr[i, 0].set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
             axarr[i, 1].set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
-        axarr[i, 0].annotate(text=r'$\mathrm{[O \, II]} \\ \mathrm{3927, \, 29}$', xy=(0.55, 0.65),
-                             xycoords='axes fraction', size=20)
-        axarr[i, 1].annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
-        axarr[i, 1].annotate(text=r'$\mathrm{[O \, III]}  \\ \mathrm{\quad 4960}$', xy=(0.45, 0.65),
-                             xycoords='axes fraction', size=20)
-        axarr[i, 1].annotate(text=r'$\mathrm{[O \, III]} \\ \mathrm{\quad 5008}$', xy=(0.7, 0.65),
-                             xycoords='axes fraction', size=20)
+        axarr[0, 0].annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.55, 0.65), xycoords='axes fraction', size=20)
+        axarr[0, 1].annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
+        axarr[0, 1].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.45, 0.65), xycoords='axes fraction', size=20)
+        axarr[0, 1].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.7, 0.65), xycoords='axes fraction', size=20)
 
         axarr[i, 0].minorticks_on()
         axarr[i, 1].minorticks_on()

@@ -76,18 +76,20 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
         row_sort = np.where(row_final == row_array[i])
         z_i = z_final[row_sort]
         wave_i, flux_i, flux_err_i, model_i = LoadGalData(row=row_array[i], qls=qls)
-        axarr[i].plot(wave_i, flux_i, color='k', lw=1)
+        axarr[i].plot(wave_i, flux_i, color='k', drawstyle='steps-mid', lw=1)
         axarr[i].plot(wave_i, model_i, color='r', lw=1)
         axarr[i].plot(wave_i, flux_err_i, color='lightgrey', lw=1)
         axarr[i].set_title('G' + str(row_array[i]), x=0.1, y=0.80, size=20)
-        axarr[0].annotate(text=r'$\mathrm{[O \, II]} \\ \mathrm{3927, \, 29}$', xy=(0.15, 0.65),
+        axarr[0].annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.2, 0.65),
                           xycoords='axes fraction', size=20)
-        axarr[0].annotate(text=r'$\mathrm{Ca \, II \, K, H}$', xy=(0.4, 0.65), xycoords='axes fraction', size=20)
+        axarr[0].annotate(text=r'$\mathrm{K, H, G}$', xy=(0.39, 0.65), xycoords='axes fraction', size=20)
         axarr[0].annotate(text=r'$\mathrm{H\beta}$', xy=(0.65, 0.65), xycoords='axes fraction', size=20)
-        axarr[0].annotate(text=r'$\mathrm{[O \, III]}  \\ \mathrm{4960, \, 5008}$', xy=(0.80, 0.65),
+        axarr[0].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.80, 0.65),
                           xycoords='axes fraction', size=20)
-        lines = (1 + z_i) * np.array([3727.092, 3729.8754960, 3934.777, 3969.588, 4862.721, 4960.295, 5008.239])
-        axarr[i].vlines(lines, lw=1, ymin=[-5, -5, -5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100, 100, 100],
+        lines = (1 + z_i) * np.array([3727.092, 3729.8754960, 3934.777, 3969.588, 4305.61, 4862.721, 4960.295, 5008.239])
+        axarr[i].vlines(lines, lw=1,
+                        ymin=[-5, -5, -5, -5, -5, -5, -5, -5],
+                        ymax=[100, 100, 100, 100, 100, 100, 100, 100],
                         linestyles='dashed', colors='grey')
         axarr[i].set_xlim(4800, 9200)
         axarr[i].set_ylim(-0.1, flux_i.max() + 0.1)

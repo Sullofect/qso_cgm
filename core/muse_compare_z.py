@@ -170,13 +170,13 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
 # plt.hist(v_gal, bins=bins_final, color='k', histtype='step', label=r'$\mathrm{v_{all}}$')
 # plt.hist(v_above, bins=bins_final, facecolor='red', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{above}}$')
 # plt.hist(v_below, bins=bins_final, facecolor='blue', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{below}}$')
-# plt.plot(rv, normalization_all * norm.pdf(rv, mu_all, scale_all), '-k', lw=2, alpha=0.5,
+# plt.plot(rv, normalization_all * norm.pdf(rv, mu_all, scale_all), '-k', lw=1, alpha=1,
 #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_all)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
 #                str("{0:.0f}".format(scale_all)) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, normalization_above * norm.pdf(rv, mu_above, scale_above), '-r', lw=2, alpha=0.5,
+# plt.plot(rv, normalization_above * norm.pdf(rv, mu_above, scale_above), '-r', lw=1, alpha=1,
 #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_above)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
 #                str("{0:.0f}".format(scale_above)) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=2, alpha=0.5,
+# plt.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=1, alpha=1,
 #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_below)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
 #                str("{0:.0f}".format(scale_below)) + r'$\mathrm{\, km/s}$')
 # plt.xlim(-2000, 2000)
