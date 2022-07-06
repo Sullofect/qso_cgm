@@ -4,9 +4,11 @@ import numpy.ma as ma
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from scipy import integrate
 from scipy.stats import norm
 from astropy.io import ascii
 from astropy.table import Table
+from scipy.optimize import minimize
 path_savefig = '/Users/lzq/Dropbox/Data/CGM_plots/'
 path_savetab = '/Users/lzq/Dropbox/Data/CGM_tables/'
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
@@ -128,6 +130,7 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
 # ra_final = ggp_info[7]
 # dec_final = ggp_info[8]
 #
+#
 # col_ID = np.arange(len(row_final))
 # select_array = np.sort(np.array([1, 4, 5, 6, 7, 13, 20, 27, 35, 36, 57, 62, 64, 68, 72, 78, 80, 81, 82, 83, 88, 92,
 #                                  93, 120, 129, 134, 140, 141, 149, 162, 164, 179, 181, 182]))  # No row=11
@@ -163,28 +166,51 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
 # nums, v_edge = np.histogram(v_below, bins=bins_final)
 # normalization_below = np.sum(nums) * 200
 #
+#
+# # Minimize likelihood
+# def gauss(x, mu, sigma):
+#     return np.exp(- (x - mu) ** 2 / 2 / sigma ** 2) / np.sqrt(2 * np.pi * sigma ** 2)
+#
+#
+# def loglikelihood(x_0, x):
+#     mu1, sigma1, mu2, sigma2 = x_0[0], x_0[1], x_0[2], x_0[3]
+#     return -1 * np.sum(np.log(normalization_below / normalization_all * gauss(x, mu1, sigma1)
+#                               + normalization_above / normalization_all * gauss(x, mu2, sigma2)))
+#
+# result = minimize(loglikelihood, [-80, 200, 500, 500], (v_gal), method="Powell")
+#
 # # Plot
 # rv = np.linspace(-2000, 2000, 1000)
 # plt.figure(figsize=(8, 5), dpi=300)
-# plt.vlines(0, 0, 11, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
+# plt.vlines(0, 0, 15, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
 # plt.hist(v_gal, bins=bins_final, color='k', histtype='step', label=r'$\mathrm{v_{all}}$')
 # plt.hist(v_above, bins=bins_final, facecolor='red', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{above}}$')
 # plt.hist(v_below, bins=bins_final, facecolor='blue', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{below}}$')
-# plt.plot(rv, normalization_all * norm.pdf(rv, mu_all, scale_all), '-k', lw=1, alpha=1,
-#          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_all)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-#                str("{0:.0f}".format(scale_all)) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, normalization_above * norm.pdf(rv, mu_above, scale_above), '-r', lw=1, alpha=1,
-#          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_above)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-#                str("{0:.0f}".format(scale_above)) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=1, alpha=1,
-#          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_below)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-#                str("{0:.0f}".format(scale_below)) + r'$\mathrm{\, km/s}$')
+# # plt.plot(rv, normalization_all * norm.pdf(rv, mu_all, scale_all), '-k', lw=1, alpha=1,
+# #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_all)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+# #                str("{0:.0f}".format(scale_all)) + r'$\mathrm{\, km/s}$')
+# # plt.plot(rv, normalization_above * norm.pdf(rv, mu_above, scale_above), '-r', lw=1, alpha=1,
+# #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_above)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+# #                str("{0:.0f}".format(scale_above)) + r'$\mathrm{\, km/s}$')
+# # plt.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=1, alpha=1,
+# #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_below)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+# #                str("{0:.0f}".format(scale_below)) + r'$\mathrm{\, km/s}$')
+# plt.plot(rv, normalization_below * norm.pdf(rv, result.x[0], result.x[1]), '-b', lw=1, alpha=1,
+#          label=r'$\mu = \, $' + str("{0:.0f}".format(result.x[0])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+#                str("{0:.0f}".format(result.x[1])) + r'$\mathrm{\, km/s}$')
+# plt.plot(rv, normalization_above * norm.pdf(rv, result.x[2], result.x[3]), '-r', lw=1, alpha=1,
+#          label=r'$\mu = \, $' + str("{0:.0f}".format(result.x[2])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+#                str("{0:.0f}".format(result.x[3])) + r'$\mathrm{\, km/s}$')
+# plt.plot(rv, normalization_all * (normalization_below / normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
+#                                   normalization_above / normalization_all * norm.pdf(rv, result.x[2], result.x[3])),
+#          '-k', lw=1, alpha=1)
 # plt.xlim(-2000, 2000)
-# plt.ylim(0, 11)
+# plt.ylim(0, 12)
 # plt.minorticks_on()
 # plt.xlabel(r'$\Delta v [\mathrm{km \; s^{-1}}]$', size=20)
 # plt.ylabel(r'$\mathrm{Numbers}$', size=20)
-# plt.tick_params(axis='both', which='major', direction='in', bottom='on', top='on', left='on', right='on', size=5, labelsize=20)
+# plt.tick_params(axis='both', which='major', direction='in', bottom='on', top='on', left='on', right='on', size=5,
+#                 labelsize=20)
 # plt.tick_params(axis='both', which='minor', direction='in', bottom='on', top='on', left='on', right='on', size=3)
 # plt.legend(prop={'size': 17}, framealpha=0, loc=2, fontsize=15)
 # plt.savefig(path_savefig + 'galaxy_velocity', bbox_inches='tight')
