@@ -102,6 +102,12 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_sys=0.1, ca
     mag_all[col_ID[mask_Y], 5] = np.inf
     dmag_all[col_ID[mask_Y], 5] = 0
 
+    # Remove invalid bad g band
+    bad_g = np.array([80])
+    mask_g = np.in1d(row_final, bad_g)
+    mag_all[col_ID[mask_g], 1] = np.inf
+    dmag_all[col_ID[mask_g], 1] = 0
+
     flux_all = 10 ** ((23.9 - mag_all) / 2.5)  # microjanskys
     flux_all_err = flux_all * np.log(10) * dmag_all / 2.5
     flux_all_err = np.where(flux_all_err != 0, flux_all_err, 99)
@@ -362,12 +368,12 @@ dmag_Y_dred = data_pho_des['magerr_auto_Y']
 
 # Trial 10: Inflate all errors + Uniform prior
 qls, spectrum_exists = False, False
-gal_fit(gal_num=[1, 13, 35, 62, 120, 134, 141, 164],
-        run_name='Trial_10', flux_hst='auto', cal='0', v_min=50, v_max=1000, prior='uniform')
-gal_fit(gal_num=[4, 88], run_name='Trial_10', flux_hst='iso', cal='0', v_min=50, v_max=1000, prior='uniform')
-gal_fit(gal_num=[93], run_name='Trial_10', flux_hst='auto', cal='0', v_min=50, v_max=200, prior='uniform')
-gal_fit(gal_num=[36], run_name='Trial_10', flux_hst='iso', cal='0', v_min=50, v_max=200, prior='uniform')
-gal_fit(gal_num=[57], run_name='Trial_10', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
-gal_fit(gal_num=[64], run_name='Trial_10', flux_hst='auto', cal='0', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[1, 13, 35, 62, 120, 134, 141, 164],
+#         run_name='Trial_10', flux_hst='auto', cal='0', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[4, 88], run_name='Trial_10', flux_hst='iso', cal='0', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[93], run_name='Trial_10', flux_hst='auto', cal='0', v_min=50, v_max=200, prior='uniform')
+# gal_fit(gal_num=[36], run_name='Trial_10', flux_hst='iso', cal='0', v_min=50, v_max=200, prior='uniform')
+# gal_fit(gal_num=[57], run_name='Trial_10', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[64], run_name='Trial_10', flux_hst='auto', cal='0', v_min=50, v_max=1000, prior='uniform')
 gal_fit(gal_num=[80], run_name='Trial_10', flux_hst='iso', cal='0', v_min=50, v_max=1000, prior='uniform')
-gal_fit(gal_num=[82], run_name='Trial_10', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[82], run_name='Trial_10', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')

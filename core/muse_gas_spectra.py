@@ -92,18 +92,22 @@ def model_all(wave_vac, z, sigma_kms, flux_OII, flux_Hbeta, flux_OIII5008, r_OII
 # Read Data
 path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset.fits')
 path_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_Hbeta_line_offset.fits')
+path_bet = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_bet_Hbeta_OIII_line_offset.fits')
 path_OIII4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_4960_line_offset.fits')
 path_OIII5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_5008_line_offset.fits')
 
 cube_OII = Cube(path_OII)
 cube_Hbeta = Cube(path_Hbeta)
+cube_bet = Cube(path_bet)
 cube_OIII4960 = Cube(path_OIII4960)
 cube_OIII5008 = Cube(path_OIII5008)
 wave_OII_vac = pyasl.airtovac2(cube_OII.wave.coord())
 wave_Hbeta_vac = pyasl.airtovac2(cube_Hbeta.wave.coord())
+wave_bet_vac = pyasl.airtovac2(cube_bet.wave.coord())
 wave_OIII4960_vac = pyasl.airtovac2(cube_OIII4960.wave.coord())
 wave_OIII5008_vac = pyasl.airtovac2(cube_OIII5008.wave.coord())
 wave_vac_stack = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac))
+wave_vac_stack_plot = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_bet_vac, wave_OIII4960_vac, wave_OIII5008_vac))
 wave_vac_all = np.array([wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
 
 redshift_guess = 0.63
@@ -140,11 +144,13 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
     for i in range(len(ra_array)):
         spe_OII_i = cube_OII.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)  # Unit in arcsec
         spe_Hbeta_i = cube_Hbeta.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
+        spe_bet_i = cube_bet.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
         spe_OIII4960_i = cube_OIII4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
         spe_OIII5008_i = cube_OIII5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
 
         flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
         flux_Hbeta_i, flux_Hbeta_err_i = spe_Hbeta_i.data * 1e-3, np.sqrt(spe_Hbeta_i.var) * 1e-3
+        flux_bet_i, flux_bet_err_i = spe_bet_i.data * 1e-3, np.sqrt(spe_bet_i.var) * 1e-3
         flux_OIII4960_i, flux_OIII4960_err_i = spe_OIII4960_i.data * 1e-3, np.sqrt(spe_OIII4960_i.var) * 1e-3
         flux_OIII5008_i, flux_OIII5008_err_i = spe_OIII5008_i.data * 1e-3, np.sqrt(spe_OIII5008_i.var) * 1e-3
         flux_all = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
@@ -153,6 +159,11 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         spec_model = lmfit.Model(model_all, missing='drop')
         result = spec_model.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters,
                                 weights=1 / flux_err_all)
+
+        # For plotting
+        flux_all_plot = np.hstack((flux_OII_i, flux_Hbeta_i, flux_bet_i, flux_OIII4960_i, flux_OIII5008_i))
+        flux_err_all_plot = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_bet_err_i,
+                                  flux_OIII4960_err_i, flux_OIII5008_err_i))
 
         # Load fitted result
         z, dz = result.best_values['z'], result.params['z'].stderr
@@ -179,8 +190,8 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr[i, 0].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
                                                    r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
                                                    b_OIII4960, a_OIII5008, b_OIII5008), '-r')
-        axarr[i, 1].plot(wave_vac_stack, flux_all, color='k', drawstyle='steps-mid', lw=1)
-        axarr[i, 1].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
+        axarr[i, 1].plot(wave_vac_stack_plot, flux_all_plot, color='k', drawstyle='steps-mid', lw=1)
+        axarr[i, 1].plot(wave_vac_stack_plot, flux_err_all_plot, color='lightgrey', lw=1)
         axarr[i, 1].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
                                                    r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
                                                    b_OIII4960, a_OIII5008, b_OIII5008), '-r')
