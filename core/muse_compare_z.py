@@ -173,12 +173,16 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
 #
 #
 # def loglikelihood(x_0, x):
-#     mu1, sigma1, mu2, sigma2 = x_0[0], x_0[1], x_0[2], x_0[3]
-#     return -1 * np.sum(np.log(normalization_below / normalization_all * gauss(x, mu1, sigma1)
-#                               + normalization_above / normalization_all * gauss(x, mu2, sigma2)))
+#     mu1, sigma1, mu2, sigma2, p1 = x_0[0], x_0[1], x_0[2], x_0[3], x_0[4]
+#     return -1 * np.sum(np.log(p1 * gauss(x, mu1, sigma1)
+#                               + (1 - p1) * gauss(x, mu2, sigma2)))
 #
-# result = minimize(loglikelihood, [-80, 200, 500, 500], (v_gal), method="Powell")
 #
+# guesses = [-80, 200, 500, 500, 0.3]
+# bnds = ((-100, 0), (0, 500), (200, 1000), (0, 1000), (0, 1))
+# result = minimize(loglikelihood, guesses, (v_gal), bounds=bnds, method="Powell")
+#
+# print(result.x)
 # # Plot
 # rv = np.linspace(-2000, 2000, 1000)
 # plt.figure(figsize=(8, 5), dpi=300)
@@ -195,15 +199,16 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
 # # plt.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=1, alpha=1,
 # #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_below)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
 # #                str("{0:.0f}".format(scale_below)) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, normalization_below * norm.pdf(rv, result.x[0], result.x[1]), '-b', lw=1, alpha=1,
-#          label=r'$\mu = \, $' + str("{0:.0f}".format(result.x[0])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-#                str("{0:.0f}".format(result.x[1])) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, normalization_above * norm.pdf(rv, result.x[2], result.x[3]), '-r', lw=1, alpha=1,
-#          label=r'$\mu = \, $' + str("{0:.0f}".format(result.x[2])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-#                str("{0:.0f}".format(result.x[3])) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, normalization_all * (normalization_below / normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
-#                                   normalization_above / normalization_all * norm.pdf(rv, result.x[2], result.x[3])),
-#          '-k', lw=1, alpha=1)
+# plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '-b', lw=1, alpha=1,
+#          label=r'$P_{1} = \,$' + str("{0:.2f}".format(result.x[4])) + '\n' + r'$\mu = \, $'
+#                + str("{0:.0f}".format(result.x[0])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
+#                + str("{0:.0f}".format(result.x[1])) + r'$\mathrm{\, km/s}$')
+# plt.plot(rv, (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-r', lw=1, alpha=1,
+#          label=r'$P_{2} = \,$' + str("{0:.2f}".format(1 - result.x[4])) + '\n' +  r'$\mu = \, $'
+#                + str("{0:.0f}".format(result.x[2])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
+#                + str("{0:.0f}".format(result.x[3])) + r'$\mathrm{\, km/s}$')
+# plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
+#          (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-k', lw=1, alpha=1)
 # plt.xlim(-2000, 2000)
 # plt.ylim(0, 12)
 # plt.minorticks_on()
