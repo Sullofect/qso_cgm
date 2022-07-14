@@ -20,17 +20,16 @@ M_8_50 = SM['M_8_50']
 M_9_50 = SM['M_9_50']
 M_10_50 = SM['M_10_50']
 
-resi_8_9 = M_8_50 - M_9_50
-resi_10_9 = M_10_50 - M_9_50
+resi_8_10 = M_8_50 - M_10_50
+resi_9_10 = M_9_50 - M_10_50
 
-resi_8_8 = resi_8_9[~np.isnan(resi_8_9)]
-resi_10_9 = resi_10_9[~np.isnan(resi_10_9)]
-#
-# print(np.linspace(-0.5, 0.5, 21))
+resi_8_10 = resi_8_10[~np.isnan(resi_8_10)]
+resi_9_10 = resi_9_10[~np.isnan(resi_9_10)]
+
 
 plt.figure(figsize=(8, 5), dpi=300)
-plt.hist(resi_10_9, bins=np.linspace(-0.5, 0.5, 21), facecolor='red', histtype='stepfilled', alpha=0.5, label=r'T10-T9')
-plt.hist(resi_8_9, bins=np.linspace(-0.5, 0.5, 21), facecolor='blue', histtype='stepfilled', alpha=0.5, label=r'T8-T9')
+plt.hist(resi_8_10, bins=np.linspace(-0.5, 0.5, 21), facecolor='red', histtype='stepfilled', alpha=0.5, label=r'T8-T10')
+plt.hist(resi_9_10, bins=np.linspace(-0.5, 0.5, 21), facecolor='blue', histtype='stepfilled', alpha=0.5, label=r'T9-T10')
 # plt.xlim(-2000, 2000)
 # plt.ylim(0, 12)
 plt.minorticks_on()

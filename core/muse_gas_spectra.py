@@ -90,11 +90,16 @@ def model_all(wave_vac, z, sigma_kms, flux_OII, flux_Hbeta, flux_OIII5008, r_OII
 
 
 # Read Data
-path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset_zapped.fits')
-path_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_Hbeta_line_offset_zapped.fits')
-path_bet = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_bet_Hbeta_OIII_line_offset_zapped.fits')
-path_OIII4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_4960_line_offset_zapped.fits')
-path_OIII5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_5008_line_offset_zapped.fits')
+path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
+                        'CUBE_OII_line_offset_zapped.fits')
+path_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
+                          'CUBE_Hbeta_line_offset_zapped.fits')
+path_bet = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
+                        'CUBE_bet_Hbeta_OIII_line_offset_zapped.fits')
+path_OIII4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
+                             'CUBE_OIII_4960_line_offset_zapped.fits')
+path_OIII5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
+                             'CUBE_OIII_5008_line_offset_zapped.fits')
 
 cube_OII = Cube(path_OII)
 cube_Hbeta = Cube(path_Hbeta)
@@ -162,8 +167,8 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
         # For plotting
         flux_all_plot = np.hstack((flux_OII_i, flux_Hbeta_i, flux_bet_i, flux_OIII4960_i, flux_OIII5008_i))
-        flux_err_all_plot = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_bet_err_i,
-                                  flux_OIII4960_err_i, flux_OIII5008_err_i))
+        flux_err_all_plot = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_bet_err_i, flux_OIII4960_err_i,
+                                       flux_OIII5008_err_i))
 
         # Load fitted result
         z, dz = result.best_values['z'], result.params['z'].stderr
@@ -240,7 +245,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
 # Plot the data
 # Read region file
-path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'gas_list_revised.reg')
+path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_list_revised.reg')
 ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
 dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]

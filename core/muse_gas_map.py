@@ -30,14 +30,17 @@ newcmp = ListedColormap(newcolors)
 
 #
 def ConvertFits(filename=None, table=None, sigma_v=False):
-    path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', filename + '.fits')
+    path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_plot', filename + '.fits')
     data, hdr = fits.getdata(path, 1, header=True)
     if sigma_v is True:
-        fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_sigma_v_revised.fits', table, overwrite=True)
-        data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/' + filename + '_sigma_v_revised.fits', 0, header=True)
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_plot/' + filename + '_sigma_v_revised.fits',
+                     table, overwrite=True)
+        data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_plot/' + filename + '_sigma_v_revised.fits',
+                                   0, header=True)
     elif sigma_v is False:
-        fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', table, overwrite=True)
-        data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', 0, header=True)
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_plot/' + filename + '_revised.fits', table, overwrite=True)
+        data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_plot/' + filename + '_revised.fits',
+                                   0, header=True)
     hdr1['BITPIX'], hdr1['NAXIS'], hdr1['NAXIS1'], hdr1['NAXIS2'] = hdr['BITPIX'], hdr['NAXIS'], \
                                                                     hdr['NAXIS1'], hdr['NAXIS2']
     hdr1['CRPIX1'], hdr1['CRPIX2'], hdr1['CTYPE1'], hdr1['CTYPE2'] = hdr['CRPIX1'], hdr['CRPIX2'], \
@@ -48,9 +51,11 @@ def ConvertFits(filename=None, table=None, sigma_v=False):
                                                                       hdr['MJDREF'], hdr['RADESYS']
     hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] = hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
     if sigma_v is True:
-        fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_sigma_v_revised.fits', data1, hdr1, overwrite=True)
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_plot/' + filename + '_sigma_v_revised.fits', data1, hdr1,
+                     overwrite=True)
     elif sigma_v is False:
-        fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data1, hdr1, overwrite=True)
+        fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_plot/' + filename + '_revised.fits', data1, hdr1,
+                     overwrite=True)
 
 
 #
@@ -58,14 +63,14 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
             ra=None, dec=None):
     # Load OIII
     if test is True:
-        path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+        path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit_' + line,
                                      'fit' + line + '_info_test.fits')
-        path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+        path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit_' + line,
                                          'fit' + line + '_info_err_test.fits')
     else:
-        path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+        path_fit_info = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit_' + line,
                                      'fit' + line + '_info_' + method + '_' + method_spe + '.fits')
-        path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+        path_fit_info_err = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'fit_' + line,
                                          'fit' + line + '_info_err_' + method + '_' + method_spe + '.fits')
     fit_info = fits.getdata(path_fit_info, 0, ignore_missing_end=True)
     fit_info_err = fits.getdata(path_fit_info_err, 0, ignore_missing_end=True)
@@ -122,7 +127,8 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
 
     # Plot velocity map
     fig = plt.figure(figsize=(8, 8), dpi=300)
-    path_dv = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_' + line + '_fitline_revised.fits')
+    path_dv = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_plot',
+                           'image_' + line + '_fitline_revised.fits')
     gc = aplpy.FITSFigure(path_dv, figure=fig, north=True)
     gc.set_system_latex(True)
     gc.show_colorscale(vmin=-300, vmax=300, cmap='coolwarm')
@@ -133,7 +139,6 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc.show_markers(ra, dec, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
     gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
     gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
-    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_ticks([-200, -100, 0, 100, 200])
     gc.colorbar.set_pad(0.)
@@ -169,8 +174,8 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
 
     # Plot sigma map
     fig = plt.figure(figsize=(8, 8), dpi=300)
-    path_sigma_v = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_' + line
-                           + '_fitline_sigma_v_revised.fits')
+    path_sigma_v = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_plot', 'image_' + line
+                                + '_fitline_sigma_v_revised.fits')
     gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
     gc.set_system_latex(True)
     gc.show_colorscale(vmin=0, vmax=200, cmap=sequential_s.Acton_6.mpl_colormap)

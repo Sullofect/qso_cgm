@@ -266,7 +266,8 @@ dmag_auto_dred = dmag_auto
 
 
 # Load DES data
-path_pho_des = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'des_dr2_galaxys_pho_final.fits')
+path_pho_des = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'des_photometry',
+                            'des_dr2_galaxys_pho_final.fits')
 data_pho_des = fits.getdata(path_pho_des, 1, ignore_missing_end=True)
 
 row_des = data_pho_des['t1_id']

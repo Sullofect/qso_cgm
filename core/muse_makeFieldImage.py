@@ -19,13 +19,13 @@ mpl.rcParams['ytick.major.size'] = 10
 
 # Convert Fits file into correct form
 def ConvertFits(filename=None, smooth=True):
-    path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', filename + '.fits')
+    path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_narrow', filename + '.fits')
     data, hdr = fits.getdata(path, 1, header=True)
     if smooth is True:
         kernel = Gaussian2DKernel(x_stddev=10.0, x_size=3, y_size=3)
         data = convolve(data, kernel)
-    fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data, overwrite=True)
-    data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', 0, header=True)
+    fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', data, overwrite=True)
+    data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', 0, header=True)
     hdr1['BITPIX'], hdr1['NAXIS'], hdr1['NAXIS1'], hdr1['NAXIS2'] = hdr['BITPIX'], hdr['NAXIS'], hdr['NAXIS1'], \
                                                                     hdr['NAXIS2']
     hdr1['CRPIX1'], hdr1['CRPIX2'], hdr1['CTYPE1'], hdr1['CTYPE2'] = hdr['CRPIX1'], hdr['CRPIX2'], hdr['CTYPE1'], \
@@ -37,17 +37,19 @@ def ConvertFits(filename=None, smooth=True):
     hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] =  hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
 
     # Rescale the data by 1e17
-    fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data1 * 1e17, hdr1, overwrite=True)
+    fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits',
+                 data1 * 1e17, hdr1, overwrite=True)
 
 
 ConvertFits(filename='image_OII_line_SB_offset', smooth=False)
 ConvertFits(filename='image_OIII_5008_line_SB_offset', smooth=False)
 
 #
-path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
+path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data', 'HE0238-1904_drc_offset.fits')
 data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
-path_OII_SB = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_OII_line_SB_offset_revised.fits')
-path_OIII_SB = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+path_OII_SB = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_narrow',
+                           'image_OII_line_SB_offset_revised.fits')
+path_OIII_SB = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_narrow',
                             'image_OIII_5008_line_SB_offset_revised.fits')
 
 #
@@ -82,19 +84,17 @@ fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
 gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
-gc.show_contour(path_OII_SB, levels=[0.35, 0.5, 1.0, 4], colors='blue', linewidths=1, smooth=3)
-gc.show_contour(path_OIII_SB, levels=[0.35, 0.5, 1.0, 4], colors='red', linewidths=1, smooth=3)
+gc.show_contour(path_OII_SB, levels=[0.15, 0.3, 0.5, 2], colors='blue', linewidths=1, smooth=7)
+gc.show_contour(path_OIII_SB, levels=[0.15, 0.3, 0.5, 2], colors='red', linewidths=1, smooth=7)
 gc.recenter(40.1359, -18.8643, width=40 / 3600, height=40 / 3600)  # 0.02 / 0.01 40''
 gc.set_system_latex(True)
-gc.show_colorscale(cmap='Greys')
+gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
 gc.add_colorbar()
 gc.colorbar.set_ticks([0])
 gc.colorbar.set_location('bottom')
 gc.colorbar.set_pad(0.0)
-# gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
 gc.colorbar.hide()
 gc.ticks.set_length(30)
-# gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
 gc.add_scalebar(length=15 * u.arcsecond)
 gc.scalebar.set_corner('top left')
 gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")

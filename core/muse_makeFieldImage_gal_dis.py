@@ -18,7 +18,7 @@ mpl.rcParams['xtick.major.size'] = 5
 mpl.rcParams['ytick.major.size'] = 5
 
 #
-path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'HE0238-1904_drc_offset.fits')
+path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data', 'HE0238-1904_drc_offset.fits')
 data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
 
 #
