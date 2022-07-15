@@ -204,6 +204,7 @@ def gal_fit(gal_num=None, run_name='Trial_5', flux_hst='auto', dflux_sys=0.1, ca
         if spectrum_exists is True:
             fit.plot_spectrum_posterior(save=True, show=True)
         fit.plot_sfh_posterior(save=True, show=True)
+        fig = fit.plot_calibration(save=True, show=True)
         fit.plot_corner(save=True, show=True)
         print(str(i), np.percentile(fit.posterior.samples["stellar_mass"], [16, 50, 84]))
         print(str(i), np.percentile(np.log10(fit.posterior.samples["mass_weighted_age"]), [16, 50, 84]))
@@ -338,7 +339,7 @@ dmag_Y_dred = data_pho_des['magerr_auto_Y']
 #         v_min=50, v_max=1000, prior='uniform')
 
 # Trial 8: Inflate all errors + Uniform prior + calibration
-qls, spectrum_exists = False, True
+# qls, spectrum_exists = False, True
 # gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179], run_name='Trial_8', flux_hst='auto', cal='2',
 #         v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[4, 88, 162], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
@@ -346,23 +347,23 @@ qls, spectrum_exists = False, True
 # gal_fit(gal_num=[36], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=200, prior='uniform')
 # gal_fit(gal_num=[57], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[64], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
-gal_fit(gal_num=[80, 81], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
+# gal_fit(gal_num=[80, 81], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[82], run_name='Trial_8', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
 # qls = True
 # gal_fit(gal_num=[5, 7, 83, 181, 182], run_name='Trial_8', flux_hst='auto', cal='2', v_min=50, v_max=1000,
 #         prior='uniform')
 
 # Trial 9: Inflate all errors + Uniform prior
-# qls, spectrum_exists = False, True
+qls, spectrum_exists = False, True
 # gal_fit(gal_num=[1, 13, 35, 62, 78, 92, 120, 134, 141, 164, 179],
 #         run_name='Trial_9', flux_hst='auto', cal='0', v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[4, 88, 162], run_name='Trial_9', flux_hst='iso', cal='0', v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[20, 27, 93], run_name='Trial_9', flux_hst='auto', cal='0', v_min=50, v_max=200, prior='uniform')
 # gal_fit(gal_num=[36], run_name='Trial_9', flux_hst='iso', cal='0', v_min=50, v_max=200, prior='uniform')
-# gal_fit(gal_num=[57], run_name='Trial_9', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
+gal_fit(gal_num=[57], run_name='Trial_9', flux_hst='auto', cal='2', v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[64], run_name='Trial_9', flux_hst='auto', cal='0', v_min=50, v_max=1000, prior='uniform')
 # gal_fit(gal_num=[80, 81], run_name='Trial_9', flux_hst='iso', cal='0', v_min=50, v_max=1000, prior='uniform')
-# gal_fit(gal_num=[82], run_name='Trial_9', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
+gal_fit(gal_num=[82], run_name='Trial_9', flux_hst='iso', cal='2', v_min=50, v_max=1000, prior='uniform')
 # qls = True
 # gal_fit(gal_num=[5, 7, 83, 181, 182], run_name='Trial_9', flux_hst='auto', cal='0', v_min=50, v_max=1000,
 #         prior='uniform')
