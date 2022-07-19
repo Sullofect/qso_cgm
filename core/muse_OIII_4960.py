@@ -23,5 +23,5 @@ cube_OIII_4960 = cube - continuum
 cube_OIII_4960_line = cube_OIII_4960.select_lambda(8060, 8100)
 image_OIII_4960_line = cube_OIII_4960_line.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2  # put into SB units
 
-cube_OIII_4960_line.write('/Users/lzq/Dropbox/Data/CGM/cube_narrow/CUBE_OIII_4960_line_offset_zapped.fits')
+cube_OIII_4960.write('/Users/lzq/Dropbox/Data/CGM/cube_narrow/CUBE_OIII_4960_line_offset_zapped.fits')
 image_OIII_4960_line.write('/Users/lzq/Dropbox/Data/CGM/image_narrow/image_OIII_4960_line_SB_offset_zapped.fits')

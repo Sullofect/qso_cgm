@@ -153,6 +153,29 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         spe_OIII4960_i = cube_OIII4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
         spe_OIII5008_i = cube_OIII5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
 
+        # Second round continuum subtraction
+        spe_OII_i.mask_region(6050, 6090)
+        conti_OII = spe_OII_i.poly_spec(3, weight=True)
+        spe_OII_i.unmask()
+        spe_OII_i -= conti_OII
+
+        spe_Hbeta_i.mask_region(7905, 7930)
+        conti_Hbeta = spe_Hbeta_i.poly_spec(3, weight=True)
+        spe_Hbeta_i.unmask()
+        spe_Hbeta_i -= conti_Hbeta
+
+        spe_OIII4960_i.mask_region(8060, 8100)
+        conti_OIII4960 = spe_OIII4960_i.poly_spec(3, weight=True)
+        spe_OIII4960_i.unmask()
+        spe_OIII4960_i -= conti_OIII4960
+
+        spe_OIII5008_i.mask_region(8140, 8180)
+        conti_OIII5008 = spe_OIII5008_i.poly_spec(3, weight=True)
+        spe_OIII5008_i.unmask()
+        spe_OIII5008_i -= conti_OIII5008
+
+
+        # Load the data
         flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
         flux_Hbeta_i, flux_Hbeta_err_i = spe_Hbeta_i.data * 1e-3, np.sqrt(spe_Hbeta_i.var) * 1e-3
         flux_bet_i, flux_bet_err_i = spe_bet_i.data * 1e-3, np.sqrt(spe_bet_i.var) * 1e-3

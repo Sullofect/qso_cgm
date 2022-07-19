@@ -61,6 +61,12 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         spe_OIII4960_i = cube_OIII4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
         spe_OIII5008_i = cube_OIII5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
 
+        # Second round continuum subtraction
+        spe_OII_i.mask_region(6050, 6090)
+        conti_OII = spe_OII_i.poly_spec(3, weight=True)
+        spe_OII_i.unmask()
+        spe_OII_i -= conti_OII
+
         flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
         flux_OII_conti_i, flux_OII_conti_err_i = spe_OII_conti_i.data * 1e-3, np.sqrt(spe_OII_conti_i.var) * 1e-3
         flux_OII_ori_i, flux_OII_ori_err_i = spe_OII_ori_i.data * 1e-3, np.sqrt(spe_OII_ori_i.var) * 1e-3
@@ -81,6 +87,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr[i, 0].plot(wave_OII_vac, flux_OII_ori_i, color='k', drawstyle='steps-mid', lw=1)
         axarr[i, 0].plot(wave_OII_vac, flux_OII_i, color='b', drawstyle='steps-mid', lw=1)
         axarr[i, 0].plot(wave_OII_vac, flux_OII_conti_i, color='r', drawstyle='steps-mid', lw=1)
+        axarr[i, 0].plot(wave_OII_vac, conti_OII.data * 1e-3, color='orange', drawstyle='steps-mid', lw=1)
         axarr[i, 0].set_title(text_array[i], x=0.2, y=0.75, size=20)
         axarr[i, 0].set_xlim(6020, 6120)
         axarr[i, 1].set_xlim(7900, 8200)
