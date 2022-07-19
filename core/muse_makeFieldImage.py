@@ -5,6 +5,7 @@ import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from mpdaf.obj import Image
 from astropy import units as u
 from muse_compare_z import compare_z
 from astropy.convolution import convolve
@@ -20,9 +21,16 @@ mpl.rcParams['ytick.major.size'] = 10
 # Convert Fits file into correct form
 def ConvertFits(filename=None, smooth=True):
     path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_narrow', filename + '.fits')
-    data, hdr = fits.getdata(path, 1, header=True)
+    image = Image(path)
+    # image.gaussian_filter(sigma=5)
+    image.mask[0:60, 0:40] = True
+    image.mask[0:60, 160:200] = True
+    image.mask[140:200, 0:200] = True
+    # image.mask[150:200, 150:200] = True
+    image.write('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', savemask='nan')
+    data, hdr = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', 1, header=True)
     if smooth is True:
-        kernel = Gaussian2DKernel(x_stddev=10.0, x_size=3, y_size=3)
+        kernel = Gaussian2DKernel(x_stddev=10.0, x_size=7, y_size=7)
         data = convolve(data, kernel)
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', data, overwrite=True)
     data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', 0, header=True)
@@ -41,8 +49,8 @@ def ConvertFits(filename=None, smooth=True):
                  data1 * 1e17, hdr1, overwrite=True)
 
 
-ConvertFits(filename='image_OII_line_SB_offset', smooth=False)
-ConvertFits(filename='image_OIII_5008_line_SB_offset', smooth=False)
+ConvertFits(filename='image_OII_line_SB_offset', smooth=True)
+ConvertFits(filename='image_OIII_5008_line_SB_offset', smooth=True)
 
 #
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data', 'HE0238-1904_drc_offset.fits')
@@ -84,8 +92,8 @@ fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
 gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
-gc.show_contour(path_OII_SB, levels=[0.15, 0.3, 0.5, 2], colors='blue', linewidths=1, smooth=7)
-gc.show_contour(path_OIII_SB, levels=[0.15, 0.3, 0.5, 2], colors='red', linewidths=1, smooth=7)
+gc.show_contour(path_OII_SB, levels=[0.15, 0.3, 0.5, 2], colors='blue', linewidths=1)
+gc.show_contour(path_OIII_SB, levels=[0.15, 0.3, 0.5, 2], colors='red', linewidths=1)
 gc.recenter(40.1359, -18.8643, width=40 / 3600, height=40 / 3600)  # 0.02 / 0.01 40''
 gc.set_system_latex(True)
 gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
