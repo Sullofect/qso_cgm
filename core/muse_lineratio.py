@@ -10,6 +10,7 @@ from matplotlib import rc
 from matplotlib import cm
 from PyAstronomy import pyasl
 from astropy import units as u
+from muse_load_cloudy import format_cloudy
 from matplotlib.colors import ListedColormap
 from mpdaf.obj import Cube, WCS, WaveCoord, iter_spe
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
@@ -293,11 +294,11 @@ path_df = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
                        'iteramodel_dustfreeAGN_Z1.0_n100.txt_grid1.txt')
 path_dy = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
                        'iteramodel_dustyAGN_Z1.0_n100.txt_grid1.txt')
-
 grid_df = np.loadtxt(path_df, encoding="ISO-8859-1")
 grid_dy = np.loadtxt(path_dy, encoding="ISO-8859-1")
+grid_test = format_cloudy(filename=['alpha_2.0', 'alpha_1.7', 'alpha_1.4', 'alpha_1.2'])
 
-alpha_df, alpha_dy = grid_df[:, 0], grid_dy[:, 0]
+alpha_df, alpha_dy, alpha_test = grid_df[:, 0], grid_dy[:, 0], grid_test[:, 0]
 logu_df, logu_dy = grid_df[:, 1], grid_dy[:, 1]
 OIII_Hbeta_df, OIII_Hbeta_dy = grid_df[:, 2], grid_dy[:, 2]
 OIII_OII_df, OIII_OII_dy = grid_df[:, 4] / grid_df[:, 5], grid_dy[:, 4] / grid_df[:, 5]
