@@ -11,6 +11,7 @@ from astropy.wcs.utils import pixel_to_skycoord
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from scipy.stats import norm
+from astropy.cosmology import FlatLambdaCDM
 from astropy import units as u
 from muse_compare_z import compare_z
 
@@ -62,6 +63,17 @@ v_gal = 3e5 * (z_final - z_qso) / (1 + z_qso)
 # dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
 skycoord_host = SkyCoord(ra_qso_gaia, dec_qso_gaia, unit='deg', frame=FK5)
-print(skycoord_host.to_string('hmsdms', sep=':'))
+# print(skycoord_host.to_string('hmsdms', sep=':'))
 skycoord = SkyCoord(ra_final, dec_final, unit='deg', frame=FK5)
-print(skycoord.to_string('hmsdms', sep=':'))
+sep = skycoord.separation(skycoord_host)
+print(sep.arcsecond)
+
+
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+d_l = cosmo.luminosity_distance(z_final).to(u.kpc)
+d_l_host = cosmo.luminosity_distance(z_qso).to(u.kpc)
+c1 = SkyCoord(ra_qso_gaia * u.deg, dec_qso_gaia * u.deg, distance=d_l_host, frame=FK5)
+c2 = SkyCoord(ra_final * u.deg, dec_final * u.deg, distance=d_l, frame=FK5)
+print(c1.separation_3d(c2))
+print(v_gal)
+# print(skycoord.to_string('hmsdms', sep=':'))
