@@ -20,8 +20,9 @@ def load_cloudy(filename='alpha_2.0'):
     alpha = np.ones(len(u_10)) * float(filename.split('_')[1])
 
     # H den Grid parameter
-    hden_grid = np.genfromtxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + filename + '.grd', delimiter=None)[:, 6]
-
+    grid = np.genfromtxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + filename + '.grd', delimiter=None)
+    hden_grid = grid[:, 6]
+    print(hden_grid)
     # Line profile
     line = np.genfromtxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + filename + '.lin', delimiter=None)
     OIII5008, OIII4960, OIIIboth = line[:, 2], line[:, 3], line[:, 4]
