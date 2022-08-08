@@ -62,18 +62,21 @@ v_gal = 3e5 * (z_final - z_qso) / (1 + z_qso)
 # ra_final = ra_final - (ra_qso_hst - ra_qso_muse)  Wrong!!!
 # dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
+# Report angular separation and ra dec
 skycoord_host = SkyCoord(ra_qso_gaia, dec_qso_gaia, unit='deg', frame=FK5)
 # print(skycoord_host.to_string('hmsdms', sep=':'))
 skycoord = SkyCoord(ra_final, dec_final, unit='deg', frame=FK5)
-sep = skycoord.separation(skycoord_host)
-print(sep.arcsecond)
-
-
-cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-d_l = cosmo.luminosity_distance(z_final).to(u.kpc)
-d_l_host = cosmo.luminosity_distance(z_qso).to(u.kpc)
-c1 = SkyCoord(ra_qso_gaia * u.deg, dec_qso_gaia * u.deg, distance=d_l_host, frame=FK5)
-c2 = SkyCoord(ra_final * u.deg, dec_final * u.deg, distance=d_l, frame=FK5)
-print(c1.separation_3d(c2))
-print(v_gal)
 # print(skycoord.to_string('hmsdms', sep=':'))
+sep = skycoord.separation(skycoord_host)
+print(np.round(sep.arcsecond, decimals=1))
+
+# Angular diameter distance
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+d_l = cosmo.angular_diameter_distance(z=z_qso)
+ratio = (1 * u.radian).to(u.arcsec).value
+dis_gal = (sep.arcsecond * d_l / ratio).to(u.kpc).value
+print(np.round(dis_gal, decimals=1))
+
+# Print velocity
+print(np.round(v_gal))
+

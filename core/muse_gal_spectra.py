@@ -126,7 +126,7 @@ z_final = z_final[select_gal]
 ra_final = ra_final[select_gal]
 dec_final = dec_final[select_gal]
 
-PlotGalSpectra(row_array=[1, 64, 88], )
+PlotGalSpectra(row_array=[181, 182], qls=True)
 #
 # fig, axarr = plt.subplots(3, 1, figsize=(10, 15), sharex=True, dpi=300)
 # plt.subplots_adjust(hspace=0.1)
