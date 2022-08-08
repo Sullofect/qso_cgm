@@ -22,7 +22,7 @@ def load_cloudy(filename='alpha_2.0'):
     # H den Grid parameter
     grid = np.genfromtxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + filename + '.grd', delimiter=None)
     hden_grid = grid[:, 6]
-    print(hden_grid)
+
     # Line profile
     line = np.genfromtxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + filename + '.lin', delimiter=None)
     OIII5008, OIII4960, OIIIboth = line[:, 2], line[:, 3], line[:, 4]
@@ -42,18 +42,21 @@ def format_cloudy(filename=None):
             output = np.vstack((output, c_i))
     return output
 
-
-output = format_cloudy(filename=['alpha_2.0', 'alpha_1.7', 'alpha_1.4', 'alpha_1.2'])
+filename = ['alpha_2.0', 'alpha_1.7', 'alpha_1.4', 'alpha_1.2']
+output = format_cloudy(filename=filename)
 
 # Load grid, plot line ratio density, ionization parameter !!!
 alpha = output[:, 0]
-logu_= output[:, 2]
-OIII_Hbeta = output[:, 3]
+logu = np.log10(output[:, 2])
+OIII_Hbeta = output[:, 4] / output[:, 5]
 OIII_OII = output[:, 6] / output[:, 7]
-OIII_Hbeta_mat = OIII_Hbeta.reshape((4, 13))
-OIII_OII_mat = OIII_OII.reshape((4, 13))
+OIII_Hbeta_mat = OIII_Hbeta.reshape((len(filename), 21))
+OIII_OII_mat = OIII_OII.reshape((len(filename), 21))
 
-print(OIII_OII_mat)
+print(output[:, 1])
+# print(alpha)
+# print(logu)
+print(OIII_Hbeta)
 f, axarr = plt.subplots(1, 1, figsize=(8, 5), dpi=300)
 # axarr.plot(np.log10(OIII_Hbeta), np.log10(OIII_OII), '.')
 x_1 = np.log10(OIII_Hbeta_mat)
@@ -74,6 +77,6 @@ axarr.tick_params(axis='both', which='major', direction='in', top='on', bottom='
                   labelsize=20, size=5)
 axarr.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
                   size=3)
-# axarr.set_xlim(-0.6, 1.4)
-# axarr.set_ylim(-2, 1)
+axarr.set_xlim(-0.6, 1.4)
+axarr.set_ylim(-2, 2)
 plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/LineRatio_region_test', bbox_inches='tight')

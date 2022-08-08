@@ -56,7 +56,7 @@ def model(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, a, b):
 
 
 # Take Muse data
-path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits')
+path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data', 'ESO_DEEP_offset.fits')
 cube = Cube(path)
 
 # Calculate the white image
