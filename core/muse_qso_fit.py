@@ -358,7 +358,7 @@ d_l = cosmo.luminosity_distance(z).to(u.cm).value
 fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[1][0], q.line_result[6:15], 'broad')
 L_5100 = 4 * np.pi * d_l ** 2 * float(q.conti_result[13]) * (5100.0/3000.0) ** float(q.conti_result[14])
 waveL_5100 = 5100 * L_5100
-L_bol = 9.26 * waveL_5100 * 1e-17
+L_bol = 9.26 * waveL_5100 * 1e-17  # bolometric correction should be 10.33?
 log_M_BH = np.log10((fwhm/1000) ** 2 * (waveL_5100 * 1e-17/1e44) ** 0.5) + 6.91
 print('logM_Blackhole is ', log_M_BH, 'solar mass')
 print('Bolometric Luminosity is', L_bol, 'erg/s')
