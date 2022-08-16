@@ -36,7 +36,7 @@ d_l = cosmo.luminosity_distance(z).to(u.cm).value
 nuL = np.log10(4 * np.pi * conti * limit * d_l ** 2 * 1e-17)
 print(nuL)
 
-distance = 50 * u.kpc
+distance = 10 * u.kpc
 print(np.log10(distance.to(u.cm).value))
 
 # Plot
