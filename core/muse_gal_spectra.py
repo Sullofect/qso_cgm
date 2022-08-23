@@ -76,6 +76,11 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
         row_sort = np.where(row_final == row_array[i])
         z_i = z_final[row_sort]
         wave_i, flux_i, flux_err_i, model_i = LoadGalData(row=row_array[i], qls=qls)
+        blue_mask, red_mask = np.where((wave_i < (1 + z_i) * 3950) * (wave_i > (1 + z_i) * 3850)), \
+                              np.where((wave_i < (1 + z_i) * 4100) * (wave_i > (1 + z_i) * 4000))
+        red = np.mean(flux_i[red_mask])  # Compute errors and report mean
+        blue = np.mean(flux_i[blue_mask])
+        print(red / blue)
         axarr[i].plot(wave_i, flux_i, color='k', drawstyle='steps-mid', lw=1)
         axarr[i].plot(wave_i, model_i, color='r', lw=1)
         axarr[i].plot(wave_i, flux_err_i, color='lightgrey', lw=1)

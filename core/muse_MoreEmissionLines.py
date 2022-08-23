@@ -95,7 +95,7 @@ def model_NeV3346(wave_vac, z, sigma_kms, flux_NeV3346, a, b):
 def model_NeIII3869(wave_vac, z, sigma_kms, flux_NeIII3869, a, b):
     # Constants
     c_kms = 2.998e5
-    wave_NeIII3869_vac = 3346.79
+    wave_NeIII3869_vac = 3869.86
 
     wave_NeIII3869_obs = wave_NeIII3869_vac * (1 + z)
     sigma_NeIII3869_A = np.sqrt((sigma_kms / c_kms * wave_NeIII3869_obs) ** 2 + (getSigma_MUSE(wave_NeIII3869_obs)) ** 2)
@@ -105,10 +105,11 @@ def model_NeIII3869(wave_vac, z, sigma_kms, flux_NeIII3869, a, b):
 
     return NeIII3869_gaussian + a * wave_vac + b
 
-def model_HeI3889(wave_vac, z, sigma_kms, flux_HeI3889, a, b):
+def model_HeI3889andH8(wave_vac, z, sigma_kms, flux_HeI3889, flux_H8, a, b):
     # Constants
     c_kms = 2.998e5
     wave_HeI3889_vac = 3889.00
+    wave_H8_vac = 3890.16
 
     wave_HeI3889_obs = wave_HeI3889_vac * (1 + z)
     sigma_HeI3889_A = np.sqrt((sigma_kms / c_kms * wave_HeI3889_obs) ** 2 + (getSigma_MUSE(wave_HeI3889_obs)) ** 2)
@@ -116,12 +117,38 @@ def model_HeI3889(wave_vac, z, sigma_kms, flux_HeI3889, a, b):
     peak_HeI3889 = flux_HeI3889 / np.sqrt(2 * sigma_HeI3889_A ** 2 * np.pi)
     HeI3889_gaussian = peak_HeI3889 * np.exp(-(wave_vac - wave_HeI3889_obs) ** 2 / 2 / sigma_HeI3889_A ** 2)
 
-    return HeI3889_gaussian + a * wave_vac + b
+    wave_H8_obs = wave_H8_vac * (1 + z)
+    sigma_H8_A = np.sqrt((sigma_kms / c_kms * wave_H8_obs) ** 2 + (getSigma_MUSE(wave_H8_obs)) ** 2)
 
-def model_Heps(wave_vac, z, sigma_kms, flux_Heps, a, b):
+    peak_H8 = flux_H8 / np.sqrt(2 * sigma_H8_A ** 2 * np.pi)
+    H8_gaussian = peak_H8 * np.exp(-(wave_vac - wave_H8_obs) ** 2 / 2 / sigma_H8_A ** 2)
+
+    return HeI3889_gaussian + H8_gaussian + a * wave_vac + b
+
+# def model_H8(wave_vac, z, sigma_kms, flux_H8, a, b):
+#     # Constants
+#     c_kms = 2.998e5
+#     wave_H8_vac = 3890.16
+#
+#     wave_H8_obs = wave_H8_vac * (1 + z)
+#     sigma_H8_A = np.sqrt((sigma_kms / c_kms * wave_H8_obs) ** 2 + (getSigma_MUSE(wave_H8_obs)) ** 2)
+#
+#     peak_H8 = flux_H8 / np.sqrt(2 * sigma_H8_A ** 2 * np.pi)
+#     H8_gaussian = peak_H8 * np.exp(-(wave_vac - wave_H8_obs) ** 2 / 2 / sigma_H8_A ** 2)
+#
+#     return H8_gaussian + a * wave_vac + b
+
+def model_NeIII3968andHeps(wave_vac, z, sigma_kms, flux_NeIII3968, flux_Heps, a, b):
     # Constants
     c_kms = 2.998e5
+    wave_NeIII3968_vac = 3968.59
     wave_Heps_vac = 3971.20
+
+    wave_NeIII3968_obs = wave_NeIII3968_vac * (1 + z)
+    sigma_NeIII3968_A = np.sqrt((sigma_kms / c_kms * wave_NeIII3968_obs) ** 2 + (getSigma_MUSE(wave_NeIII3968_obs)) ** 2)
+
+    peak_NeIII3968 = flux_NeIII3968 / np.sqrt(2 * sigma_NeIII3968_A ** 2 * np.pi)
+    NeIII3968_gaussian = peak_NeIII3968 * np.exp(-(wave_vac - wave_NeIII3968_obs) ** 2 / 2 / sigma_NeIII3968_A ** 2)
 
     wave_Heps_obs = wave_Heps_vac * (1 + z)
     sigma_Heps_A = np.sqrt((sigma_kms / c_kms * wave_Heps_obs) ** 2 + (getSigma_MUSE(wave_Heps_obs)) ** 2)
@@ -129,7 +156,20 @@ def model_Heps(wave_vac, z, sigma_kms, flux_Heps, a, b):
     peak_Heps = flux_Heps / np.sqrt(2 * sigma_Heps_A ** 2 * np.pi)
     Heps_gaussian = peak_Heps * np.exp(-(wave_vac - wave_Heps_obs) ** 2 / 2 / sigma_Heps_A ** 2)
 
-    return Heps_gaussian + a * wave_vac + b
+    return NeIII3968_gaussian + Heps_gaussian + a * wave_vac + b
+
+# def model_Heps(wave_vac, z, sigma_kms, flux_Heps, a, b):
+#     # Constants
+#     c_kms = 2.998e5
+#     wave_Heps_vac = 3971.20
+#
+#     wave_Heps_obs = wave_Heps_vac * (1 + z)
+#     sigma_Heps_A = np.sqrt((sigma_kms / c_kms * wave_Heps_obs) ** 2 + (getSigma_MUSE(wave_Heps_obs)) ** 2)
+#
+#     peak_Heps = flux_Heps / np.sqrt(2 * sigma_Heps_A ** 2 * np.pi)
+#     Heps_gaussian = peak_Heps * np.exp(-(wave_vac - wave_Heps_obs) ** 2 / 2 / sigma_Heps_A ** 2)
+#
+#     return Heps_gaussian + a * wave_vac + b
 
 def model_Hdel(wave_vac, z, sigma_kms, flux_Hdel, a, b):
     # Constants
@@ -173,7 +213,7 @@ def model_OIII4364(wave_vac, z, sigma_kms, flux_OIII4364, a, b):
 def model_HeII4687(wave_vac, z, sigma_kms, flux_HeII4687, a, b):
     # Constants
     c_kms = 2.998e5
-    wave_HeII4687_vac = 4364.44
+    wave_HeII4687_vac = 4687.31
 
     wave_HeII4687_obs = wave_HeII4687_vac * (1 + z)
     sigma_HeII4687_A = np.sqrt((sigma_kms / c_kms * wave_HeII4687_obs) ** 2 + (getSigma_MUSE(wave_HeII4687_obs)) ** 2)
@@ -186,28 +226,50 @@ def model_HeII4687(wave_vac, z, sigma_kms, flux_HeII4687, a, b):
 # [Ne V] 3346.79, [Ne III] 3869, He I 3889, Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
 # lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3971.20, 4102.89, 4341.68, 4364.44, 4687.31])
 
-def model_all(wave_vac, z, sigma_kms, flux_OII, flux_Hbeta, flux_OIII5008, r_OII3729_3727, a_OII, b_OII, a_Hbeta,
-              b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008):
+def model_more(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
+              flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, flux_Hbeta, flux_OIII5008, r_OII3729_3727,
+              a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968,
+              b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687,
+              b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008):
 
-    m_OII = model_OII(wave_vac[0], z, sigma_kms, flux_OII, r_OII3729_3727, a_OII, b_OII)
-    m_Hbeta = model_Hbeta(wave_vac[1], z, sigma_kms, flux_Hbeta, a_Hbeta, b_Hbeta)
-    m_OIII4960 = model_OIII4960(wave_vac[2], z, sigma_kms, flux_OIII5008 / 3, a_OIII4960, b_OIII4960)
-    m_OIII5008 = model_OIII5008(wave_vac[3], z, sigma_kms, flux_OIII5008, a_OIII5008, b_OIII5008)
-    return np.hstack((m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
-
-def model_more(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_Heps, flux_Hdel, flux_Hgam,
-               flux_OIII4364, flux_HeII4687, a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889,
-               a_Heps, b_Heps, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687):
-
+    # Weak lines
     m_NeV3356 = model_NeV3346(wave_vac[0], z, sigma_kms, flux_NeV3346, a_NeV3346, b_NeV3346)
     m_NeIII3869 = model_NeIII3869(wave_vac[1], z, sigma_kms, flux_NeIII3869, a_NeIII3869, b_NeIII3869)
-    m_HeI3889 = model_HeI3889(wave_vac[2], z, sigma_kms, flux_HeI3889, a_HeI3889, b_HeI3889)
-    m_Heps = model_Heps(wave_vac[3], z, sigma_kms, flux_Heps, a_Heps, b_Heps)
+    m_HeI3889andH8 = model_HeI3889andH8(wave_vac[2], z, sigma_kms, flux_HeI3889, flux_H8, a_HeI3889, b_HeI3889)
+    # m_H8 = model_H8(wave_vac[2], z, sigma_kms, flux_H8, a_H8, b_H8) # wavelength same as HeI
+    m_NeIII3968andHeps = model_NeIII3968andHeps(wave_vac[3], z, sigma_kms, flux_NeIII3968, flux_Heps, a_NeIII3968,
+                                                b_NeIII3968)
+    # wavelength same as Heps
+
+    # m_Heps = model_Heps(wave_vac[3], z, sigma_kms, flux_Heps, a_Heps, b_Heps)
     m_Hdel = model_Hdel(wave_vac[4], z, sigma_kms, flux_Hdel, a_Hdel, b_Hdel)
     m_Hgam = model_Hgam(wave_vac[5], z, sigma_kms, flux_Hgam, a_Hgam, b_Hgam)
     m_OIII4364 = model_OIII4364(wave_vac[6], z, sigma_kms, flux_OIII4364, a_OIII4364, b_OIII4364)
     m_HeII4687 = model_HeII4687(wave_vac[7], z, sigma_kms, flux_HeII4687, a_HeII4687, b_HeII4687)
-    return np.hstack((m_NeV3356, m_NeIII3869, m_HeI3889, m_Heps, m_Hdel, m_Hgam, m_OIII4364, m_HeII4687))
+
+    # Strong lines
+    m_OII = model_OII(wave_vac[8], z, sigma_kms, flux_OII, r_OII3729_3727, a_OII, b_OII)
+    m_Hbeta = model_Hbeta(wave_vac[9], z, sigma_kms, flux_Hbeta, a_Hbeta, b_Hbeta)
+    m_OIII4960 = model_OIII4960(wave_vac[10], z, sigma_kms, flux_OIII5008 / 3, a_OIII4960, b_OIII4960)
+    m_OIII5008 = model_OIII5008(wave_vac[11], z, sigma_kms, flux_OIII5008, a_OIII5008, b_OIII5008)
+    return np.hstack((m_NeV3356, m_NeIII3869, m_HeI3889andH8, m_NeIII3968andHeps, m_Hdel, m_Hgam, m_OIII4364,
+                      m_HeII4687, m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
+
+def model_all(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968,
+              flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, a_NeV3346, b_NeV3346, a_NeIII3869,
+              b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364,
+              b_OIII4364, a_HeII4687, b_HeII4687):
+
+    m_NeV3356 = model_NeV3346(wave_vac[0], z, sigma_kms, flux_NeV3346, a_NeV3346, b_NeV3346)
+    m_NeIII3869 = model_NeIII3869(wave_vac[1], z, sigma_kms, flux_NeIII3869, a_NeIII3869, b_NeIII3869)
+    m_HeI3889andH8 = model_HeI3889andH8(wave_vac[2], z, sigma_kms, flux_HeI3889, flux_H8, a_HeI3889, b_HeI3889)
+    m_NeIII3968andHeps = model_NeIII3968andHeps(wave_vac[3], z, sigma_kms, flux_NeIII3968, flux_Heps, a_NeIII3968,
+                                                b_NeIII3968)
+    m_Hdel = model_Hdel(wave_vac[4], z, sigma_kms, flux_Hdel, a_Hdel, b_Hdel)
+    m_Hgam = model_Hgam(wave_vac[5], z, sigma_kms, flux_Hgam, a_Hgam, b_Hgam)
+    m_OIII4364 = model_OIII4364(wave_vac[6], z, sigma_kms, flux_OIII4364, a_OIII4364, b_OIII4364)
+    m_HeII4687 = model_HeII4687(wave_vac[7], z, sigma_kms, flux_HeII4687, a_HeII4687, b_HeII4687)
+    return np.hstack((m_NeV3356, m_NeIII3869, m_HeI3889andH8, m_NeIII3968andHeps, m_Hdel, m_Hgam, m_OIII4364, m_HeII4687))
 
 
 # Read Data
@@ -243,10 +305,7 @@ wave_Hdel_vac = pyasl.airtovac2(cube_Hdel.wave.coord())
 wave_Hgam_vac = pyasl.airtovac2(cube_Hgam.wave.coord())
 wave_OIII4364_vac = pyasl.airtovac2(cube_OIII4364.wave.coord())
 wave_HeII4687_vac = pyasl.airtovac2(cube_HeII4687.wave.coord())
-wave_vac_more = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
-                          wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac], dtype=object)
-wave_vac_more_stack = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
-                                 wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac))
+
 
 # Classical [O II], Hbeta, [O III]
 cube_OII = Cube(path_OII)
@@ -263,6 +322,18 @@ wave_OIII5008_vac = pyasl.airtovac2(cube_OIII5008.wave.coord())
 wave_vac_stack = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac))
 wave_vac_stack_plot = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_bet_vac, wave_OIII4960_vac, wave_OIII5008_vac))
 wave_vac_all = np.array([wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
+
+wave_vac_more = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
+                          wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
+                          wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
+wave_vac_more_stack = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
+                                 wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
+                                 wave_OIII4960_vac, wave_OIII5008_vac))
+
+wave_vac_more_plot = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
+                          wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac], dtype=object)
+wave_vac_more_stack_plot = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
+                                 wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac))
 
 redshift_guess = 0.63
 sigma_kms_guess = 150.0
@@ -291,19 +362,25 @@ parameters_more.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                          ('flux_NeV3346', 0.01, True, None, None, None),
                          ('flux_NeIII3869', 0.05, True, None, None, None),
                          ('flux_HeI3889', 0.01, True, None, None, None),
+                         ('flux_H8', 0.01, True, None, None, None),
+                         ('flux_NeIII3968', 0.01, True, None, None, None),
                          ('flux_Heps', 0.03, True, None, None, None),
                          ('flux_Hdel', 0.01, True, None, None, None),
                          ('flux_Hgam', 0.01, True, None, None, None),
                          ('flux_OIII4364', 0.1, True, None, None, None),
                          ('flux_HeII4687', 0.005, True, None, None, None),
+                         ('flux_OII', 0.01, True, None, None, None),
+                         ('flux_Hbeta', 0.02, True, None, None, None),
+                         ('flux_OIII5008', 0.1, True, None, None, None),
+                         ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
                          ('a_NeV3346', 0.0, False, None, None, None),
                          ('b_NeV3346', 0.0, False, None, None, None),
                          ('a_NeIII3869', 0.0, False, None, None, None),
                          ('b_NeIII3869', 0.0, False, None, None, None),
                          ('a_HeI3889', 0.0, False, None, None, None),
                          ('b_HeI3889', 0.0, False, None, None, None),
-                         ('a_Heps', 0.0, False, None, None, None),
-                         ('b_Heps', 0.0, False, None, None, None),
+                         ('a_NeIII3968', 0.0, False, None, None, None),
+                         ('b_NeIII3968', 0.0, False, None, None, None),
                          ('a_Hdel', 0.0, False, None, None, None),
                          ('b_Hdel', 0.0, False, None, None, None),
                          ('a_Hgam', 0.0, False, None, None, None),
@@ -311,7 +388,15 @@ parameters_more.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                          ('a_OIII4364', 0.0, False, None, None, None),
                          ('b_OIII4364', 0.0, False, None, None, None),
                          ('a_HeII4687', 0.0, False, None, None, None),
-                         ('b_HeII4687', 0.0, False, None, None, None))
+                         ('b_HeII4687', 0.0, False, None, None, None),
+                         ('a_OII', 0.0, False, None, None, None),
+                         ('b_OII', 0.0, False, None, None, None),
+                         ('a_Hbeta', 0.0, False, None, None, None),
+                         ('b_Hbeta', 0.0, False, None, None, None),
+                         ('a_OIII4960', 0.0, False, None, None, None),
+                         ('b_OIII4960', 0.0, False, None, None, None),
+                         ('a_OIII5008', 0.0, False, None, None, None),
+                         ('b_OIII5008', 0.0, False, None, None, None))
 
 
 # Def Plot function
@@ -321,7 +406,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                               gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
     fig.subplots_adjust(hspace=0)
     fig.subplots_adjust(wspace=0.2)
-    # flux_info = np.zeros((len(ra_array), 6))
+    flux_info = np.zeros((len(ra_array), 16))
     # axarr = axarr.ravel()
     for i in range(len(ra_array)):
         spe_NeV3346_i = cube_NeV3346.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
@@ -427,10 +512,6 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         flux_Hgam_i, flux_Hgam_err_i = spe_Hgam_i.data * 1e-3, np.sqrt(spe_Hgam_i.var) * 1e-3
         flux_OIII4364_i, flux_OIII4364_err_i = spe_OIII4364_i.data * 1e-3, np.sqrt(spe_OIII4364_i.var) * 1e-3
         flux_HeII4687_i, flux_HeII4687_err_i = spe_HeII4687_i.data * 1e-3, np.sqrt(spe_HeII4687_i.var) * 1e-3
-        flux_more = np.hstack((flux_NeV3346_i, flux_NeIII3869_i, flux_HeI3889_i, flux_Heps_i, flux_Hdel_i, flux_Hgam_i,
-                               flux_OIII4364_i, flux_HeII4687_i))
-        flux_err_more =  np.hstack((flux_NeV3346_err_i, flux_NeIII3869_err_i, flux_HeI3889_err_i, flux_Heps_err_i,
-                                    flux_Hdel_err_i, flux_Hgam_err_i, flux_OIII4364_err_i, flux_HeII4687_err_i))
 
         # flux_i, flux_err_i = spe_cube_i.data * 1e-3, np.sqrt(spe_cube_i.var) * 1e-3
         flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
@@ -440,6 +521,13 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         flux_OIII5008_i, flux_OIII5008_err_i = spe_OIII5008_i.data * 1e-3, np.sqrt(spe_OIII5008_i.var) * 1e-3
         flux_all = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
         flux_err_all = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
+
+        flux_more = np.hstack((flux_NeV3346_i, flux_NeIII3869_i, flux_HeI3889_i, flux_Heps_i, flux_Hdel_i, flux_Hgam_i,
+                               flux_OIII4364_i, flux_HeII4687_i, flux_OII_i, flux_Hbeta_i, flux_OIII4960_i,
+                               flux_OIII5008_i))
+        flux_err_more =  np.hstack((flux_NeV3346_err_i, flux_NeIII3869_err_i, flux_HeI3889_err_i, flux_Heps_err_i,
+                                    flux_Hdel_err_i, flux_Hgam_err_i, flux_OIII4364_err_i, flux_HeII4687_err_i,
+                                    flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
         # spec_model = lmfit.Model(model_all, missing='drop')
         # result = spec_model.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters,
@@ -455,30 +543,31 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         #                                flux_OIII5008_err_i))
 
         # Load fitted result
-        # z, dz = result.best_values['z'], result.params['z'].stderr
-        # sigma, dsigma = result.best_values['sigma_kms'], result.params['sigma_kms'].stderr
-        # flux_OII, dflux_OII = result.best_values['flux_OII'], result.params['flux_OII'].stderr
-        # flux_Hbeta, dflux_Hbeta = result.best_values['flux_Hbeta'], result.params['flux_Hbeta'].stderr
-        # flux_OIII5008, dflux_OIII5008 = result.best_values['flux_OIII5008'], result.params['flux_OIII5008'].stderr
-        # r_OII, dr_OII = result.best_values['r_OII3729_3727'], result.params['r_OII3729_3727'].stderr
-        #
-        # a_OII, da_OII = result.best_values['a_OII'], result.params['a_OII'].stderr
-        # b_OII, db_OII = result.best_values['b_OII'], result.params['b_OII'].stderr
-        # a_Hbeta, da_Hbeta = result.best_values['a_Hbeta'], result.params['a_Hbeta'].stderr
-        # b_Hbeta, db_Hbeta = result.best_values['b_Hbeta'], result.params['b_Hbeta'].stderr
-        # a_OIII4960, da_OIII4960 = result.best_values['a_OIII4960'], result.params['a_OIII4960'].stderr
-        # b_OIII4960, db_OIII4960 = result.best_values['b_OIII4960'], result.params['b_OIII4960'].stderr
-        # a_OIII5008, da_OIII5008 = result.best_values['a_OIII5008'], result.params['a_OIII5008'].stderr
-        # b_OIII5008, db_OIII5008 = result.best_values['b_OIII5008'], result.params['b_OIII5008'].stderr
+        z, dz = result_more.best_values['z'], result_more.params['z'].stderr
+        sigma, dsigma = result_more.best_values['sigma_kms'], result_more.params['sigma_kms'].stderr
+        flux_OII, dflux_OII = result_more.best_values['flux_OII'], result_more.params['flux_OII'].stderr
+        flux_Hbeta, dflux_Hbeta = result_more.best_values['flux_Hbeta'], result_more.params['flux_Hbeta'].stderr
+        flux_OIII5008, dflux_OIII5008 = result_more.best_values['flux_OIII5008'], result_more.params['flux_OIII5008'].stderr
+        r_OII, dr_OII = result_more.best_values['r_OII3729_3727'], result_more.params['r_OII3729_3727'].stderr
+
+        a_OII, da_OII = result_more.best_values['a_OII'], result_more.params['a_OII'].stderr
+        b_OII, db_OII = result_more.best_values['b_OII'], result_more.params['b_OII'].stderr
+        a_Hbeta, da_Hbeta = result_more.best_values['a_Hbeta'], result_more.params['a_Hbeta'].stderr
+        b_Hbeta, db_Hbeta = result_more.best_values['b_Hbeta'], result_more.params['b_Hbeta'].stderr
+        a_OIII4960, da_OIII4960 = result_more.best_values['a_OIII4960'], result_more.params['a_OIII4960'].stderr
+        b_OIII4960, db_OIII4960 = result_more.best_values['b_OIII4960'], result_more.params['b_OIII4960'].stderr
+        a_OIII5008, da_OIII5008 = result_more.best_values['a_OIII5008'], result_more.params['a_OIII5008'].stderr
+        b_OIII5008, db_OIII5008 = result_more.best_values['b_OIII5008'], result_more.params['b_OIII5008'].stderr
 
         # [Ne V] 3346.79, [Ne III] 3869, He I 3889, Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
 
-        z, dz = result_more.best_values['z'], result_more.params['z'].stderr
-        sigma, dsigma = result_more.best_values['sigma_kms'], result_more.params['sigma_kms'].stderr
         flux_NeV3346, dflux_NeV3346 = result_more.best_values['flux_NeV3346'], result_more.params['flux_NeV3346'].stderr
         flux_NeIII3869, dflux_NeIII3869 = result_more.best_values['flux_NeIII3869'], \
                                           result_more.params['flux_NeIII3869'].stderr
         flux_HeI3889, dflux_HeI3889 = result_more.best_values['flux_HeI3889'], result_more.params['flux_HeI3889'].stderr
+        flux_H8, dflux_H8 = result_more.best_values['flux_H8'], result_more.params['flux_H8'].stderr
+        flux_NeIII3968, dflux_NeIII3968 = result_more.best_values['flux_NeIII3968'], \
+                                          result_more.params['flux_NeIII3968'].stderr
         flux_Heps, dflux_Heps = result_more.best_values['flux_Heps'], result_more.params['flux_Heps'].stderr
         flux_Hdel, dflux_Hdel = result_more.best_values['flux_Hdel'], result_more.params['flux_Hdel'].stderr
         flux_Hgam, dflux_Hgam = result_more.best_values['flux_Hgam'], result_more.params['flux_Hgam'].stderr
@@ -495,8 +584,8 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         b_NeIII3869, db_NeIII3869 = result_more.best_values['b_NeIII3869'], result_more.params['b_NeIII3869'].stderr
         a_HeI3889, da_HeI3889 = result_more.best_values['a_HeI3889'], result_more.params['a_HeI3889'].stderr
         b_HeI3889, db_HeI3889 = result_more.best_values['b_HeI3889'], result_more.params['b_HeI3889'].stderr
-        a_Heps, da_Heps = result_more.best_values['a_Heps'], result_more.params['a_Heps'].stderr
-        b_Heps, db_Heps = result_more.best_values['b_Heps'], result_more.params['b_Heps'].stderr
+        a_NeIII3968, da_NeIII3968 = result_more.best_values['a_NeIII3968'], result_more.params['a_NeIII3968'].stderr
+        b_NeIII3968, db_NeIII3968 = result_more.best_values['b_NeIII3968'], result_more.params['b_NeIII3968'].stderr
         a_Hdel, da_Hdel = result_more.best_values['a_Hdel'], result_more.params['a_Hdel'].stderr
         b_Hdel, db_Hdel = result_more.best_values['b_Hdel'], result_more.params['b_Hdel'].stderr
         a_Hgam, da_Hgam = result_more.best_values['a_Hgam'], result_more.params['a_Hgam'].stderr
@@ -507,7 +596,9 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         b_HeII4687, db_HeII4687 = result_more.best_values['b_HeII4687'], result_more.params['b_HeII4687'].stderr
 
         # Save the fitted result
-        # flux_info[i, :] = np.array([flux_OII, flux_Hbeta, flux_OIII5008, dflux_OII, dflux_Hbeta, dflux_OIII5008])
+        flux_info[i, :] = np.array([flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_Heps, flux_Hdel, flux_Hgam,
+                                    flux_OIII4364, flux_HeII4687, dflux_NeV3346, dflux_NeIII3869, dflux_HeI3889,
+                                    dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364, dflux_HeII4687])
 
         # axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', drawstyle='steps-mid', lw=1)
         # axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
@@ -526,17 +617,26 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         # axarr[i, 0].plot(wave_cube, flux_i_ori, color='r', drawstyle='steps-mid', lw=1)
         # axarr[i, 0].plot(wave_cube, flux_i_conti, color='b', drawstyle='steps-mid', lw=1)
 
+        # line_model = model_more(wave_vac_more, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
+        #                         flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687,
+        #                         flux_OII, flux_Hbeta, flux_OIII5008, r_OII,
+        #                         a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889,
+        #                         a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam,
+        #                         a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta,
+        #                         a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
 
-        line_model = model_more(wave_vac_more, z, sigma, flux_NeV3346, flux_NeIII3869,
-                                                         flux_HeI3889, flux_Heps, flux_Hdel, flux_Hgam,
-                                                         flux_OIII4364, flux_HeII4687, a_NeV3346, b_NeV3346,
-                                                         a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889,
-                                                         a_Heps, b_Heps, a_Hdel, b_Hdel, a_Hgam, b_Hgam,
-                                                         a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687)
+
+        line_model = model_all(wave_vac_more_plot, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
+                                flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687,
+                                a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889,
+                                a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam,
+                                a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687)
+
+
         axarr[i, 0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
         # axarr[i, 0].plot(wave_NeV3346_vac, flux_i_conti, color='b', drawstyle='steps-mid', lw=1)
         axarr[i, 0].plot(wave_NeV3346_vac, flux_NeV3346_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr[i, 0].plot(wave_vac_more_stack, line_model, '-r')
+        axarr[i, 0].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
         axarr[i, 0].set_xlim(5350, 5500)
         axarr[i, 0].set_title(text_array[i], x=0.2, y=0.75, size=20)
 
@@ -544,31 +644,31 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr[i, 1].plot(wave_NeIII3869_vac, flux_NeIII3869_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
         axarr[i, 1].plot(wave_HeI3889_vac, flux_HeI3889_i, color='k', drawstyle='steps-mid', lw=1)
         axarr[i, 1].plot(wave_HeI3889_vac, flux_HeI3889_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr[i, 1].plot(wave_vac_more_stack, line_model, '-r')
+        axarr[i, 1].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
         axarr[i, 1].set_xlim(6250, 6400)
         # axarr[i, 1].set_xticks([6300])
 
 
         axarr[i, 2].plot(wave_Heps_vac, flux_Heps_i, color='k', drawstyle='steps-mid', lw=1)
         axarr[i, 2].plot(wave_Heps_vac, flux_Heps_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr[i, 2].plot(wave_vac_more_stack, line_model, '-r')
+        axarr[i, 2].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
         axarr[i, 2].set_xlim(6400, 6550)
 
         axarr[i, 3].plot(wave_Hdel_vac, flux_Hdel_i, color='k', drawstyle='steps-mid', lw=1)
         axarr[i, 3].plot(wave_Hdel_vac, flux_Hdel_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr[i, 3].plot(wave_vac_more_stack, line_model, '-r')
+        axarr[i, 3].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
         axarr[i, 3].set_xlim(6600, 6750)
 
         axarr[i, 4].plot(wave_Hgam_vac, flux_Hgam_i, color='k', drawstyle='steps-mid', lw=1)
         axarr[i, 4].plot(wave_Hgam_vac, flux_Hgam_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
         axarr[i, 4].plot(wave_OIII4364_vac, flux_OIII4364_i, color='k', drawstyle='steps-mid', lw=1)
         axarr[i, 4].plot(wave_OIII4364_vac, flux_OIII4364_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr[i, 4].plot(wave_vac_more_stack, line_model, '-r')
+        axarr[i, 4].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
         axarr[i, 4].set_xlim(7000, 7150)
 
         axarr[i, 5].plot(wave_HeII4687_vac, flux_HeII4687_i, color='k', drawstyle='steps-mid', lw=1)
         axarr[i, 5].plot(wave_HeII4687_vac, flux_HeII4687_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr[i, 5].plot(wave_vac_more_stack, line_model, '-r')
+        axarr[i, 5].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
         axarr[i, 5].set_xlim(7550, 7700)
         # axarr[i, 0].set_xlim(6300, 6350)
         # axarr[i, 1].set_xlim(7900, 8200)
@@ -587,31 +687,21 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr[i, 5].spines['left'].set_visible(False)
 
         # Mark line info
-        # [Ne V] 3346.79, [Ne III] 3869, He I 3889, Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
-        lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3971.20, 4102.89, 4341.68, 4364.44, 4687.31])
+        # [Ne V] 3346.79, [Ne III] 3869, He I 3889 and H8, NeIII3968 and Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
+        lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3890.16, 3968.59, 3971.20, 4102.89, 4341.68,
+                                         4364.44, 4687.31])
         lines = (1 + z) * np.array([3727.092, 3729.8754960, 4862.721, 4960.295, 5008.239])
-        axarr[i, 0].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
-                           colors='grey')
-        axarr[i, 1].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
-                           colors='grey')
-        axarr[i, 0].vlines(lines_more, ymin=[-5, -5, -5, -5, -5, -5, -5, -5],
-                           ymax=[100, 100, 100, 100, 100, 100, 100, 100], linestyles='dashed',
-                           colors='grey')
-        axarr[i, 1].vlines(lines_more, ymin=[-5, -5, -5, -5, -5, -5, -5, -5],
-                           ymax=[100, 100, 100, 100, 100, 100, 100, 100], linestyles='dashed',
-                           colors='grey')
-        axarr[i, 2].vlines(lines_more, ymin=[-5, -5, -5, -5, -5, -5, -5, -5],
-                           ymax=[100, 100, 100, 100, 100, 100, 100, 100], linestyles='dashed',
-                           colors='grey')
-        axarr[i, 3].vlines(lines_more, ymin=[-5, -5, -5, -5, -5, -5, -5, -5],
-                           ymax=[100, 100, 100, 100, 100, 100, 100, 100], linestyles='dashed',
-                           colors='grey')
-        axarr[i, 4].vlines(lines_more, ymin=[-5, -5, -5, -5, -5, -5, -5, -5],
-                           ymax=[100, 100, 100, 100, 100, 100, 100, 100], linestyles='dashed',
-                           colors='grey')
-        axarr[i, 5].vlines(lines_more, ymin=[-5, -5, -5, -5, -5, -5, -5, -5],
-                           ymax=[100, 100, 100, 100, 100, 100, 100, 100], linestyles='dashed',
-                           colors='grey')
+        ymin, ymax = [-5, -5, -5, -5, -5, -5, -5, -5, -5, -5], [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+        # axarr[i, 0].vlines(lines, ymin=[-5, -5, -5, -5, -5,], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
+        #                    colors='grey')
+        # axarr[i, 1].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
+        #                    colors='grey')
+        axarr[i, 0].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr[i, 1].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr[i, 2].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr[i, 3].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr[i, 4].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr[i, 5].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
         # axarr[i, 0].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
         # axarr[i, 1].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
         axarr[i, 0].set_ylim(flux_all.min() - 0.2, 0.5)
@@ -625,8 +715,10 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         #     axarr[i, 1].set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
         axarr[0, 0].annotate(text=r'$\mathrm{[Ne \, V]}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
         axarr[0, 1].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.25, 0.65), xycoords='axes fraction', size=15)
-        axarr[0, 1].annotate(text=r'$\mathrm{He \, I}$', xy=(0.6, 0.65), xycoords='axes fraction', size=15)
-        axarr[0, 2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
+        axarr[0, 1].annotate(text=r'$\mathrm{He \, I}$' + '\n' + r'$\mathrm{H8}$', xy=(0.6, 0.53),
+                             xycoords='axes fraction', size=15)
+        axarr[0, 2].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.20, 0.65), xycoords='axes fraction', size=15)
+        axarr[0, 2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
         axarr[0, 3].annotate(text=r'$\mathrm{H \delta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
         axarr[0, 4].annotate(text=r'$\mathrm{H \gamma}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
         axarr[0, 4].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
@@ -668,7 +760,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
             axarr[i, 3].tick_params(axis='x', which='both', labelbottom=False)
             axarr[i, 4].tick_params(axis='x', which='both', labelbottom=False)
             axarr[i, 5].tick_params(axis='x', which='both', labelbottom=False)
-    # fits.writeto('/Users/lzq/Dropbox/Data/CGM/line_profile_selected_region.fits', flux_info, overwrite=True)
+    fits.writeto('/Users/lzq/Dropbox/Data/CGM/moreline_profile_selected_region.fits', flux_info, overwrite=True)
     fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.0)
     fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.02)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '.png', bbox_inches='tight')
