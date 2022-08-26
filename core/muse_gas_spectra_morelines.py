@@ -406,7 +406,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                               gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
     fig.subplots_adjust(hspace=0)
     fig.subplots_adjust(wspace=0.2)
-    flux_info = np.zeros((len(ra_array), 16))
+    flux_info = np.zeros((len(ra_array), 28))
     # axarr = axarr.ravel()
     for i in range(len(ra_array)):
         spe_NeV3346_i = cube_NeV3346.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
@@ -596,9 +596,11 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         b_HeII4687, db_HeII4687 = result_more.best_values['b_HeII4687'], result_more.params['b_HeII4687'].stderr
 
         # Save the fitted result
-        flux_info[i, :] = np.array([flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_Heps, flux_Hdel, flux_Hgam,
-                                    flux_OIII4364, flux_HeII4687, dflux_NeV3346, dflux_NeIII3869, dflux_HeI3889,
-                                    dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364, dflux_HeII4687])
+        flux_info[i, :] = np.array([flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
+                                    flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, r_OII, flux_Hbeta,
+                                    flux_OIII5008, dflux_NeV3346, dflux_NeIII3869, dflux_HeI3889, dflux_H8,
+                                    dflux_NeIII3968, dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364,
+                                    dflux_HeII4687, dflux_OII, dr_OII, dflux_Hbeta, dflux_OIII5008])
 
         # axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', drawstyle='steps-mid', lw=1)
         # axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
@@ -690,6 +692,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         # [Ne V] 3346.79, [Ne III] 3869, He I 3889 and H8, NeIII3968 and Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
         lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3890.16, 3968.59, 3971.20, 4102.89, 4341.68,
                                          4364.44, 4687.31])
+        # [O II] 3727, 3729, Hbeta, [O III] 4960 5008
         lines = (1 + z) * np.array([3727.092, 3729.8754960, 4862.721, 4960.295, 5008.239])
         ymin, ymax = [-5, -5, -5, -5, -5, -5, -5, -5, -5, -5], [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
         # axarr[i, 0].vlines(lines, ymin=[-5, -5, -5, -5, -5,], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
