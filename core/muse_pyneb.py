@@ -25,8 +25,10 @@ dr_OII = data_fit_info_sr[:, 25]
 r_OIII = data_fit_info_sr[:, 8] / data_fit_info_sr[:, 13]
 dr_OIII = r_OIII * np.sqrt((data_fit_info_sr[:, 22] / data_fit_info_sr[:, 8] ) ** 2
                            + (data_fit_info_sr[:, 27] / data_fit_info_sr[:, 13]) ** 2)
-print(r_OII, dr_OII)
-print(r_OIII, dr_OIII)
+logr_OII = np.log10(r_OII)
+logr_OIII = np.log10(r_OIII)
+logdr_OII = dr_OII / (r_OII * np.log(dr_OII))
+logdr_OIII = dr_OIII / (r_OIII * np.log(dr_OIII))
 
 # [Ne V] 3346.79, [Ne III] 3869, He I 3889 and H8, NeIII3968 and Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
 # lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3890.16, 3968.59, 3971.20, 4102.89, 4341.68,
@@ -109,35 +111,36 @@ OIII5007_array = O3.getEmissivity(tem=tem_array, den=den_array, wave=5007)
 #
 
 # Interpolation
-f_OII = interpolate.interp2d(np.log10(tem_array), np.log10(den_array),
+f_OII = interpolate.interp2d(np.log10(Tem.flatten()), np.log10(Den.flatten()),
                          np.log10(OII3729_array / OII3727_array).flatten(), kind='cubic')
 f_OIII = interpolate.interp2d(np.log10(Tem.flatten()), np.log10(Den.flatten()),
                          np.log10(OIII4363_array / OIII5007_array).flatten(), kind='cubic')
 
-print(np.shape(Tem), np.shape(Den))
-print(np.shape(OII3727_array))
+# print(np.shape(Tem), np.shape(Den))
+# print(np.shape(OII3727_array))
 # print(f(tem_array, den_array)[50:, 50:])
-print(np.shape(f(np.log10(tem_array), np.log10(den_array))))
+# print(np.shape(f(np.log10(tem_array), np.log10(den_array))))
 
 # Plot the result of interpolation
-fig = plt.figure()
-ax = plt.axes(projection='3d')
-ax.plot_surface(np.log10(Tem), np.log10(Den), np.log10(OII3729_array / OII3727_array))
-ax.plot_surface(np.log10(Tem), np.log10(Den), f(np.log10(tem_array), np.log10(den_array)))
-ax.plot_surface(np.log10(Tem), np.log10(Den), f(np.log10(Tem.flatten()), np.log10(Den.flatten()))[0, :].reshape((100, 100)))
-fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/pyneb_test_interp2d.png', bbox_inches='tight')
+# fig = plt.figure()
+# ax = plt.axes(projection='3d')
+# ax.plot_surface(np.log10(Tem), np.log10(Den), np.log10(OII3729_array / OII3727_array))
+# ax.plot_surface(np.log10(Tem), np.log10(Den), f(np.log10(tem_array), np.log10(den_array)))
+# ax.plot_surface(np.log10(Tem), np.log10(Den), f(np.log10(Tem.flatten()), np.log10(Den.flatten()))[0, :].reshape((100, 100)))
+# fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/pyneb_test_interp2d.png', bbox_inches='tight')
 #
 # true_line_ratio = -0.1
 # print(- 0.5 * ((f(4.11, 3.01) - true_line_ratio) / 1e-8) ** 2)
 def log_prob(x):
-    tem, den = x[0], x[1]
-    return - 0.5 * (((f_OII(tem, den) - r_OII) / dr_OII) ** 2 + ((f_OIII(tem, den) - r_OIII) / dr_OIII) ** 2)
+    logtem, logden = x[0], x[1]
+    return - 0.5 * (((f_OII(logtem, logden) - logr_OII) / logdr_OII) ** 2 +
+                    ((f_OIII(logtem, logden) - logr_OIII) / logdr_OIII) ** 2)
 #
 ndim, nwalkers = 2, 40
-p0 = np.array([4.1, 3.0]) + 0.001 * np.random.randn(nwalkers, ndim)
+p0 = np.array([4.1, 1.5]) + 0.001 * np.random.randn(nwalkers, ndim)
 print(p0)
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
-state = sampler.run_mcmc(p0, 100)
+state = sampler.run_mcmc(p0, 1000)
 samples = sampler.get_chain(flat=True)
 
 chain_emcee = sampler.get_chain()
