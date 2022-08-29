@@ -100,8 +100,8 @@ fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/pyneb_test_OIII.png', bbox_inches
 
 
 # MCMC and interpolation
-tem_array = 10 ** np.linspace(2.0, 4.11, 100)
-den_array = 10 ** np.linspace(2.0, 3.02, 100)
+tem_array = 10 ** np.linspace(3.5, 4.5, 200)
+den_array = 10 ** np.linspace(1.0, 2.0, 200)
 Tem, Den = np.meshgrid(tem_array, den_array)
 OII3727_array = O2.getEmissivity(tem=tem_array, den=den_array, wave=3727)
 OII3729_array = O2.getEmissivity(tem=tem_array, den=den_array, wave=3729)
@@ -136,11 +136,11 @@ def log_prob(x):
     return - 0.5 * (((f_OII(logtem, logden) - logr_OII) / logdr_OII) ** 2 +
                     ((f_OIII(logtem, logden) - logr_OIII) / logdr_OIII) ** 2)
 #
-ndim, nwalkers = 2, 40
+ndim, nwalkers = 2, 10
 p0 = np.array([4.1, 1.5]) + 0.001 * np.random.randn(nwalkers, ndim)
 print(p0)
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
-state = sampler.run_mcmc(p0, 1000)
+state = sampler.run_mcmc(p0, 100)
 samples = sampler.get_chain(flat=True)
 
 chain_emcee = sampler.get_chain()
