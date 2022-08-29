@@ -25,10 +25,10 @@ dr_OII = data_fit_info_sr[:, 25]
 r_OIII = data_fit_info_sr[:, 8] / data_fit_info_sr[:, 13]
 dr_OIII = r_OIII * np.sqrt((data_fit_info_sr[:, 22] / data_fit_info_sr[:, 8] ) ** 2
                            + (data_fit_info_sr[:, 27] / data_fit_info_sr[:, 13]) ** 2)
-logr_OII = np.log10(r_OII)
-logr_OIII = np.log10(r_OIII)
-logdr_OII = dr_OII / (r_OII * np.log(dr_OII))
-logdr_OIII = dr_OIII / (r_OIII * np.log(dr_OIII))
+logr_OII = np.log10(r_OII)[1]
+logr_OIII = np.log10(r_OIII)[1]
+logdr_OII = dr_OII[1] / (r_OII[1] * np.log(dr_OII[1]))
+logdr_OIII = dr_OIII[1] / (r_OIII[1] * np.log(dr_OIII[1]))
 
 # [Ne V] 3346.79, [Ne III] 3869, He I 3889 and H8, NeIII3968 and Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
 # lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3890.16, 3968.59, 3971.20, 4102.89, 4341.68,
@@ -71,7 +71,7 @@ axarr[1].set_ylabel(r'$\mathrm{log( [O \, II] \lambda 3729 / \lambda 3727)}$', s
 axarr[1].legend(prop={'size': 15}, framealpha=0, loc=1, fontsize=15)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/pyneb_test_OII.png', bbox_inches='tight')
 
-# # ###
+#
 # [O III] vs density
 fig, axarr = plt.subplots(2, 1, figsize=(5, 10), dpi=300)
 tem_array_den = np.array([8000, 10000, 20000])
@@ -98,24 +98,26 @@ axarr[1].set_ylabel(r'$\mathrm{log( [O \, III] \lambda 4363 / \lambda 5007)}$', 
 axarr[1].legend(prop={'size': 15}, framealpha=0, loc=1, fontsize=15)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/pyneb_test_OIII.png', bbox_inches='tight')
 
-
 # MCMC and interpolation
-tem_array = 10 ** np.linspace(3.5, 4.5, 200)
-den_array = 10 ** np.linspace(1.0, 2.0, 200)
+tem_array = 10 ** np.linspace(3.5, 5.0, 200)
+den_array = 10 ** np.linspace(1, 3.0, 200)
 Tem, Den = np.meshgrid(tem_array, den_array)
 OII3727_array = O2.getEmissivity(tem=tem_array, den=den_array, wave=3727)
 OII3729_array = O2.getEmissivity(tem=tem_array, den=den_array, wave=3729)
 OIII4363_array = O3.getEmissivity(tem=tem_array, den=den_array, wave=4363)
 OIII5007_array = O3.getEmissivity(tem=tem_array, den=den_array, wave=5007)
-
-#
+OII3727_array_1d = O2.getEmissivity(tem=1e4, den=den_array, wave=3727)
+OII3729_array_1d = O2.getEmissivity(tem=1e4, den=den_array, wave=3729)
+OIII4363_array_1d = O3.getEmissivity(tem=tem_array, den=1e2, wave=4363)
+OIII5007_array_1d = O3.getEmissivity(tem=tem_array, den=1e2, wave=5007)
 
 # Interpolation
 f_OII = interpolate.interp2d(np.log10(Tem.flatten()), np.log10(Den.flatten()),
-                         np.log10(OII3729_array / OII3727_array).flatten(), kind='cubic')
+                         np.log10(OII3729_array / OII3727_array).flatten())
 f_OIII = interpolate.interp2d(np.log10(Tem.flatten()), np.log10(Den.flatten()),
-                         np.log10(OIII4363_array / OIII5007_array).flatten(), kind='cubic')
-
+                         np.log10(OIII4363_array / OIII5007_array).flatten())
+# print(f_OII(4.1, 1.5))
+# print(f_OIII(4.1, 1.5))
 # print(np.shape(Tem), np.shape(Den))
 # print(np.shape(OII3727_array))
 # print(f(tem_array, den_array)[50:, 50:])
@@ -131,38 +133,47 @@ f_OIII = interpolate.interp2d(np.log10(Tem.flatten()), np.log10(Den.flatten()),
 #
 # true_line_ratio = -0.1
 # print(- 0.5 * ((f(4.11, 3.01) - true_line_ratio) / 1e-8) ** 2)
+
+# 1-D
+# f_OIII_1d = interpolate.interp1d(np.log10(tem_array), np.log10(OIII4363_array_1d / OIII5007_array_1d).flatten())
+# def log_prob_1d(x):
+#     logtem = x[0]
+#     return - 0.5 * ((f_OIII_1d(logtem) - logr_OIII) / logdr_OIII) ** 2
+
+f_OII_1d = interpolate.interp1d(np.log10(den_array),
+                         np.log10(OII3729_array_1d / OII3727_array_1d).flatten())
+def log_prob_1d(x):
+    logden = x[0]
+    return - 0.5 * ((f_OII_1d(logden) - logr_OII) / logdr_OII) ** 2
+
 def log_prob(x):
     logtem, logden = x[0], x[1]
-    return - 0.5 * (((f_OII(logtem, logden) - logr_OII) / logdr_OII) ** 2 +
-                    ((f_OIII(logtem, logden) - logr_OIII) / logdr_OIII) ** 2)
+    return - 0.5 * (((f_OII(logtem, logden) - logr_OII) / logdr_OII) ** 2
+                     + ((f_OIII(logtem, logden) - logr_OIII) / logdr_OIII) ** 2)
 #
-ndim, nwalkers = 2, 10
-p0 = np.array([4.1, 1.5]) + 0.001 * np.random.randn(nwalkers, ndim)
-print(p0)
-sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
+# ndim, nwalkers = 2, 40
+# p0 = np.array([4.1, 1.5]) + 0.01 * np.random.randn(nwalkers, ndim)
+# ndim, nwalkers = 1, 40
+# p0 = np.array([4.1]) + 0.01 * np.random.randn(nwalkers, ndim)
+ndim, nwalkers = 1, 40
+p0 = np.array([1.5]) + 0.01 * np.random.randn(nwalkers, ndim)
+sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob_1d)
 state = sampler.run_mcmc(p0, 100)
 samples = sampler.get_chain(flat=True)
 
-chain_emcee = sampler.get_chain()
-# Plot each walker with a separate line.  This is c1.
-f, ax = plt.subplots(1, 3, figsize=(15, 7), gridspec_kw={'wspace':0.3})
-for j in range(2):
-    for i in range(chain_emcee.shape[1]):
-        ax[j].plot(np.arange(chain_emcee.shape[0]), chain_emcee[:, i, j], lw=1)
-    ax[j].set_xlabel("Step Number")
-    ax[j].set_xlim(0, 100)
-    ax[j].set_ylim(0, 5)
-f.savefig('/Users/lzq/Dropbox/Data/CGM_plots/pyneb_test_mcmc_chain.png', bbox_inches='tight')
-#
-# lnprob = sampler.get_log_prob()[-1]
+# chain_emcee = sampler.get_chain()
+# f, ax = plt.subplots(1, 2, figsize=(15, 7))
+# for j in range(2):
+#     for i in range(chain_emcee.shape[1]):
+#         ax[j].plot(np.arange(chain_emcee.shape[0]), chain_emcee[:, i, j], lw=1)
+#     ax[j].set_xlabel("Step Number")
+#     ax[j].set_xlim(0, 1000)
+#     ax[j].set_ylim(0, 5)
+# f.savefig('/Users/lzq/Dropbox/Data/CGM_plots/pyneb_test_mcmc_chain.png', bbox_inches='tight')
 
-# ndim, nsamples = 2, 10000
-# np.random.seed(42)
-# samples = np.random.randn(ndim * nsamples).reshape([nsamples, ndim])
-# print(np.shape(samples))
-# figure = corner.corner(samples)
-# samples = OII3729_tem / OII3727_tem
-# plt.figure(figsize=(10, 10), dpi=300)
-# figure = corner.corner(samples, title_fmt = '.3f',labels=[r"$T$", r"$\mathrm{Density}$"],
-#                        quantiles=[0.25, 0.68, 0.95], show_titles=True, color='k')
-# figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/pyneb_test_mcmc.png', bbox_inches='tight')
+
+#
+plt.figure(figsize=(10, 10), dpi=300)
+figure = corner.corner(samples, title_fmt = '.3f',labels=[r"$logT$", r"$log\mathrm{Density}$"],
+                       quantiles=[0.25, 0.68, 0.95], show_titles=True, color='k')
+figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/pyneb_test_mcmc.png', bbox_inches='tight')
