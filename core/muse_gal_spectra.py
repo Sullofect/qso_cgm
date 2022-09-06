@@ -72,6 +72,7 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
     fig, axarr = plt.subplots(len(row_array), 1, figsize=(10, 2.5 * len(row_array)), sharex=True, dpi=300)
     plt.subplots_adjust(hspace=0.0)
 
+
     for i in range(len(row_array)):
         row_sort = np.where(row_final == row_array[i])
         z_i = z_final[row_sort]
@@ -81,31 +82,41 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
         red = np.mean(flux_i[red_mask])  # Compute errors and report mean
         blue = np.mean(flux_i[blue_mask])
         print(red / blue)
-        axarr[i].plot(wave_i, flux_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr[i].plot(wave_i, model_i, color='r', lw=1)
-        axarr[i].plot(wave_i, flux_err_i, color='lightgrey', lw=1)
-        axarr[i].set_title('G' + str(row_array[i]), x=0.1, y=0.80, size=20)
-        axarr[0].annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.2, 0.65),
+        if len(row_array) == 1:
+            axarr_i = axarr
+            axarr_0 = axarr
+        else:
+            axarr_i = axarr[i]
+            axarr_0 = axarr[0]
+        axarr_i.plot(wave_i, flux_i, color='k', drawstyle='steps-mid', lw=1)
+        axarr_i.plot(wave_i, model_i, color='r', lw=1)
+        axarr_i.plot(wave_i, flux_err_i, color='lightgrey', lw=1)
+        axarr_i.set_title('G' + str(row_array[i]), x=0.1, y=0.80, size=20)
+        axarr_0.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.2, 0.65),
                           xycoords='axes fraction', size=20)
-        axarr[0].annotate(text=r'$\mathrm{K, H, G}$', xy=(0.39, 0.65), xycoords='axes fraction', size=20)
-        axarr[0].annotate(text=r'$\mathrm{H\beta}$', xy=(0.65, 0.65), xycoords='axes fraction', size=20)
-        axarr[0].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.80, 0.65),
+        axarr_0.annotate(text=r'$\mathrm{K, H, G}$', xy=(0.39, 0.65), xycoords='axes fraction', size=20)
+        axarr_0.annotate(text=r'$\mathrm{H\beta}$', xy=(0.65, 0.65), xycoords='axes fraction', size=20)
+        axarr_0.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.80, 0.65),
                           xycoords='axes fraction', size=20)
         lines = (1 + z_i) * np.array([3727.092, 3729.8754960, 3934.777, 3969.588, 4305.61, 4862.721, 4960.295, 5008.239])
-        axarr[i].vlines(lines, lw=1,
+        axarr_i.vlines(lines, lw=1,
                         ymin=[-5, -5, -5, -5, -5, -5, -5, -5],
                         ymax=[100, 100, 100, 100, 100, 100, 100, 100],
                         linestyles='dashed', colors='grey')
-        axarr[i].set_xlim(4800, 9200)
-        axarr[i].set_ylim(-0.1, flux_i.max() + 0.1)
-        axarr[i].minorticks_on()
-        axarr[i].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
+        axarr_i.set_xlim(4800, 9200)
+        axarr_i.set_ylim(-0.1, flux_i.max() + 0.1)
+        axarr_i.minorticks_on()
+        axarr_i.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
                              labelsize=20, size=5)
-        axarr[i].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
+        axarr_i.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',
                              size=3)
-    fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
-    fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '.png', bbox_inches='tight')
+    if len(row_array) == 1:
+        fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=15, y=-0.1)
+        fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=15, x=0.06)
+    else:
+        fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
+        fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/spectra_gal/' + figname + '.png', bbox_inches='tight')
 
 
 # Load info
@@ -131,7 +142,8 @@ z_final = z_final[select_gal]
 ra_final = ra_final[select_gal]
 dec_final = dec_final[select_gal]
 
-PlotGalSpectra(row_array=[181, 182], qls=True)
+for i in [5, 6, 7, 181, 182]:
+    PlotGalSpectra(row_array=[i], qls=True, figname="spectra_gal_" + str(i))
 #
 # fig, axarr = plt.subplots(3, 1, figsize=(10, 15), sharex=True, dpi=300)
 # plt.subplots_adjust(hspace=0.1)
