@@ -27,8 +27,8 @@ dr_OIII = r_OIII * np.sqrt((data_fit_info_sr[:, 22] / data_fit_info_sr[:, 8] ) *
                            + (data_fit_info_sr[:, 27] / data_fit_info_sr[:, 13]) ** 2)
 logr_OII = np.log10(r_OII)[0]
 logr_OIII = np.log10(r_OIII)[0]
-logdr_OII = dr_OII[0] / (r_OII[0] * np.log(dr_OII[0]))
-logdr_OIII = dr_OIII[0] / (r_OIII[0] * np.log(dr_OIII[0]))
+logdr_OII = dr_OII[0] / (r_OII[0] * np.log(10))
+logdr_OIII = dr_OIII[0] / (r_OIII[0] * np.log(10))
 
 # [Ne V] 3346.79, [Ne III] 3869, He I 3889 and H8, NeIII3968 and Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
 # lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3890.16, 3968.59, 3971.20, 4102.89, 4341.68,
@@ -193,7 +193,7 @@ def log_prob_1d(x):
 
 
 # Luminosity, alpha=1.4, high/low cut (1000ev, 5ev converted to radberg),
-# radius (fixed), density, metalicity,
+# radius (fixed), density -2 to 2.5 delta 0.1 dex, metalicity -1.5 to 0.5 delta 0.1 dex,
 
 
 
