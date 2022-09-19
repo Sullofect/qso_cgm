@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 from PyAstronomy import pyasl
 from mpdaf.obj import Cube, WCS, WaveCoord, iter_spe
+from astropy.table import Table
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 
@@ -763,7 +764,13 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
             axarr[i, 3].tick_params(axis='x', which='both', labelbottom=False)
             axarr[i, 4].tick_params(axis='x', which='both', labelbottom=False)
             axarr[i, 5].tick_params(axis='x', which='both', labelbottom=False)
-    fits.writeto('/Users/lzq/Dropbox/Data/CGM/moreline_profile_selected_region.fits', flux_info, overwrite=True)
+    t = Table(flux_info, names=('flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', f'lux_NeIII3968',
+                                'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364', 'flux_HeII4687',
+                                'flux_OII', 'r_OII', 'flux_Hbeta', 'flux_OIII5008', 'dflux_NeV3346',
+                                'dflux_NeIII3869', 'dflux_HeI3889', 'dflux_H8', 'dflux_NeIII3968',
+                                'dflux_Heps', 'dflux_Hdel', 'dflux_Hgam', 'dflux_OIII4364',
+                                'dflux_HeII4687', 'dflux_OII', 'dr_OII', 'dflux_Hbeta', 'dflux_OIII5008'))
+    t.write('/Users/lzq/Dropbox/Data/CGM/moreline_profile_selected_region.fits', format='fits', overwrite=True)
     fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.0)
     fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.02)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '.png', bbox_inches='tight')
