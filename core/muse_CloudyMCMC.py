@@ -201,7 +201,7 @@ fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_check_MCMC.png', bbox_inch
 fig, ax = plt.subplots(1, 1, figsize=(8, 5), dpi=300, sharex=True)
 E_NeV3346, E_NeIII3869 = 97.11, 40.96  # in ev
 E_OIII5008, E_OII = 35.12, 13.6
-E_HeII4687, E_Hbeta = 54.42, 0
+E_HeII4687, E_Hbeta = 54.42, 13.6
 data_x = [E_NeV3346 / E_NeIII3869, E_OIII5008 / E_OII]
 data_y = [logflux_NeV3346 - logflux_NeIII3869, logflux_OIII5008 - logflux_OII]
 data_yerr = [NeV3346_NeIII3869_error, OIII5008_OII_error]
