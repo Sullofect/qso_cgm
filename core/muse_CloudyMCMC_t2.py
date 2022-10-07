@@ -97,13 +97,13 @@ def format_cloudy_t2(filename=None, path=None):
         metal_i = filename[0][i]
         for j in range(len(filename[1])):
             alpha_j = filename[1][j]
-            filename_i = 'alpha_' + str(alpha_j) + '_' + str(metal_i)
+            filename_ij = 'alpha_' + str(alpha_j) + '_' + str(metal_i)
             if j == 0:
-                output_j = load_cloudy(filename_i, path=path)
-                ind_j = np.array([[0]])
+                output_j = load_cloudy(filename_ij, path=path)
+                ind_j = np.array([[alpha_j, metal_i]])
             else:
-                ind_jj = np.array([[j]])
-                c_i = load_cloudy(filename_i, path=path)
+                ind_jj = np.array([[alpha_j, metal_i]])
+                c_i = load_cloudy(filename_ij, path=path)
                 print(np.shape(c_i))
                 print(alpha_j, metal_i)
                 output_j = np.dstack((output_j, c_i))
@@ -118,9 +118,9 @@ def format_cloudy_t2(filename=None, path=None):
             output = np.concatenate((output, output_j[:, :, :, np.newaxis]), axis=3)
             ind =  np.concatenate((ind, ind_j[:, :, :, np.newaxis]), axis=3)
             print(np.shape(output))
-    return output
+    return output, ind
 
-output = format_cloudy_t2(filename=[metal, alpha], path='/Users/lzq/Dropbox/Data/CGM/cloudy/trial2/')
+output, ind = format_cloudy_t2(filename=[metal, alpha], path='/Users/lzq/Dropbox/Data/CGM/cloudy/trial2/')
 
 f_NeV3346 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[0, :, :, :],
                                                 bounds_error=False, fill_value=None)
@@ -158,8 +158,8 @@ def log_prob(x):
 ndim, nwalkers = 3, 40
 p0 = np.array([1.1, -1.4, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
-state = sampler.run_mcmc(p0, 1000)
-samples = sampler.get_chain(flat=True, discard=100)
+state = sampler.run_mcmc(p0, 10000)
+samples = sampler.get_chain(flat=True, discard=1000)
 
 # chain_emcee = sampler.get_chain()
 # f, ax = plt.subplots(1, 2, figsize=(15, 7))
@@ -236,7 +236,7 @@ data_yerr = [np.sqrt(dlogflux_OII ** 2 + dlogflux_Hbeta ** 2),
              np.sqrt(dlogflux_HeII4687 ** 2 + dlogflux_Hbeta ** 2),
              np.sqrt(dlogflux_NeV3346 ** 2 + dlogflux_Hbeta ** 2)]
 ax.errorbar(data_x, data_y,  data_yerr, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
-best_fit = (1.49, -0.79, -0.19)
+best_fit = (1.81, -0.79, 0.05)
 bestfit_y = [f_OII(best_fit), f_OIII4364(best_fit), f_OIII5008(best_fit), f_NeIII3869(best_fit), f_HeII4687(best_fit),
              f_NeV3346(best_fit)]
 ax.plot(data_x, bestfit_y, '-k', alpha=1)
@@ -250,10 +250,9 @@ for i in inds:
     ax.plot(data_x, model_y, '-C1', alpha=0.1)
 ax.set_xlabel(r'$\mathrm{Ionization \, energy}$', size=20)
 ax.set_ylabel(r'$\mathrm{Line \, ratio}$', size=20)
-ax.set_xticks(data_x, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$',
-                       r'$\mathrm{}$', r'$\mathrm{\frac{[Ne \, III]}{H\beta}}$',
-                       r'$\mathrm{\frac{He \, II}{H\beta}}$', r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'],
-              y=0.8)
+ax.set_xticks(data_x, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$', r'$\mathrm{}$',
+                       r'$\mathrm{\frac{[Ne \, III]}{H\beta}}$', r'$\mathrm{\frac{He \, II}{H\beta}}$',
+                       r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'], y=0.8)
 ax.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
 ax.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_check_MCMC_2.png', bbox_inches='tight')
