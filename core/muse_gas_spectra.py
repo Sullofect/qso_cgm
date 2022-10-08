@@ -147,12 +147,12 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
     flux_info = np.zeros((len(ra_array), 6))
     # axarr = axarr.ravel()
     for i in range(len(ra_array)):
-        if len(row_array) == 1:
-            axarr_i = axarr[0]
-            axarr_0 = axarr[1]
-        else:
-            axarr_i = axarr[i]
+        if len(ra_array) == 1:
             axarr_0 = axarr[0]
+            axarr_1 = axarr[1]
+        else:
+            axarr_0 = axarr[i, 0]
+            axarr_1 = axarr[i, 1]
 
         spe_OII_i = cube_OII.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)  # Unit in arcsec
         spe_Hbeta_i = cube_Hbeta.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
@@ -220,56 +220,60 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         # Save the fitted result
         flux_info[i, :] = np.array([flux_OII, flux_Hbeta, flux_OIII5008, dflux_OII, dflux_Hbeta, dflux_OIII5008])
 
-        axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', drawstyle='steps-mid', lw=1)
-        axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
-        axarr[i, 0].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
+        axarr_0.plot(wave_vac_stack, flux_all, color='k', drawstyle='steps-mid', lw=1)
+        axarr_0.plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
+        axarr_0.plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
                                                    r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
                                                    b_OIII4960, a_OIII5008, b_OIII5008), '-r')
-        axarr[i, 1].plot(wave_vac_stack_plot, flux_all_plot, color='k', drawstyle='steps-mid', lw=1)
-        axarr[i, 1].plot(wave_vac_stack_plot, flux_err_all_plot, color='lightgrey', lw=1)
-        axarr[i, 1].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
+        axarr_1.plot(wave_vac_stack_plot, flux_all_plot, color='k', drawstyle='steps-mid', lw=1)
+        axarr_1.plot(wave_vac_stack_plot, flux_err_all_plot, color='lightgrey', lw=1)
+        axarr_1.plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
                                                    r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
                                                    b_OIII4960, a_OIII5008, b_OIII5008), '-r')
-        axarr[i, 0].set_title(text_array[i], x=0.2, y=0.75, size=20)
-        axarr[i, 0].set_xlim(6020, 6120)
-        axarr[i, 1].set_xlim(7900, 8200)
-        axarr[i, 0].spines['right'].set_visible(False)
-        axarr[i, 1].spines['left'].set_visible(False)
+        axarr_0.set_title(text_array[i], x=0.2, y=0.75, size=20)
+        axarr_0.set_xlim(6020, 6120)
+        axarr_1.set_xlim(7900, 8200)
+        axarr_0.spines['right'].set_visible(False)
+        axarr_1.spines['left'].set_visible(False)
 
         # Mark line info
         lines = (1 + z) * np.array([3727.092, 3729.8754960, 4862.721, 4960.295, 5008.239])
-        axarr[i, 0].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
+        axarr_0.vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
                            colors='grey')
-        axarr[i, 1].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
+        axarr_1.vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
                            colors='grey')
-        axarr[i, 0].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
-        axarr[i, 1].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
+        axarr_0.set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
+        axarr_1.set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
         if flux_Hbeta_i.max() > flux_OIII5008_i.max():
-            axarr[i, 0].set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
-            axarr[i, 1].set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
-        axarr[0, 0].annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.55, 0.65), xycoords='axes fraction', size=20)
-        axarr[0, 1].annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
-        axarr[0, 1].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.45, 0.65), xycoords='axes fraction', size=20)
-        axarr[0, 1].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.7, 0.65), xycoords='axes fraction', size=20)
+            axarr_0.set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
+            axarr_1.set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
+        axarr_0.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.55, 0.65), xycoords='axes fraction', size=20)
+        axarr_1.annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
+        axarr_1.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.45, 0.65), xycoords='axes fraction', size=20)
+        axarr_1.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.7, 0.65), xycoords='axes fraction', size=20)
 
-        axarr[i, 0].minorticks_on()
-        axarr[i, 1].minorticks_on()
-        axarr[i, 0].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right=False,
+        axarr_0.minorticks_on()
+        axarr_1.minorticks_on()
+        axarr_0.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right=False,
                                 labelsize=20, size=5)
-        axarr[i, 0].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right=False,
+        axarr_0.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right=False,
                                 size=3)
-        axarr[i, 0].tick_params(axis='y', which='both', right=False, labelright=False)
-        axarr[i, 1].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False, right='on',
+        axarr_0.tick_params(axis='y', which='both', right=False, labelright=False)
+        axarr_1.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False, right='on',
                                 labelsize=20, size=5)
-        axarr[i, 1].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False, right='on',
+        axarr_1.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False, right='on',
                                 size=3)
-        axarr[i, 1].tick_params(axis='y', which='both', left=False, labelleft=False)
+        axarr_1.tick_params(axis='y', which='both', left=False, labelleft=False)
         if i != len(ra_array) - 1:
-            axarr[i, 0].tick_params(axis='x', which='both', labelbottom=False)
-            axarr[i, 1].tick_params(axis='x', which='both', labelbottom=False)
+            axarr_0.tick_params(axis='x', which='both', labelbottom=False)
+            axarr_1.tick_params(axis='x', which='both', labelbottom=False)
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/line_profile_selected_region.fits', flux_info, overwrite=True)
-    fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
-    fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.05)
+    if len(ra_array) == 1:
+        fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
+        fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.03)
+    else:
+        fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
+        fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.05)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '.png', bbox_inches='tight')
 
 
@@ -285,5 +289,5 @@ text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 # PlotGasSpectra(ra_array[7:], dec_array[7:], radius_array[7:], text_array[7:], figname='spectra_gas_P2')
 
 for i in range(len(radius_array)):
-    PlotGasSpectra([ra_array[i]], dec_array[i], radius_array[i], text_array[i],
+    PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
                    figname='spectra_gas_' + str(text_array[i]))
