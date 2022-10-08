@@ -30,13 +30,15 @@ newcmp = ListedColormap(newcolors)
 
 # Convert Fits file into correct form
 def ConvertFits(filename=None, smooth=True):
-    path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', filename + '.fits')
+    path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_MakeMovie',
+                        filename + '.fits')
     data, hdr = fits.getdata(path, 1, header=True)
     if smooth is True:
         kernel = Gaussian2DKernel(x_stddev=10.0, x_size=3, y_size=3)
         data = convolve(data, kernel)
-    fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data, overwrite=True)
-    data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', 0, header=True)
+    fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/' + filename + '_revised.fits', data, overwrite=True)
+    data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/' + filename + '_revised.fits',
+                               0, header=True)
     hdr1['BITPIX'], hdr1['NAXIS'], hdr1['NAXIS1'], hdr1['NAXIS2'] = hdr['BITPIX'], hdr['NAXIS'], hdr['NAXIS1'], \
                                                                     hdr['NAXIS2']
     hdr1['CRPIX1'], hdr1['CRPIX2'], hdr1['CTYPE1'], hdr1['CTYPE2'] = hdr['CRPIX1'], hdr['CRPIX2'], hdr['CTYPE1'], \
@@ -48,11 +50,13 @@ def ConvertFits(filename=None, smooth=True):
     hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] =  hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
 
     # Rescale the data by 1e17
-    fits.writeto('/Users/lzq/Dropbox/Data/CGM/' + filename + '_revised.fits', data1 * 1e17, hdr1, overwrite=True)
+    fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/' + filename + '_revised.fits',
+                 data1 * 1e17, hdr1, overwrite=True)
 
 
 # Make movie OII
-path_cube_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OII_line_offset.fits')
+path_cube_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
+                             'CUBE_OII_line_offset.fits')
 cube_OII = Cube(path_cube_OII)
 
 # Load galxies infomation
@@ -79,6 +83,14 @@ ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
 # ra_final = ra_final - (ra_qso_hst - ra_qso_muse)  # Wrong!!!
 # dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
+# Plot the data
+# Read region file
+path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_list_revised.reg')
+ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
+
 for i in range(8):
     fig = plt.figure(figsize=(8, 8), dpi=300)
     wave_i = 6050 + 5 * i
@@ -89,9 +101,10 @@ for i in range(8):
                  3e5 * ((wave_f_vac / 3727.092 - 1) - z_qso)/ (1 + z_qso)
     sub_cube = cube_OII.select_lambda(wave_i, wave_f)
     sub_cube = sub_cube.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2
-    sub_cube.write('/Users/lzq/Dropbox/Data/CGM/image_make_OII_NB.fits')
+    sub_cube.write('/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/image_make_OII_NB.fits')
     ConvertFits(filename='image_make_OII_NB')
-    path_subcube = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_make_OII_NB_revised.fits')
+    path_subcube = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_MakeMovie',
+                                'image_make_OII_NB_revised.fits')
     gc = aplpy.FITSFigure(path_subcube, figure=fig, north=True, animated=True)
     gc.set_system_latex(True)
     gc.show_colorscale(vmin=0, vmid=0.2, vmax=5.0, cmap=newcmp, stretch='arcsinh')
@@ -100,6 +113,7 @@ for i in range(8):
     gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=400)
     # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
+    gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linewidths=0.5, alpha=0.7)
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/gas_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.0)
@@ -130,3 +144,6 @@ for i in range(8):
     gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/NB_movie/image_OII_' + str("{0:.0f}".format(wave_i_vac)) + '_' +
                 str("{0:.0f}".format(wave_f_vac)) + '.png', bbox_inches='tight')
+
+os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OII_*.png '
+          '~/dropbox/Data/CGM_plots/NB_movie/OII_movie.gif')

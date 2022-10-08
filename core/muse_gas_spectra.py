@@ -147,6 +147,13 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
     flux_info = np.zeros((len(ra_array), 6))
     # axarr = axarr.ravel()
     for i in range(len(ra_array)):
+        if len(row_array) == 1:
+            axarr_i = axarr[0]
+            axarr_0 = axarr[1]
+        else:
+            axarr_i = axarr[i]
+            axarr_0 = axarr[0]
+
         spe_OII_i = cube_OII.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)  # Unit in arcsec
         spe_Hbeta_i = cube_Hbeta.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
         spe_bet_i = cube_bet.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
@@ -274,5 +281,9 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-PlotGasSpectra(ra_array[:7], dec_array[:7], radius_array[:7], text_array[:7], figname='spectra_gas_P1')
-PlotGasSpectra(ra_array[7:], dec_array[7:], radius_array[7:], text_array[7:], figname='spectra_gas_P2')
+# PlotGasSpectra(ra_array[:7], dec_array[:7], radius_array[:7], text_array[:7], figname='spectra_gas_P1')
+# PlotGasSpectra(ra_array[7:], dec_array[7:], radius_array[7:], text_array[7:], figname='spectra_gas_P2')
+
+for i in range(len(radius_array)):
+    PlotGasSpectra([ra_array[i]], dec_array[i], radius_array[i], text_array[i],
+                   figname='spectra_gas_' + str(text_array[i]))
