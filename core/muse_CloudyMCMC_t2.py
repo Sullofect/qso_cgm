@@ -75,7 +75,8 @@ Hden = np.arange(-2, 2.6, 0.1)  # log
 print(len(Hden))
 metal = np.array([-1.5, -1.4, -1.3, -1.2, -1.1, -1., -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3,
               -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5])  # log
-alpha = np.array([-1.8, -1.75, -1.7, -1.65, -1.6, -1.55, -1.5, -1.45, -1.4, -1.35, -1.3, -1.25, -1.2])
+alpha = np.array([-1.8, -1.75, -1.7, -1.65, -1.6, -1.55, -1.5, -1.45, -1.4, -1.35, -1.3, -1.25, -1.2,
+                  -1.15, -1.1, -1.05, -1.0, -0.95, -0.9, -0.85, -0.8, -0.75, -0.7, -0.65, -0.6])
 print(len(metal))
 
 # Load lineratio
@@ -158,8 +159,8 @@ def log_prob(x):
 ndim, nwalkers = 3, 40
 p0 = np.array([1.1, -1.4, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
-state = sampler.run_mcmc(p0, 10000)
-samples = sampler.get_chain(flat=True, discard=1000)
+state = sampler.run_mcmc(p0, 2000)
+samples = sampler.get_chain(flat=True, discard=100)
 
 # chain_emcee = sampler.get_chain()
 # f, ax = plt.subplots(1, 2, figsize=(15, 7))
@@ -236,7 +237,7 @@ data_yerr = [np.sqrt(dlogflux_OII ** 2 + dlogflux_Hbeta ** 2),
              np.sqrt(dlogflux_HeII4687 ** 2 + dlogflux_Hbeta ** 2),
              np.sqrt(dlogflux_NeV3346 ** 2 + dlogflux_Hbeta ** 2)]
 ax.errorbar(data_x, data_y,  data_yerr, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
-best_fit = (1.81, -0.79, 0.05)
+best_fit = (1.67, -0.79, 0.16)
 bestfit_y = [f_OII(best_fit), f_OIII4364(best_fit), f_OIII5008(best_fit), f_NeIII3869(best_fit), f_HeII4687(best_fit),
              f_NeV3346(best_fit)]
 ax.plot(data_x, bestfit_y, '-k', alpha=1)
