@@ -25,9 +25,9 @@ data_fit_info_sr = fits.getdata(path_fit_info_sr, ignore_missing_end=True)
 data_fit_info_sr = data_fit_info_sr[0]
 
 flux_Hbeta, dflux_Hbeta = data_fit_info_sr['flux_Hbeta'], data_fit_info_sr['dflux_Hbeta']
-
 flux_OII, dflux_OII = data_fit_info_sr['flux_OII'] / flux_Hbeta, \
                               data_fit_info_sr['dflux_OII'] / flux_Hbeta
+r_OII, dr_OII = data_fit_info_sr['r_OII'], data_fit_info_sr['dr_OII']
 flux_NeV3346, dflux_NeV3346 = data_fit_info_sr['flux_NeV3346'] / flux_Hbeta, \
                               data_fit_info_sr['dflux_NeV3346'] / flux_Hbeta
 flux_NeIII3869, dflux_NeIII3869 = data_fit_info_sr['flux_NeIII3869'] / flux_Hbeta, \
@@ -47,8 +47,8 @@ flux_OIII5008, dflux_OIII5008 = data_fit_info_sr['flux_OIII5008'] / flux_Hbeta, 
 logflux_Hbeta, dlogflux_Hbeta = np.log10(flux_Hbeta), dflux_Hbeta / (flux_Hbeta * np.log(10))
 logflux_NeV3346, dlogflux_NeV3346 =  np.log10(flux_NeV3346), np.sqrt((dflux_NeV3346 / (flux_NeV3346 * np.log(10))) ** 2
                                                                      + 0.03 ** 2)
-
 logflux_OII, dlogflux_OII = np.log10(flux_OII), np.sqrt((dflux_OII / (flux_OII * np.log(10))) ** 2 + 0.03 ** 2)
+logr_OII, dlogr_OII = np.log10(r_OII), np.sqrt((dr_OII / (r_OII * np.log(10))) ** 2 + 0.03 ** 2)
 logflux_NeIII3869, dlogflux_NeIII3869 =  np.log10(flux_NeIII3869), np.sqrt((dflux_NeIII3869 /
                                                                             (flux_NeIII3869 * np.log(10))) ** 2
                                                                            + 0.03 ** 2)
@@ -60,34 +60,31 @@ logflux_HeII4687, dlogflux_HeII4687 =  np.log10(flux_HeII4687), np.sqrt((dflux_H
                                                                          (flux_HeII4687 * np.log(10))) ** 2 + 0.03 ** 2)
 logflux_OIII5008, dlogflux_OIII5008 =  np.log10(flux_OIII5008), np.sqrt((dflux_OIII5008 /
                                                                          (flux_OIII5008 * np.log(10))) ** 2 + 0.03 ** 2)
-print(dlogflux_NeV3346)
-print(dlogflux_OII)
-print(dlogflux_NeIII3869)
-print(dlogflux_Hdel)
-print(dlogflux_Hgam)
-print(dlogflux_OIII4364)
-print(dlogflux_HeII4687)
-print(dlogflux_OIII5008)
+# print(dlogflux_NeV3346)
+# print(dlogflux_OII)
+# print(dlogflux_NeIII3869)
+# print(dlogflux_Hdel)
+# print(dlogflux_Hgam)
+# print(dlogflux_OIII4364)
+# print(dlogflux_HeII4687)
+# print(dlogflux_OIII5008)
 
 
 # Load cloudy result
 Hden = np.arange(-2, 2.6, 0.1)  # log
-print(len(Hden))
 metal = np.array([-1.5, -1.4, -1.3, -1.2, -1.1, -1., -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3,
               -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5])  # log
 alpha = np.array([-1.8, -1.75, -1.7, -1.65, -1.6, -1.55, -1.5, -1.45, -1.4, -1.35, -1.3, -1.25, -1.2,
                   -1.15, -1.1, -1.05, -1.0, -0.95, -0.9, -0.85, -0.8, -0.75, -0.7, -0.65, -0.6])
-print(len(metal))
 
 # Load lineratio
-
 def load_cloudy(filename=None, path=None):
     # Line profile
     line = np.genfromtxt(path + filename + '.lin', delimiter=None)
     NeV3346, OII3727, OII3730 = line[:, 2], line[:, 3], line[:, 4]
     NeIII3869, Hdel, Hgam = line[:, 5], line[:, 8], line[:, 9]
     OIII4364, HeII4687, OIII5008 = line[:, 10], line[:, 11], line[:, 13]
-    data = np.vstack((NeV3346, OII3727 + OII3730, NeIII3869, Hdel, Hgam, OIII4364, HeII4687, OIII5008))
+    data = np.vstack((NeV3346, OII3727, OII3730, OII3727 + OII3730, NeIII3869, Hdel, Hgam, OIII4364, HeII4687, OIII5008))
     return np.log10(data)
 
 
@@ -105,39 +102,38 @@ def format_cloudy_t2(filename=None, path=None):
             else:
                 ind_jj = np.array([[alpha_j, metal_i]])
                 c_i = load_cloudy(filename_ij, path=path)
-                print(np.shape(c_i))
-                print(alpha_j, metal_i)
                 output_j = np.dstack((output_j, c_i))
                 ind_j = np.dstack((ind_j, ind_jj))
 
         if i == 0:
             ind = ind_j[:, :, :, np.newaxis]
             output = output_j[:, :, :, np.newaxis]
-            print(np.shape(output))
         else:
-            print(np.shape(output_j))
             output = np.concatenate((output, output_j[:, :, :, np.newaxis]), axis=3)
             ind =  np.concatenate((ind, ind_j[:, :, :, np.newaxis]), axis=3)
-            print(np.shape(output))
     return output, ind
 
 output, ind = format_cloudy_t2(filename=[metal, alpha], path='/Users/lzq/Dropbox/Data/CGM/cloudy/trial2/')
 
 f_NeV3346 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[0, :, :, :],
                                                 bounds_error=False, fill_value=None)
-f_OII = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[1, :, :, :],
+f_OII3727 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[1, :, :, :],
                                             bounds_error=False, fill_value=None)
-f_NeIII3869 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[2, :, :, :],
+f_OII3730 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[2, :, :, :],
+                                            bounds_error=False, fill_value=None)
+f_OII = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[3, :, :, :],
+                                            bounds_error=False, fill_value=None)
+f_NeIII3869 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[4, :, :, :],
                                                   bounds_error=False, fill_value=None)
-f_Hdel = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[3, :, :, :],
+f_Hdel = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[5, :, :, :],
                                              bounds_error=False, fill_value=None)
-f_Hgam = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[4, :, :, :],
+f_Hgam = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[6, :, :, :],
                                              bounds_error=False, fill_value=None)
-f_OIII4364 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[5, :, :, :],
+f_OIII4364 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[7, :, :, :],
                                                  bounds_error=False, fill_value=None)
-f_HeII4687 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[6, :, :, :],
+f_HeII4687 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[8, :, :, :],
                                                  bounds_error=False, fill_value=None)
-f_OIII5008 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[7, :, :, :],
+f_OIII5008 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[9, :, :, :],
                                                  bounds_error=False, fill_value=None)
 
 # Define the log likelihood function and run MCMC
@@ -222,25 +218,31 @@ figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_test_mcmc_all.pdf', bbo
 
 
 # Check
-fig, ax = plt.subplots(1, 1, figsize=(8, 5), dpi=300, sharex=True)
+fig, ax = plt.subplots(1, 2, figsize=(12, 5), gridspec_kw={'width_ratios': [3, 1]}, dpi=300)
 E_NeV3346, E_NeIII3869 = 97.11, 40.96  # in ev
 E_OIII4364, E_OIII5008, E_OII = 35.12, 35.12, 13.6
 E_HeII4687, E_Hbeta = 54.42, 13.6
 data_x = [E_OII / E_Hbeta, E_OIII4364 / E_Hbeta - 0.5, E_OIII5008 / E_Hbeta, E_NeIII3869 / E_Hbeta + 0.2,
           E_HeII4687 / E_Hbeta, E_NeV3346 / E_Hbeta - 2]
-data_y = [logflux_OII - logflux_Hbeta, logflux_OIII4364 - logflux_Hbeta, logflux_OIII5008 - logflux_Hbeta,
-          logflux_NeIII3869 - logflux_Hbeta, logflux_HeII4687 - logflux_Hbeta, logflux_NeV3346 - logflux_Hbeta]
-data_yerr = [np.sqrt(dlogflux_OII ** 2 + dlogflux_Hbeta ** 2),
-             np.sqrt(dlogflux_OIII4364 ** 2 + dlogflux_Hbeta ** 2),
-             np.sqrt(dlogflux_OIII5008 ** 2 + dlogflux_Hbeta ** 2),
-             np.sqrt(dlogflux_NeIII3869 ** 2 + dlogflux_Hbeta ** 2),
-             np.sqrt(dlogflux_HeII4687 ** 2 + dlogflux_Hbeta ** 2),
-             np.sqrt(dlogflux_NeV3346 ** 2 + dlogflux_Hbeta ** 2)]
-ax.errorbar(data_x, data_y,  data_yerr, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
+data_y = [logflux_OII, logflux_OIII4364, logflux_OIII5008,
+          logflux_NeIII3869, logflux_HeII4687, logflux_NeV3346]
+data_yerr = [dlogflux_OII ** 2,
+             dlogflux_OIII4364 ** 2,
+             dlogflux_OIII5008 ** 2,
+             dlogflux_NeIII3869 ** 2,
+             dlogflux_HeII4687 ** 2,
+             dlogflux_NeV3346 ** 2]
+ax[0].errorbar(data_x, data_y,  data_yerr, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
+ax[1].errorbar([0, 5], [logr_OII, logflux_OIII4364 - logflux_OIII5008],
+               [dlogr_OII, np.sqrt(dlogflux_OIII4364 ** 2 + dlogflux_OIII5008 ** 2)]
+               , fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
+
 best_fit = (1.67, -0.79, 0.16)
 bestfit_y = [f_OII(best_fit), f_OIII4364(best_fit), f_OIII5008(best_fit), f_NeIII3869(best_fit), f_HeII4687(best_fit),
              f_NeV3346(best_fit)]
-ax.plot(data_x, bestfit_y, '-k', alpha=1)
+ax[0].plot(data_x, bestfit_y, '-k', alpha=1)
+ax[1].plot([0, 5], [f_OII3730(best_fit) - f_OII3727(best_fit),
+                    f_OIII4364(best_fit) - f_OIII5008(best_fit)], '-k', alpha=1)
 
 inds = np.random.randint(len(samples), size=50)
 for i in inds:
@@ -248,12 +250,19 @@ for i in inds:
     model = (sample[0], sample[1], sample[2])
     model_y = [f_OII(model), f_OIII4364(model), f_OIII5008(model), f_NeIII3869(model), f_HeII4687(model),
                f_NeV3346(model)]
-    ax.plot(data_x, model_y, '-C1', alpha=0.1)
-ax.set_xlabel(r'$\mathrm{Ionization \, energy}$', size=20)
-ax.set_ylabel(r'$\mathrm{Line \, ratio}$', size=20)
-ax.set_xticks(data_x, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$', r'$\mathrm{}$',
+    ax[0].plot(data_x, model_y, '-C1', alpha=0.1)
+    ax[1].plot([0, 5], [f_OII3730(model) - f_OII3727(model),
+                    f_OIII4364(model) - f_OIII5008(model)], '-C1', alpha=0.1)
+
+ax[0].set_xlabel(r'$\mathrm{Ionization \, energy}$', size=20)
+ax[0].set_ylabel(r'$\mathrm{Line \, ratio}$', size=20)
+ax[0].set_xticks(data_x, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$', r'$\mathrm{}$',
                        r'$\mathrm{\frac{[Ne \, III]}{H\beta}}$', r'$\mathrm{\frac{He \, II}{H\beta}}$',
                        r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'], y=0.8)
-ax.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
-ax.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+ax[1].set_xticks([0, 5], [r'$\mathrm{[O \, II] \frac{\lambda 3729}{\lambda 3727}}$',
+                          r'$\mathrm{[O \, III] \frac{\lambda 4363}{\lambda 5007}}$'], y=0.8)
+ax[0].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
+ax[0].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+ax[1].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=15, size=5)
+ax[1].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_check_MCMC_2.png', bbox_inches='tight')
