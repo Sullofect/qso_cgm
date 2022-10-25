@@ -91,14 +91,27 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-for i in range(8):
+for i in range(6):
     fig = plt.figure(figsize=(8, 8), dpi=300)
-    wave_i = 6050 + 5 * i
-    wave_f = 6050 + 5 * (i + 1)
-    wave_i_vac, wave_f_vac = pyasl.airtovac2(wave_i), pyasl.airtovac2(wave_f)
     z_qso = 0.6282144177077355
-    dv_i, dv_f = 3e5 * ((wave_i_vac / 3727.092 - 1) - z_qso)/ (1 + z_qso), \
-                 3e5 * ((wave_f_vac / 3727.092 - 1) - z_qso)/ (1 + z_qso)
+    OII_air_1 = 3726.032
+    OII_air_2 = 3728.815
+
+    # Split by velocity
+    dv_i, dv_f = -500 + 200 * i, -500 + 200 * (i + 1)
+    wave_i = OII_air_2 * (1 + z_qso) * (dv_i / 3e5 + 1)
+    wave_f = OII_air_2 * (1 + z_qso) * (dv_f / 3e5 + 1)
+    wave_i_vac, wave_f_vac = pyasl.airtovac2(wave_i), pyasl.airtovac2(wave_f)
+
+    # Split by wavelength
+    # wave_i = 6050 + 5 * i
+    # wave_f = 6050 + 5 * (i + 1)
+    # wave_i_vac, wave_f_vac = pyasl.airtovac2(wave_i), pyasl.airtovac2(wave_f)
+    # z_qso = 0.6282144177077355
+    # dv_i, dv_f = 3e5 * ((wave_i_vac / 3727.092 - 1) - z_qso)/ (1 + z_qso), \
+    #              3e5 * ((wave_f_vac / 3727.092 - 1) - z_qso)/ (1 + z_qso)
+
+
     sub_cube = cube_OII.select_lambda(wave_i, wave_f)
     sub_cube = sub_cube.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2
     sub_cube.write('/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/image_make_OII_NB.fits')
@@ -113,7 +126,7 @@ for i in range(8):
     gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=400)
     # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-    gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linewidths=0.5, alpha=0.7)
+    # gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linewidths=0.5, alpha=0.7)
     # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/gas_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.0)

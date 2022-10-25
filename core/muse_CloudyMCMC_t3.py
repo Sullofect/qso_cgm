@@ -22,7 +22,7 @@ rc('axes', **{'labelsize':15})
 path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
                                 'moreline_profile_selected_region.fits')
 data_fit_info_sr = fits.getdata(path_fit_info_sr, ignore_missing_end=True)
-data_fit_info_sr = data_fit_info_sr[1]
+data_fit_info_sr = data_fit_info_sr[7]  ### S8
 
 flux_Hbeta, dflux_Hbeta = data_fit_info_sr['flux_Hbeta'], data_fit_info_sr['dflux_Hbeta']
 flux_OII = data_fit_info_sr['flux_OII'] / flux_Hbeta
@@ -64,8 +64,8 @@ logflux_Hdel, dlogflux_Hdel =  np.log10(flux_Hdel), np.sqrt((dflux_Hdel / (flux_
 logflux_Hgam, dlogflux_Hgam =  np.log10(flux_Hgam), np.sqrt((dflux_Hgam / (flux_Hgam * np.log(10))) ** 2 + 0.0 ** 2)
 logflux_OIII4364, dlogflux_OIII4364 =  np.log10(flux_OIII4364), np.sqrt((dflux_OIII4364 /
                                                                          (flux_OIII4364 * np.log(10))) ** 2 + 0.0 ** 2)
-logflux_HeII4687, dlogflux_HeII4687 =  np.log10(flux_HeII4687), np.sqrt((dflux_HeII4687 /
-                                                                         (flux_HeII4687 * np.log(10))) ** 2 + 0.0 ** 2)
+# logflux_HeII4687, dlogflux_HeII4687 =  np.log10(flux_HeII4687), np.sqrt((dflux_HeII4687 /
+#                                                                          (flux_HeII4687 * np.log(10))) ** 2 + 0.0 ** 2)
 logflux_OIII5008, dlogflux_OIII5008 =  np.log10(flux_OIII5008), np.sqrt((dflux_OIII5008 /
                                                                          (flux_OIII5008 * np.log(10))) ** 2 + 0.0 ** 2)
 # print(dlogflux_NeV3346)
@@ -150,13 +150,14 @@ def log_prob(x):
     # if alpha > -1.2:
     #     return -np.inf
     # else:
-    return - 0.5 * (((f_NeV3346((logden, alpha, logz)) - logflux_NeV3346) / dlogflux_NeV3346) ** 2
-                    + ((f_OII((logden, alpha, logz)) - logflux_OII) / dlogflux_OII) ** 2
-                    + ((f_NeIII3869((logden, alpha, logz)) - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
-                    + ((f_Hdel((logden, alpha, logz)) - logflux_Hdel) / dlogflux_Hdel) ** 2
-                    + ((f_Hgam((logden, alpha, logz)) - logflux_Hgam) / dlogflux_Hgam) ** 2
-                    + ((f_OIII4364((logden, alpha, logz)) - logflux_OIII4364) / dlogflux_OIII4364) ** 2
-                    + ((f_HeII4687((logden, alpha, logz)) - logflux_HeII4687) / dlogflux_HeII4687) ** 2
+    return - 0.5 * (
+                    #((f_NeV3346((logden, alpha, logz)) - logflux_NeV3346) / dlogflux_NeV3346) ** 2
+                    ((f_OII((logden, alpha, logz)) - logflux_OII) / dlogflux_OII) ** 2
+                    # + ((f_NeIII3869((logden, alpha, logz)) - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
+                    # + ((f_Hdel((logden, alpha, logz)) - logflux_Hdel) / dlogflux_Hdel) ** 2
+                    # + ((f_Hgam((logden, alpha, logz)) - logflux_Hgam) / dlogflux_Hgam) ** 2
+                    # + ((f_OIII4364((logden, alpha, logz)) - logflux_OIII4364) / dlogflux_OIII4364) ** 2
+                    # + ((f_HeII4687((logden, alpha, logz)) - logflux_HeII4687) / dlogflux_HeII4687) ** 2
                     + ((f_OIII5008((logden, alpha, logz)) - logflux_OIII5008) / dlogflux_OIII5008) ** 2)
 
 
@@ -164,7 +165,7 @@ ndim, nwalkers = 3, 40
 p0 = np.array([1.1, -1.4, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
 state = sampler.run_mcmc(p0, 2000)
-samples = sampler.get_chain(flat=True, discard=100)
+samples = sampler.get_chain(flat=True, discard=1000)
 
 # chain_emcee = sampler.get_chain()
 # f, ax = plt.subplots(1, 2, figsize=(15, 7))
@@ -187,7 +188,7 @@ for i, ax in enumerate(figure.get_axes()):
     if i == 2:
         ax.tick_params(axis='both', direction='in', top='on', bottom='on', left='on', right='on')
     ax.tick_params(axis='both', direction='in', top='on', bottom='on')
-figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_test_mcmc_all.pdf', bbox_inches='tight')
+figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_test_mcmc_S8.pdf', bbox_inches='tight')
 
 #
 # NeV3346_NeIII3869_error = np.sqrt(dlogflux_NeV3346 ** 2 + dlogflux_NeIII3869 ** 2)
@@ -226,46 +227,46 @@ figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_test_mcmc_all.pdf', bbo
 
 
 # Check
-fig, ax = plt.subplots(1, 2, figsize=(12, 5), gridspec_kw={'width_ratios': [1, 3]}, dpi=300)
-E_NeV3346, E_NeIII3869 = 97.11, 40.96  # in ev
-E_OIII4364, E_OIII5008, E_OII = 35.12, 35.12, 13.6
-E_HeII4687, E_Hbeta = 54.42, 13.6
-data_x = [E_OII / E_Hbeta, E_OIII4364 / E_Hbeta - 0.5, E_OIII5008 / E_Hbeta, E_NeIII3869 / E_Hbeta + 0.2,
-          E_HeII4687 / E_Hbeta, E_NeV3346 / E_Hbeta - 2]
-data_y = [logflux_OII, logflux_OIII4364, logflux_OIII5008, logflux_NeIII3869, logflux_HeII4687, logflux_NeV3346]
-data_yerr = [dlogflux_OII, dlogflux_OIII4364, dlogflux_OIII5008, dlogflux_NeIII3869,
-             dlogflux_HeII4687, dlogflux_NeV3346]
-ax[1].errorbar(data_x, data_y,  data_yerr, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
-ax[0].errorbar([0, 5], [logr_OII, logflux_OIII4364 - logflux_OIII5008],
-               [dlogr_OII, np.sqrt(dlogflux_OIII4364 ** 2 + dlogflux_OIII5008 ** 2)]
-               , fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
-
-best_fit = (1.68, -0.78, 0.16)
-bestfit_y = [f_OII(best_fit), f_OIII4364(best_fit), f_OIII5008(best_fit), f_NeIII3869(best_fit), f_HeII4687(best_fit),
-             f_NeV3346(best_fit)]
-ax[1].plot(data_x, bestfit_y, '-k', alpha=1)
-ax[0].plot([0, 5], [f_OII3730(best_fit) - f_OII3727(best_fit),
-                    f_OIII4364(best_fit) - f_OIII5008(best_fit)], '-k', alpha=1)
-
-inds = np.random.randint(len(samples), size=50)
-for i in inds:
-    sample = samples[i]
-    model = (sample[0], sample[1], sample[2])
-    model_y = [f_OII(model), f_OIII4364(model), f_OIII5008(model), f_NeIII3869(model), f_HeII4687(model),
-               f_NeV3346(model)]
-    ax[1].plot(data_x, model_y, '-C1', alpha=0.1)
-    ax[0].plot([0, 5], [f_OII3730(model) - f_OII3727(model),
-                    f_OIII4364(model) - f_OIII5008(model)], '-C1', alpha=0.1)
-
-ax[1].set_xlabel(r'$\mathrm{Ionization \, energy}$', size=20)
-ax[0].set_ylabel(r'$\mathrm{log[line \, ratio]}$', size=20)
-ax[1].set_xticks(data_x, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$',
-                          r'$\mathrm{}$', r'$\mathrm{\frac{[Ne \, III]}{H\beta}}$',
-                          r'$\mathrm{\frac{He \, II}{H\beta}}$', r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'], y=0.8)
-ax[0].set_xticks([2, 4], [r'$\mathrm{[O \, II]}$' + '\n' + r'$\mathrm{\frac{\lambda 3729}{\lambda 3727}}$',
-                          r'$\mathrm{[O \, III]}$' + '\n' + r'$\mathrm{\frac{\lambda 4363}{\lambda 5007}}$'], y=0.9)
-ax[1].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
-ax[1].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-ax[0].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=15, size=5)
-ax[0].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_check_MCMC_2.png', bbox_inches='tight')
+# fig, ax = plt.subplots(1, 2, figsize=(12, 5), gridspec_kw={'width_ratios': [1, 3]}, dpi=300)
+# E_NeV3346, E_NeIII3869 = 97.11, 40.96  # in ev
+# E_OIII4364, E_OIII5008, E_OII = 35.12, 35.12, 13.6
+# E_HeII4687, E_Hbeta = 54.42, 13.6
+# data_x = [E_OII / E_Hbeta, E_OIII4364 / E_Hbeta - 0.5, E_OIII5008 / E_Hbeta, E_NeIII3869 / E_Hbeta + 0.2,
+#           E_HeII4687 / E_Hbeta, E_NeV3346 / E_Hbeta - 2]
+# data_y = [logflux_OII, logflux_OIII4364, logflux_OIII5008, logflux_NeIII3869, logflux_HeII4687, logflux_NeV3346]
+# data_yerr = [dlogflux_OII, dlogflux_OIII4364, dlogflux_OIII5008, dlogflux_NeIII3869,
+#              dlogflux_HeII4687, dlogflux_NeV3346]
+# ax[1].errorbar(data_x, data_y,  data_yerr, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
+# ax[0].errorbar([0, 5], [logr_OII, logflux_OIII4364 - logflux_OIII5008],
+#                [dlogr_OII, np.sqrt(dlogflux_OIII4364 ** 2 + dlogflux_OIII5008 ** 2)]
+#                , fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
+#
+# best_fit = (1.67, -0.79, 0.16)
+# bestfit_y = [f_OII(best_fit), f_OIII4364(best_fit), f_OIII5008(best_fit), f_NeIII3869(best_fit), f_HeII4687(best_fit),
+#              f_NeV3346(best_fit)]
+# ax[1].plot(data_x, bestfit_y, '-k', alpha=1)
+# ax[0].plot([0, 5], [f_OII3730(best_fit) - f_OII3727(best_fit),
+#                     f_OIII4364(best_fit) - f_OIII5008(best_fit)], '-k', alpha=1)
+#
+# inds = np.random.randint(len(samples), size=50)
+# for i in inds:
+#     sample = samples[i]
+#     model = (sample[0], sample[1], sample[2])
+#     model_y = [f_OII(model), f_OIII4364(model), f_OIII5008(model), f_NeIII3869(model), f_HeII4687(model),
+#                f_NeV3346(model)]
+#     ax[1].plot(data_x, model_y, '-C1', alpha=0.1)
+#     ax[0].plot([0, 5], [f_OII3730(model) - f_OII3727(model),
+#                     f_OIII4364(model) - f_OIII5008(model)], '-C1', alpha=0.1)
+#
+# ax[1].set_xlabel(r'$\mathrm{Ionization \, energy}$', size=20)
+# ax[0].set_ylabel(r'$\mathrm{Line \, ratio}$', size=20)
+# ax[1].set_xticks(data_x, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$',
+#                           r'$\mathrm{}$', r'$\mathrm{\frac{[Ne \, III]}{H\beta}}$',
+#                           r'$\mathrm{\frac{He \, II}{H\beta}}$', r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'], y=0.8)
+# ax[0].set_xticks([2, 4], [r'$\mathrm{\frac{\lambda 3729}{\lambda 3727}}$',
+#                           r'$\mathrm{\frac{\lambda 4363}{\lambda 5007}}$'], y=0.8)
+# ax[1].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
+# ax[1].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+# ax[0].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=15, size=5)
+# ax[0].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+# fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_check_MCMC_S8.png', bbox_inches='tight')

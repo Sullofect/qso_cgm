@@ -80,11 +80,9 @@ gc.ticks.hide()
 gc.tick_labels.hide()
 gc.axis_labels.hide()
 norm = mpl.colors.Normalize(vmin=-300, vmax=300)
-# gc.show_markers(ra_final, dec_final, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
-#                 linewidths=1.2, s=80)
-# gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
-# gc.show_markers(ra_final, dec_final, marker='o', c=v_gal, linewidths=0.5, alpha=1, facecolor='none', edgecolors=None,
-#                 s=40, vmin=-300, vmax=300, cmap='coolwarm')
+gc.show_markers(ra_final, dec_final, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
+                linewidths=1.2, s=80)
+gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
 gc.add_label(0.87, 0.97, r'$\mathrm{ACS+F814W}$', color='k', size=15, relative=True)
 xw, yw = 40.1231559, -18.8580071
 gc.show_arrows(xw, yw, -0.0001 * yw, 0, color='k')
@@ -158,4 +156,4 @@ gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
 # axins.set_ylim(0, 10)
 # axins.set_xticks([-400, -200, 0, 200])
 # axins.set_yticks([0, 2, 4, 6, 8, 10])
-fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis_background.png', bbox_inches='tight')
+fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis.png', bbox_inches='tight')

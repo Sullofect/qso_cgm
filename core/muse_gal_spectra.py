@@ -104,7 +104,7 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
                         ymax=[100, 100, 100, 100, 100, 100, 100, 100],
                         linestyles='dashed', colors='grey')
         axarr_i.set_xlim(4800, 9200)
-        axarr_i.set_ylim(-0.1, flux_i.max() + 0.1)
+        axarr_i.set_ylim(-0.1, flux_i.max() + 0.2)
         axarr_i.minorticks_on()
         axarr_i.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
                              labelsize=20, size=5)

@@ -218,4 +218,4 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
 #                 labelsize=20)
 # plt.tick_params(axis='both', which='minor', direction='in', bottom='on', top='on', left='on', right='on', size=3)
 # plt.legend(prop={'size': 17}, framealpha=0, loc=2, fontsize=15)
-# plt.savefig(path_savefig + 'galaxy_velocity', bbox_inches='tight')
+# plt.savefig(path_savefig + 'galaxy_velocity_all', bbox_inches='tight')
