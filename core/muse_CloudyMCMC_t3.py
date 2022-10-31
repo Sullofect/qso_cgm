@@ -147,25 +147,29 @@ f_OIII5008 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[9,
 # Define the log likelihood function and run MCMC
 def log_prob(x):
     logden, alpha, logz = x[0], x[1], x[2]
-    # if alpha > -1.2:
-    #     return -np.inf
-    # else:
-    return - 0.5 * (
-                    #((f_NeV3346((logden, alpha, logz)) - logflux_NeV3346) / dlogflux_NeV3346) ** 2
-                    ((f_OII((logden, alpha, logz)) - logflux_OII) / dlogflux_OII) ** 2
-                    # + ((f_NeIII3869((logden, alpha, logz)) - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
-                    # + ((f_Hdel((logden, alpha, logz)) - logflux_Hdel) / dlogflux_Hdel) ** 2
-                    # + ((f_Hgam((logden, alpha, logz)) - logflux_Hgam) / dlogflux_Hgam) ** 2
-                    # + ((f_OIII4364((logden, alpha, logz)) - logflux_OIII4364) / dlogflux_OIII4364) ** 2
-                    # + ((f_HeII4687((logden, alpha, logz)) - logflux_HeII4687) / dlogflux_HeII4687) ** 2
-                    + ((f_OIII5008((logden, alpha, logz)) - logflux_OIII5008) / dlogflux_OIII5008) ** 2)
+    if alpha < -3:
+        return -np.inf
+    elif alpha > 0:
+        return -np.inf
+    elif logz > 0.5:
+        return -np.inf
+    else:
+        return - 0.5 * (
+                        #((f_NeV3346((logden, alpha, logz)) - logflux_NeV3346) / dlogflux_NeV3346) ** 2
+                        ((f_OII((logden, alpha, logz)) - logflux_OII) / dlogflux_OII) ** 2
+                        + ((f_NeIII3869((logden, alpha, logz)) - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
+                        # + ((f_Hdel((logden, alpha, logz)) - logflux_Hdel) / dlogflux_Hdel) ** 2
+                        + ((f_Hgam((logden, alpha, logz)) - logflux_Hgam) / dlogflux_Hgam) ** 2
+                        # + ((f_OIII4364((logden, alpha, logz)) - logflux_OIII4364) / dlogflux_OIII4364) ** 2
+                        # + ((f_HeII4687((logden, alpha, logz)) - logflux_HeII4687) / dlogflux_HeII4687) ** 2
+                        + ((f_OIII5008((logden, alpha, logz)) - logflux_OIII5008) / dlogflux_OIII5008) ** 2)
 
 
 ndim, nwalkers = 3, 40
 p0 = np.array([1.1, -1.4, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
-state = sampler.run_mcmc(p0, 2000)
-samples = sampler.get_chain(flat=True, discard=1000)
+state = sampler.run_mcmc(p0, 10000)
+samples = sampler.get_chain(flat=True, discard=2000)
 
 # chain_emcee = sampler.get_chain()
 # f, ax = plt.subplots(1, 2, figsize=(15, 7))
