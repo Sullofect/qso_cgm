@@ -82,8 +82,7 @@ logflux_OIII5008, dlogflux_OIII5008 =  np.log10(flux_OIII5008), np.sqrt((dflux_O
 Hden = np.arange(-2, 2.6, 0.1)  # log
 metal = np.array([-1.5, -1.4, -1.3, -1.2, -1.1, -1., -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3,
               -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5])  # log
-alpha = np.array([-1.8, -1.75, -1.7, -1.65, -1.6, -1.55, -1.5, -1.45, -1.4, -1.35, -1.3, -1.25, -1.2,
-                  -1.15, -1.1, -1.05, -1.0, -0.95, -0.9, -0.85, -0.8, -0.75, -0.7, -0.65, -0.6])
+alpha = np.array([-1.2, -1.15, -1.1, -1.05, -1.0, -0.95, -0.9, -0.85, -0.8, -0.75, -0.7, -0.65, -0.6])
 
 # Load lineratio
 def load_cloudy(filename=None, path=None):
@@ -121,7 +120,7 @@ def format_cloudy_t2(filename=None, path=None):
             ind =  np.concatenate((ind, ind_j[:, :, :, np.newaxis]), axis=3)
     return output, ind
 
-output, ind = format_cloudy_t2(filename=[metal, alpha], path='/Users/lzq/Dropbox/Data/CGM/cloudy/trial2/')
+output, ind = format_cloudy_t2(filename=[metal, alpha], path='/Users/lzq/Dropbox/Data/CGM/cloudy/trial3/')
 
 f_NeV3346 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[0, :, :, :],
                                                 bounds_error=False, fill_value=None)
@@ -147,7 +146,7 @@ f_OIII5008 = interpolate.RegularGridInterpolator((Hden, alpha, metal), output[9,
 # Define the log likelihood function and run MCMC
 def log_prob(x):
     logden, alpha, logz = x[0], x[1], x[2]
-    if alpha < -3:
+    if alpha < -1.2:
         return -np.inf
     elif alpha > 0:
         return -np.inf
