@@ -148,7 +148,7 @@ def log_prob(x):
     logden, alpha, logz = x[0], x[1], x[2]
     if alpha < -1.2:
         return -np.inf
-    elif alpha > 0:
+    elif alpha > 0.5:
         return -np.inf
     elif logz > 0.5:
         return -np.inf
