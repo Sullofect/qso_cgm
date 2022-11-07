@@ -257,6 +257,7 @@ for i in inds:
     ax[0].plot([0, 5], [f_OII3730(model) - f_OII3727(model),
                     f_OIII4364(model) - f_OIII5008(model)], '-C1', alpha=0.1)
 
+
 ax[1].set_xlabel(r'$\mathrm{Ionization \, energy}$', size=20)
 ax[0].set_ylabel(r'$\mathrm{log[line \, ratio]}$', size=20)
 ax[1].set_xticks(data_x, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$',
