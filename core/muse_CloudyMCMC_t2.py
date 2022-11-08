@@ -163,7 +163,7 @@ def log_prob(x):
 ndim, nwalkers = 3, 40
 p0 = np.array([1.1, -1.4, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
-state = sampler.run_mcmc(p0, 2000)
+state = sampler.run_mcmc(p0, 3000)
 samples = sampler.get_chain(flat=True, discard=100)
 
 # chain_emcee = sampler.get_chain()
@@ -243,21 +243,34 @@ ax[0].errorbar([0, 5], [logr_OII, logflux_OIII4364 - logflux_OIII5008],
 best_fit = (1.68, -0.78, 0.16)
 bestfit_y = [f_OII(best_fit), f_OIII4364(best_fit), f_OIII5008(best_fit), f_NeIII3869(best_fit), f_HeII4687(best_fit),
              f_NeV3346(best_fit)]
-ax[1].plot(data_x, bestfit_y, '-k', alpha=1)
-ax[0].plot([0, 5], [f_OII3730(best_fit) - f_OII3727(best_fit),
-                    f_OIII4364(best_fit) - f_OIII5008(best_fit)], '-k', alpha=1)
+# ax[1].plot(data_x, bestfit_y, '-k', alpha=1)
+# ax[0].plot([0, 5], [f_OII3730(best_fit) - f_OII3727(best_fit),
+#                     f_OIII4364(best_fit) - f_OIII5008(best_fit)], '-k', alpha=1)
 
-inds = np.random.randint(len(samples), size=50)
-for i in inds:
-    sample = samples[i]
-    model = (sample[0], sample[1], sample[2])
-    model_y = [f_OII(model), f_OIII4364(model), f_OIII5008(model), f_NeIII3869(model), f_HeII4687(model),
-               f_NeV3346(model)]
-    ax[1].plot(data_x, model_y, '-C1', alpha=0.1)
-    ax[0].plot([0, 5], [f_OII3730(model) - f_OII3727(model),
-                    f_OIII4364(model) - f_OIII5008(model)], '-C1', alpha=0.1)
+# inds = np.random.randint(len(samples), size=100)
+# for i in inds:
+#     sample = samples[i]
+#     model = (sample[0], sample[1], sample[2])
+#     model_y = [f_OII(model), f_OIII4364(model), f_OIII5008(model), f_NeIII3869(model), f_HeII4687(model),
+#                f_NeV3346(model)]
+    # ax[1].plot(data_x, model_y, '-C1', alpha=0.1)
+    # ax[0].plot([0, 5], [f_OII3730(model) - f_OII3727(model),
+    #                 f_OIII4364(model) - f_OIII5008(model)], '-C1', alpha=0.1)
 
-
+draw = np.random.choice(len(samples), size=500, replace=False)
+samples_draw = samples[draw]
+model = (samples_draw[:, 0], samples_draw[:, 1], samples_draw[:, 2])
+model_y = [f_OII(model), f_OIII4364(model), f_OIII5008(model), f_NeIII3869(model), f_HeII4687(model),
+           f_NeV3346(model)]
+violin_parts_0 = ax[0].violinplot([f_OII3730(model) - f_OII3727(model), f_OIII4364(model) - f_OIII5008(model)],
+                                  positions=[0, 5], points=500, widths=0.5, showmeans=False, showextrema=False,
+                                  showmedians=False)
+violin_parts_1 = ax[1].violinplot(model_y, positions=data_x, points=500, widths=0.5, showmeans=False, showextrema=False,
+                                  showmedians=False)
+for pc in violin_parts_0['bodies']:
+    pc.set_facecolor('C1')
+for pc in violin_parts_1['bodies']:
+    pc.set_facecolor('C1')
 ax[1].set_xlabel(r'$\mathrm{Ionization \, energy}$', size=20)
 ax[0].set_ylabel(r'$\mathrm{log[line \, ratio]}$', size=20)
 ax[1].set_xticks(data_x, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$',
