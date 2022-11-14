@@ -332,9 +332,9 @@ wave_vac_more_stack = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3
                                  wave_OIII4960_vac, wave_OIII5008_vac))
 
 wave_vac_more_plot = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
-                          wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac], dtype=object)
-wave_vac_more_stack_plot = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
-                                 wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac))
+                               wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac], dtype=object)
+wave_vac_more_stack_plot = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac,
+                                      wave_Hdel_vac, wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac))
 
 redshift_guess = 0.63
 sigma_kms_guess = 150.0
@@ -401,7 +401,7 @@ parameters_more.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
 
 
 # Def Plot function
-def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_1'):
+def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_1', save_table=False):
     global cube_OII, cube_Hbeta, cube_OIII4960, cube_OIII5008, wave_vac_stack, wave_vac_all
     fig, axarr = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
                               gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
@@ -702,7 +702,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                                          4364.44, 4687.31])
         # [O II] 3727, 3729, Hbeta, [O III] 4960 5008
         lines = (1 + z) * np.array([3727.092, 3729.8754960, 4862.721, 4960.295, 5008.239])
-        ymin, ymax = [-5, -5, -5, -5, -5, -5, -5, -5, -5, -5], [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+        ymin, ymax = -5 * np.ones_like(lines_more), 100 * np.ones_like(lines_more)
         # axarr_i[0].vlines(lines, ymin=[-5, -5, -5, -5, -5,], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
         #                    colors='grey')
         # axarr_i[1].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
@@ -771,13 +771,17 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
             axarr_i[3].tick_params(axis='x', which='both', labelbottom=False)
             axarr_i[4].tick_params(axis='x', which='both', labelbottom=False)
             axarr_i[5].tick_params(axis='x', which='both', labelbottom=False)
-    t = Table(flux_info, names=('flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', f'lux_NeIII3968',
+
+    t = Table(flux_info, names=('flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', 'flux_NeIII3968',
                                 'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364', 'flux_HeII4687',
                                 'flux_OII', 'r_OII', 'flux_Hbeta', 'flux_OIII5008', 'dflux_NeV3346',
                                 'dflux_NeIII3869', 'dflux_HeI3889', 'dflux_H8', 'dflux_NeIII3968',
                                 'dflux_Heps', 'dflux_Hdel', 'dflux_Hgam', 'dflux_OIII4364',
                                 'dflux_HeII4687', 'dflux_OII', 'dr_OII', 'dflux_Hbeta', 'dflux_OIII5008'))
-    t.write('/Users/lzq/Dropbox/Data/CGM/moreline_profile_selected_region.fits', format='fits', overwrite=True)
+    t['region'] = text_array
+    if save_table is True:
+        t.write('/Users/lzq/Dropbox/Data/CGM/moreline_profile_selected_region.fits', format='fits', overwrite=True)
+
     if len(ra_array) == 1:
         fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
         fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.03)
@@ -795,7 +799,7 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_all')
+PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_all', save_table=True)
 
 #
 # PlotGasSpectra([ra_array[1]], [dec_array[1]], [radius_array[1]], [text_array[1]], figname='spectra_gas_S2')

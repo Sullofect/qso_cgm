@@ -12,17 +12,19 @@ from scipy import interpolate
 from matplotlib import rc
 from PyAstronomy import pyasl
 from mpdaf.obj import Cube, WCS, WaveCoord, iter_spe
+from muse_LoadCloudy import format_cloudy
+from muse_LoadLineRatio import load_lineratio
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('axes', **{'labelsize':15})
 
 # Load the actual measurement
-# Load S2 line ratio
+# Load S8 line ratio
 # Use OII [Ne V] [Ne III] Hdel Hgam [O III] He II [O III]
 path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
                                 'moreline_profile_selected_region.fits')
 data_fit_info_sr = fits.getdata(path_fit_info_sr, ignore_missing_end=True)
-data_fit_info_sr = data_fit_info_sr[7]  ### S8
+data_fit_info_sr = data_fit_info_sr[data_fit_info_sr['region'] == 'S8']
 
 flux_Hbeta, dflux_Hbeta = data_fit_info_sr['flux_Hbeta'], data_fit_info_sr['dflux_Hbeta']
 flux_OII = data_fit_info_sr['flux_OII'] / flux_Hbeta

@@ -163,7 +163,7 @@ for i in range(len(z)):
         np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/trial4/alpha_' + str(alpha_array[j]) + '_'
                    + str(z[i]) + '.in', lines, fmt="%s")
 
-### Trial 4
+### Trial 5
 # Luminosity, alpha=?, high/low cut (1000ev, 5ev converted to radberg),
 # radius (fixed), density -2 to 2.5 delta 0.1 dex, metalicity -1.5 to 0.5 delta 0.1 dex,
 # alpha_array = np.array([-1.2, -1.15, -1.1, -1.05, -1.0, -0.95, -0.9, -0.85, -0.8, -0.75, -0.7, -0.65, -0.6])

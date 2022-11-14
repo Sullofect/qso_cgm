@@ -12,6 +12,8 @@ from scipy import interpolate
 from matplotlib import rc
 from PyAstronomy import pyasl
 from mpdaf.obj import Cube, WCS, WaveCoord, iter_spe
+from muse_LoadCloudy import format_cloudy
+from muse_LoadLineRatio import load_lineratio
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('axes', **{'labelsize':15})
