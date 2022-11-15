@@ -189,3 +189,31 @@ for i in range(len(z)):
                           + '.lin" from "linelist.dat" last'])
         np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/trial5/alpha_' + str(alpha_array[j]) + '_'
                    + str(z[i]) + '.in', lines, fmt="%s")
+
+
+### Trial 6
+# Luminosity, alpha=?, high/low cut (1000ev, 5ev converted to radberg),
+# radius (fixed), density -2 to 2.5 delta 0.1 dex, metalicity -1.5 to 0.5 delta 0.1 dex,
+# alpha_array = np.array([-1.2, -1.15, -1.1, -1.05, -1.0, -0.95, -0.9, -0.85, -0.8, -0.75, -0.7, -0.65, -0.6])
+alpha_array = np.linspace(-1.8, 0, 10, dtype='f2')
+# z = np.array([-1.5, -1.4, -1.3, -1.2, -1.1, -1., -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3,
+#               -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5])
+z = np.linspace(-1.5, 0.5, 11, dtype='f2')
+for i in range(len(z)):
+    for j in range(len(alpha_array)):
+        lines = np.array(['Table power law spectral index ' + str(alpha_array[j]) + ', low=0.37, high=73.5 ',
+                          'nuL(nu) = 45.54 at 1.0 Ryd',
+                          'hden 4 vary',
+                          'grid -2 2.5 0.2',
+                          'save grid "alpha_' + str(alpha_array[j]) + '_' + str(z[i]) + '.grd"',
+                          'metals ' + str(z[i]) + ' log',
+                          'radius 22.75',
+                          'iterative to convergence',
+                          'save averages, file="alpha_' + str(alpha_array[j])
+                          + '_' + str(z[i]) + '.avr" last no clobber',
+                          'temperature, hydrogen 1 over volume',
+                          'end of averages',
+                          'save line list "alpha_' + str(alpha_array[j]) + '_' + str(z[i])
+                          + '.lin" from "linelist.dat" last'])
+        np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/trial6/alpha_' + str(alpha_array[j]) + '_'
+                   + str(z[i]) + '.in', lines, fmt="%s")
