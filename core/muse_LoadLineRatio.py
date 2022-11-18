@@ -6,7 +6,8 @@ def load_lineratio(region=None):
     path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
                                     'moreline_profile_selected_region.fits')
     data_fit_info_sr = fits.getdata(path_fit_info_sr, ignore_missing_end=True)
-    data_fit_info_sr = data_fit_info_sr[data_fit_info_sr['region'] == region]
+    if region != 'all':
+        data_fit_info_sr = data_fit_info_sr[data_fit_info_sr['region'] == region]
 
     flux_Hbeta, dflux_Hbeta = data_fit_info_sr['flux_Hbeta'], data_fit_info_sr['dflux_Hbeta']
     flux_OII = data_fit_info_sr['flux_OII'] / flux_Hbeta
