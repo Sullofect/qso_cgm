@@ -34,6 +34,7 @@ conti = np.median(flux)
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 d_l = cosmo.luminosity_distance(z).to(u.cm).value
 nuL = np.log10(4 * np.pi * conti * limit * d_l ** 2 * 1e-17)
+print(limit, conti)
 print(nuL)
 
 distance = 10 * u.kpc
