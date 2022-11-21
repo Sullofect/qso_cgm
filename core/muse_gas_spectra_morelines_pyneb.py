@@ -1,20 +1,32 @@
 import os
 import lmfit
+import pyneb as pn
 import numpy as np
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from scipy import interpolate
 from PyAstronomy import pyasl
 from mpdaf.obj import Cube, WCS, WaveCoord, iter_spe
 from astropy.table import Table
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 
+# [OII] 3726/3729
+O2 = pn.Atom('O', 2)
+
+# den_array = 10 ** np.linspace(-1, 6, 100)
+# OII3727 = O2.getEmissivity(tem=20000, den=den_array, wave=3727)
+# OII3729 = O2.getEmissivity(tem=20000, den=den_array, wave=3729)
+# r_OII_pyneb = OII3729 / OII3727
+#
+# f_r_OII = interpolate.interp1d(r_OII_pyneb, np.log10(den_array), bounds_error=False)
+
 def getSigma_MUSE(wave):
     return (5.866e-8 * wave ** 2 - 9.187e-4 * wave + 6.04) / 2.355
 
 
-def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, a, b):
+def model_OII(wave_vac, z, sigma_kms, flux_OII, log_density, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OII3727_vac = 3727.092
@@ -25,6 +37,10 @@ def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, a, b):
 
     sigma_OII3727_A = np.sqrt((sigma_kms / c_kms * wave_OII3727_obs) ** 2 + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
     sigma_OII3729_A = np.sqrt((sigma_kms / c_kms * wave_OII3729_obs) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
+
+    OII3727 = O2.getEmissivity(tem=20000, den=10 ** log_density, wave=3727)
+    OII3729 = O2.getEmissivity(tem=20000, den=10 ** log_density, wave=3729)
+    r_OII3729_3727 = OII3729 / OII3727
 
     flux_OII3727 = flux_OII / (1 + r_OII3729_3727)
     flux_OII3729 = flux_OII / (1 + 1.0 / r_OII3729_3727)
@@ -228,7 +244,7 @@ def model_HeII4687(wave_vac, z, sigma_kms, flux_HeII4687, a, b):
 # lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3971.20, 4102.89, 4341.68, 4364.44, 4687.31])
 
 def model_more(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
-              flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, flux_Hbeta, flux_OIII5008, r_OII3729_3727,
+              flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, flux_Hbeta, flux_OIII5008, log_density,
               a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968,
               b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687,
               b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008):
@@ -249,7 +265,7 @@ def model_more(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI388
     m_HeII4687 = model_HeII4687(wave_vac[7], z, sigma_kms, flux_HeII4687, a_HeII4687, b_HeII4687)
 
     # Strong lines
-    m_OII = model_OII(wave_vac[8], z, sigma_kms, flux_OII, r_OII3729_3727, a_OII, b_OII)
+    m_OII = model_OII(wave_vac[8], z, sigma_kms, flux_OII, log_density, a_OII, b_OII)
     m_Hbeta = model_Hbeta(wave_vac[9], z, sigma_kms, flux_Hbeta, a_Hbeta, b_Hbeta)
     m_OIII4960 = model_OIII4960(wave_vac[10], z, sigma_kms, flux_OIII5008 / 3, a_OIII4960, b_OIII4960)
     m_OIII5008 = model_OIII5008(wave_vac[11], z, sigma_kms, flux_OIII5008, a_OIII5008, b_OIII5008)
@@ -339,7 +355,7 @@ wave_vac_more_stack_plot = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave
 redshift_guess = 0.63
 sigma_kms_guess = 150.0
 # flux_OIII5008_guess = 0.01
-r_OII3729_3727_guess = 2
+log_density_guess = 2
 
 # parameters = lmfit.Parameters()
 # parameters.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
@@ -373,7 +389,7 @@ parameters_more.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                          ('flux_OII', 0.01, True, None, None, None),
                          ('flux_Hbeta', 0.02, True, None, None, None),
                          ('flux_OIII5008', 0.1, True, None, None, None),
-                         ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
+                         ('log_density', log_density_guess, True, 0.2, 5, None),
                          ('a_NeV3346', 0.0, False, None, None, None),
                          ('b_NeV3346', 0.0, False, None, None, None),
                          ('a_NeIII3869', 0.0, False, None, None, None),
@@ -556,7 +572,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         flux_OII, dflux_OII = result_more.best_values['flux_OII'], result_more.params['flux_OII'].stderr
         flux_Hbeta, dflux_Hbeta = result_more.best_values['flux_Hbeta'], result_more.params['flux_Hbeta'].stderr
         flux_OIII5008, dflux_OIII5008 = result_more.best_values['flux_OIII5008'], result_more.params['flux_OIII5008'].stderr
-        r_OII, dr_OII = result_more.best_values['r_OII3729_3727'], result_more.params['r_OII3729_3727'].stderr
+        log_density, dlog_density = result_more.best_values['log_density'], result_more.params['log_density'].stderr
 
         a_OII, da_OII = result_more.best_values['a_OII'], result_more.params['a_OII'].stderr
         b_OII, db_OII = result_more.best_values['b_OII'], result_more.params['b_OII'].stderr
@@ -605,10 +621,10 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
         # Save the fitted result
         flux_info[i, :] = np.array([flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
-                                    flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, r_OII, flux_Hbeta,
+                                    flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, log_density, flux_Hbeta,
                                     flux_OIII5008, dflux_NeV3346, dflux_NeIII3869, dflux_HeI3889, dflux_H8,
                                     dflux_NeIII3968, dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364,
-                                    dflux_HeII4687, dflux_OII, dr_OII, dflux_Hbeta, dflux_OIII5008])
+                                    dflux_HeII4687, dflux_OII, dlog_density, dflux_Hbeta, dflux_OIII5008])
 
         # axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', drawstyle='steps-mid', lw=1)
         # axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
@@ -780,13 +796,14 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
     t = Table(flux_info, names=('flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', 'flux_NeIII3968',
                                 'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364', 'flux_HeII4687',
-                                'flux_OII', 'r_OII', 'flux_Hbeta', 'flux_OIII5008', 'dflux_NeV3346',
+                                'flux_OII', 'log_density', 'flux_Hbeta', 'flux_OIII5008', 'dflux_NeV3346',
                                 'dflux_NeIII3869', 'dflux_HeI3889', 'dflux_H8', 'dflux_NeIII3968',
                                 'dflux_Heps', 'dflux_Hdel', 'dflux_Hgam', 'dflux_OIII4364',
-                                'dflux_HeII4687', 'dflux_OII', 'dr_OII', 'dflux_Hbeta', 'dflux_OIII5008'))
+                                'dflux_HeII4687', 'dflux_OII', 'dlog_density', 'dflux_Hbeta', 'dflux_OIII5008'))
     t['region'] = text_array
     if save_table is True:
-        t.write('/Users/lzq/Dropbox/Data/CGM/moreline_profile_selected_region.fits', format='fits', overwrite=True)
+        t.write('/Users/lzq/Dropbox/Data/CGM/moreline_profile_selected_region_density.fits',
+                format='fits', overwrite=True)
 
     if len(ra_array) == 1:
         fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
@@ -805,9 +822,9 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-# PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_all', save_table=True)
+PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_all', save_table=True)
 
 
-for i in range(len(text_array)):
-    PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
-                   figname='spectra_gas/spectra_gas_' + str(text_array[i]))
+# for i in range(len(text_array)):
+#     PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
+#                    figname='spectra_gas/spectra_gas_' + str(text_array[i]))
