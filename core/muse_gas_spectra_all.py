@@ -93,6 +93,7 @@ def model_NeV3346(wave_vac, z, sigma_kms, flux_NeV3346, a, b):
 
     return NeV3346_gaussian + a * wave_vac + b
 
+
 def model_NeIII3869(wave_vac, z, sigma_kms, flux_NeIII3869, a, b):
     # Constants
     c_kms = 2.998e5
@@ -105,6 +106,7 @@ def model_NeIII3869(wave_vac, z, sigma_kms, flux_NeIII3869, a, b):
     NeIII3869_gaussian = peak_NeIII3869 * np.exp(-(wave_vac - wave_NeIII3869_obs) ** 2 / 2 / sigma_NeIII3869_A ** 2)
 
     return NeIII3869_gaussian + a * wave_vac + b
+
 
 def model_HeI3889andH8(wave_vac, z, sigma_kms, flux_HeI3889, flux_H8, a, b):
     # Constants
@@ -126,18 +128,6 @@ def model_HeI3889andH8(wave_vac, z, sigma_kms, flux_HeI3889, flux_H8, a, b):
 
     return HeI3889_gaussian + H8_gaussian + a * wave_vac + b
 
-# def model_H8(wave_vac, z, sigma_kms, flux_H8, a, b):
-#     # Constants
-#     c_kms = 2.998e5
-#     wave_H8_vac = 3890.16
-#
-#     wave_H8_obs = wave_H8_vac * (1 + z)
-#     sigma_H8_A = np.sqrt((sigma_kms / c_kms * wave_H8_obs) ** 2 + (getSigma_MUSE(wave_H8_obs)) ** 2)
-#
-#     peak_H8 = flux_H8 / np.sqrt(2 * sigma_H8_A ** 2 * np.pi)
-#     H8_gaussian = peak_H8 * np.exp(-(wave_vac - wave_H8_obs) ** 2 / 2 / sigma_H8_A ** 2)
-#
-#     return H8_gaussian + a * wave_vac + b
 
 def model_NeIII3968andHeps(wave_vac, z, sigma_kms, flux_NeIII3968, flux_Heps, a, b):
     # Constants
@@ -159,18 +149,6 @@ def model_NeIII3968andHeps(wave_vac, z, sigma_kms, flux_NeIII3968, flux_Heps, a,
 
     return NeIII3968_gaussian + Heps_gaussian + a * wave_vac + b
 
-# def model_Heps(wave_vac, z, sigma_kms, flux_Heps, a, b):
-#     # Constants
-#     c_kms = 2.998e5
-#     wave_Heps_vac = 3971.20
-#
-#     wave_Heps_obs = wave_Heps_vac * (1 + z)
-#     sigma_Heps_A = np.sqrt((sigma_kms / c_kms * wave_Heps_obs) ** 2 + (getSigma_MUSE(wave_Heps_obs)) ** 2)
-#
-#     peak_Heps = flux_Heps / np.sqrt(2 * sigma_Heps_A ** 2 * np.pi)
-#     Heps_gaussian = peak_Heps * np.exp(-(wave_vac - wave_Heps_obs) ** 2 / 2 / sigma_Heps_A ** 2)
-#
-#     return Heps_gaussian + a * wave_vac + b
 
 def model_Hdel(wave_vac, z, sigma_kms, flux_Hdel, a, b):
     # Constants
@@ -185,6 +163,7 @@ def model_Hdel(wave_vac, z, sigma_kms, flux_Hdel, a, b):
 
     return Hdel_gaussian + a * wave_vac + b
 
+
 def model_Hgam(wave_vac, z, sigma_kms, flux_Hgam, a, b):
     # Constants
     c_kms = 2.998e5
@@ -197,6 +176,7 @@ def model_Hgam(wave_vac, z, sigma_kms, flux_Hgam, a, b):
     Hgam_gaussian = peak_Hgam * np.exp(-(wave_vac - wave_Hgam_obs) ** 2 / 2 / sigma_Hgam_A ** 2)
 
     return Hgam_gaussian + a * wave_vac + b
+
 
 def model_OIII4364(wave_vac, z, sigma_kms, flux_OIII4364, a, b):
     # Constants
@@ -211,6 +191,7 @@ def model_OIII4364(wave_vac, z, sigma_kms, flux_OIII4364, a, b):
 
     return OIII4364_gaussian + a * wave_vac + b
 
+
 def model_HeII4687(wave_vac, z, sigma_kms, flux_HeII4687, a, b):
     # Constants
     c_kms = 2.998e5
@@ -224,10 +205,8 @@ def model_HeII4687(wave_vac, z, sigma_kms, flux_HeII4687, a, b):
 
     return HeII4687_gaussian + a * wave_vac + b
 
-# [Ne V] 3346.79, [Ne III] 3869, He I 3889, Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
-# lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3971.20, 4102.89, 4341.68, 4364.44, 4687.31])
 
-def model_more(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
+def model_all(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
               flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, flux_Hbeta, flux_OIII5008, r_OII3729_3727,
               a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968,
               b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687,
@@ -237,12 +216,8 @@ def model_more(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI388
     m_NeV3356 = model_NeV3346(wave_vac[0], z, sigma_kms, flux_NeV3346, a_NeV3346, b_NeV3346)
     m_NeIII3869 = model_NeIII3869(wave_vac[1], z, sigma_kms, flux_NeIII3869, a_NeIII3869, b_NeIII3869)
     m_HeI3889andH8 = model_HeI3889andH8(wave_vac[2], z, sigma_kms, flux_HeI3889, flux_H8, a_HeI3889, b_HeI3889)
-    # m_H8 = model_H8(wave_vac[2], z, sigma_kms, flux_H8, a_H8, b_H8) # wavelength same as HeI
     m_NeIII3968andHeps = model_NeIII3968andHeps(wave_vac[3], z, sigma_kms, flux_NeIII3968, flux_Heps, a_NeIII3968,
                                                 b_NeIII3968)
-    # wavelength same as Heps
-
-    # m_Heps = model_Heps(wave_vac[3], z, sigma_kms, flux_Heps, a_Heps, b_Heps)
     m_Hdel = model_Hdel(wave_vac[4], z, sigma_kms, flux_Hdel, a_Hdel, b_Hdel)
     m_Hgam = model_Hgam(wave_vac[5], z, sigma_kms, flux_Hgam, a_Hgam, b_Hgam)
     m_OIII4364 = model_OIII4364(wave_vac[6], z, sigma_kms, flux_OIII4364, a_OIII4364, b_OIII4364)
@@ -255,22 +230,6 @@ def model_more(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI388
     m_OIII5008 = model_OIII5008(wave_vac[11], z, sigma_kms, flux_OIII5008, a_OIII5008, b_OIII5008)
     return np.hstack((m_NeV3356, m_NeIII3869, m_HeI3889andH8, m_NeIII3968andHeps, m_Hdel, m_Hgam, m_OIII4364,
                       m_HeII4687, m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
-
-def model_all(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968,
-              flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, a_NeV3346, b_NeV3346, a_NeIII3869,
-              b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364,
-              b_OIII4364, a_HeII4687, b_HeII4687):
-
-    m_NeV3356 = model_NeV3346(wave_vac[0], z, sigma_kms, flux_NeV3346, a_NeV3346, b_NeV3346)
-    m_NeIII3869 = model_NeIII3869(wave_vac[1], z, sigma_kms, flux_NeIII3869, a_NeIII3869, b_NeIII3869)
-    m_HeI3889andH8 = model_HeI3889andH8(wave_vac[2], z, sigma_kms, flux_HeI3889, flux_H8, a_HeI3889, b_HeI3889)
-    m_NeIII3968andHeps = model_NeIII3968andHeps(wave_vac[3], z, sigma_kms, flux_NeIII3968, flux_Heps, a_NeIII3968,
-                                                b_NeIII3968)
-    m_Hdel = model_Hdel(wave_vac[4], z, sigma_kms, flux_Hdel, a_Hdel, b_Hdel)
-    m_Hgam = model_Hgam(wave_vac[5], z, sigma_kms, flux_Hgam, a_Hgam, b_Hgam)
-    m_OIII4364 = model_OIII4364(wave_vac[6], z, sigma_kms, flux_OIII4364, a_OIII4364, b_OIII4364)
-    m_HeII4687 = model_HeII4687(wave_vac[7], z, sigma_kms, flux_HeII4687, a_HeII4687, b_HeII4687)
-    return np.hstack((m_NeV3356, m_NeIII3869, m_HeI3889andH8, m_NeIII3968andHeps, m_Hdel, m_Hgam, m_OIII4364, m_HeII4687))
 
 
 # Read Data
@@ -287,7 +246,7 @@ path_OIII4960 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', '
 path_OIII5008 = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
                              'CUBE_OIII_5008_line_offset_zapped.fits')
 
-# More lines
+# Weak lines
 cube = Cube(path_cube)
 cube_NeV3346 = cube.select_lambda(5380, 5500)
 cube_NeIII3869 = cube.select_lambda(6250, 6320)
@@ -307,8 +266,7 @@ wave_Hgam_vac = pyasl.airtovac2(cube_Hgam.wave.coord())
 wave_OIII4364_vac = pyasl.airtovac2(cube_OIII4364.wave.coord())
 wave_HeII4687_vac = pyasl.airtovac2(cube_HeII4687.wave.coord())
 
-
-# Classical [O II], Hbeta, [O III]
+# Strong lines [O II], Hbeta, [O III]
 cube_OII = Cube(path_OII)
 cube_Hbeta = Cube(path_Hbeta)
 cube_bet = Cube(path_bet)
@@ -320,42 +278,22 @@ wave_Hbeta_vac = pyasl.airtovac2(cube_Hbeta.wave.coord())
 wave_bet_vac = pyasl.airtovac2(cube_bet.wave.coord())
 wave_OIII4960_vac = pyasl.airtovac2(cube_OIII4960.wave.coord())
 wave_OIII5008_vac = pyasl.airtovac2(cube_OIII5008.wave.coord())
-wave_vac_stack = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac))
-wave_vac_stack_plot = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_bet_vac, wave_OIII4960_vac, wave_OIII5008_vac))
-wave_vac_all = np.array([wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
 
-wave_vac_more = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
+# Strong lines
+wave_vac_strong_stack = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_bet_vac, wave_OIII4960_vac, wave_OIII5008_vac))
+
+# All lines
+wave_vac_all = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
                           wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
                           wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
-wave_vac_more_stack = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
+wave_vac_all_stack = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
                                  wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
                                  wave_OIII4960_vac, wave_OIII5008_vac))
-
-wave_vac_more_plot = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
-                               wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac], dtype=object)
-wave_vac_more_stack_plot = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac,
-                                      wave_Hdel_vac, wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac))
 
 redshift_guess = 0.63
 sigma_kms_guess = 150.0
 # flux_OIII5008_guess = 0.01
 r_OII3729_3727_guess = 2
-
-# parameters = lmfit.Parameters()
-# parameters.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
-#                     ('sigma_kms', sigma_kms_guess, True, 10, 500, None),
-#                     ('flux_OII', 0.01, True, None, None, None),
-#                     ('flux_Hbeta', 0.02, True, None, None, None),
-#                     ('flux_OIII5008', 0.1, True, None, None, None),
-#                     ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
-#                     ('a_OII', 0.0, False, None, None, None),
-#                     ('b_OII', 0.0, False, None, None, None),
-#                     ('a_Hbeta', 0.0, False, None, None, None),
-#                     ('b_Hbeta', 0.0, False, None, None, None),
-#                     ('a_OIII4960', 0.0, False, None, None, None),
-#                     ('b_OIII4960', 0.0, False, None, None, None),
-#                     ('a_OIII5008', 0.0, False, None, None, None),
-#                     ('b_OIII5008', 0.0, False, None, None, None))
 
 parameters_more = lmfit.Parameters()
 parameters_more.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
@@ -402,20 +340,30 @@ parameters_more.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
 
 # Def Plot function
 def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_1', save_table=False):
-    global cube_OII, cube_Hbeta, cube_OIII4960, cube_OIII5008, wave_vac_stack, wave_vac_all
-    fig, axarr = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
+    # Weak emission lines
+    fig_weak, axarr_weak = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
                               gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
-    fig.subplots_adjust(hspace=0)
-    fig.subplots_adjust(wspace=0.2)
+    fig_weak.subplots_adjust(hspace=0)
+    fig_weak.subplots_adjust(wspace=0.2)
+
+    # Strong emission lines
+    fig_strong, axarr_strong = plt.subplots(len(ra_array), 2, figsize=(10, len(ra_array) * 2.5),
+                              gridspec_kw={'width_ratios': [1, 3]}, dpi=300)
+    fig_strong.subplots_adjust(hspace=0)
+    fig_strong.subplots_adjust(wspace=0.1)
+
     flux_info = np.zeros((len(ra_array), 28))
-    # axarr = axarr.ravel()
     for i in range(len(ra_array)):
         if len(ra_array) == 1:
-            axarr_0 = axarr
-            axarr_i = axarr
+            axarr_0_strong = axarr_strong[0]
+            axarr_1_strong = axarr_strong[1]
+            axarr_0_weak = axarr_weak
+            axarr_i_weak = axarr_weak
         else:
-            axarr_0 = axarr[0]
-            axarr_i = axarr[i]
+            axarr_0_strong = axarr_strong[i, 0]
+            axarr_1_strong = axarr_strong[i, 1]
+            axarr_0_weak = axarr_weak[0]
+            axarr_i_weak = axarr_weak[i]
 
         spe_NeV3346_i = cube_NeV3346.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
         spe_NeIII3869_i = cube_NeIII3869.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
@@ -431,21 +379,11 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         spe_OIII4960_i = cube_OIII4960.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
         spe_OIII5008_i = cube_OIII5008.aperture((dec_array[i], ra_array[i]), radius_array[i], is_sum=True)
 
-        # Continuum subtraction for faint lines
-        wave_min, wave_max = wave_cube.min(), wave_cube.max()
-
         # For [Ne V] 3346.79
         spe_NeV3346_i.mask_region(5440, 5460)
-        # print(len(spe_cube_i.data.data[~spe_cube_i.data.mask]))
         conti_NeV3346_i = spe_NeV3346_i.poly_spec(3, weight=True)
         spe_NeV3346_i.unmask()
-        # flux_i_ori, flux_err_i_ori = spe_cube_i.data * 1e-3, np.sqrt(spe_cube_i.var) * 1e-3
-        # flux_i_conti = conti_NeV3346_i.data * 1e-3
         spe_NeV3346_i -= conti_NeV3346_i
-        # spe_cube_i.mask_region(wave_min, 5440)
-        # spe_cube_i.mask_region(5460, wave_max)
-        # spe_cube_i.unmask()
-        # print(np.median(flux_NeV3346_i.data))
 
         # For [Ne III] 3869
         spe_NeIII3869_i.mask_region(6290, 6305)
@@ -510,7 +448,6 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         spe_OIII5008_i.unmask()
         spe_OIII5008_i -= conti_OIII5008
 
-        # [Ne V] 3346.79, [Ne III] 3869, He I 3889, Hepisolon. Hdelta, Hgamma, [O III] 4364, He II 4687
         # Load the data
         flux_NeV3346_i, flux_NeV3346_err_i = spe_NeV3346_i.data * 1e-3, np.sqrt(spe_NeV3346_i.var) * 1e-3
         flux_NeIII3869_i, flux_NeIII3869_err_i = spe_NeIII3869_i.data * 1e-3, np.sqrt(spe_NeIII3869_i.var) * 1e-3
@@ -521,45 +458,41 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         flux_OIII4364_i, flux_OIII4364_err_i = spe_OIII4364_i.data * 1e-3, np.sqrt(spe_OIII4364_i.var) * 1e-3
         flux_HeII4687_i, flux_HeII4687_err_i = spe_HeII4687_i.data * 1e-3, np.sqrt(spe_HeII4687_i.var) * 1e-3
 
-        # flux_i, flux_err_i = spe_cube_i.data * 1e-3, np.sqrt(spe_cube_i.var) * 1e-3
         flux_OII_i, flux_OII_err_i = spe_OII_i.data * 1e-3, np.sqrt(spe_OII_i.var) * 1e-3
         flux_Hbeta_i, flux_Hbeta_err_i = spe_Hbeta_i.data * 1e-3, np.sqrt(spe_Hbeta_i.var) * 1e-3
         flux_bet_i, flux_bet_err_i = spe_bet_i.data * 1e-3, np.sqrt(spe_bet_i.var) * 1e-3
         flux_OIII4960_i, flux_OIII4960_err_i = spe_OIII4960_i.data * 1e-3, np.sqrt(spe_OIII4960_i.var) * 1e-3
         flux_OIII5008_i, flux_OIII5008_err_i = spe_OIII5008_i.data * 1e-3, np.sqrt(spe_OIII5008_i.var) * 1e-3
-        flux_all = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
-        flux_err_all = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
-        flux_more = np.hstack((flux_NeV3346_i, flux_NeIII3869_i, flux_HeI3889_i, flux_Heps_i, flux_Hdel_i, flux_Hgam_i,
-                               flux_OIII4364_i, flux_HeII4687_i, flux_OII_i, flux_Hbeta_i, flux_OIII4960_i,
-                               flux_OIII5008_i))
-        flux_err_more =  np.hstack((flux_NeV3346_err_i, flux_NeIII3869_err_i, flux_HeI3889_err_i, flux_Heps_err_i,
-                                    flux_Hdel_err_i, flux_Hgam_err_i, flux_OIII4364_err_i, flux_HeII4687_err_i,
-                                    flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
+        #
+        flux_strong = np.hstack((flux_OII_i, flux_Hbeta_i, flux_bet_i, flux_OIII4960_i, flux_OIII5008_i))
+        flux_err_strong = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_bet_err_i, flux_OIII4960_err_i,
+                                     flux_OIII5008_err_i))
+        
+        flux_all = np.hstack((flux_NeV3346_i, flux_NeIII3869_i, flux_HeI3889_i, flux_Heps_i, flux_Hdel_i, flux_Hgam_i,
+                              flux_OIII4364_i, flux_HeII4687_i, flux_OII_i, flux_Hbeta_i, flux_OIII4960_i,
+                              flux_OIII5008_i))
+        flux_err_all =  np.hstack((flux_NeV3346_err_i, flux_NeIII3869_err_i, flux_HeI3889_err_i, flux_Heps_err_i,
+                                   flux_Hdel_err_i, flux_Hgam_err_i, flux_OIII4364_err_i, flux_HeII4687_err_i,
+                                   flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
-        # spec_model = lmfit.Model(model_all, missing='drop')
-        # result = spec_model.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters,
-        #                         weights=1 / flux_err_all)
-
-        spec_model_more = lmfit.Model(model_more, missing='drop')
-        result_more = spec_model_more.fit(data=flux_more, wave_vac=wave_vac_more, params=parameters_more,
-                                weights=1 / flux_err_more)
-
-        # For plotting
-        # flux_all_plot = np.hstack((flux_OII_i, flux_Hbeta_i, flux_bet_i, flux_OIII4960_i, flux_OIII5008_i))
-        # flux_err_all_plot = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_bet_err_i, flux_OIII4960_err_i,
-        #                                flux_OIII5008_err_i))
+        spec_model_more = lmfit.Model(model_all, missing='drop')
+        result_more = spec_model_more.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters_more,
+                                weights=1 / flux_err_all)
 
         # Load fitted result
         z, dz = result_more.best_values['z'], result_more.params['z'].stderr
         sigma, dsigma = result_more.best_values['sigma_kms'], result_more.params['sigma_kms'].stderr
+
+        # Strong lines
         flux_OII, dflux_OII = result_more.best_values['flux_OII'], result_more.params['flux_OII'].stderr
         flux_Hbeta, dflux_Hbeta = result_more.best_values['flux_Hbeta'], result_more.params['flux_Hbeta'].stderr
         flux_OIII5008, dflux_OIII5008 = result_more.best_values['flux_OIII5008'], result_more.params['flux_OIII5008'].stderr
         r_OII, dr_OII = result_more.best_values['r_OII3729_3727'], result_more.params['r_OII3729_3727'].stderr
-
         a_OII, da_OII = result_more.best_values['a_OII'], result_more.params['a_OII'].stderr
         b_OII, db_OII = result_more.best_values['b_OII'], result_more.params['b_OII'].stderr
+
+        # Strong lines conti
         a_Hbeta, da_Hbeta = result_more.best_values['a_Hbeta'], result_more.params['a_Hbeta'].stderr
         b_Hbeta, db_Hbeta = result_more.best_values['b_Hbeta'], result_more.params['b_Hbeta'].stderr
         a_OIII4960, da_OIII4960 = result_more.best_values['a_OIII4960'], result_more.params['a_OIII4960'].stderr
@@ -567,8 +500,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         a_OIII5008, da_OIII5008 = result_more.best_values['a_OIII5008'], result_more.params['a_OIII5008'].stderr
         b_OIII5008, db_OIII5008 = result_more.best_values['b_OIII5008'], result_more.params['b_OIII5008'].stderr
 
-        # [Ne V] 3346.79, [Ne III] 3869, He I 3889, Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
-
+        # Weak lines
         flux_NeV3346, dflux_NeV3346 = result_more.best_values['flux_NeV3346'], result_more.params['flux_NeV3346'].stderr
         flux_NeIII3869, dflux_NeIII3869 = result_more.best_values['flux_NeIII3869'], \
                                           result_more.params['flux_NeIII3869'].stderr
@@ -583,9 +515,8 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                                         result_more.params['flux_OIII4364'].stderr
         flux_HeII4687, dflux_HeII4687 = result_more.best_values['flux_HeII4687'], \
                                         result_more.params['flux_HeII4687'].stderr
-        print(flux_NeV3346)
-        print(flux_OIII4364)
 
+        # Weak lines conti
         a_NeV3346, da_NeV3346 = result_more.best_values['a_NeV3346'], result_more.params['a_NeV3346'].stderr
         b_NeV3346, db_NeV3346 = result_more.best_values['b_NeV3346'], result_more.params['b_NeV3346'].stderr
         a_NeIII3869, da_NeIII3869 = result_more.best_values['a_NeIII3869'], result_more.params['a_NeIII3869'].stderr
@@ -610,173 +541,176 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                                     dflux_NeIII3968, dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364,
                                     dflux_HeII4687, dflux_OII, dr_OII, dflux_Hbeta, dflux_OIII5008])
 
-        # axarr[i, 0].plot(wave_vac_stack, flux_all, color='k', drawstyle='steps-mid', lw=1)
-        # axarr[i, 0].plot(wave_vac_stack, flux_err_all, color='lightgrey', lw=1)
-        # axarr[i, 0].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
-        #                                            r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
-        #                                            b_OIII4960, a_OIII5008, b_OIII5008), '-r')
-        # axarr[i, 1].plot(wave_vac_stack_plot, flux_all_plot, color='k', drawstyle='steps-mid', lw=1)
-        # axarr[i, 1].plot(wave_vac_stack_plot, flux_err_all_plot, color='lightgrey', lw=1)
-        # axarr[i, 1].plot(wave_vac_stack, model_all(wave_vac_all, z, sigma, flux_OII, flux_Hbeta, flux_OIII5008,
-        #                                            r_OII, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
-        #                                            b_OIII4960, a_OIII5008, b_OIII5008), '-r')
+        line_model_all = model_all(wave_vac_all, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
+                                    flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687,
+                                    flux_OII, flux_Hbeta, flux_OIII5008, r_OII, a_NeV3346, b_NeV3346,
+                                    a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968,
+                                    a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687,
+                                    a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
 
-        # More lines
-        # axarr[i, 0].plot(wave_cube, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
-        # axarr[i, 0].plot(wave_cube, flux_NeV3346_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        # axarr[i, 0].plot(wave_cube, flux_i_ori, color='r', drawstyle='steps-mid', lw=1)
-        # axarr[i, 0].plot(wave_cube, flux_i_conti, color='b', drawstyle='steps-mid', lw=1)
+        # Weak lines
+        axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[0].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[0].set_xlim(5350, 5500)
+        axarr_i_weak[0].set_title(text_array[i], x=0.2, y=0.75, size=20)
 
-        # line_model = model_more(wave_vac_more, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
-        #                         flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687,
-        #                         flux_OII, flux_Hbeta, flux_OIII5008, r_OII,
-        #                         a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889,
-        #                         a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam,
-        #                         a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta,
-        #                         a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
+        axarr_i_weak[1].plot(wave_NeIII3869_vac, flux_NeIII3869_i, color='k', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[1].plot(wave_NeIII3869_vac, flux_NeIII3869_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[1].plot(wave_HeI3889_vac, flux_HeI3889_i, color='k', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[1].plot(wave_HeI3889_vac, flux_HeI3889_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[1].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[1].set_xlim(6250, 6400)
+        axarr_i_weak[1].set_xticks([6300, 6400], ['6300', ''])
 
+        axarr_i_weak[2].plot(wave_Heps_vac, flux_Heps_i, color='k', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[2].plot(wave_Heps_vac, flux_Heps_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[2].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[2].set_xlim(6400, 6550)
 
-        line_model = model_all(wave_vac_more_plot, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
-                                flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687,
-                                a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889,
-                                a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam,
-                                a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687)
+        axarr_i_weak[3].plot(wave_Hdel_vac, flux_Hdel_i, color='k', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[3].plot(wave_Hdel_vac, flux_Hdel_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[3].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[3].set_xlim(6600, 6750)
 
+        axarr_i_weak[4].plot(wave_Hgam_vac, flux_Hgam_i, color='k', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[4].plot(wave_Hgam_vac, flux_Hgam_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[4].plot(wave_OIII4364_vac, flux_OIII4364_i, color='k', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[4].plot(wave_OIII4364_vac, flux_OIII4364_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[4].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[4].set_xlim(7000, 7150)
 
-        axarr_i[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
-        # axarr_i[0].plot(wave_NeV3346_vac, flux_i_conti, color='b', drawstyle='steps-mid', lw=1)
-        axarr_i[0].plot(wave_NeV3346_vac, flux_NeV3346_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i[0].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
-        axarr_i[0].set_xlim(5350, 5500)
-        axarr_i[0].set_title(text_array[i], x=0.2, y=0.75, size=20)
+        axarr_i_weak[5].plot(wave_HeII4687_vac, flux_HeII4687_i, color='k', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[5].plot(wave_HeII4687_vac, flux_HeII4687_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        axarr_i_weak[5].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[5].set_xlim(7550, 7700)
 
-        axarr_i[1].plot(wave_NeIII3869_vac, flux_NeIII3869_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i[1].plot(wave_NeIII3869_vac, flux_NeIII3869_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i[1].plot(wave_HeI3889_vac, flux_HeI3889_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i[1].plot(wave_HeI3889_vac, flux_HeI3889_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i[1].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
-        axarr_i[1].set_xlim(6250, 6400)
-        axarr_i[1].set_xticks([6300, 6400], ['6300', ''])
-
-
-        axarr_i[2].plot(wave_Heps_vac, flux_Heps_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i[2].plot(wave_Heps_vac, flux_Heps_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i[2].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
-        axarr_i[2].set_xlim(6400, 6550)
-
-        axarr_i[3].plot(wave_Hdel_vac, flux_Hdel_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i[3].plot(wave_Hdel_vac, flux_Hdel_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i[3].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
-        axarr_i[3].set_xlim(6600, 6750)
-
-        axarr_i[4].plot(wave_Hgam_vac, flux_Hgam_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i[4].plot(wave_Hgam_vac, flux_Hgam_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i[4].plot(wave_OIII4364_vac, flux_OIII4364_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i[4].plot(wave_OIII4364_vac, flux_OIII4364_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i[4].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
-        axarr_i[4].set_xlim(7000, 7150)
-
-        axarr_i[5].plot(wave_HeII4687_vac, flux_HeII4687_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i[5].plot(wave_HeII4687_vac, flux_HeII4687_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i[5].plot(wave_vac_more_stack_plot, line_model, '-r', lw=1)
-        axarr_i[5].set_xlim(7550, 7700)
-        # axarr_i[0].set_xlim(6300, 6350)
-        # axarr_i[1].set_xlim(7900, 8200)
         #
-        # axarr_i[0].set_xlim(6020, 6120)
-        # axarr_i[1].set_xlim(7900, 8200)
-        axarr_i[0].spines['right'].set_visible(False)
-        axarr_i[1].spines['right'].set_visible(False)
-        axarr_i[1].spines['left'].set_visible(False)
-        axarr_i[2].spines['right'].set_visible(False)
-        axarr_i[2].spines['left'].set_visible(False)
-        axarr_i[3].spines['right'].set_visible(False)
-        axarr_i[3].spines['left'].set_visible(False)
-        axarr_i[4].spines['right'].set_visible(False)
-        axarr_i[4].spines['left'].set_visible(False)
-        axarr_i[5].spines['left'].set_visible(False)
+        axarr_i_weak[0].spines['right'].set_visible(False)
+        axarr_i_weak[1].spines['right'].set_visible(False)
+        axarr_i_weak[1].spines['left'].set_visible(False)
+        axarr_i_weak[2].spines['right'].set_visible(False)
+        axarr_i_weak[2].spines['left'].set_visible(False)
+        axarr_i_weak[3].spines['right'].set_visible(False)
+        axarr_i_weak[3].spines['left'].set_visible(False)
+        axarr_i_weak[4].spines['right'].set_visible(False)
+        axarr_i_weak[4].spines['left'].set_visible(False)
+        axarr_i_weak[5].spines['left'].set_visible(False)
 
         # Mark line info
-        # [Ne V] 3346.79, [Ne III] 3869, He I 3889 and H8, NeIII3968 and Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
-        lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3890.16, 3968.59, 3971.20, 4102.89, 4341.68,
-                                         4364.44, 4687.31])
-        # [O II] 3727, 3729, Hbeta, [O III] 4960 5008
-        lines = (1 + z) * np.array([3727.092, 3729.8754960, 4862.721, 4960.295, 5008.239])
-        ymin, ymax = -5 * np.ones_like(lines_more), 100 * np.ones_like(lines_more)
-        # axarr_i[0].vlines(lines, ymin=[-5, -5, -5, -5, -5,], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
-        #                    colors='grey')
-        # axarr_i[1].vlines(lines, ymin=[-5, -5, -5, -5, -5], ymax=[100, 100, 100, 100, 100], linestyles='dashed',
-        #                    colors='grey')
-        axarr_i[0].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i[1].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i[2].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i[3].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i[4].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i[5].vlines(lines_more, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        # axarr_i[0].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
-        # axarr_i[1].set_ylim(flux_all.min() - 0.5, flux_all.max() + 0.5)
-        axarr_i[0].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i[1].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i[2].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i[3].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i[4].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i[5].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        # axarr_i[0].set_ylim(bottom=-0.15, auto=True)
-        # axarr_i[1].set_ylim(bottom=-0.15, auto=True)
-        # axarr_i[2].set_ylim(bottom=-0.15, auto=True)
-        # axarr_i[3].set_ylim(bottom=-0.15, auto=True)
-        # axarr_i[4].set_ylim(bottom=-0.15, auto=True)
-        # axarr_i[5].set_ylim(bottom=-0.15, auto=True)
-        # if flux_Hbeta_i.max() > flux_OIII5008_i.max():
-        #     axarr_i[0].set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
-        #     axarr_i[1].set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
-        axarr_0[0].annotate(text=r'$\mathrm{[Ne \, V]}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
-        axarr_0[1].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.25, 0.65), xycoords='axes fraction', size=15)
-        axarr_0[1].annotate(text=r'$\mathrm{He \, I}$' + '\n' + r'$\mathrm{H8}$', xy=(0.6, 0.53),
-                             xycoords='axes fraction', size=15)
-        axarr_0[2].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.20, 0.65), xycoords='axes fraction', size=15)
-        axarr_0[2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
-        axarr_0[3].annotate(text=r'$\mathrm{H \delta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
-        axarr_0[4].annotate(text=r'$\mathrm{H \gamma}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
-        axarr_0[4].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
-        axarr_0[5].annotate(text=r'$\mathrm{He \, II}$', xy=(0.6, 0.65), xycoords='axes fraction', size=15)
+        # [Ne V] 3346.79, [O II] 3727, 3729, [Ne III] 3869, He I 3889 and H8, NeIII3968 and Hepsilon. Hdelta, Hgamma,
+        # [O III] 4364, He II 4687 Hbeta, [O III] 4960 5008
+        lines = (1 + z) * np.array([pyasl.airtovac2(3345.821), pyasl.airtovac2(3726.032),
+                                    pyasl.airtovac2(3728.815), pyasl.airtovac2(3868.760),
+                                    pyasl.airtovac2(3888.647), pyasl.airtovac2(3889.064),
+                                    pyasl.airtovac2(3967.470), pyasl.airtovac2(3970.079),
+                                    pyasl.airtovac2(4101.742), pyasl.airtovac2(4340.471),
+                                    pyasl.airtovac2(4363.210), pyasl.airtovac2(4685.710),
+                                    pyasl.airtovac2(4861.333), pyasl.airtovac2(4958.911),
+                                    pyasl.airtovac2(5006.843)])
+        ymin, ymax = -5 * np.ones_like(lines), 100 * np.ones_like(lines)
+        axarr_i_weak[0].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr_i_weak[1].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr_i_weak[2].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr_i_weak[3].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr_i_weak[4].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr_i_weak[5].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
 
-        axarr_i[0].minorticks_on()
-        axarr_i[1].minorticks_on()
-        axarr_i[2].minorticks_on()
-        axarr_i[3].minorticks_on()
-        axarr_i[4].minorticks_on()
-        axarr_i[5].minorticks_on()
-        axarr_i[0].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on',
-                                right=False,
-                                labelsize=20, size=5)
-        axarr_i[0].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on',
-                                right=False,
-                                size=3)
-        axarr_i[0].tick_params(axis='y', which='both', right=False, labelright=False)
-        axarr_i[5].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False,
-                                right='on',
-                                labelsize=20, size=5)
-        axarr_i[5].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False,
-                                right='on',
-                                size=3)
-        axarr_i[5].tick_params(axis='y', which='both', left=False, labelleft=False)
+
+        axarr_i_weak[0].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
+        axarr_i_weak[1].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
+        axarr_i_weak[2].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
+        axarr_i_weak[3].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
+        axarr_i_weak[4].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
+        axarr_i_weak[5].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
+
+        axarr_0_weak[0].annotate(text=r'$\mathrm{[Ne \, V]}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[1].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.25, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[1].annotate(text=r'$\mathrm{He \, I}$' + '\n' + r'$\mathrm{H8}$', xy=(0.6, 0.53),
+                             xycoords='axes fraction', size=15)
+        axarr_0_weak[2].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.20, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[3].annotate(text=r'$\mathrm{H \delta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[4].annotate(text=r'$\mathrm{H \gamma}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[4].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[5].annotate(text=r'$\mathrm{He \, II}$', xy=(0.6, 0.65), xycoords='axes fraction', size=15)
+
+        axarr_i_weak[0].minorticks_on()
+        axarr_i_weak[1].minorticks_on()
+        axarr_i_weak[2].minorticks_on()
+        axarr_i_weak[3].minorticks_on()
+        axarr_i_weak[4].minorticks_on()
+        axarr_i_weak[5].minorticks_on()
+        axarr_i_weak[0].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on',
+                                right=False, labelsize=20, size=5)
+        axarr_i_weak[0].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on',
+                                right=False, size=3)
+        axarr_i_weak[0].tick_params(axis='y', which='both', right=False, labelright=False)
+        axarr_i_weak[5].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False,
+                                right='on', labelsize=20, size=5)
+        axarr_i_weak[5].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False,
+                                right='on', size=3)
+        axarr_i_weak[5].tick_params(axis='y', which='both', left=False, labelleft=False)
         for j in [1, 2, 3, 4]:
-            axarr_i[j].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False,
-                                    right=False,
-                                    labelsize=20, size=5)
-            axarr_i[j].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False,
-                                    right=False,
-                                    size=3)
-            axarr_i[j].tick_params(axis='y', which='both', right=False, labelright=False, left=False, labelleft=False)
+            axarr_i_weak[j].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False,
+                                    right=False, labelsize=20, size=5)
+            axarr_i_weak[j].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False,
+                                    right=False, size=3)
+            axarr_i_weak[j].tick_params(axis='y', which='both', right=False, labelright=False, left=False, labelleft=False)
 
         if i != len(ra_array) - 1:
-            axarr_i[0].tick_params(axis='x', which='both', labelbottom=False)
-            axarr_i[1].tick_params(axis='x', which='both', labelbottom=False)
-            axarr_i[2].tick_params(axis='x', which='both', labelbottom=False)
-            axarr_i[3].tick_params(axis='x', which='both', labelbottom=False)
-            axarr_i[4].tick_params(axis='x', which='both', labelbottom=False)
-            axarr_i[5].tick_params(axis='x', which='both', labelbottom=False)
+            axarr_i_weak[0].tick_params(axis='x', which='both', labelbottom=False)
+            axarr_i_weak[1].tick_params(axis='x', which='both', labelbottom=False)
+            axarr_i_weak[2].tick_params(axis='x', which='both', labelbottom=False)
+            axarr_i_weak[3].tick_params(axis='x', which='both', labelbottom=False)
+            axarr_i_weak[4].tick_params(axis='x', which='both', labelbottom=False)
+            axarr_i_weak[5].tick_params(axis='x', which='both', labelbottom=False)
+        
+        # Strong lines
+        axarr_0_strong.plot(wave_vac_strong_stack, flux_strong, color='k', drawstyle='steps-mid', lw=1)
+        axarr_0_strong.plot(wave_vac_strong_stack, flux_err_strong, color='lightgrey', lw=1)
+        axarr_0_strong.plot(wave_vac_all_stack, line_model_all, '-r')
+
+        axarr_1_strong.plot(wave_vac_strong_stack, flux_strong, color='k', drawstyle='steps-mid', lw=1)
+        axarr_1_strong.plot(wave_vac_strong_stack, flux_err_strong, color='lightgrey', lw=1)
+        axarr_1_strong.plot(wave_vac_all_stack, line_model_all, '-r')
+
+        axarr_0_strong.set_title(text_array[i], x=0.2, y=0.75, size=20)
+        axarr_0_strong.set_xlim(6020, 6120)
+        axarr_1_strong.set_xlim(7900, 8200)
+        axarr_0_strong.spines['right'].set_visible(False)
+        axarr_1_strong.spines['left'].set_visible(False)
+
+        # Mark line info
+        axarr_0_strong.vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey')
+        axarr_1_strong.vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey')
+        axarr_0_strong.set_ylim(flux_strong.min() - 0.5, flux_strong.max() + 0.5)
+        axarr_1_strong.set_ylim(flux_strong.min() - 0.5, flux_strong.max() + 0.5)
+
+        if flux_Hbeta_i.max() > flux_OIII5008_i.max():
+            axarr_0_strong.set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
+            axarr_1_strong.set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
+
+        axarr_0_strong.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.55, 0.65), xycoords='axes fraction', size=20)
+        axarr_1_strong.annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
+        axarr_1_strong.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.45, 0.65), xycoords='axes fraction', size=20)
+        axarr_1_strong.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.7, 0.65), xycoords='axes fraction', size=20)
+
+        axarr_0_strong.minorticks_on()
+        axarr_1_strong.minorticks_on()
+        axarr_0_strong.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right=False,
+                                labelsize=20, size=5)
+        axarr_0_strong.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right=False,
+                                size=3)
+        axarr_0_strong.tick_params(axis='y', which='both', right=False, labelright=False)
+        axarr_1_strong.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False, right='on',
+                                labelsize=20, size=5)
+        axarr_1_strong.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False, right='on',
+                                size=3)
+        axarr_1_strong.tick_params(axis='y', which='both', left=False, labelleft=False)
+        if i != len(ra_array) - 1:
+            axarr_0_strong.tick_params(axis='x', which='both', labelbottom=False)
+            axarr_1_strong.tick_params(axis='x', which='both', labelbottom=False)
 
     t = Table(flux_info, names=('flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', 'flux_NeIII3968',
                                 'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364', 'flux_HeII4687',
@@ -789,12 +723,21 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         t.write('/Users/lzq/Dropbox/Data/CGM/moreline_profile_selected_region.fits', format='fits', overwrite=True)
 
     if len(ra_array) == 1:
-        fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
-        fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.03)
+        fig_weak.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
+        fig_weak.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
+                           size=20, x=0.03)
+        fig_strong.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
+        fig_strong.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
+                             size=20, x=0.03)
     else:
-        fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.0)
-        fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20, x=0.02)
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '.png', bbox_inches='tight')
+        fig_weak.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.0)
+        fig_weak.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
+                           size=20, x=0.02)
+        fig_strong.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
+        fig_strong.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
+                             size=20, x=0.05)
+    fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak.png', bbox_inches='tight')
+    fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong.png', bbox_inches='tight')
 
 
 # Plot the data
