@@ -288,3 +288,37 @@ for i in range(len(z)):
 
             command_array = np.hstack((command_array, command))
 np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/S3_t1/command.txt', command_array, fmt="%s")
+
+
+### S4 Trial 1
+## S4
+z = np.linspace(-1.5, 0.5, 11, dtype='f2')
+alpha_array = np.linspace(-1.8, 0, 10, dtype='f2')
+den_array =  np.linspace(-2, 2.6, 24, dtype='f2')
+command_array = np.array([])
+for i in range(len(z)):
+    for j in range(len(alpha_array)):
+        for k in range(len(den_array)):
+            lines = np.array(['Table power law spectral index ' + str(alpha_array[j]) + ', low=0.37, high=73.5 ',
+                              'nuL(nu) = 46.54 at 1.0 Ryd',
+                              'hden ' + str(den_array[k]),
+                              'save grid "alpha_' + str(alpha_array[j]) + '_' + str(z[i])
+                              + '_' + str(den_array[k]) + '.grd"',
+                              'metals ' + str(z[i]) + ' log',
+                              'radius 22.72',
+                              'iterative to convergence',
+                              'save averages, file="alpha_' + str(alpha_array[j])
+                              + '_' + str(z[i]) + '_' + str(den_array[k]) + '.avr" last no clobber',
+                              'temperature, hydrogen 1 over volume',
+                              'end of averages',
+                              'save line list "alpha_' + str(alpha_array[j]) + '_' + str(z[i]) + '_' + str(den_array[k])
+                              + '.lin" from "linelist.dat" last'])
+            np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/S4_t1/alpha_' + str(alpha_array[j]) + '_'
+                       + str(z[i]) + '_' + str(den_array[k]) + '.in', lines, fmt="%s")
+
+            # Command
+            command = np.array(['$cloudy -r ' + 'alpha_' + str(alpha_array[j]) + '_'
+                       + str(z[i]) + '_' + str(den_array[k])])
+
+            command_array = np.hstack((command_array, command))
+np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/S4_t1/command.txt', command_array, fmt="%s")

@@ -319,7 +319,7 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                          ('flux_OII', 0.01, True, None, None, None),
                          ('flux_Hbeta', 0.02, True, None, None, None),
                          ('flux_OIII5008', 0.1, True, None, None, None),
-                         ('log_density', log_density_guess, True, -2, 4, None),
+                         ('log_density', log_density_guess, True, -2, 5, None),
                          ('a_NeV3346', 0.0, False, None, None, None),
                          ('b_NeV3346', 0.0, False, None, None, None),
                          ('a_NeIII3869', 0.0, False, None, None, None),
@@ -764,8 +764,8 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-# PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_all', save_table=True,
-#                save_figure=False)
+PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_all', save_table=True,
+               save_figure=False)
 
 
 for i in range(len(text_array)):

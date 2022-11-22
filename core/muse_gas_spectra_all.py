@@ -281,6 +281,7 @@ wave_OIII5008_vac = pyasl.airtovac2(cube_OIII5008.wave.coord())
 
 # Strong lines
 wave_vac_strong_stack = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_bet_vac, wave_OIII4960_vac, wave_OIII5008_vac))
+idx_strong = len(wave_vac_strong_stack) - len(wave_bet_vac)
 
 # All lines
 wave_vac_all = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
@@ -289,6 +290,8 @@ wave_vac_all = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac,
 wave_vac_all_stack = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
                                  wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
                                  wave_OIII4960_vac, wave_OIII5008_vac))
+idx_all = len(wave_vac_all_stack)
+idx_weak = idx_all - idx_strong
 
 redshift_guess = 0.63
 sigma_kms_guess = 150.0
@@ -552,7 +555,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         # Weak lines
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[0].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[0].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
         axarr_i_weak[0].set_xlim(5350, 5500)
         axarr_i_weak[0].set_title(text_array[i], x=0.3, y=0.75, size=20)
 
@@ -560,30 +563,30 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr_i_weak[1].plot(wave_NeIII3869_vac, flux_NeIII3869_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
         axarr_i_weak[1].plot(wave_HeI3889_vac, flux_HeI3889_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[1].plot(wave_HeI3889_vac, flux_HeI3889_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[1].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[1].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
         axarr_i_weak[1].set_xlim(6250, 6400)
         axarr_i_weak[1].set_xticks([6300, 6400], ['6300', ''])
 
         axarr_i_weak[2].plot(wave_Heps_vac, flux_Heps_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[2].plot(wave_Heps_vac, flux_Heps_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[2].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[2].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
         axarr_i_weak[2].set_xlim(6400, 6550)
 
         axarr_i_weak[3].plot(wave_Hdel_vac, flux_Hdel_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[3].plot(wave_Hdel_vac, flux_Hdel_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[3].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[3].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
         axarr_i_weak[3].set_xlim(6600, 6750)
 
         axarr_i_weak[4].plot(wave_Hgam_vac, flux_Hgam_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[4].plot(wave_Hgam_vac, flux_Hgam_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
         axarr_i_weak[4].plot(wave_OIII4364_vac, flux_OIII4364_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[4].plot(wave_OIII4364_vac, flux_OIII4364_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[4].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[4].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
         axarr_i_weak[4].set_xlim(7000, 7150)
 
         axarr_i_weak[5].plot(wave_HeII4687_vac, flux_HeII4687_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[5].plot(wave_HeII4687_vac, flux_HeII4687_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[5].plot(wave_vac_all_stack, line_model_all, '-r', lw=1)
+        axarr_i_weak[5].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
         axarr_i_weak[5].set_xlim(7550, 7700)
 
         #
@@ -610,12 +613,12 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                                     pyasl.airtovac2(4861.333), pyasl.airtovac2(4958.911),
                                     pyasl.airtovac2(5006.843)])
         ymin, ymax = -5 * np.ones_like(lines), 100 * np.ones_like(lines)
-        axarr_i_weak[0].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i_weak[1].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i_weak[2].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i_weak[3].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i_weak[4].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
-        axarr_i_weak[5].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1)
+        axarr_i_weak[0].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
+        axarr_i_weak[1].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
+        axarr_i_weak[2].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
+        axarr_i_weak[3].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
+        axarr_i_weak[4].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
+        axarr_i_weak[5].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
 
 
         axarr_i_weak[0].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
@@ -670,11 +673,11 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         # Strong lines
         axarr_0_strong.plot(wave_vac_strong_stack, flux_strong, color='k', drawstyle='steps-mid', lw=1)
         axarr_0_strong.plot(wave_vac_strong_stack, flux_err_strong, color='lightgrey', lw=1)
-        axarr_0_strong.plot(wave_vac_all_stack, line_model_all, '-r')
+        axarr_0_strong.plot(wave_vac_all_stack[idx_weak:idx_all], line_model_all[idx_weak:idx_all], '-r')
 
         axarr_1_strong.plot(wave_vac_strong_stack, flux_strong, color='k', drawstyle='steps-mid', lw=1)
         axarr_1_strong.plot(wave_vac_strong_stack, flux_err_strong, color='lightgrey', lw=1)
-        axarr_1_strong.plot(wave_vac_all_stack, line_model_all, '-r')
+        axarr_1_strong.plot(wave_vac_all_stack[idx_weak:idx_all], line_model_all[idx_weak:idx_all], '-r')
 
         axarr_0_strong.set_title(text_array[i], x=0.2, y=0.75, size=20)
         axarr_0_strong.set_xlim(6020, 6120)
@@ -683,8 +686,8 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr_1_strong.spines['left'].set_visible(False)
 
         # Mark line info
-        axarr_0_strong.vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey')
-        axarr_1_strong.vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey')
+        axarr_0_strong.vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', zorder=-10)
+        axarr_1_strong.vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', zorder=-10)
         axarr_0_strong.set_ylim(flux_strong.min() - 0.5, flux_strong.max() + 0.5)
         axarr_1_strong.set_ylim(flux_strong.min() - 0.5, flux_strong.max() + 0.5)
 
