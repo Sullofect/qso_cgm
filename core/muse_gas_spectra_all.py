@@ -231,6 +231,18 @@ def model_all(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI3889
     return np.hstack((m_NeV3356, m_NeIII3869, m_HeI3889andH8, m_NeIII3968andHeps, m_Hdel, m_Hgam, m_OIII4364,
                       m_HeII4687, m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
 
+def expand_wave(wave, stack=True, times=3):
+    if stack is True:
+        wave_expand = np.array([])
+    else:
+        wave_expand = np.empty_like(wave)
+    for i in range(len(wave)):
+        wave_i = np.linspace(wave[i].min(), wave[i].max(), times * len(wave[i]))
+        if stack is True:
+            wave_expand = np.hstack((wave_expand, wave_i))
+        else:
+            wave_expand[i] = wave_i
+    return wave_expand
 
 # Read Data
 path_cube = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data',
@@ -281,15 +293,17 @@ wave_OIII5008_vac = pyasl.airtovac2(cube_OIII5008.wave.coord())
 
 # Strong lines
 wave_vac_strong_stack = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_bet_vac, wave_OIII4960_vac, wave_OIII5008_vac))
-idx_strong = len(wave_vac_strong_stack) - len(wave_bet_vac)
+idx_strong = (len(wave_vac_strong_stack) - len(wave_bet_vac)) * 3
 
 # All lines
 wave_vac_all = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
                           wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
                           wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
+wave_vac_all_plot = expand_wave(wave_vac_all, stack=False)
 wave_vac_all_stack = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
                                  wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
                                  wave_OIII4960_vac, wave_OIII5008_vac))
+wave_vac_all_stack = expand_wave(wave_vac_all)
 idx_all = len(wave_vac_all_stack)
 idx_weak = idx_all - idx_strong
 
@@ -545,7 +559,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                                     dflux_NeIII3968, dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364,
                                     dflux_HeII4687, dflux_OII, dr_OII, dflux_Hbeta, dflux_OIII5008])
 
-        line_model_all = model_all(wave_vac_all, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
+        line_model_all = model_all(wave_vac_all_plot, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
                                     flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687,
                                     flux_OII, flux_Hbeta, flux_OIII5008, r_OII, a_NeV3346, b_NeV3346,
                                     a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968,

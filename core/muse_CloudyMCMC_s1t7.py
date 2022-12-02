@@ -80,7 +80,7 @@ figure = corner.corner(samples, labels=[r"$\mathrm{log_{10}(n)}$", r"$\mathrm{\a
                        smooth=1., smooth1d=1., bins=25)
 
 for i, ax in enumerate(figure.get_axes()):
-    if i == 2:
+    if not np.isin(i, np.arange(0, ndim ** 2, ndim + 1)):
         ax.tick_params(axis='both', direction='in', top='on', bottom='on', left='on', right='on')
     ax.tick_params(axis='both', direction='in', top='on', bottom='on')
 figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_test_mcmc_S1_t7.pdf', bbox_inches='tight')

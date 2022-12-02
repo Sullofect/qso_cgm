@@ -627,35 +627,34 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=(wave_vac_all, flux_MCMC, flux_err_MCMC, z, sigma,
                                                                        a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008,
                                                                        b_OIII5008))
-        state = sampler.run_mcmc(p0, 500)
-        samples = sampler.get_chain(flat=True, discard=100)
+        state = sampler.run_mcmc(p0, 1000)
+        samples = sampler.get_chain(flat=True, discard=10)
 
         figure = corner.corner(samples, labels=[r"$\mathrm{log_{10}(n)}$", r"$\mathrm{log_{10}(T)}$",
-                                                r"$\mathrm{Flux_OII}$", r"$\mathrm{Flux_OIII5008}$"],
+                                                r"$\mathrm{Flux\_OII}$", r"$\mathrm{Flux\_OIII5008}$"],
                                quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k', title_kwargs={"fontsize": 13},
                                smooth=1., smooth1d=1., bins=25)
 
 
         best_fit = np.percentile(samples, [16, 50, 84], axis=0)
 
-        for i in range((3)):
-            model_MCMC_i = model_MCMC(wave_vac_all, z, sigma, best_fit[i, 0], best_fit[i, 1], best_fit[i, 2],
-                                      best_fit[i, 3], a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008, b_OIII5008)
+        for j in range(3):
+            model_MCMC_j = model_MCMC(wave_vac_all, z, sigma, best_fit[j, 0], best_fit[j, 1], best_fit[j, 2],
+                                      best_fit[j, 3], a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008, b_OIII5008)
             ind_1 = len(wave_vac_all[8])
             ind_2 = len(wave_vac_all[8]) + len(wave_vac_all[6])
-            ind_3 =len(wave_vac_all[8]) + len(wave_vac_all[6]) + len(wave_vac_all[11])
-            axarr_0_strong.plot(wave_vac_all[8], model_MCMC_i[:ind_1], '-b', lw=1)
-            axarr_i_weak[4].plot(wave_vac_all[6], model_MCMC_i[ind_1:ind_2], '-b', lw=1)
-            axarr_1_strong.plot(wave_vac_all[11], model_MCMC_i[ind_2:ind_3], '-b', lw=1)
+            ind_3 = len(wave_vac_all[8]) + len(wave_vac_all[6]) + len(wave_vac_all[11])
+            axarr_0_strong.plot(wave_vac_all[8], model_MCMC_j[:ind_1], '-', lw=0.5, zorder=100)
+            axarr_i_weak[4].plot(wave_vac_all[6], model_MCMC_j[ind_1:ind_2], '-', lw=1, zorder=100)
+            axarr_1_strong.plot(wave_vac_all[11], model_MCMC_j[ind_2:ind_3], '-', lw=1, zorder=100)
             #
 
-        for i, ax in enumerate(figure.get_axes()):
-            print(i)
-            if i == 2:
+        for j, ax in enumerate(figure.get_axes()):
+            if not np.isin(j, np.arange(0, ndim ** 2, ndim + 1)):
                 ax.tick_params(axis='both', direction='in', top='on', bottom='on', right='on', left='on')
             ax.tick_params(axis='both', direction='in', top='on', bottom='on')
         figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_MCMC.pdf', bbox_inches='tight')
-
+        #.close()
         # Weak lines
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
@@ -792,7 +791,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         # Mark line info
         axarr_0_strong.vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
         axarr_1_strong.vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
-        axarr_0_strong.set_ylim(flux_strong.min() - 0.5, flux_strong.max() + 0.5)
+        axarr_0_strong.set_ylim(flux_strong.min() - 0.1, flux_OII_i.max() + 0.1)
         axarr_1_strong.set_ylim(flux_strong.min() - 0.5, flux_strong.max() + 0.5)
 
         if flux_Hbeta_i.max() > flux_OIII5008_i.max():
