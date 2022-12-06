@@ -43,7 +43,7 @@ def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, a, b):
 
     return OII3727_gaussian + OII3729_gaussian + a * wave_vac + b
 
-def model_OII_nT(wave_vac, z, sigma_kms, flux_OII, logden, logT, a, b):
+def model_OII_nT(wave_vac, z, sigma_kms, flux_OII, den, logT, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OII3727_vac = 3727.092
@@ -55,8 +55,8 @@ def model_OII_nT(wave_vac, z, sigma_kms, flux_OII, logden, logT, a, b):
     sigma_OII3727_A = np.sqrt((sigma_kms / c_kms * wave_OII3727_obs) ** 2 + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
     sigma_OII3729_A = np.sqrt((sigma_kms / c_kms * wave_OII3729_obs) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
 
-    OII3727 = O2.getEmissivity(tem=10 ** logT, den=10 ** logden, wave=3727)
-    OII3729 = O2.getEmissivity(tem=10 ** logT, den=10 ** logden, wave=3729)
+    OII3727 = O2.getEmissivity(tem=10 ** logT, den=den, wave=3727)
+    OII3729 = O2.getEmissivity(tem=10 ** logT, den=den, wave=3729)
     r_OII3729_3727 = OII3729 / OII3727
 
     flux_OII3727 = flux_OII / (1 + r_OII3729_3727)
@@ -265,14 +265,14 @@ def model_all(wave_vac, z, sigma_kms, flux_NeV3346, flux_NeIII3869, flux_HeI3889
     return np.hstack((m_NeV3356, m_NeIII3869, m_HeI3889andH8, m_NeIII3968andHeps, m_Hdel, m_Hgam, m_OIII4364,
                       m_HeII4687, m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
 
-def model_MCMC(wave_vac, z, sigma_kms, logden, logT, flux_OII, flux_OIII5008, a_OIII4364, b_OIII4364,
+def model_MCMC(wave_vac, z, sigma_kms, den, logT, flux_OII, flux_OIII5008, a_OIII4364, b_OIII4364,
                a_OII, b_OII, a_OIII5008, b_OIII5008):
 
-    OIII4364 = O3.getEmissivity(tem=10 ** logT, den=10 ** logden, wave=4363)
-    OIII5008 = O3.getEmissivity(tem=10 ** logT, den=10 ** logden, wave=5007)
+    OIII4364 = O3.getEmissivity(tem=10 ** logT, den=den, wave=4363)
+    OIII5008 = O3.getEmissivity(tem=10 ** logT, den=den, wave=5007)
     r_OIII4364_5008 = OIII4364 / OIII5008
 
-    m_OII = model_OII_nT(wave_vac[8], z, sigma_kms, flux_OII, logden, logT, a_OII, b_OII)
+    m_OII = model_OII_nT(wave_vac[8], z, sigma_kms, flux_OII, den, logT, a_OII, b_OII)
     m_OIII4364 = model_OIII4364(wave_vac[6], z, sigma_kms, flux_OIII5008 * r_OIII4364_5008, a_OIII4364, b_OIII4364)
     m_OIII5008 = model_OIII5008(wave_vac[11], z, sigma_kms, flux_OIII5008, a_OIII5008, b_OIII5008)
 
@@ -281,19 +281,19 @@ def model_MCMC(wave_vac, z, sigma_kms, logden, logT, flux_OII, flux_OIII5008, a_
 
 # Define the log likelihood function and run MCMC
 def log_prob(x, wave_vac, flux, dflux, z, sigma_kms, a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008, b_OIII5008):
-    logden, logT, flux_OII, flux_OIII5008 = x[0], x[1], x[2], x[3]
-    if logden < -1:
+    den, logT, flux_OII, flux_OIII5008 = x[0], x[1], x[2], x[3]
+    if den < 0:
         return -np.inf
-    # if alpha > -0.5:
-    #     return -np.inf
-    # if logz > 0.:
-    #     return -np.inf
+    elif logT > 5:
+        return -np.inf
+    elif logT < 3.5:
+        return -np.inf
     # if logden > 2.6:
     #     return -np.inf
     # elif logden < 0:
     #     return -np.inf
     else:
-        model = model_MCMC(wave_vac, z, sigma_kms, logden, logT, flux_OII, flux_OIII5008, a_OIII4364,
+        model = model_MCMC(wave_vac, z, sigma_kms, den, logT, flux_OII, flux_OIII5008, a_OIII4364,
                            b_OIII4364, a_OII, b_OII, a_OIII5008, b_OIII5008)
         return - 0.5 * np.nansum(((model - flux) / dflux) ** 2)
 
@@ -623,14 +623,14 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         flux_err_MCMC = np.hstack((flux_OII_err_i, flux_OIII4364_err_i, flux_OIII5008_err_i))
 
         ndim, nwalkers = 4, 40
-        p0 = np.array([1.5, 4.3, flux_OII, flux_OIII5008]) + 0.1 * np.random.randn(nwalkers, ndim)
+        p0 = np.array([5, 4.3, flux_OII, flux_OIII5008]) + 0.1 * np.random.randn(nwalkers, ndim)
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=(wave_vac_all, flux_MCMC, flux_err_MCMC, z, sigma,
                                                                        a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008,
                                                                        b_OIII5008))
-        state = sampler.run_mcmc(p0, 1000)
-        samples = sampler.get_chain(flat=True, discard=10)
+        state = sampler.run_mcmc(p0, 5000)
+        samples = sampler.get_chain(flat=True, discard=1000)
 
-        figure = corner.corner(samples, labels=[r"$\mathrm{log_{10}(n)}$", r"$\mathrm{log_{10}(T)}$",
+        figure = corner.corner(samples, labels=[r"$\mathrm{n}$", r"$\mathrm{log_{10}(T)}$",
                                                 r"$\mathrm{Flux\_OII}$", r"$\mathrm{Flux\_OIII5008}$"],
                                quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k', title_kwargs={"fontsize": 13},
                                smooth=1., smooth1d=1., bins=25)
@@ -864,6 +864,7 @@ text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 #                save_figure=False)
 
 
-for i in range(len(text_array[:2])):
+for i in range(len(text_array)):
+# for i in [8, 9]:
     PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
                    figname='spectra_gas/spectra_gas_' + str(text_array[i]))
