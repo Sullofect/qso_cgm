@@ -422,3 +422,66 @@ for i in range(len(z)):
 
             command_array = np.hstack((command_array, command))
 np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/S7_t1/command.txt', command_array, fmt="%s")
+
+
+def CreateGrid(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=None):
+    global text_array
+    dis = np.around(distance[text_array == region][0], decimals=2)
+    command_array = np.array([])
+    os.makedirs('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial, exist_ok=True)
+    os.popen('cp /Users/lzq/Dropbox/Data/CGM/cloudy/trial7/linelist.dat'
+             ' /Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/linelist.dat')
+    for i in range(len(z_array)):
+        for j in range(len(alpha_array)):
+            for k in range(len(den_array)):
+                lines = np.array(['Table power law spectral index ' + str(alpha_array[j]) + ', low=0.37, high=73.5 ',
+                                  'nuL(nu) = ' + str(L_qso) + ' at 1.0 Ryd',
+                                  'hden ' + str(den_array[k]),
+                                  'save grid "alpha_' + str(alpha_array[j]) + '_' + str(z[i])
+                                  + '_' + str(den_array[k]) + '.grd"',
+                                  'metals ' + str(z[i]) + ' log',
+                                  'radius ' + str(dis),
+                                  'iterative to convergence',
+                                  'save averages, file="alpha_' + str(alpha_array[j])
+                                  + '_' + str(z[i]) + '_' + str(den_array[k]) + '.avr" last no clobber',
+                                  'temperature, hydrogen 1 over volume',
+                                  'end of averages',
+                                  'save line list "alpha_' + str(alpha_array[j]) + '_' + str(z[i]) + '_' + str(
+                                      den_array[k])
+                                  + '.lin" from "linelist.dat" last'])
+                np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial
+                           + '/alpha_' + str(alpha_array[j]) + '_'
+                           + str(z[i]) + '_' + str(den_array[k]) + '.in', lines, fmt="%s")
+
+                # Command
+                command = np.array(['$cloudy -r ' + 'alpha_' + str(alpha_array[j]) + '_'
+                                    + str(z[i]) + '_' + str(den_array[k])])
+
+                command_array = np.hstack((command_array, command))
+    np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
+
+#
+z_array = np.linspace(-1.5, 0.5, 11, dtype='f2')
+alpha_array = np.linspace(-1.8, 0, 10, dtype='f2')
+den_array =  np.linspace(-2, 2.6, 24, dtype='f2')
+
+# S8
+CreateGrid(z_array, alpha_array, den_array, region='S8', trial='t1')
+
+# S9
+CreateGrid(z_array, alpha_array, den_array, region='S9', trial='t1')
+
+# S10
+CreateGrid(z_array, alpha_array, den_array, region='S10', trial='t1')
+
+# B1
+CreateGrid(z_array, alpha_array, den_array, region='B1', trial='t1')
+
+# B2
+CreateGrid(z_array, alpha_array, den_array, region='B2', trial='t1')
+
+# B3
+CreateGrid(z_array, alpha_array, den_array, region='B3', trial='t1')
+
+# B4
+CreateGrid(z_array, alpha_array, den_array, region='B4', trial='t1')
