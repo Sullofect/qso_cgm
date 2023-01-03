@@ -1,5 +1,6 @@
 import os
 import lmfit
+import extinction
 import numpy as np
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
@@ -244,6 +245,13 @@ def expand_wave(wave, stack=True, times=3):
             wave_expand[i] = wave_i
     return wave_expand
 
+def extinction_ndarray(wave_ndarray, A_v):
+    output = np.array([])
+    for i in range(len(wave_ndarray)):
+        ext_i = extinction.fm07(wave_ndarray[i], A_v)
+        output = np.hstack((output, ext_i))
+    return output
+
 # Read Data
 path_cube = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data',
                         'ESO_DEEP_offset_zapped.fits_SUBTRACTED.fits')
@@ -300,9 +308,9 @@ wave_vac_all = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac,
                           wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
                           wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
 wave_vac_all_plot = expand_wave(wave_vac_all, stack=False)
-wave_vac_all_stack = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
-                                 wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
-                                 wave_OIII4960_vac, wave_OIII5008_vac))
+# wave_vac_all_stack = np.hstack((wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
+#                                  wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
+#                                  wave_OIII4960_vac, wave_OIII5008_vac))
 wave_vac_all_stack = expand_wave(wave_vac_all)
 idx_all = len(wave_vac_all_stack)
 idx_weak = idx_all - idx_strong
@@ -356,8 +364,8 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
 
 
 # Def Plot function
-def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_1', save_table=False,
-                   save_figure=True):
+def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_1', deredden=True,
+                   save_table=False, save_figure=True):
     # Weak emission lines
     fig_weak, axarr_weak = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
                               gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
@@ -483,6 +491,38 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         flux_OIII5008_i, flux_OIII5008_err_i = spe_OIII5008_i.data * 1e-3, np.sqrt(spe_OIII5008_i.var) * 1e-3
 
         #
+        if deredden:
+            A_v = 0.54
+            factor_extinction = extinction_ndarray(wave_vac_all, A_v)
+
+            flux_NeV3346_i *= 10 ** (0.4 * factor_extinction[0])
+            flux_NeV3346_err_i *= 10 ** (0.4 * factor_extinction[0])
+            flux_NeIII3869_i *= 10 ** (0.4 * factor_extinction[1])
+            flux_NeIII3869_err_i *= 10 ** (0.4 * factor_extinction[1])
+            flux_HeI3889_i *= 10 ** (0.4 * factor_extinction[2])
+            flux_HeI3889_err_i *= 10 ** (0.4 * factor_extinction[2])
+            flux_Heps_i *= 10 ** (0.4 * factor_extinction[3])
+            flux_Heps_err_i *= 10 ** (0.4 * factor_extinction[3])
+            flux_Hdel_i *= 10 ** (0.4 * factor_extinction[4])
+            flux_Hdel_err_i *= 10 ** (0.4 * factor_extinction[4])
+            flux_Hgam_i *= 10 ** (0.4 * factor_extinction[5])
+            flux_Hgam_err_i *= 10 ** (0.4 * factor_extinction[5])
+            flux_OIII4364_i *= 10 ** (0.4 * factor_extinction[6])
+            flux_OIII4364_err_i *= 10 ** (0.4 * factor_extinction[6])
+            flux_HeII4687_i *= 10 ** (0.4 * factor_extinction[7])
+            flux_HeII4687_err_i *= 10 ** (0.4 * factor_extinction[7])
+            flux_OII_i *= 10 ** (0.4 * factor_extinction[8])
+            flux_OII_err_i *= 10 ** (0.4 * factor_extinction[8])
+            # no continuum
+            flux_Hbeta_i *= 10 ** (0.4 * factor_extinction[9])
+            flux_Hbeta_err_i *= 10 ** (0.4 * factor_extinction[9])
+            flux_OIII4960_i *= 10 ** (0.4 * factor_extinction[10])
+            flux_OIII4960_err_i *= 10 ** (0.4 * factor_extinction[10])
+            flux_OIII5008_i *= 10 ** (0.4 * factor_extinction[11])
+            flux_OIII5008_err_i *= 10 ** (0.4 * factor_extinction[11])
+
+
+            #
         flux_strong = np.hstack((flux_OII_i, flux_Hbeta_i, flux_bet_i, flux_OIII4960_i, flux_OIII5008_i))
         flux_err_strong = np.hstack((flux_OII_err_i, flux_Hbeta_err_i, flux_bet_err_i, flux_OIII4960_err_i,
                                      flux_OIII5008_err_i))
@@ -494,6 +534,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                                    flux_Hdel_err_i, flux_Hgam_err_i, flux_OIII4364_err_i, flux_HeII4687_err_i,
                                    flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
 
+        # Fit
         spec_model_all = lmfit.Model(model_all, missing='drop')
         result_all = spec_model_all.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters_all,
                                 weights=1 / flux_err_all)
@@ -755,8 +796,12 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         fig_strong.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
                              size=20, x=0.05)
     if save_figure:
-        fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak.png', bbox_inches='tight')
-        fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong.png', bbox_inches='tight')
+        if deredden:
+            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak_dered.png', bbox_inches='tight')
+            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong_dered.png', bbox_inches='tight')
+        else:
+            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak.png', bbox_inches='tight')
+            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong.png', bbox_inches='tight')
 
 
 # Plot the data
