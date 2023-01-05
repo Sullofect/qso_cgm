@@ -3,7 +3,7 @@ import numpy as np
 import astropy.io.fits as fits
 
 def load_lineratio(region=None):
-    path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM',
+    path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'RegionLinesRatio',
                                     'moreline_profile_selected_region.fits')
     data_fit_info_sr = fits.getdata(path_fit_info_sr, ignore_missing_end=True)
     if region != 'all':
