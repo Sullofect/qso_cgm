@@ -2,14 +2,29 @@ import os
 import numpy as np
 import astropy.io.fits as fits
 
-def load_lineratio(region=None):
-    path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'RegionLinesRatio',
-                                    'moreline_profile_selected_region.fits')
+def load_lineratio(region=None, deredden=True):
+    if deredden:
+        if region == 'S3' or region == 'S4':
+            path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'RegionLinesRatio',
+                                            'RegionLinesRatio_S3S4_dered.fits')
+        else:
+            path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'RegionLinesRatio',
+                                            'RegionLinesRatio_dered.fits')
+    else:
+        if region == 'S3' or region == 'S4':
+            path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'RegionLinesRatio',
+                                            'RegionLinesRatio_S3S4.fits')
+        else:
+            path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'RegionLinesRatio',
+                                            'RegionLinesRatio.fits')
+
+
     data_fit_info_sr = fits.getdata(path_fit_info_sr, ignore_missing_end=True)
     if region != 'all':
         data_fit_info_sr = data_fit_info_sr[data_fit_info_sr['region'] == region]
 
     flux_Hbeta, dflux_Hbeta = data_fit_info_sr['flux_Hbeta'], data_fit_info_sr['dflux_Hbeta']
+    print(flux_Hbeta, dflux_Hbeta)
     flux_OII = data_fit_info_sr['flux_OII'] / flux_Hbeta
     dflux_OII = flux_OII * np.sqrt((data_fit_info_sr['dflux_OII'] / data_fit_info_sr['flux_OII']) ** 2
                                    + (dflux_Hbeta / flux_Hbeta) ** 2)
