@@ -1,7 +1,7 @@
 import os
 import emcee
 import lmfit
-import extinction
+import corner
 import numpy as np
 import pyneb as pn
 import astropy.io.fits as fits
@@ -21,7 +21,8 @@ def getSigma_MUSE(wave):
     return (5.866e-8 * wave ** 2 - 9.187e-4 * wave + 6.04) / 2.355
 
 
-def model_OII(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing, r_OII3729_3727, a, b):
+def model_OII(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing, r_OII3729_3727,
+              r_OII3729_3727_wing, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OII3727_vac = 3727.092
@@ -43,15 +44,28 @@ def model_OII(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII
     OII3729_gaussian = peak_OII3729 * np.exp(-(wave_vac - wave_OII3729_obs) ** 2 / 2 / sigma_OII3729_A ** 2)
 
     # Redshifted wing
-    # OII3727_wing =
-    # OII3729_wing =
-    wave_OII3729_wing = wave_OII3729_vac * (1 + z_wing)
-    sigma_wing_A = np.sqrt((sigma_kms_wing / c_kms * wave_OII3729_wing) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
-    peak_wing = flux_OII_wing / np.sqrt(2 * sigma_wing_A ** 2 * np.pi)
-    OII_wing = peak_wing * np.exp(-(wave_vac - wave_OII3729_wing) ** 2 / 2 / sigma_wing_A ** 2)
-    return OII3727_gaussian + OII3729_gaussian + OII_wing + a * wave_vac + b
+    wave_OII3727_wing = wave_OII3727_vac * (1 + z + dz_wing)
+    wave_OII3729_wing = wave_OII3729_vac * (1 + z + dz_wing)
 
-def model_OII_nT(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing, den, logT, a, b):
+    sigma_OII3727_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3727_wing) ** 2
+                                   + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
+    sigma_OII3729_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3729_wing) ** 2
+                                   + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
+
+    flux_OII3727_wing = flux_OII_wing / (1 + r_OII3729_3727_wing)
+    flux_OII3729_wing = flux_OII_wing / (1 + 1.0 / r_OII3729_3727_wing)
+
+    peak_OII3727_wing = flux_OII3727_wing / np.sqrt(2 * sigma_OII3727_A_wing ** 2 * np.pi)
+    peak_OII3729_wing = flux_OII3729_wing / np.sqrt(2 * sigma_OII3729_A_wing ** 2 * np.pi)
+
+    OII3727_gaussian_wing = peak_OII3727_wing * np.exp(-(wave_vac - wave_OII3727_wing) ** 2 / 2
+                                                       / sigma_OII3727_A_wing ** 2)
+    OII3729_gaussian_wing = peak_OII3729_wing * np.exp(-(wave_vac - wave_OII3729_wing) ** 2 / 2
+                                                       / sigma_OII3729_A_wing ** 2)
+    return OII3727_gaussian + OII3729_gaussian + OII3727_gaussian_wing + OII3729_gaussian_wing + a * wave_vac + b
+
+def model_OII_nT(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing, den, logT, den_wing,
+                 logT_wing, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OII3727_vac = 3727.092
@@ -77,11 +91,29 @@ def model_OII_nT(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_
     OII3729_gaussian = peak_OII3729 * np.exp(-(wave_vac - wave_OII3729_obs) ** 2 / 2 / sigma_OII3729_A ** 2)
 
     # Redshifted wing
-    wave_OII3729_wing = wave_OII3729_vac * (1 + z_wing)
-    sigma_wing_A = np.sqrt((sigma_kms_wing / c_kms * wave_OII3729_wing) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
-    peak_wing = flux_OII_wing / np.sqrt(2 * sigma_wing_A ** 2 * np.pi)
-    OII_wing = peak_wing * np.exp(-(wave_vac - wave_OII3729_wing) ** 2 / 2 / sigma_wing_A ** 2)
-    return OII3727_gaussian + OII3729_gaussian + OII_wing + a * wave_vac + b
+    wave_OII3727_wing = wave_OII3727_vac * (1 + z + dz_wing)
+    wave_OII3729_wing = wave_OII3729_vac * (1 + z + dz_wing)
+
+    sigma_OII3727_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3727_wing) ** 2
+                                   + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
+    sigma_OII3729_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3729_wing) ** 2
+                                   + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
+
+    OII3727_wing = O2.getEmissivity(tem=10 ** logT_wing, den=den_wing, wave=3727)
+    OII3729_wing = O2.getEmissivity(tem=10 ** logT_wing, den=den_wing, wave=3729)
+    r_OII3729_3727_wing = OII3729_wing / OII3727_wing
+
+    flux_OII3727_wing = flux_OII_wing / (1 + r_OII3729_3727_wing)
+    flux_OII3729_wing = flux_OII_wing / (1 + 1.0 / r_OII3729_3727_wing)
+
+    peak_OII3727_wing = flux_OII3727_wing / np.sqrt(2 * sigma_OII3727_A_wing ** 2 * np.pi)
+    peak_OII3729_wing = flux_OII3729_wing / np.sqrt(2 * sigma_OII3729_A_wing ** 2 * np.pi)
+
+    OII3727_gaussian_wing = peak_OII3727_wing * np.exp(-(wave_vac - wave_OII3727_wing) ** 2 / 2
+                                                       / sigma_OII3727_A_wing ** 2)
+    OII3729_gaussian_wing = peak_OII3729_wing * np.exp(-(wave_vac - wave_OII3729_wing) ** 2 / 2
+                                                       / sigma_OII3729_A_wing ** 2)
+    return OII3727_gaussian + OII3729_gaussian + OII3727_gaussian_wing + OII3729_gaussian_wing + a * wave_vac + b
 
 
 def model_Hbeta(wave_vac, z, sigma_kms, flux_Hbeta, a, b):
@@ -98,7 +130,7 @@ def model_Hbeta(wave_vac, z, sigma_kms, flux_Hbeta, a, b):
     return Hbeta_gaussian + a * wave_vac + b
 
 
-def model_OIII4960(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_OIII4960, flux_OIII4960_wing, a, b):
+def model_OIII4960(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII4960, flux_OIII4960_wing, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OIII4960_vac = 4960.295
@@ -110,7 +142,7 @@ def model_OIII4960(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_OIII4960
     OIII4960_gaussian = peak_OIII4960 * np.exp(-(wave_vac - wave_OIII4960_obs) ** 2 / 2 / sigma_OIII4960_A ** 2)
 
     # Redshifted wing
-    wave_OIII4960_wing = wave_OIII4960_vac * (1 + z_wing)
+    wave_OIII4960_wing = wave_OIII4960_vac * (1 + z + dz_wing)
     sigma_wing_A = np.sqrt((sigma_kms_wing / c_kms * wave_OIII4960_wing) ** 2 + (getSigma_MUSE(wave_OIII4960_obs)) ** 2)
     peak_wing = flux_OIII4960_wing / np.sqrt(2 * sigma_wing_A ** 2 * np.pi)
     OIII4960_wing = peak_wing * np.exp(-(wave_vac - wave_OIII4960_wing) ** 2 / 2 / sigma_wing_A ** 2)
@@ -118,7 +150,7 @@ def model_OIII4960(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_OIII4960
     return OIII4960_gaussian + OIII4960_wing + a * wave_vac + b
 
 
-def model_OIII5008(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing, a, b):
+def model_OIII5008(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OIII5008_vac = 5008.239
@@ -130,7 +162,7 @@ def model_OIII5008(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_OIII5008
     OIII5008_gaussian = peak_OIII5008 * np.exp(-(wave_vac - wave_OIII5008_obs) ** 2 / 2 / sigma_OIII5008_A ** 2)
 
     # Redshifted wing
-    wave_OIII5008_wing = wave_OIII5008_vac * (1 + z_wing)
+    wave_OIII5008_wing = wave_OIII5008_vac * (1 + z + dz_wing)
     sigma_wing_A = np.sqrt((sigma_kms_wing / c_kms * wave_OIII5008_wing) ** 2 + (getSigma_MUSE(wave_OIII5008_obs)) ** 2)
     peak_wing = flux_OIII5008_wing / np.sqrt(2 * sigma_wing_A ** 2 * np.pi)
     OIII5008_wing = peak_wing * np.exp(-(wave_vac - wave_OIII5008_wing) ** 2 / 2 / sigma_wing_A ** 2)
@@ -265,9 +297,9 @@ def model_HeII4687(wave_vac, z, sigma_kms, flux_HeII4687, a, b):
     return HeII4687_gaussian + a * wave_vac + b
 
 
-def model_all(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
+def model_all(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
               flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, flux_OII_wing,
-              flux_Hbeta, flux_OIII5008, flux_OIII5008_wing, r_OII3729_3727,
+              flux_Hbeta, flux_OIII5008, flux_OIII5008_wing, r_OII3729_3727, r_OII3729_3727_wing,
               a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968,
               b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687,
               b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008):
@@ -283,28 +315,34 @@ def model_all(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, flux_NeV3346, flux
     m_HeII4687 = model_HeII4687(wave_vac[7], z, sigma_kms, flux_HeII4687, a_HeII4687, b_HeII4687)
 
     # Strong lines
-    m_OII = model_OII(wave_vac[8], z, z_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing,
-                      r_OII3729_3727, a_OII, b_OII)
+    m_OII = model_OII(wave_vac[8], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing,
+                      r_OII3729_3727, r_OII3729_3727_wing, a_OII, b_OII)
     m_Hbeta = model_Hbeta(wave_vac[9], z, sigma_kms, flux_Hbeta, a_Hbeta, b_Hbeta)
-    m_OIII4960 = model_OIII4960(wave_vac[10], z, z_wing, sigma_kms, sigma_kms_wing, flux_OIII5008 / 3,
+    m_OIII4960 = model_OIII4960(wave_vac[10], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008 / 3,
                                 flux_OIII5008_wing / 3, a_OIII4960, b_OIII4960)
-    m_OIII5008 = model_OIII5008(wave_vac[11], z, z_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing,
+    m_OIII5008 = model_OIII5008(wave_vac[11], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing,
                                 a_OIII5008, b_OIII5008)
     return np.hstack((m_NeV3356, m_NeIII3869, m_HeI3889andH8, m_NeIII3968andHeps, m_Hdel, m_Hgam, m_OIII4364,
                       m_HeII4687, m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
 
-def model_MCMC(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing, den, logT, flux_OII, flux_OII_wing,
+def model_MCMC(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, den, logT, den_wing, logT_wing, flux_OII, flux_OII_wing,
                flux_OIII5008, flux_OIII5008_wing, a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008, b_OIII5008):
 
     OIII4364 = O3.getEmissivity(tem=10 ** logT, den=den, wave=4363)
     OIII5008 = O3.getEmissivity(tem=10 ** logT, den=den, wave=5007)
     r_OIII4364_5008 = OIII4364 / OIII5008
 
-    m_OII = model_OII_nT(wave_vac[8], z, z_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing,
-                         den, logT, a_OII, b_OII)
+    # OIII4364_wing = O3.getEmissivity(tem=10 ** logT_wing, den=den_wing, wave=4363)
+    # OIII5008_wing = O3.getEmissivity(tem=10 ** logT_wing, den=den_wing, wave=5007)
+    # r_OIII4364_5008_wing = OIII4364_wing / OIII5008_wing
+
+    m_OII = model_OII_nT(wave_vac[8], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing,
+                         den, logT, den_wing, logT_wing, a_OII, b_OII)
     m_OIII4364 = model_OIII4364(wave_vac[6], z, sigma_kms, flux_OIII5008 * r_OIII4364_5008, a_OIII4364, b_OIII4364)
-    m_OIII5008 = model_OIII5008(wave_vac[11], z, z_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing,
+    m_OIII5008 = model_OIII5008(wave_vac[11], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing,
                                 a_OIII5008, b_OIII5008)
+
+    # m_OIII4364_wing = model_OIII4364(wave_vac[6], z, sigma_kms, flux_OIII5008 * r_OIII4364_5008_wing, a_OIII4364, b_OIII4364)
     return np.hstack((m_OII, m_OIII4364, m_OIII5008))
 
 
@@ -330,22 +368,29 @@ def extinction_ndarray(wave_ndarray, A_v):
     return output
 
 # Define the log likelihood function and run MCMC
-def log_prob(x, wave_vac, flux, dflux, z, z_wing, sigma_kms, sigma_kms_wing, a_OIII4364, b_OIII4364, a_OII, b_OII,
+def log_prob(x, wave_vac, flux, dflux, z, dz_wing, sigma_kms, sigma_kms_wing, a_OIII4364, b_OIII4364, a_OII, b_OII,
              a_OIII5008, b_OIII5008):
-    den, logT, flux_OII, flux_OII_wing, flux_OIII5008, flux_OIII5008_wing = x[0], x[1], x[2], x[3], x[4], x[5]
+    den, logT, den_wing, logT_wing, flux_OII, \
+    flux_OII_wing, flux_OIII5008, flux_OIII5008_wing = x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]
     if den < 0:
+        return -np.inf
+    elif den_wing < 0:
         return -np.inf
     elif logT > 5:
         return -np.inf
     elif logT < 3.5:
+        return -np.inf
+    elif logT_wing > 5:
+        return -np.inf
+    elif logT_wing < 3.5:
         return -np.inf
     # if logden > 2.6:
     #     return -np.inf
     # elif logden < 0:
     #     return -np.inf
     else:
-        model = model_MCMC(wave_vac, z, z_wing, sigma_kms, sigma_kms_wing,
-                           den, logT, flux_OII, flux_OII_wing, flux_OIII5008, flux_OIII5008_wing,
+        model = model_MCMC(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing,
+                           den, logT, den_wing, logT_wing, flux_OII, flux_OII_wing, flux_OIII5008, flux_OIII5008_wing,
                            a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008, b_OIII5008)
         return - 0.5 * np.nansum(((model - flux) / dflux) ** 2)
 
@@ -420,9 +465,9 @@ r_OII3729_3727_guess = 2
 
 parameters_all = lmfit.Parameters()
 parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
-                        ('z_wing', redshift_guess, True, 0.62, 0.7, None),
+                        ('dz_wing', 0.0006, True, 0.0, 0.005, None),
                         ('sigma_kms', sigma_kms_guess, True, 10, 500, None),
-                        ('sigma_kms_wing', sigma_kms_guess, True, 10, 1000, None),
+                        ('sigma_kms_wing', 300, True, 10, 1000, None),
                         ('flux_NeV3346', 0.01, True, None, None, None),
                         ('flux_NeIII3869', 0.05, True, None, None, None),
                         ('flux_HeI3889', 0.01, True, None, None, None),
@@ -433,12 +478,13 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                         ('flux_Hgam', 0.01, True, None, None, None),
                         ('flux_OIII4364', 0.1, True, None, None, None),
                         ('flux_HeII4687', 0.005, True, None, None, None),
-                        ('flux_OII', 0.01, True, None, None, None),
-                        ('flux_OII_wing', 0.01, True, None, None, None),
+                        ('flux_OII', 0.01, True, 0, None, None),
+                        ('flux_OII_wing', 0.005, True, 0, None, None),
                         ('flux_Hbeta', 0.02, True, None, None, None),
                         ('flux_OIII5008', 0.1, True, None, None, None),
-                        ('flux_OIII5008_wing', 0.1, True, None, None, None),
+                        ('flux_OIII5008_wing', 0.1, True, 0, None, None),
                         ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
+                        ('r_OII3729_3727_wing', r_OII3729_3727_guess, True, 0.2, None, None),
                         ('a_NeV3346', 0.0, False, None, None, None),
                         ('b_NeV3346', 0.0, False, None, None, None),
                         ('a_NeIII3869', 0.0, False, None, None, None),
@@ -642,7 +688,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
         # Load fitted result
         z, dz = result_all.best_values['z'], result_all.params['z'].stderr
-        z_wing, dz_wing = result_all.best_values['z_wing'], result_all.params['z_wing'].stderr
+        dz_wing, ddz_wing = result_all.best_values['dz_wing'], result_all.params['dz_wing'].stderr
         sigma, dsigma = result_all.best_values['sigma_kms'], result_all.params['sigma_kms'].stderr
         sigma_wing, dsigma_wing = result_all.best_values['sigma_kms_wing'], result_all.params['sigma_kms_wing'].stderr
 
@@ -656,6 +702,8 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         flux_OIII5008_wing, dflux_OIII5008_wing = result_all.best_values['flux_OIII5008_wing'], result_all.params[
             'flux_OIII5008_wing'].stderr
         r_OII, dr_OII = result_all.best_values['r_OII3729_3727'], result_all.params['r_OII3729_3727'].stderr
+        r_OII_wing, dr_OII_wing = result_all.best_values['r_OII3729_3727_wing'], \
+                                  result_all.params['r_OII3729_3727_wing'].stderr
 
         # Strong lines conti
         a_OII, da_OII = result_all.best_values['a_OII'], result_all.params['a_OII'].stderr
@@ -708,27 +756,28 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                                     dflux_NeIII3968, dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364,
                                     dflux_HeII4687, dflux_OII, dr_OII, dflux_Hbeta, dflux_OIII5008])
 
-        line_model_all = model_all(wave_vac_all_plot, z, z_wing, sigma, sigma_wing, flux_NeV3346, flux_NeIII3869,
+        line_model_all = model_all(wave_vac_all_plot, z, dz_wing, sigma, sigma_wing, flux_NeV3346, flux_NeIII3869,
                                    flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam,
                                    flux_OIII4364, flux_HeII4687, flux_OII, flux_OII_wing, flux_Hbeta, flux_OIII5008,
-                                   flux_OIII5008_wing, r_OII, a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889,
-                                   b_HeI3889, a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364,
-                                   b_OIII4364, a_HeII4687, b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
-                                   b_OIII4960, a_OIII5008, b_OIII5008)
+                                   flux_OIII5008_wing, r_OII, r_OII_wing, a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869,
+                                   a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam,
+                                   a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta,
+                                   a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
 
         flux_MCMC = np.hstack((flux_OII_i, flux_OIII4364_i, flux_OIII5008_i))
         flux_err_MCMC = np.hstack((flux_OII_err_i, flux_OIII4364_err_i, flux_OIII5008_err_i))
 
-        ndim, nwalkers = 6, 40
-        p0 = np.array([5, 4.3, flux_OII, flux_OII_wing, flux_OIII5008, flux_OIII5008_wing]) \
+        ndim, nwalkers = 8, 40
+        p0 = np.array([5, 4.3, 10, 4.3, flux_OII, flux_OII_wing, flux_OIII5008, flux_OIII5008_wing]) \
              + 0.1 * np.random.randn(nwalkers, ndim)
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=(wave_vac_all, flux_MCMC, flux_err_MCMC, z, z_wing,
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=(wave_vac_all, flux_MCMC, flux_err_MCMC, z, dz_wing,
                                                                         sigma, sigma_wing, a_OIII4364, b_OIII4364,
                                                                         a_OII, b_OII, a_OIII5008, b_OIII5008))
         state = sampler.run_mcmc(p0, 5000)
         samples = sampler.get_chain(flat=True, discard=1000)
 
         figure = corner.corner(samples, labels=[r"$\mathrm{n}$", r"$\mathrm{log_{10}(T)}$",
+                                                r"$\mathrm{n\_wing}$", r"$\mathrm{log_{10}(T)\_wing}$",
                                                 r"$\mathrm{Flux\_OII}$", r"$\mathrm{Flux\_OII\_wing}$",
                                                 r"$\mathrm{Flux\_OIII5008}$", r"$\mathrm{Flux\_OIII5008\_wing}$"],
                                quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k', title_kwargs={"fontsize": 13},
@@ -738,9 +787,10 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         best_fit = np.percentile(samples, [16, 50, 84], axis=0)
 
         for j in range(3):
-            model_MCMC_j = model_MCMC(wave_vac_all, z, z_wing, sigma, sigma_wing,
-                                      best_fit[j, 0], best_fit[j, 1], best_fit[j, 2], best_fit[j, 3], best_fit[j, 4],
-                                      best_fit[j, 5], a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008, b_OIII5008)
+            model_MCMC_j = model_MCMC(wave_vac_all, z, dz_wing, sigma, sigma_wing, best_fit[j, 0], best_fit[j, 1],
+                                      best_fit[j, 2], best_fit[j, 3], best_fit[j, 4],
+                                      best_fit[j, 5], best_fit[j, 6], best_fit[j, 7],
+                                      a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008, b_OIII5008)
             ind_1 = len(wave_vac_all[8])
             ind_2 = len(wave_vac_all[8]) + len(wave_vac_all[6])
             ind_3 = len(wave_vac_all[8]) + len(wave_vac_all[6]) + len(wave_vac_all[11])
@@ -970,8 +1020,15 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-PlotGasSpectra(ra_array[2:4], dec_array[2:4], radius_array[2:4], text_array[2:4], figname='spectra_gas/spectra_gas_S3S4',
+# S3
+PlotGasSpectra(ra_array[2:3], dec_array[2:3], radius_array[2:3], text_array[2:3],
+               figname='spectra_gas/spectra_gas_S3S4_S3',
                save_table=True, save_figure=True, deredden=False)
+
+# S4
+# PlotGasSpectra(ra_array[3:4], dec_array[3:4], radius_array[3:4], text_array[3:4],
+#                figname='spectra_gas/spectra_gas_S3S4_S4',
+#                save_table=True, save_figure=True, deredden=False)
 
 
 # for i in range(len(text_array)):

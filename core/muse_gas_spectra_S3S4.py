@@ -17,7 +17,8 @@ def getSigma_MUSE(wave):
     return (5.866e-8 * wave ** 2 - 9.187e-4 * wave + 6.04) / 2.355
 
 
-def model_OII(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing, r_OII3729_3727, a, b):
+def model_OII(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing, r_OII3729_3727,
+              r_OII3729_3727_wing, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OII3727_vac = 3727.092
@@ -39,13 +40,25 @@ def model_OII(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OI
     OII3729_gaussian = peak_OII3729 * np.exp(-(wave_vac - wave_OII3729_obs) ** 2 / 2 / sigma_OII3729_A ** 2)
 
     # Redshifted wing
-    # OII3727_wing =
-    # OII3729_wing =
+    wave_OII3727_wing = wave_OII3727_vac * (1 + z + dz_wing)
     wave_OII3729_wing = wave_OII3729_vac * (1 + z + dz_wing)
-    sigma_wing_A = np.sqrt((sigma_kms_wing / c_kms * wave_OII3729_wing) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
-    peak_wing = flux_OII_wing / np.sqrt(2 * sigma_wing_A ** 2 * np.pi)
-    OII_wing = peak_wing * np.exp(-(wave_vac - wave_OII3729_wing) ** 2 / 2 / sigma_wing_A ** 2)
-    return OII3727_gaussian + OII3729_gaussian + OII_wing + a * wave_vac + b
+
+    sigma_OII3727_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3727_wing) ** 2
+                                   + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
+    sigma_OII3729_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3729_wing) ** 2
+                                   + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
+
+    flux_OII3727_wing = flux_OII_wing / (1 + r_OII3729_3727_wing)
+    flux_OII3729_wing = flux_OII_wing / (1 + 1.0 / r_OII3729_3727_wing)
+
+    peak_OII3727_wing = flux_OII3727_wing / np.sqrt(2 * sigma_OII3727_A_wing ** 2 * np.pi)
+    peak_OII3729_wing = flux_OII3729_wing / np.sqrt(2 * sigma_OII3729_A_wing ** 2 * np.pi)
+
+    OII3727_gaussian_wing = peak_OII3727_wing * np.exp(-(wave_vac - wave_OII3727_wing) ** 2 / 2
+                                                       / sigma_OII3727_A_wing ** 2)
+    OII3729_gaussian_wing = peak_OII3729_wing * np.exp(-(wave_vac - wave_OII3729_wing) ** 2 / 2
+                                                       / sigma_OII3729_A_wing ** 2)
+    return OII3727_gaussian + OII3729_gaussian + OII3727_gaussian_wing + OII3729_gaussian_wing + a * wave_vac + b
 
 
 def model_Hbeta(wave_vac, z, sigma_kms, flux_Hbeta, a, b):
@@ -231,7 +244,7 @@ def model_HeII4687(wave_vac, z, sigma_kms, flux_HeII4687, a, b):
 
 def model_all(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
               flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, flux_OII_wing,
-              flux_Hbeta, flux_OIII5008, flux_OIII5008_wing, r_OII3729_3727,
+              flux_Hbeta, flux_OIII5008, flux_OIII5008_wing, r_OII3729_3727, r_OII3729_3727_wing,
               a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968,
               b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687,
               b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008):
@@ -248,7 +261,7 @@ def model_all(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_NeV3346, flu
 
     # Strong lines
     m_OII = model_OII(wave_vac[8], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing,
-                      r_OII3729_3727, a_OII, b_OII)
+                      r_OII3729_3727, r_OII3729_3727_wing, a_OII, b_OII)
     m_Hbeta = model_Hbeta(wave_vac[9], z, sigma_kms, flux_Hbeta, a_Hbeta, b_Hbeta)
     m_OIII4960 = model_OIII4960(wave_vac[10], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008 / 3,
                                 flux_OIII5008_wing / 3, a_OIII4960, b_OIII4960)
@@ -350,9 +363,9 @@ r_OII3729_3727_guess = 2
 
 parameters_all = lmfit.Parameters()
 parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
-                        ('dz_wing', 0.03, True, 0.0, 0.05, None),
+                        ('dz_wing', 0.0006, True, 0.0, 0.005, None),
                         ('sigma_kms', sigma_kms_guess, True, 10, 500, None),
-                        ('sigma_kms_wing', sigma_kms_guess, True, 10, 500, None),
+                        ('sigma_kms_wing', 300, True, 10, 1000, None),
                         ('flux_NeV3346', 0.01, True, None, None, None),
                         ('flux_NeIII3869', 0.05, True, None, None, None),
                         ('flux_HeI3889', 0.01, True, None, None, None),
@@ -363,12 +376,13 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                         ('flux_Hgam', 0.01, True, None, None, None),
                         ('flux_OIII4364', 0.1, True, None, None, None),
                         ('flux_HeII4687', 0.005, True, None, None, None),
-                        ('flux_OII', 0.01, True, None, None, None),
-                        ('flux_OII_wing', 0.005, True, None, None, None),
+                        ('flux_OII', 0.01, True, 0, None, None),
+                        ('flux_OII_wing', 0.005, True, 0, None, None),
                         ('flux_Hbeta', 0.02, True, None, None, None),
                         ('flux_OIII5008', 0.1, True, None, None, None),
-                        ('flux_OIII5008_wing', 0.05, True, None, None, None),
+                        ('flux_OIII5008_wing', 0.05, True, 0, None, None),
                         ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
+                        ('r_OII3729_3727_wing', r_OII3729_3727_guess, True, 0.2, None, None),
                         ('a_NeV3346', 0.0, False, None, None, None),
                         ('b_NeV3346', 0.0, False, None, None, None),
                         ('a_NeIII3869', 0.0, False, None, None, None),
@@ -410,7 +424,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
     fig_strong.subplots_adjust(hspace=0)
     fig_strong.subplots_adjust(wspace=0.1)
 
-    flux_info = np.zeros((len(ra_array), 28))
+    flux_info = np.zeros((len(ra_array), 34))
     for i in range(len(ra_array)):
         if len(ra_array) == 1:
             axarr_0_strong = axarr_strong[0]
@@ -586,6 +600,8 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         flux_OIII5008_wing, dflux_OIII5008_wing = result_all.best_values['flux_OIII5008_wing'], result_all.params[
             'flux_OIII5008_wing'].stderr
         r_OII, dr_OII = result_all.best_values['r_OII3729_3727'], result_all.params['r_OII3729_3727'].stderr
+        r_OII_wing, dr_OII_wing = result_all.best_values['r_OII3729_3727_wing'], \
+                                  result_all.params['r_OII3729_3727_wing'].stderr
 
         # Strong lines conti
         a_OII, da_OII = result_all.best_values['a_OII'], result_all.params['a_OII'].stderr
@@ -633,18 +649,19 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
         # Save the fitted result
         flux_info[i, :] = np.array([flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
-                                    flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, r_OII, flux_Hbeta,
-                                    flux_OIII5008, dflux_NeV3346, dflux_NeIII3869, dflux_HeI3889, dflux_H8,
-                                    dflux_NeIII3968, dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364,
-                                    dflux_HeII4687, dflux_OII, dr_OII, dflux_Hbeta, dflux_OIII5008])
+                                    flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, flux_OII_wing, r_OII,
+                                    r_OII_wing, flux_Hbeta, flux_OIII5008, flux_OIII5008_wing, dflux_NeV3346,
+                                    dflux_NeIII3869, dflux_HeI3889, dflux_H8, dflux_NeIII3968, dflux_Heps, dflux_Hdel,
+                                    dflux_Hgam, dflux_OIII4364, dflux_HeII4687, dflux_OII, dflux_OII_wing, dr_OII,
+                                    dr_OII_wing, dflux_Hbeta, dflux_OIII5008, dflux_OIII5008_wing])
 
         line_model_all = model_all(wave_vac_all_plot, z, dz_wing, sigma, sigma_wing, flux_NeV3346, flux_NeIII3869,
                                    flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam,
                                    flux_OIII4364, flux_HeII4687, flux_OII, flux_OII_wing, flux_Hbeta, flux_OIII5008,
-                                   flux_OIII5008_wing, r_OII, a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889,
-                                   b_HeI3889, a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364,
-                                   b_OIII4364, a_HeII4687, b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960,
-                                   b_OIII4960, a_OIII5008, b_OIII5008)
+                                   flux_OIII5008_wing, r_OII, r_OII_wing, a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869,
+                                   a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam,
+                                   a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta,
+                                   a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
 
         # Weak lines
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
@@ -816,10 +833,11 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
     t = Table(flux_info, names=('flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', 'flux_NeIII3968',
                                 'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364', 'flux_HeII4687',
-                                'flux_OII', 'r_OII', 'flux_Hbeta', 'flux_OIII5008', 'dflux_NeV3346',
-                                'dflux_NeIII3869', 'dflux_HeI3889', 'dflux_H8', 'dflux_NeIII3968',
-                                'dflux_Heps', 'dflux_Hdel', 'dflux_Hgam', 'dflux_OIII4364',
-                                'dflux_HeII4687', 'dflux_OII', 'dr_OII', 'dflux_Hbeta', 'dflux_OIII5008'))
+                                'flux_OII', 'flux_OII_wing', 'r_OII', 'r_OII_wing', 'flux_Hbeta', 'flux_OIII5008',
+                                'flux_OIII5008_wing', 'dflux_NeV3346', 'dflux_NeIII3869', 'dflux_HeI3889', 'dflux_H8',
+                                'dflux_NeIII3968', 'dflux_Heps', 'dflux_Hdel', 'dflux_Hgam', 'dflux_OIII4364',
+                                'dflux_HeII4687', 'dflux_OII', 'dflux_OII_wing', 'dr_OII', 'dr_OII_wing', 'dflux_Hbeta',
+                                'dflux_OIII5008', 'dflux_OIII5008_wing'))
     t['region'] = text_array
     if save_table is True:
         if deredden:
@@ -862,7 +880,7 @@ radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 PlotGasSpectra(ra_array[2:4], dec_array[2:4], radius_array[2:4], text_array[2:4], figname='spectra_gas/spectra_gas_S3S4',
-               save_table=True, save_figure=True, deredden=False)
+               save_table=True, save_figure=True, deredden=True)
 
 
 # for i in range(len(text_array)):
