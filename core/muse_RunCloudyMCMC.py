@@ -231,18 +231,19 @@ def RunCloudyMCMC(region=None, trial=None, bnds=None, line_param=None, deredden=
 # RunCloudyMCMC(region='S4', trial='t1', bnds=S4_bnds, line_param=S4_param, deredden=False)
 
 # S5
-# S5_bnds = np.array([[-2, 2.6],
-#                     [-2, 0],
-#                     [-1.5, 0.5]])
-# S5_param = np.array([['NeV3346', False],
-#                      ['OII', True],
-#                      ['NeIII3869', True],
-#                      ['Hdel', False],
-#                      ['Hgam', False],
-#                      ['OIII4364', False],
-#                      ['HeII4687', False],
-#                      ['OIII5008', True]], dtype=bool)
+S5_bnds = np.array([[-2, 2.6],
+                    [-2, 0],
+                    [-1.5, 0.5]])
+S5_param = np.array([['NeV3346', False],
+                     ['OII', True],
+                     ['NeIII3869', True],
+                     ['Hdel', False],
+                     ['Hgam', False],
+                     ['OIII4364', False],
+                     ['HeII4687', False],
+                     ['OIII5008', True]], dtype=bool)
 # RunCloudyMCMC(region='S5', trial='t1', bnds=S5_bnds, line_param=S5_param, deredden=False)
+RunCloudyMCMC(region='S5', trial='t2', bnds=S5_bnds, line_param=S5_param, deredden=False)
 
 # S6
 # S6_bnds = np.array([[-2, 3.0],
@@ -259,18 +260,18 @@ def RunCloudyMCMC(region=None, trial=None, bnds=None, line_param=None, deredden=
 # RunCloudyMCMC(region='S6', trial='t1', bnds=S6_bnds, line_param=S6_param, deredden=False)
 
 # S7
-S7_bnds = np.array([[-2, 2.6],
-                    [-1.8, 0],
-                    [-1.5, 0.5]])
-S7_param = np.array([['NeV3346', False],
-                     ['OII', True],
-                     ['NeIII3869', False],
-                     ['Hdel', False],
-                     ['Hgam', False],
-                     ['OIII4364', False],
-                     ['HeII4687', False],
-                     ['OIII5008', True]], dtype=bool)
-RunCloudyMCMC(region='S7', trial='t1', bnds=S7_bnds, line_param=S7_param, deredden=False)
+# S7_bnds = np.array([[-2, 2.6],
+#                     [-1.8, 0],
+#                     [-1.5, 0.5]])
+# S7_param = np.array([['NeV3346', False],
+#                      ['OII', True],
+#                      ['NeIII3869', False],
+#                      ['Hdel', False],
+#                      ['Hgam', False],
+#                      ['OIII4364', False],
+#                      ['HeII4687', False],
+#                      ['OIII5008', True]], dtype=bool)
+# RunCloudyMCMC(region='S7', trial='t1', bnds=S7_bnds, line_param=S7_param, deredden=False)
 
 # S8
 # S8_bnds = np.array([[-2, 2.6],

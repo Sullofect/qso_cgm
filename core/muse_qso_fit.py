@@ -100,6 +100,7 @@ result = spec_model.fit(flux_OII, wave_vac=wave_OII_vac, params=parameters)
 # print(result.fit_report())
 z = result.best_values['z']
 print(z)
+print(result.params['z'].stderr)
 
 # # Plot the Spectrum
 # fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
@@ -356,10 +357,12 @@ fig.savefig(path_savefig + 'spectra_qso', bbox_inches='tight')
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 d_l = cosmo.luminosity_distance(z).to(u.cm).value
 fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[1][0], q.line_result[6:15], 'broad')
+print(fwhm)
 L_5100 = 4 * np.pi * d_l ** 2 * float(q.conti_result[13]) * (5100.0/3000.0) ** float(q.conti_result[14])
 waveL_5100 = 5100 * L_5100
-L_bol = 9.26 * waveL_5100 * 1e-17  # bolometric correction should be 10.33? # Shen Y2011-06 eq.5
+L_bol = 10.33 * waveL_5100 * 1e-17  # bolometric correction should be 10.33? # Shen Y2011-06 eq.5 9.26?
 log_M_BH = np.log10((fwhm/1000) ** 2 * (waveL_5100 * 1e-17/1e44) ** 0.5) + 6.91
-print('Monochromatic luminosity is', L_5100 * 1e-17, 'erg/s')
-print('logM_Blackhole is ', log_M_BH, 'solar mass')
+# log_M_BH = 2 * np.log10(fwhm / 1000) + 0.5 * np.log10(waveL_5100 * 1e-17/1e44) + 0.91
+print('Monochromatic luminosity is', waveL_5100 * 1e-17, 'erg/s')
 print('Bolometric Luminosity is', L_bol, 'erg/s')
+print('logM_Blackhole is ', log_M_BH, 'solar mass')
