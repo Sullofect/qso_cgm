@@ -14,8 +14,8 @@ rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
 mpl.rcParams['ytick.direction'] = 'in'
-mpl.rcParams['xtick.major.size'] = 5
-mpl.rcParams['ytick.major.size'] = 5
+mpl.rcParams['xtick.major.size'] = 10
+mpl.rcParams['ytick.major.size'] = 10
 
 #
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data', 'HE0238-1904_drc_offset.fits')
@@ -58,20 +58,40 @@ ra_qso_hst, dec_qso_hst = 40.1359, -18.8643
 
 # Plot
 fig = plt.figure(figsize=(8, 8), dpi=300)
+gc1 = aplpy.FITSFigure(path_hb, figure=fig, north=True)
 gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
 gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
+gc1.set_xaxis_coord_type('scalar')
+gc1.set_yaxis_coord_type('scalar')
 gc.recenter(40.1359, -18.8643, width=90/3600, height=90/3600)  # 0.02 / 0.01 40''
 gc.show_rectangles(40.1359, -18.8643, width=40/3600, height=40/3600, color='k', linestyle='--')
 gc.show_rectangles(40.1359, -18.8643, width=65/3600, height=65/3600, angle=60, color='k', linestyle='--')
+d = np.sqrt(2) * 65/3600
+angle = 75 * np.pi / 180
+N1 = [np.array([40.1289217, 40.1429009, 40.1359 + d * np.sin(angle), 40.1359 + d * np.cos(angle)]),
+      np.array([-18.8576894, -18.8709014, -18.8643 + d * np.sin(angle), -18.8643 - d * np.sin(angle)])]
+gc.show_polygons(N1, color='purple', linestyle='-')
+gc1.recenter(40.1359, -18.8643, width=40/3600, height=40/3600)  # 0.02 / 0.01 40''
+#gc1.show_rectangles(40.1359, -18.8643, width=40/3600, height=40/3600, color='k', linestyle='--')
+# gc1.show_rectangles(40.1359, -18.8643, width=65/3600, height=65/3600, angle=60, color='k', linestyle='--')
 gc.set_system_latex(True)
-gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+gc1.set_system_latex(True)
+gc1.show_colorscale(cmap='coolwarm', vmin=-1000, vmax=1000, aspect='auto')
+gc1.add_colorbar()
+gc1.hide_colorscale()
+gc1.colorbar.set_box([0.15, 0.13, 0.38, 0.02], box_orientation='horizontal')
+gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2, aspect='auto')
 gc.add_colorbar()
-gc.colorbar.set_ticks([0])
-gc.colorbar.set_location('bottom')
-gc.colorbar.set_pad(0.0)
+gc.colorbar.set_box([0.15, 0.13, 0.38, 0.02], box_orientation='horizontal')
 gc.colorbar.hide()
+# gc.add_colorbar(vmin=-300, vmax=300, cmap='coolwarm')
+# gc1.colorbar.set_ticks([0])
+# gc1.colorbar.set_location('bottom')
+# gc1.colorbar.set_pad(0.0)
+# gc.colorbar.hide()
 gc.ticks.set_length(30)
+gc1.ticks.set_length(30)
 gc.add_scalebar(length=15 * u.arcsecond)
 gc.scalebar.set_corner('top left')
 gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
@@ -79,7 +99,10 @@ gc.scalebar.set_font_size(15)
 gc.ticks.hide()
 gc.tick_labels.hide()
 gc.axis_labels.hide()
-norm = mpl.colors.Normalize(vmin=-300, vmax=300)
+gc1.ticks.hide()
+gc1.tick_labels.hide()
+gc1.axis_labels.hide()
+norm = mpl.colors.Normalize(vmin=-1000, vmax=1000)
 gc.show_markers(ra_final, dec_final, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
                 linewidths=1.2, s=80)
 gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
@@ -91,7 +114,8 @@ line = np.array([[40.1289217, 40.1429009], [-18.8576894, -18.8709014]])
 gc.show_lines([line], color='k', alpha=0.3, linestyle='--')
 gc.add_label(0.985, 0.85, r'N', size=15, relative=True)
 gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
-
+gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
+gc.add_label(0.62, 0.74, r"$\rm 40'' \times 40''$", size=15, relative=True)
 
 # Determine whcih galaxy is below the line
 # vector_ra = ra_final - line[0, 0]
@@ -156,4 +180,4 @@ gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
 # axins.set_ylim(0, 10)
 # axins.set_xticks([-400, -200, 0, 200])
 # axins.set_yticks([0, 2, 4, 6, 8, 10])
-fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis.png', bbox_inches='tight')
+fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis_ini.png', bbox_inches='tight')

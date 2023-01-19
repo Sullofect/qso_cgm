@@ -425,7 +425,7 @@ distance = np.log10((ang_sep * d_l / ratio).to(u.cm).value)
 
 z_array = np.linspace(-1.5, 0.5, 11, dtype='f2')
 alpha_array = np.linspace(-1.8, 0, 10, dtype='f2')
-den_array =  np.linspace(-2, 2.6, 24, dtype='f2')
+den_array = np.linspace(-2, 2.6, 24, dtype='f2')
 
 def CreateGrid(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=None):
     global text_array
@@ -484,10 +484,41 @@ def CreateGrid(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=
 # # B4
 # CreateGrid(z_array, alpha_array, den_array, region='B4', trial='t1')
 
+# S5 extension
+# den_array_2 =  np.linspace(2.6, 3.4, 5, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_2, region='S5', trial='t1_2')
+
+# S6 extension
+# CreateGrid(z_array, alpha_array, den_array_2, region='S6', trial='t1_2')
+
+# S5 extension 2
+# den_array_3 =  np.linspace(3.6, 6.6, 16, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_3, region='S5', trial='t1_3')
+
+# S7 extension
+# den_array_S7t1_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_S7t1_2, region='S7', trial='t1_2')
+
+# S8 extension
+# den_array_S8t1_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_S8t1_2, region='S8', trial='t1_2')
+
+# S9 extension
+# den_array_S9t1_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_S9t1_2, region='S9', trial='t1_2')
+
+# S10 extension
+# den_array_S10t1_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_S10t1_2, region='S10', trial='t1_2')
+
 #dim qso by 10 times
-CreateGrid(z_array, alpha_array, den_array, L_qso=45.54, region='S5', trial='t2')
-CreateGrid(z_array, alpha_array, den_array, L_qso=45.54, region='S6', trial='t2')
-CreateGrid(z_array, alpha_array, den_array, L_qso=45.54, region='S7', trial='t2')
-CreateGrid(z_array, alpha_array, den_array, L_qso=45.54, region='S8', trial='t2')
-CreateGrid(z_array, alpha_array, den_array, L_qso=45.54, region='S9', trial='t2')
-CreateGrid(z_array, alpha_array, den_array, L_qso=45.54, region='S10', trial='t2')
+den_array_S5t2_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+CreateGrid(z_array, alpha_array, den_array_S5t2_2, L_qso=45.54, region='S5', trial='t2_2')
+# CreateGrid(z_array, alpha_array, den_array, L_qso=45.54, region='S6', trial='t2')
+
+#
+den_array_t2 = np.linspace(-2, 4.6, 34, dtype='f2')
+CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S7', trial='t2')
+CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S8', trial='t2')
+CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S9', trial='t2')
+CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S10', trial='t2')

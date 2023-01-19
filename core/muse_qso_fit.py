@@ -60,8 +60,10 @@ path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data'
 cube = Cube(path)
 
 # Calculate the white image
-image_white = cube.sum(axis=0)
-p, q = image_white.peak()['p'], image_white.peak()['q']
+# image_white = cube.sum(axis=0)
+# p, q = image_white.peak()['p'], image_white.peak()['q']
+# print(p, q)
+p, q = 231.01781907579925, 228.86688579081402
 
 # Spectrum
 cube_ape = cube.aperture((p, q), 3, unit_center=None, is_sum=True)
@@ -290,8 +292,8 @@ fig, ax = plt.subplots(1, 1, figsize=(16, 4), dpi=300)
 ax.plot(q.wave * (1 + z), q.flux / (1 + z), lw=1, color='k', drawstyle='steps-mid', label=r'$\mathrm{Data}$')
 ax.plot(q.wave * (1 + z), q.err / (1 + z), lw=1, color='lightgrey', label=r'$\mathrm{err}$')
 # ax.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z) + q.f_conti_model / (1 + z),
-#         'b', label='Line')
-# ax.plot(q.wave * (1 + z), q.f_conti_model / (1 + z), 'c', label=r'$\mathrm{Iron}$')
+#         'r', label='Line', lw=1)
+ax.plot(q.wave * (1 + z), q.f_conti_model / (1 + z), 'b', label=r'$\mathrm{Iron}$', lw=1)
 ax.plot(q.wave * (1 + z), q.PL_poly_BC / (1 + z), '--', color='purple', label=r'$\mathrm{Continuum}$')
 ax.set_xlim(5200, 9300)
 ax.set_ylim(-20, 480)
@@ -337,8 +339,9 @@ axins.plot(q.wave * (1 + z), q.flux / (1 + z), lw=1, color='black', drawstyle='s
 axins.plot(q.wave * (1 + z), q.PL_poly_BC / (1 + z), '--', color='purple', label=r'$\mathrm{Continuum}$')
 axins.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result) / (1 + z) + q.f_conti_model / (1 + z), 'red',
            label=r'$\mathrm{Broad} + \mathrm{Narrow}$',)
-# axins.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result[0:9]) / (1 + z), 'r',
-#            label=r'$\mathrm{Broad}$', lw=2)
+axins.plot(q.wave * (1 + z), q.f_conti_model / (1 + z), 'b', label=r'$\mathrm{Iron}$', lw=1)
+# axins.plot(q.wave * (1 + z), q.Manygauss(np.log(q.wave), q.gauss_result[0:9]) / (1 + z) + + q.f_conti_model / (1 + z),
+#            'r', label=r'$\mathrm{Broad}$', lw=2)
 axins.set_xlim(7600, 8350)
 axins.set_ylim(100, 300)
 axins.minorticks_on()
@@ -359,10 +362,11 @@ d_l = cosmo.luminosity_distance(z).to(u.cm).value
 fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[1][0], q.line_result[6:15], 'broad')
 print(fwhm)
 L_5100 = 4 * np.pi * d_l ** 2 * float(q.conti_result[13]) * (5100.0/3000.0) ** float(q.conti_result[14])
-waveL_5100 = 5100 * L_5100
-L_bol = 10.33 * waveL_5100 * 1e-17  # bolometric correction should be 10.33? # Shen Y2011-06 eq.5 9.26?
-log_M_BH = np.log10((fwhm/1000) ** 2 * (waveL_5100 * 1e-17/1e44) ** 0.5) + 6.91
+waveL_5100 = 10 ** 46.21
+# 5100 * L_5100
+L_bol = 10.33 * waveL_5100  # bolometric correction should be 10.33? # Shen Y2011-06 eq.5 9.26?
+log_M_BH = np.log10((fwhm/1000) ** 2 * (waveL_5100/1e44) ** 0.5) + 6.91
 # log_M_BH = 2 * np.log10(fwhm / 1000) + 0.5 * np.log10(waveL_5100 * 1e-17/1e44) + 0.91
-print('Monochromatic luminosity is', waveL_5100 * 1e-17, 'erg/s')
+print('Monochromatic luminosity is', waveL_5100, 'erg/s')
 print('Bolometric Luminosity is', L_bol, 'erg/s')
 print('logM_Blackhole is ', log_M_BH, 'solar mass')
