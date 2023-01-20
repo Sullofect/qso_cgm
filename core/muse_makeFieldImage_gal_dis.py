@@ -64,14 +64,19 @@ gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
 gc1.set_xaxis_coord_type('scalar')
 gc1.set_yaxis_coord_type('scalar')
+d = np.sqrt(2) * 65 / 2 / 3600
+angle = 75 * np.pi / 180
+# N1 = [np.array([[40.1289217, 40.1429009, 40.1359 - d * np.cos(angle), 40.1359 - d * np.sin(angle)],
+#                [-18.8576894, -18.8709014, -18.8643 - d * np.sin(angle), -18.8643 + d * np.cos(angle)]])]
+N1 = [np.array([[40.1288438, 40.1428230, 40.1324189, 40.1228938],
+                [-18.8577309, -18.8709429, -18.8766207, -18.8610104]])]
+N2 = [np.array([[40.1289217, 40.1429009, 40.1489166, 40.1394084],
+                [-18.8576894, -18.8709014, -18.8676171, -18.8519788]])]
+gc.show_polygons(N1, color='purple', linestyle='-', lw=2, alpha=0.5)
+gc.show_polygons(N2, color='orange', linestyle='-', lw=2, alpha=0.5)
 gc.recenter(40.1359, -18.8643, width=90/3600, height=90/3600)  # 0.02 / 0.01 40''
 gc.show_rectangles(40.1359, -18.8643, width=40/3600, height=40/3600, color='k', linestyle='--')
 gc.show_rectangles(40.1359, -18.8643, width=65/3600, height=65/3600, angle=60, color='k', linestyle='--')
-d = np.sqrt(2) * 65/3600
-angle = 75 * np.pi / 180
-N1 = [np.array([40.1289217, 40.1429009, 40.1359 + d * np.sin(angle), 40.1359 + d * np.cos(angle)]),
-      np.array([-18.8576894, -18.8709014, -18.8643 + d * np.sin(angle), -18.8643 - d * np.sin(angle)])]
-gc.show_polygons(N1, color='purple', linestyle='-')
 gc1.recenter(40.1359, -18.8643, width=40/3600, height=40/3600)  # 0.02 / 0.01 40''
 #gc1.show_rectangles(40.1359, -18.8643, width=40/3600, height=40/3600, color='k', linestyle='--')
 # gc1.show_rectangles(40.1359, -18.8643, width=65/3600, height=65/3600, angle=60, color='k', linestyle='--')
@@ -111,7 +116,7 @@ xw, yw = 40.1231559, -18.8580071
 gc.show_arrows(xw, yw, -0.0001 * yw, 0, color='k')
 gc.show_arrows(xw, yw, 0, -0.0001 * yw, color='k')
 line = np.array([[40.1289217, 40.1429009], [-18.8576894, -18.8709014]])
-gc.show_lines([line], color='k', alpha=0.3, linestyle='--')
+# gc.show_lines([line], color='k', alpha=0.3, linestyle='--')
 gc.add_label(0.985, 0.85, r'N', size=15, relative=True)
 gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
 gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
