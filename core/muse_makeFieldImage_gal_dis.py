@@ -14,8 +14,8 @@ rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
 mpl.rcParams['ytick.direction'] = 'in'
-mpl.rcParams['xtick.major.size'] = 10
-mpl.rcParams['ytick.major.size'] = 10
+mpl.rcParams['xtick.major.size'] = 12
+mpl.rcParams['ytick.major.size'] = 12
 
 #
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data', 'HE0238-1904_drc_offset.fits')
@@ -86,6 +86,10 @@ gc1.show_colorscale(cmap='coolwarm', vmin=-1000, vmax=1000, aspect='auto')
 gc1.add_colorbar()
 gc1.hide_colorscale()
 gc1.colorbar.set_box([0.15, 0.13, 0.38, 0.02], box_orientation='horizontal')
+gc1.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
+gc1.colorbar.set_axis_label_font(size=12)
+gc1.colorbar.set_axis_label_pad(-40)
+gc1.colorbar.set_location('bottom')
 gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2, aspect='auto')
 gc.add_colorbar()
 gc.colorbar.set_box([0.15, 0.13, 0.38, 0.02], box_orientation='horizontal')
