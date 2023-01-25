@@ -1,19 +1,7 @@
-import os
-import aplpy
 import numpy as np
-import matplotlib as mpl
-import astropy.io.fits as fits
 import matplotlib.pyplot as plt
-import scipy.integrate as integrate
-import palettable.scientific.sequential as sequential_s
 from matplotlib import rc
 from muse_LoadCloudy import format_cloudy_nogrid
-from matplotlib import cm
-from PyAstronomy import pyasl
-from astropy import units as u
-# from muse_load_cloudy import format_cloudy
-from matplotlib.colors import ListedColormap
-from mpdaf.obj import Cube, WCS, WaveCoord, iter_spe
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 

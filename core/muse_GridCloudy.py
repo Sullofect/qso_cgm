@@ -1,17 +1,8 @@
 import os
-import emcee
-import corner
-import lmfit
 import numpy as np
-import astropy.io.fits as fits
-import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.cosmology import FlatLambdaCDM
-from scipy import interpolate
-from matplotlib import rc
-from PyAstronomy import pyasl
-from mpdaf.obj import Cube, WCS, WaveCoord, iter_spe
 
 
 # load the region
@@ -432,7 +423,7 @@ def CreateGrid(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=
     dis = np.around(distance[text_array == region][0], decimals=2)
     command_array = np.array([])
     os.makedirs('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial, exist_ok=True)
-    os.popen('cp /Users/lzq/Dropbox/Data/CGM/cloudy/trial7/linelist.dat'
+    os.popen('cp /Users/lzq/Dropbox/Data/CGM/cloudy/S1_t1/linelist.dat'
              ' /Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/linelist.dat')
     for i in range(len(z_array)):
         for j in range(len(alpha_array)):
@@ -461,6 +452,54 @@ def CreateGrid(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=
                                     + str(z_array[i]) + '_' + str(den_array[k])])
 
                 command_array = np.hstack((command_array, command))
+    np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
+
+def CreateGrid_AGN(z_array, alpha_ox_array, alpha_uv_array, alpha_x_array, den_array, T_array,
+                   L_qso=46.54, region=None, trial=None):
+    global text_array
+    dis = np.around(distance[text_array == region][0], decimals=2)
+    command_array = np.array([])
+    os.makedirs('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial, exist_ok=True)
+    os.popen('cp /Users/lzq/Dropbox/Data/CGM/cloudy/S1_t1/linelist.dat'
+             ' /Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/linelist.dat')
+    for i in range(len(z_array)):
+        for j in range(len(alpha_ox_array)):
+            for k in range(len(den_array)):
+                for ii in range(len(alpha_uv_array)):
+                    for jj in range(len(alpha_x_array)):
+                        for kk in range(len(T_array)):
+                            lines = np.array(['AGN T = ' + str(T_array[kk]) + ', a(ox) = ' + str(alpha_ox_array[j])
+                                              + ', a(uv) = ' + str(alpha_uv_array[ii]) + ', a(x) = '
+                                              + str(alpha_x_array[jj]),
+                                              'nuL(nu) = ' + str(L_qso) + ' at 1.0 Ryd',
+                                              'hden ' + str(den_array[k]),
+                                              'metals ' + str(z_array[i]) + ' log',
+                                              'radius ' + str(dis),
+                                              'iterative to convergence',
+                                              'save line list "ox_' + str(alpha_ox_array[j])
+                                              + 'uv_' + str(alpha_uv_array[ii])
+                                              + 'x_' + str(alpha_x_array[jj])
+                                              + 'T_' + str(T_array[kk])
+                                              + 'Z_' + str(z_array[i])
+                                              + 'n_' + str(den_array[k]) + '.lin" from "linelist.dat" last'])
+                            np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial
+                                       + '/ox_' + str(alpha_ox_array[j])
+                                       + 'uv_' + str(alpha_uv_array[ii])
+                                       + 'x_' + str(alpha_x_array[jj])
+                                       + 'T_' + str(T_array[kk])
+                                       + 'Z_' + str(z_array[i])
+                                       + 'n_' + str(den_array[k]) + '.in', lines, fmt="%s")
+
+                            # Command
+                            command = np.array(['$cloudy -r '
+                                                + 'ox_' + str(alpha_ox_array[j])
+                                                + 'uv_' + str(alpha_uv_array[ii])
+                                                + 'x_' + str(alpha_x_array[jj])
+                                                + 'T_' + str(T_array[kk])
+                                                + 'Z_' + str(z_array[i])
+                                                + 'n_' + str(den_array[k])])
+
+                            command_array = np.hstack((command_array, command))
     np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
 
 # # S8
@@ -511,14 +550,24 @@ def CreateGrid(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=
 # den_array_S10t1_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
 # CreateGrid(z_array, alpha_array, den_array_S10t1_2, region='S10', trial='t1_2')
 
-#dim qso by 10 times
-den_array_S5t2_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
-CreateGrid(z_array, alpha_array, den_array_S5t2_2, L_qso=45.54, region='S5', trial='t2_2')
+# dim qso by 10 times
+# den_array_S5t2_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_S5t2_2, L_qso=45.54, region='S5', trial='t2_2')
 # CreateGrid(z_array, alpha_array, den_array, L_qso=45.54, region='S6', trial='t2')
 
 #
-den_array_t2 = np.linspace(-2, 4.6, 34, dtype='f2')
-CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S7', trial='t2')
-CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S8', trial='t2')
-CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S9', trial='t2')
-CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S10', trial='t2')
+# den_array_t2 = np.linspace(-2, 4.6, 34, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S7', trial='t2')
+# CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S8', trial='t2')
+# CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S9', trial='t2')
+# CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S10', trial='t2')
+
+# Check AGN continuum with S1
+z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
+den_array_AGN = np.linspace(1.0, 2.4, 8, dtype='f2')
+alpha_ox_array_AGN = np.linspace(-1.2, -0.2, 6, dtype='f2')
+alpha_uv_array_AGN = np.linspace(-1.0, 0, 3, dtype='f2')
+alpha_x_array_AGN = np.linspace(-1.5, -0.5, 3, dtype='f2')
+T_array_AGN = np.linspace(5, 5.5, 3, dtype='f2')
+CreateGrid_AGN(z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
+               den_array_AGN, T_array_AGN, region='S1', trial='AGN')
