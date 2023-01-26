@@ -64,33 +64,33 @@ def format_cloudy_nogrid(filename=None, path=None):
             output = np.concatenate((output, output_j[:, :, :, np.newaxis]), axis=3)
     return output
 
-def format_cloudy_AGN(filename=None, path=None):
-    for k in range(len(filename[2])):
-        metal_k = filename[2][k]
-        for j in range(len(filename[1])):
-            alpha_j = filename[1][j]
-            for i in range(len(filename[0])):
-                density_i = filename[0][i]
-                for kk in range(len()):
-                    for jj in range(len()):
-                        for ii in range(len()):
-                filename_jki = 'ox_' + str(alpha_ox_array[j])
-                                + 'uv_' + str(alpha_uv_array[ii])
-                                + 'x_' + str(alpha_x_array[jj])
-                                + 'T_' + str(T_array[kk])
-                                + 'Z_' + str(z_array[i])
-                                + 'n_' + str(den_array[k])
-                if i == 0:
-                    output_i = load_cloudy_nogrid(filename_jki, path=path)[:, 0]
-                else:
-                    c_i = load_cloudy_nogrid(filename_jki, path=path)[:, 0]
-                    output_i = np.vstack((output_i, c_i))
-            if j == 0:
-                output_j = output_i.T
-            else:
-                output_j = np.dstack((output_j, output_i.T))
-        if k == 0:
-            output = output_j[:, :, :, np.newaxis]
-        else:
-            output = np.concatenate((output, output_j[:, :, :, np.newaxis]), axis=3)
-    return output
+# def format_cloudy_AGN(filename=None, path=None):
+#     for k in range(len(filename[2])):
+#         metal_k = filename[2][k]
+#         for j in range(len(filename[1])):
+#             alpha_j = filename[1][j]
+#             for i in range(len(filename[0])):
+#                 density_i = filename[0][i]
+#                 for kk in range(len()):
+#                     for jj in range(len()):
+#                         for ii in range(len()):
+#                 filename_jki = 'ox_' + str(alpha_ox_array[j])
+#                                 + 'uv_' + str(alpha_uv_array[ii])
+#                                 + 'x_' + str(alpha_x_array[jj])
+#                                 + 'T_' + str(T_array[kk])
+#                                 + 'Z_' + str(z_array[i])
+#                                 + 'n_' + str(den_array[k])
+#                 if i == 0:
+#                     output_i = load_cloudy_nogrid(filename_jki, path=path)[:, 0]
+#                 else:
+#                     c_i = load_cloudy_nogrid(filename_jki, path=path)[:, 0]
+#                     output_i = np.vstack((output_i, c_i))
+#             if j == 0:
+#                 output_j = output_i.T
+#             else:
+#                 output_j = np.dstack((output_j, output_i.T))
+#         if k == 0:
+#             output = output_j[:, :, :, np.newaxis]
+#         else:
+#             output = np.concatenate((output, output_j[:, :, :, np.newaxis]), axis=3)
+#     return output

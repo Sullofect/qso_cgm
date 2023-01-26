@@ -72,7 +72,7 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
     fig, axarr = plt.subplots(len(row_array), 1, figsize=(10, 2.5 * len(row_array)), sharex=True, dpi=300)
     plt.subplots_adjust(hspace=0.0)
 
-
+    # Iterate over galaxy
     for i in range(len(row_array)):
         row_sort = np.where(row_final == row_array[i])
         z_i = z_final[row_sort]
@@ -92,17 +92,13 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
         axarr_i.plot(wave_i, model_i, color='r', lw=1)
         axarr_i.plot(wave_i, flux_err_i, color='lightgrey', lw=1)
         axarr_i.set_title('G' + str(row_array[i]), x=0.1, y=0.80, size=20)
-        axarr_0.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.2, 0.65),
-                          xycoords='axes fraction', size=20)
+        axarr_0.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.2, 0.65), xycoords='axes fraction', size=20)
         axarr_0.annotate(text=r'$\mathrm{K, H, G}$', xy=(0.39, 0.65), xycoords='axes fraction', size=20)
         axarr_0.annotate(text=r'$\mathrm{H\beta}$', xy=(0.65, 0.65), xycoords='axes fraction', size=20)
-        axarr_0.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.80, 0.65),
-                          xycoords='axes fraction', size=20)
+        axarr_0.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.80, 0.65), xycoords='axes fraction', size=20)
         lines = (1 + z_i) * np.array([3727.092, 3729.8754960, 3934.777, 3969.588, 4305.61, 4862.721, 4960.295, 5008.239])
-        axarr_i.vlines(lines, lw=1,
-                        ymin=[-5, -5, -5, -5, -5, -5, -5, -5],
-                        ymax=[100, 100, 100, 100, 100, 100, 100, 100],
-                        linestyles='dashed', colors='grey')
+        axarr_i.vlines(lines, lw=1, ymin=-5 * np.ones_like(lines), ymax=100 * np.ones_like(lines),
+                       linestyles='dashed', colors='grey')
         axarr_i.set_xlim(4800, 9200)
         axarr_i.set_ylim(-0.1, flux_i.max() + 0.2)
         axarr_i.minorticks_on()

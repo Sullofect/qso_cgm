@@ -16,21 +16,25 @@ Q_H = 10 ** nuL_nu / 13.6 / ev_erg
 logd = 22.94  # in cm
 
 #
-Hden = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 4.6, 10, dtype='f2')))
+Hden = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 4.6, 10, dtype='f2')))[17:24]
 U = Q_H / 4 / np.pi / (10 ** logd) ** 2 / 10 ** Hden / c
-logU = np.log10(U)[17:25]
-alpha = np.linspace(-1.8, 0, 10, dtype='f2')
-metal = np.linspace(-1.5, 0.5, 11, dtype='f2')
+logU = np.log10(U)
+alpha = np.linspace(-1.8, 0, 10, dtype='f2')[:3]
+# metal = np.linspace(-1.5, 0.5, 11, dtype='f2')
+metal = np.linspace(-1.9, -0.3, 9, dtype='f2')
+
 output = format_cloudy_nogrid(filename=[Hden, alpha, metal],
-                              path='/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/')[:, 17:25, :3, :6]
+                              path='/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/')[:, :, :, :9]
 print(np.log10(U))
 print(np.shape(output))
+# output = output[:, :, :, ::2]
 #
 OIIOIII_Halpha = np.log10((10 ** output[3, :, :, :] + 10 ** output[9, :, :, :]) / 3)
 OIII_OII = output[9, :, :, :] - output[3, :, :, :]
 
 plt.figure(figsize=(8, 8), dpi=300)
-for i in range(len(metal))[:6]:
+for i in range(len(metal[:9]))[::2]:
+    print(i)
     color = 'C' + str(i)
     # plt.plot(OIII_OII[:, 0, i], OIIOIII_Halpha[:, 0, i], '-', color=color, alpha=0,
     #          label=r'$\rm log(Z/Z_{\odot})=$' + str(metal[i]))
@@ -52,16 +56,16 @@ for i in range(len(metal))[:6]:
 #                  xy=(OIII_OII[len(logU) - 1, i, 0], OIIOIII_Halpha[len(logU) - 1, i, 0]),
 #                  xycoords='data', size=10)
 
-for i in range(len(logU)):
-    plt.annotate(r'$\mathrm{log(U)}$=' + str(np.round(logU[i], 1)),
-                 xy=(OIII_OII[i, 2, 0], OIIOIII_Halpha[i, 2, 0] - 0.05),
-                 xycoords='data', size=10)
+# for i in range(len(logU)):
+#     plt.annotate(r'$\mathrm{log(U)}$=' + str(np.round(logU[i], 1)),
+#                  xy=(OIII_OII[i, 2, 0], OIIOIII_Halpha[i, 2, 0] - 0.05),
+#                  xycoords='data', size=10)
 
 plt.minorticks_on()
-plt.xlim(-0.25, 1.85)
-plt.ylim(-0.7, 0.7)
-plt.xlabel(r'$\mathrm{log([O \, III]\lambda5008  / [O \, II] \lambda \lambda 3727,29)}$', size=20)
-plt.ylabel(r'$\mathrm{log([O \, III]\lambda5008 + [O \, II] \lambda \lambda 3727,29) / H\alpha)}$', size=20)
+plt.xlim(0, 1.85)
+#plt.ylim(-0.7, 0.7)
+plt.xlabel(r'$\mathrm{log([O \, III]  / [O \, II])}$', size=20)
+plt.ylabel(r'$\mathrm{log([O \, III] + [O \, II] / H\alpha)}$', size=20)
 plt.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
                 labelsize=20, size=5)
 plt.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on', size=3)

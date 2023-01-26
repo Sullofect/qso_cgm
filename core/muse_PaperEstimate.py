@@ -9,7 +9,6 @@ from astropy.io import ascii
 from astropy.table import Table
 from matplotlib import rc
 from astropy.wcs import WCS
-from astropy.wcs.utils import pixel_to_skycoord
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astropy import units as u

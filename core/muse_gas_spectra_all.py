@@ -537,7 +537,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         # Fit
         spec_model_all = lmfit.Model(model_all, missing='drop')
         result_all = spec_model_all.fit(data=flux_all, wave_vac=wave_vac_all, params=parameters_all,
-                                weights=1 / flux_err_all)
+                                        weights=1 / flux_err_all)
 
         # Load fitted result
         z, dz = result_all.best_values['z'], result_all.params['z'].stderr
@@ -701,20 +701,20 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr_i_weak[4].minorticks_on()
         axarr_i_weak[5].minorticks_on()
         axarr_i_weak[0].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on',
-                                right=False, labelsize=20, size=5)
+                                    right=False, labelsize=20, size=5)
         axarr_i_weak[0].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on',
-                                right=False, size=3)
+                                    right=False, size=3)
         axarr_i_weak[0].tick_params(axis='y', which='both', right=False, labelright=False)
         axarr_i_weak[5].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False,
-                                right='on', labelsize=20, size=5)
+                                    right='on', labelsize=20, size=5)
         axarr_i_weak[5].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False,
-                                right='on', size=3)
+                                    sright='on', size=3)
         axarr_i_weak[5].tick_params(axis='y', which='both', left=False, labelleft=False)
         for j in [1, 2, 3, 4]:
             axarr_i_weak[j].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False,
-                                    right=False, labelsize=20, size=5)
+                                        right=False, labelsize=20, size=5)
             axarr_i_weak[j].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False,
-                                    right=False, size=3)
+                                        right=False, size=3)
             axarr_i_weak[j].tick_params(axis='y', which='both', right=False, labelright=False, left=False, labelleft=False)
 
         if i != len(ra_array) - 1:

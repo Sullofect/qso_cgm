@@ -502,6 +502,9 @@ def CreateGrid_AGN(z_array, alpha_ox_array, alpha_uv_array, alpha_x_array, den_a
                             command_array = np.hstack((command_array, command))
     np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
 
+# S7_t1 JWST proposal
+CreateGrid(np.linspace(-1.9, -1.7, 2, dtype='f2'), alpha_array[:3], den_array[17:25], region='S7', trial='t1_JWST')
+
 # # S8
 # CreateGrid(z_array, alpha_array, den_array, region='S8', trial='t1')
 #
@@ -563,11 +566,11 @@ def CreateGrid_AGN(z_array, alpha_ox_array, alpha_uv_array, alpha_x_array, den_a
 # CreateGrid(z_array, alpha_array, den_array_t2, L_qso=45.54, region='S10', trial='t2')
 
 # Check AGN continuum with S1
-z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
-den_array_AGN = np.linspace(1.0, 2.4, 8, dtype='f2')
-alpha_ox_array_AGN = np.linspace(-1.2, -0.2, 6, dtype='f2')
-alpha_uv_array_AGN = np.linspace(-1.0, 0, 3, dtype='f2')
-alpha_x_array_AGN = np.linspace(-1.5, -0.5, 3, dtype='f2')
-T_array_AGN = np.linspace(5, 5.5, 3, dtype='f2')
-CreateGrid_AGN(z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
-               den_array_AGN, T_array_AGN, region='S1', trial='AGN')
+# z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
+# den_array_AGN = np.linspace(1.0, 2.4, 8, dtype='f2')
+# alpha_ox_array_AGN = np.linspace(-1.2, -0.2, 6, dtype='f2')
+# alpha_uv_array_AGN = np.linspace(-1.0, 0, 3, dtype='f2')
+# alpha_x_array_AGN = np.linspace(-1.5, -0.5, 3, dtype='f2')
+# T_array_AGN = np.linspace(5, 5.5, 3, dtype='f2')
+# CreateGrid_AGN(z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
+#                den_array_AGN, T_array_AGN, region='S1', trial='AGN')
