@@ -6,6 +6,7 @@ import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from matplotlib import cm
+from regions import Regions
 from PyAstronomy import pyasl
 from astropy import units as u
 from muse_compare_z import compare_z
@@ -91,6 +92,11 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
+#
+path_label = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_label_list.reg')
+regions_label = Regions.read(path_label, format='ds9')
+
+
 for i in range(6):
     fig = plt.figure(figsize=(8, 8), dpi=300)
     z_qso = 0.6282144177077355
@@ -126,8 +132,12 @@ for i in range(6):
     gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=400)
     # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-    # gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linewidths=0.5, alpha=0.7)
-    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/gas_list.reg')
+    gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linewidths=0.5, alpha=0.7)
+    for i in range(len(ra_array)):
+        x = regions_label[i].center.ra.degree
+        y = regions_label[i].center.dec.degree
+        gc.add_label(x, y, text_array[i], size=10)
+    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/regions/gas_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.0)
     gc.colorbar.set_ticks([1, 2, 3, 4])
@@ -158,5 +168,5 @@ for i in range(6):
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/NB_movie/image_OII_' + str("{0:.0f}".format(wave_i_vac)) + '_' +
                 str("{0:.0f}".format(wave_f_vac)) + '.png', bbox_inches='tight')
 
-os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OII_*.png '
-          '~/dropbox/Data/CGM_plots/NB_movie/OII_movie.gif')
+# os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OII_*.png '
+#           '~/dropbox/Data/CGM_plots/NB_movie/OII_movie.gif')

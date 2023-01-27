@@ -118,6 +118,7 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
     output = np.array([bins_ggp, row_ggp, ID_ggp, z_ggp, v_ggp, name_ggp, ql_ggp, ra_ggp, dec_ggp], dtype=object)
     return output
 
+# Plot the velocity dispersion
 def PlotVelDis():
     ggp_info = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
                          cat_will='ESO_DEEP_offset_zapped_objects.fits')
@@ -166,11 +167,9 @@ def PlotVelDis():
     nums, v_edge = np.histogram(v_below, bins=bins_final)
     normalization_below = np.sum(nums) * 200
 
-
     # Minimize likelihood
     def gauss(x, mu, sigma):
         return np.exp(- (x - mu) ** 2 / 2 / sigma ** 2) / np.sqrt(2 * np.pi * sigma ** 2)
-
 
     def loglikelihood(x_0, x):
         mu1, sigma1, mu2, sigma2, p1 = x_0[0], x_0[1], x_0[2], x_0[3], x_0[4]
@@ -190,7 +189,6 @@ def PlotVelDis():
     bnds = ((-100, 0), (0, 500), (200, 1000), (0, 1000), (0, 1))
     result = minimize(loglikelihood, guesses, (v_gal), bounds=bnds, method="Powell")
     print(result.x)
-
 
     # Bootstrap
     result_array = np.zeros((50, 5))
@@ -241,8 +239,10 @@ def PlotVelDis():
     plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
              (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-k', lw=1, alpha=1)
     plt.hist(v_gal, bins=bins_final, color='k', histtype='step', label=r'$\mathrm{v_{all}}$')
-    plt.hist(v_above, bins=bins_final, facecolor='orange', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{orange}}$')
-    plt.hist(v_below, bins=bins_final, facecolor='purple', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{purple}}$')
+    plt.hist(v_above, bins=bins_final, facecolor='orange', histtype='stepfilled', alpha=0.5,
+             label=r'$\mathrm{v_{orange}}$')
+    plt.hist(v_below, bins=bins_final, facecolor='purple', histtype='stepfilled', alpha=0.5,
+             label=r'$\mathrm{v_{purple}}$')
     plt.xlim(-2000, 2000)
     plt.ylim(0, 12)
     plt.minorticks_on()
