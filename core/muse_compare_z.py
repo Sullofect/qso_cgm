@@ -1,10 +1,10 @@
 import os
+import lmfit
 import numpy as np
 import numpy.ma as ma
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
-from scipy import integrate
 from scipy.stats import norm
 from astropy.io import ascii
 from astropy.table import Table
@@ -118,104 +118,141 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
     output = np.array([bins_ggp, row_ggp, ID_ggp, z_ggp, v_ggp, name_ggp, ql_ggp, ra_ggp, dec_ggp], dtype=object)
     return output
 
+def PlotVelDis():
+    ggp_info = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
+                         cat_will='ESO_DEEP_offset_zapped_objects.fits')
+    bins_final = ggp_info[0]
+    row_final = ggp_info[1]
+    ID_final = ggp_info[2]
+    z_final = ggp_info[3]
+    name_final = ggp_info[5]
+    ql_final = ggp_info[6]
+    ra_final = ggp_info[7]
+    dec_final = ggp_info[8]
 
-# ggp_info = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
-#                      cat_will='ESO_DEEP_offset_zapped_objects.fits')
-# bins_final = ggp_info[0]
-# row_final = ggp_info[1]
-# ID_final = ggp_info[2]
-# z_final = ggp_info[3]
-# name_final = ggp_info[5]
-# ql_final = ggp_info[6]
-# ra_final = ggp_info[7]
-# dec_final = ggp_info[8]
-#
-#
-# col_ID = np.arange(len(row_final))
-# select_array = np.sort(np.array([1, 4, 5, 6, 7, 13, 20, 27, 35, 36, 57, 62, 64, 68, 72, 78, 80, 81, 82, 83, 88, 92,
-#                                  93, 120, 129, 134, 140, 141, 149, 162, 164, 179, 181, 182]))  # No row=11
-# select_gal = np.in1d(row_final, select_array)
-# row_final = row_final[select_gal]
-# z_final = z_final[select_gal]
-# ra_final = ra_final[select_gal]
-# dec_final = dec_final[select_gal]
-#
-# z_qso = 0.6282144177077355
-# v_gal = 3e5 * (z_final - z_qso) / (1 + z_qso)
-#
-# # Determine whcih galaxy is below the line
-# line = np.array([[40.1300330, 40.1417710], [-18.8587229, -18.8698312]])
-# vector_ra = ra_final - line[0, 0]
-# vector_dec = dec_final - line[1, 0]
-# vector_line = np.array([line[0, 1] - line[0, 0], line[1, 1] - line[1, 0]])
-# value = np.cross(np.vstack((vector_ra, vector_dec)).T,  vector_line)
-# value_sort = value < 0
-# row_above, row_below = row_final[value_sort], row_final[np.invert(value_sort)]
-# v_above, v_below = v_gal[value_sort], v_gal[np.invert(value_sort)]
-#
-# # Plot the fitting
-# mu_all, scale_all = norm.fit(v_gal)
-# mu_above, scale_above = norm.fit(v_above)
-# mu_below, scale_below = norm.fit(v_below)
-#
-# # Normalization
-# nums, v_edge = np.histogram(v_gal, bins=bins_final)
-# normalization_all = np.sum(nums) * 200
-# nums, v_edge = np.histogram(v_above, bins=bins_final)
-# normalization_above = np.sum(nums) * 200
-# nums, v_edge = np.histogram(v_below, bins=bins_final)
-# normalization_below = np.sum(nums) * 200
-#
-#
-# # Minimize likelihood
-# def gauss(x, mu, sigma):
-#     return np.exp(- (x - mu) ** 2 / 2 / sigma ** 2) / np.sqrt(2 * np.pi * sigma ** 2)
-#
-#
-# def loglikelihood(x_0, x):
-#     mu1, sigma1, mu2, sigma2, p1 = x_0[0], x_0[1], x_0[2], x_0[3], x_0[4]
-#     return -1 * np.sum(np.log(p1 * gauss(x, mu1, sigma1)
-#                               + (1 - p1) * gauss(x, mu2, sigma2)))
-#
-#
-# guesses = [-80, 200, 500, 500, 0.3]
-# bnds = ((-100, 0), (0, 500), (200, 1000), (0, 1000), (0, 1))
-# result = minimize(loglikelihood, guesses, (v_gal), bounds=bnds, method="Powell")
-#
-# print(result.x)
-# # Plot
-# rv = np.linspace(-2000, 2000, 1000)
-# plt.figure(figsize=(8, 5), dpi=300)
-# plt.vlines(0, 0, 15, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
-# plt.hist(v_gal, bins=bins_final, color='k', histtype='step', label=r'$\mathrm{v_{all}}$')
-# plt.hist(v_above, bins=bins_final, facecolor='orange', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{orange}}$')
-# plt.hist(v_below, bins=bins_final, facecolor='purple', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{purple}}$')
-# # plt.plot(rv, normalization_all * norm.pdf(rv, mu_all, scale_all), '-k', lw=1, alpha=1,
-# #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_all)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-# #                str("{0:.0f}".format(scale_all)) + r'$\mathrm{\, km/s}$')
-# # plt.plot(rv, normalization_above * norm.pdf(rv, mu_above, scale_above), '-r', lw=1, alpha=1,
-# #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_above)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-# #                str("{0:.0f}".format(scale_above)) + r'$\mathrm{\, km/s}$')
-# # plt.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=1, alpha=1,
-# #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_below)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-# #                str("{0:.0f}".format(scale_below)) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '-', c='purple', lw=1, alpha=1,
-#          label=r'$P_{1} = \,$' + str("{0:.2f}".format(result.x[4])) + '\n' + r'$\mu = \, $'
-#                + str("{0:.0f}".format(result.x[0])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
-#                + str("{0:.0f}".format(result.x[1])) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-', c='orange', lw=1,
-#          alpha=1, label=r'$P_{2} = \,$' + str("{0:.2f}".format(1 - result.x[4])) + '\n' +  r'$\mu = \, $'
-#                         + str("{0:.0f}".format(result.x[2])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
-#                         + str("{0:.0f}".format(result.x[3])) + r'$\mathrm{\, km/s}$')
-# plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
-#          (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-k', lw=1, alpha=1)
-# plt.xlim(-2000, 2000)
-# plt.ylim(0, 12)
-# plt.minorticks_on()
-# plt.xlabel(r'$\Delta v [\mathrm{km \; s^{-1}}]$', size=20)
-# plt.ylabel(r'$\mathrm{Numbers}$', size=20)
-# plt.tick_params(axis='both', which='major', direction='in', bottom='on', top='on', left='on', right='on', size=5,
-#                 labelsize=20)
-# plt.tick_params(axis='both', which='minor', direction='in', bottom='on', top='on', left='on', right='on', size=3)
-# plt.legend(prop={'size': 17}, framealpha=0, loc=2, fontsize=15)
-# plt.savefig(path_savefig + 'galaxy_velocity_all', bbox_inches='tight')
+
+    col_ID = np.arange(len(row_final))
+    select_array = np.sort(np.array([1, 4, 5, 6, 7, 13, 20, 27, 35, 36, 57, 62, 64, 68, 72, 78, 80, 81, 82, 83, 88, 92,
+                                     93, 120, 129, 134, 140, 141, 149, 162, 164, 179, 181, 182]))  # No row=11
+    select_gal = np.in1d(row_final, select_array)
+    row_final = row_final[select_gal]
+    z_final = z_final[select_gal]
+    ra_final = ra_final[select_gal]
+    dec_final = dec_final[select_gal]
+
+    z_qso = 0.6282144177077355
+    v_gal = 3e5 * (z_final - z_qso) / (1 + z_qso)
+
+    # Determine whcih galaxy is below the line
+    line = np.array([[40.1300330, 40.1417710], [-18.8587229, -18.8698312]])
+    vector_ra = ra_final - line[0, 0]
+    vector_dec = dec_final - line[1, 0]
+    vector_line = np.array([line[0, 1] - line[0, 0], line[1, 1] - line[1, 0]])
+    value = np.cross(np.vstack((vector_ra, vector_dec)).T,  vector_line)
+    value_sort = value < 0
+    row_above, row_below = row_final[value_sort], row_final[np.invert(value_sort)]
+    v_above, v_below = v_gal[value_sort], v_gal[np.invert(value_sort)]
+
+    # Plot the fitting
+    # mu_all, scale_all = norm.fit(v_gal)
+    # mu_above, scale_above = norm.fit(v_above)
+    # mu_below, scale_below = norm.fit(v_below)
+
+    # Normalization
+    nums, v_edge = np.histogram(v_gal, bins=bins_final)
+    normalization_all = np.sum(nums) * 200
+    nums, v_edge = np.histogram(v_above, bins=bins_final)
+    normalization_above = np.sum(nums) * 200
+    nums, v_edge = np.histogram(v_below, bins=bins_final)
+    normalization_below = np.sum(nums) * 200
+
+
+    # Minimize likelihood
+    def gauss(x, mu, sigma):
+        return np.exp(- (x - mu) ** 2 / 2 / sigma ** 2) / np.sqrt(2 * np.pi * sigma ** 2)
+
+
+    def loglikelihood(x_0, x):
+        mu1, sigma1, mu2, sigma2, p1 = x_0[0], x_0[1], x_0[2], x_0[3], x_0[4]
+        return -1 * np.sum(np.log(p1 * gauss(x, mu1, sigma1) + (1 - p1) * gauss(x, mu2, sigma2)))
+
+    # def loglikelihood(x_0, x):
+    #     vals = x_0.valuesdict()
+    #     mu1 = vals['mu1']
+    #     sigma1 = vals['sigma1']
+    #     mu2 = vals['mu2']
+    #     sigma2 = vals['sigma2']
+    #     p1 = vals['p1']
+    #     return -1 * np.sum(np.log(p1 * gauss(x, mu1, sigma1) + (1 - p1) * gauss(x, mu2, sigma2)))
+
+
+    guesses = [-80, 200, 500, 500, 0.3]
+    bnds = ((-100, 0), (0, 500), (200, 1000), (0, 1000), (0, 1))
+    result = minimize(loglikelihood, guesses, (v_gal), bounds=bnds, method="Powell")
+    print(result.x)
+
+
+    # Bootstrap
+    result_array = np.zeros((50, 5))
+    for i in range(len(result_array)):
+        v_gal_i = np.random.choice(v_gal, replace=True, size=len(v_gal))
+        result_i = minimize(loglikelihood, guesses, (v_gal_i), bounds=bnds, method="Powell")
+        result_array[i, :] = result_i.x
+    result_std = np.std(result_array, axis=0)
+
+
+    # parameters_all = lmfit.Parameters()
+    # parameters_all.add_many(('mu1', -80, True, -100, 0, None),
+    #                         ('sigma1', 200, True, 0, 500, None),
+    #                         ('mu2', 500, True, 200, 1000, None),
+    #                         ('sigma2', 500, True, 0, 1000, None),
+    #                         ('p1', 0.3, True, 0, 1, None))
+    # out = lmfit.minimize(loglikelihood, parameters_all, args=(v_gal,), method='powell')
+    # print(out.params.pretty_print())
+    # print(lmfit.fit_report(out))
+
+    # Plot
+    rv = np.linspace(-2000, 2000, 1000)
+    plt.figure(figsize=(8, 5), dpi=300)
+    plt.vlines(0, 0, 15, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
+    # plt.plot(rv, normalization_all * norm.pdf(rv, mu_all, scale_all), '-k', lw=1, alpha=1,
+    #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_all)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+    #                str("{0:.0f}".format(scale_all)) + r'$\mathrm{\, km/s}$')
+    # plt.plot(rv, normalization_above * norm.pdf(rv, mu_above, scale_above), '-r', lw=1, alpha=1,
+    #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_above)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+    #                str("{0:.0f}".format(scale_above)) + r'$\mathrm{\, km/s}$')
+    # plt.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=1, alpha=1,
+    #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_below)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
+    #                str("{0:.0f}".format(scale_below)) + r'$\mathrm{\, km/s}$')
+    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '-', c='purple', lw=1, alpha=1,
+             label=r'$P_{1} = \,$' + str("{0:.2f}".format(result.x[4])) + r'$\pm$'
+                   + str("{0:.2f}".format(result_std[4])) + '\n' + r'$\mu = \, $'
+                   + str("{0:.0f}".format(result.x[0])) + r'$\pm$'
+                   + str("{0:.0f}".format(result_std[0])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
+                   + str("{0:.0f}".format(result.x[1])) + r'$\pm$'
+                   + str("{0:.0f}".format(result_std[1])) + r'$\mathrm{\, km/s}$', zorder=110)
+    plt.plot(rv, (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-', c='orange', lw=1,
+             alpha=1, label=r'$P_{2} = \,$' + str("{0:.2f}".format(1 - result.x[4])) + r'$\mp$'
+                            + str("{0:.2f}".format(result_std[4])) + '\n' + r'$\mu = \, $'
+                            + str("{0:.0f}".format(result.x[2])) + r'$\pm$'
+                            + str("{0:.0f}".format(result_std[2])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
+                            + str("{0:.0f}".format(result.x[3])) + r'$\pm$'
+                            + str("{0:.0f}".format(result_std[3])) + r'$\mathrm{\, km/s}$', zorder=100)
+    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
+             (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-k', lw=1, alpha=1)
+    plt.hist(v_gal, bins=bins_final, color='k', histtype='step', label=r'$\mathrm{v_{all}}$')
+    plt.hist(v_above, bins=bins_final, facecolor='orange', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{orange}}$')
+    plt.hist(v_below, bins=bins_final, facecolor='purple', histtype='stepfilled', alpha=0.5, label=r'$\mathrm{v_{purple}}$')
+    plt.xlim(-2000, 2000)
+    plt.ylim(0, 12)
+    plt.minorticks_on()
+    plt.xlabel(r'$\Delta v [\mathrm{km \; s^{-1}}]$', size=20)
+    plt.ylabel(r'$\mathrm{Numbers}$', size=20)
+    plt.tick_params(axis='both', which='major', direction='in', bottom='on', top='on', left='on', right='on', size=5,
+                    labelsize=20)
+    plt.tick_params(axis='both', which='minor', direction='in', bottom='on', top='on', left='on', right='on', size=3)
+    plt.legend(prop={'size': 17}, framealpha=0, loc=2, fontsize=15)
+    plt.savefig(path_savefig + 'galaxy_velocity_all', bbox_inches='tight')
+
+
+# PlotVelDis()

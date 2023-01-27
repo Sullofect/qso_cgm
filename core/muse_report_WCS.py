@@ -46,7 +46,6 @@ ra_qso_gaia, dec_qso_gaia = 40.13576715640353, -18.86426977828008
 ra_final = ra_final - (ra_qso_gaia - ra_qso_muse)
 dec_final = dec_final - (dec_qso_gaia - dec_qso_muse)
 
-
 # Change coordinate for galaxy with row = 1
 row_1_sort = np.where(row_final == 1)
 ra_final[row_1_sort] = 40.1440392
