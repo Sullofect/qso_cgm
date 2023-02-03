@@ -454,7 +454,7 @@ def CreateGrid(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=
                 command_array = np.hstack((command_array, command))
     np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
 
-def CreateGrid_AGN(den_array, z_array, T_array, alpha_ox_array, alpha_uv_array, alpha_x_array,
+def CreateGrid_AGN(den_array, T_array, z_array, alpha_ox_array, alpha_uv_array, alpha_x_array,
                    L_qso=46.54, region=None, trial=None):
     global text_array
     dis = np.around(distance[text_array == region][0], decimals=2)
@@ -574,3 +574,15 @@ CreateGrid(np.linspace(-1.9, -1.7, 2, dtype='f2'), alpha_array[:3], den_array[17
 # T_array_AGN = np.linspace(5, 5.5, 3, dtype='f2')
 # CreateGrid_AGN(den_array_AGN, T_array_AGN, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
 #                region='S1', trial='AGN')
+
+
+# Check AGN continuum trial 2 with S1
+den_array_AGN = np.linspace(1.0, 2.4, 8, dtype='f2')
+z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
+T_array_AGN = np.linspace(5, 5.5, 3, dtype='f2')
+alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
+# alpha_uv_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
+alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
+alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
+CreateGrid_AGN(den_array_AGN, T_array_AGN, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
+               region='S1', trial='AGN_2')

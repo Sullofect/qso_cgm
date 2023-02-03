@@ -354,11 +354,35 @@ def RunCloudyMCMC_AGN(den_array, z_array, T_array, alpha_ox_array, alpha_uv_arra
 
 
 # AGN model
+# S1_bnds = np.array([[1.0, 2.4],
+#                     [-0.5, 0.5],
+#                     [5, 5.5],
+#                     [-1.2, -0.2],
+#                     [-1.0, 0],
+#                     [-1.5, -0.5]])
+# S1_param = np.array([['NeV3346', True],
+#                      ['OII', True],
+#                      ['NeIII3869', True],
+#                      ['Hdel', True],
+#                      ['Hgam', True],
+#                      ['OIII4364', True],
+#                      ['HeII4687', True],
+#                      ['OIII5008', True]], dtype=bool)
+# den_array_AGN = np.linspace(1.0, 2.4, 8, dtype='f2')
+# z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
+# T_array_AGN = np.linspace(5, 5.5, 3, dtype='f2')
+# alpha_ox_array_AGN = np.linspace(-1.2, -0.2, 6, dtype='f2')
+# alpha_uv_array_AGN = np.linspace(-1.0, 0, 3, dtype='f2')
+# alpha_x_array_AGN = np.linspace(-1.5, -0.5, 3, dtype='f2')
+# RunCloudyMCMC_AGN(den_array_AGN, z_array_AGN, T_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
+#                   region='S1', trial='AGN', bnds=S1_bnds, line_param=S1_param, deredden=False)
+
+# AGN_2 model
 S1_bnds = np.array([[1.0, 2.4],
                     [-0.5, 0.5],
                     [5, 5.5],
-                    [-1.2, -0.2],
-                    [-1.0, 0],
+                    [-1.2, 0],
+                    [-0.52, -0.48],
                     [-1.5, -0.5]])
 S1_param = np.array([['NeV3346', True],
                      ['OII', True],
@@ -371,11 +395,11 @@ S1_param = np.array([['NeV3346', True],
 den_array_AGN = np.linspace(1.0, 2.4, 8, dtype='f2')
 z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
 T_array_AGN = np.linspace(5, 5.5, 3, dtype='f2')
-alpha_ox_array_AGN = np.linspace(-1.2, -0.2, 6, dtype='f2')
-alpha_uv_array_AGN = np.linspace(-1.0, 0, 3, dtype='f2')
-alpha_x_array_AGN = np.linspace(-1.5, -0.5, 3, dtype='f2')
+alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
+alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
+alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
 RunCloudyMCMC_AGN(den_array_AGN, z_array_AGN, T_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
-                  region='S1', trial='AGN', bnds=S1_bnds, line_param=S1_param, deredden=False)
+                  region='S1', trial='AGN_2', bnds=S1_bnds, line_param=S1_param, deredden=False)
 
 # # S3
 # S3_bnds = np.array([[-2, 3.0],
