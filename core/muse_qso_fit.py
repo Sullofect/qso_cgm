@@ -303,9 +303,9 @@ ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; (\AA)}$', size=20)
 ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
 ax.tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20, size=5)
 ax.tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-ax.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.22, 0.8), xycoords='axes fraction', size=20)
-ax.annotate(text=r'$\mathrm{H\beta}$', xy=(0.65, 0.8), xycoords='axes fraction', size=20)
-ax.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.697, 0.8),
+ax.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.03, 0.8), xycoords='axes fraction', size=20)
+ax.annotate(text=r'$\mathrm{H\beta}$', xy=(0.57, 0.8), xycoords='axes fraction', size=20)
+ax.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.63, 0.8),
             xycoords='axes fraction', size=20)
 ax.fill_between([6060, 6080], [-20, -20], [480, 480], color='lightgrey', alpha=0.5)
 ax.fill_between([7750, 8270], [-20, -20], [480, 480], color='lightgrey', alpha=0.5)

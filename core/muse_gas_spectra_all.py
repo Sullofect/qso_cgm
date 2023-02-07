@@ -757,15 +757,15 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
         axarr_0_strong.minorticks_on()
         axarr_1_strong.minorticks_on()
-        axarr_0_strong.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right=False,
-                                labelsize=20, size=5)
-        axarr_0_strong.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right=False,
-                                size=3)
+        axarr_0_strong.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on',
+                                   right=False, labelsize=20, size=5)
+        axarr_0_strong.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on',
+                                   right=False, size=3)
         axarr_0_strong.tick_params(axis='y', which='both', right=False, labelright=False)
-        axarr_1_strong.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False, right='on',
-                                labelsize=20, size=5)
-        axarr_1_strong.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False, right='on',
-                                size=3)
+        axarr_1_strong.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False,
+                                   right='on', labelsize=20, size=5)
+        axarr_1_strong.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False,
+                                   right='on', size=3)
         axarr_1_strong.tick_params(axis='y', which='both', left=False, labelleft=False)
         if i != len(ra_array) - 1:
             axarr_0_strong.tick_params(axis='x', which='both', labelbottom=False)

@@ -213,6 +213,13 @@ def PlotVelDis():
     rv = np.linspace(-2000, 2000, 1000)
     plt.figure(figsize=(8, 5), dpi=300)
     plt.vlines(0, 0, 15, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
+    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
+             (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-k', lw=1, alpha=1)
+    plt.hist(v_gal, bins=bins_final, color='k', histtype='step', label=r'$v_{\rm all}$')
+    plt.hist(v_above, bins=bins_final, facecolor='orange', histtype='stepfilled', alpha=0.5,
+             label=r'$v_{\rm orange}$')
+    plt.hist(v_below, bins=bins_final, facecolor='purple', histtype='stepfilled', alpha=0.5,
+             label=r'$v_{\rm purple}$')
     # plt.plot(rv, normalization_all * norm.pdf(rv, mu_all, scale_all), '-k', lw=1, alpha=1,
     #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_all)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
     #                str("{0:.0f}".format(scale_all)) + r'$\mathrm{\, km/s}$')
@@ -222,27 +229,28 @@ def PlotVelDis():
     # plt.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=1, alpha=1,
     #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_below)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
     #                str("{0:.0f}".format(scale_below)) + r'$\mathrm{\, km/s}$')
-    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '-', c='purple', lw=1, alpha=1,
-             label=r'$P_{1} = \,$' + str("{0:.2f}".format(result.x[4])) + r'$\pm$'
-                   + str("{0:.2f}".format(result_std[4])) + '\n' + r'$\mu = \, $'
-                   + str("{0:.0f}".format(result.x[0])) + r'$\pm$'
-                   + str("{0:.0f}".format(result_std[0])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
-                   + str("{0:.0f}".format(result.x[1])) + r'$\pm$'
-                   + str("{0:.0f}".format(result_std[1])) + r'$\mathrm{\, km/s}$', zorder=110)
+    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '-', c='purple', lw=1,
+             alpha=1, label=r'$P_{1} = \,$' + str("{0:.2f}".format(result.x[4])) +
+                            '\n' + r'$\mu = \, $' + str("{0:.0f}".format(result.x[0])) + r'$\mathrm{\, km/s}$, ' +
+                            '\n' + r'$\sigma = \, $' + str("{0:.0f}".format(result.x[1])) + r'$\mathrm{\, km/s}$')
     plt.plot(rv, (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-', c='orange', lw=1,
-             alpha=1, label=r'$P_{2} = \,$' + str("{0:.2f}".format(1 - result.x[4])) + r'$\mp$'
-                            + str("{0:.2f}".format(result_std[4])) + '\n' + r'$\mu = \, $'
-                            + str("{0:.0f}".format(result.x[2])) + r'$\pm$'
-                            + str("{0:.0f}".format(result_std[2])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
-                            + str("{0:.0f}".format(result.x[3])) + r'$\pm$'
-                            + str("{0:.0f}".format(result_std[3])) + r'$\mathrm{\, km/s}$', zorder=100)
-    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
-             (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-k', lw=1, alpha=1)
-    plt.hist(v_gal, bins=bins_final, color='k', histtype='step', label=r'$\mathrm{v_{all}}$')
-    plt.hist(v_above, bins=bins_final, facecolor='orange', histtype='stepfilled', alpha=0.5,
-             label=r'$\mathrm{v_{orange}}$')
-    plt.hist(v_below, bins=bins_final, facecolor='purple', histtype='stepfilled', alpha=0.5,
-             label=r'$\mathrm{v_{purple}}$')
+             alpha=1, label=r'$P_{2} = \,$' + str("{0:.2f}".format(1 - result.x[4])) +
+                            '\n' + r'$\mu = \, $' + str("{0:.0f}".format(result.x[2])) + r'$\mathrm{\, km/s}$, ' +
+                            '\n' + r'$\sigma = \, $' + str("{0:.0f}".format(result.x[3])) + r'$\mathrm{\, km/s}$')
+    # plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '-', c='purple', lw=1, alpha=1,
+    #          label=r'$P_{1} = \,$' + str("{0:.2f}".format(result.x[4])) + r'$\pm$'
+    #                + str("{0:.2f}".format(result_std[4])) + '\n' + r'$\mu = \, $'
+    #                + str("{0:.0f}".format(result.x[0])) + r'$\pm$'
+    #                + str("{0:.0f}".format(result_std[0])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
+    #                + str("{0:.0f}".format(result.x[1])) + r'$\pm$'
+    #                + str("{0:.0f}".format(result_std[1])) + r'$\mathrm{\, km/s}$', zorder=110)
+    # plt.plot(rv, (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-', c='orange', lw=1,
+    #          alpha=1, label=r'$P_{2} = \,$' + str("{0:.2f}".format(1 - result.x[4])) + r'$\mp$'
+    #                         + str("{0:.2f}".format(result_std[4])) + '\n' + r'$\mu = \, $'
+    #                         + str("{0:.0f}".format(result.x[2])) + r'$\pm$'
+    #                         + str("{0:.0f}".format(result_std[2])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
+    #                         + str("{0:.0f}".format(result.x[3])) + r'$\pm$'
+    #                         + str("{0:.0f}".format(result_std[3])) + r'$\mathrm{\, km/s}$', zorder=100)
     plt.xlim(-2000, 2000)
     plt.ylim(0, 12)
     plt.minorticks_on()

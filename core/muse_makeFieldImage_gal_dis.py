@@ -93,6 +93,7 @@ gc1.axis_labels.hide()
 norm = mpl.colors.Normalize(vmin=-1000, vmax=1000)
 gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                 linewidths=0.5, s=400)
+gc.add_label(40.13564948691202 - 0.0015, -18.864301804042814, 'QSO', size=10)
 gc.show_markers(ra_final, dec_final, marker='o', facecolor='none', c='none',
                 edgecolors=plt.cm.coolwarm(norm(v_gal)), linewidths=1.2, s=80)
 gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)

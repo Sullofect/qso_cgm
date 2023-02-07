@@ -584,5 +584,10 @@ alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
 # alpha_uv_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
 alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
 alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
-CreateGrid_AGN(den_array_AGN, T_array_AGN, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
-               region='S1', trial='AGN_2')
+# CreateGrid_AGN(den_array_AGN, T_array_AGN, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
+#                region='S1', trial='AGN_2')
+
+# Add more grid point
+T_array_AGN_add = np.array([4.75, 5.75], dtype='f2')
+CreateGrid_AGN(den_array_AGN, T_array_AGN_add, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
+               region='S1', trial='AGN_2_2')
