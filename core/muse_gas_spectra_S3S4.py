@@ -424,7 +424,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
     fig_strong.subplots_adjust(hspace=0)
     fig_strong.subplots_adjust(wspace=0.1)
 
-    flux_info = np.zeros((len(ra_array), 34))
+    flux_info = np.zeros((len(ra_array), 38))
     for i in range(len(ra_array)):
         if len(ra_array) == 1:
             axarr_0_strong = axarr_strong[0]
@@ -648,8 +648,9 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         b_HeII4687, db_HeII4687 = result_all.best_values['b_HeII4687'], result_all.params['b_HeII4687'].stderr
 
         # Save the fitted result
-        flux_info[i, :] = np.array([flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
-                                    flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, flux_OII_wing, r_OII,
+        flux_info[i, :] = np.array([z, dz_wing, sigma, sigma_wing, flux_NeV3346, flux_NeIII3869, flux_HeI3889,
+                                    flux_H8, flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364,
+                                    flux_HeII4687, flux_OII, flux_OII_wing, r_OII,
                                     r_OII_wing, flux_Hbeta, flux_OIII5008, flux_OIII5008_wing, dflux_NeV3346,
                                     dflux_NeIII3869, dflux_HeI3889, dflux_H8, dflux_NeIII3968, dflux_Heps, dflux_Hdel,
                                     dflux_Hgam, dflux_OIII4364, dflux_HeII4687, dflux_OII, dflux_OII_wing, dr_OII,
@@ -743,7 +744,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr_0_weak[1].annotate(text=r'$\mathrm{He \, I}$' + '\n' + r'$\mathrm{H8}$', xy=(0.6, 0.53),
                                  xycoords='axes fraction', size=15)
         axarr_0_weak[2].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.20, 0.65), xycoords='axes fraction', size=15)
-        axarr_0_weak[2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.64, 0.65), xycoords='axes fraction', size=15)
         axarr_0_weak[3].annotate(text=r'$\mathrm{H \delta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
         axarr_0_weak[4].annotate(text=r'$\mathrm{H \gamma}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
         axarr_0_weak[4].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
@@ -831,7 +832,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
             axarr_0_strong.tick_params(axis='x', which='both', labelbottom=False)
             axarr_1_strong.tick_params(axis='x', which='both', labelbottom=False)
 
-    t = Table(flux_info, names=('flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', 'flux_NeIII3968',
+    t = Table(flux_info, names=('z', 'dz_wing', 'sigma', 'sigma_wing', 'flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', 'flux_NeIII3968',
                                 'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364', 'flux_HeII4687',
                                 'flux_OII', 'flux_OII_wing', 'r_OII', 'r_OII_wing', 'flux_Hbeta', 'flux_OIII5008',
                                 'flux_OIII5008_wing', 'dflux_NeV3346', 'dflux_NeIII3869', 'dflux_HeI3889', 'dflux_H8',
@@ -880,7 +881,7 @@ radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 PlotGasSpectra(ra_array[2:4], dec_array[2:4], radius_array[2:4], text_array[2:4], figname='spectra_gas/spectra_gas_S3S4',
-               save_table=True, save_figure=True, deredden=True)
+               save_table=True, save_figure=True, deredden=False)
 
 
 # for i in range(len(text_array)):

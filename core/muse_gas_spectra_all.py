@@ -6,6 +6,7 @@ import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from PyAstronomy import pyasl
+from muse_gas_spectra_S3S4 import model_all as S3S4_model_all
 from mpdaf.obj import Cube, WCS, WaveCoord, iter_spe
 from astropy.table import Table
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
@@ -368,17 +369,17 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                    save_table=False, save_figure=True):
     # Weak emission lines
     fig_weak, axarr_weak = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
-                              gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
+                                        gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
     fig_weak.subplots_adjust(hspace=0)
     fig_weak.subplots_adjust(wspace=0.2)
 
     # Strong emission lines
     fig_strong, axarr_strong = plt.subplots(len(ra_array), 2, figsize=(10, len(ra_array) * 2.5),
-                              gridspec_kw={'width_ratios': [1, 3]}, dpi=300)
+                                            gridspec_kw={'width_ratios': [1, 3]}, dpi=300)
     fig_strong.subplots_adjust(hspace=0)
     fig_strong.subplots_adjust(wspace=0.1)
 
-    flux_info = np.zeros((len(ra_array), 28))
+    flux_info = np.zeros((len(ra_array), 30))
     for i in range(len(ra_array)):
         if len(ra_array) == 1:
             axarr_0_strong = axarr_strong[0]
@@ -594,18 +595,53 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         b_HeII4687, db_HeII4687 = result_all.best_values['b_HeII4687'], result_all.params['b_HeII4687'].stderr
 
         # Save the fitted result
-        flux_info[i, :] = np.array([flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
+        flux_info[i, :] = np.array([z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
                                     flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, r_OII, flux_Hbeta,
                                     flux_OIII5008, dflux_NeV3346, dflux_NeIII3869, dflux_HeI3889, dflux_H8,
                                     dflux_NeIII3968, dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364,
                                     dflux_HeII4687, dflux_OII, dr_OII, dflux_Hbeta, dflux_OIII5008])
 
-        line_model_all = model_all(wave_vac_all_plot, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
-                                    flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687,
-                                    flux_OII, flux_Hbeta, flux_OIII5008, r_OII, a_NeV3346, b_NeV3346,
-                                    a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968,
-                                    a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687,
-                                    a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
+        # Use different line profile if specified
+        if text_array[i] == 'S3' or text_array[i] == 'S4':
+            if deredden:
+                lineRatioS3S4 = Table.read('/Users/lzq/Dropbox/Data/CGM/RegionLinesRatio/'
+                                           'RegionLinesRatio_S3S4_dered.fits')
+                lineRatioS3S4 = lineRatioS3S4[lineRatioS3S4['region'] == text_array[i]]
+            else:
+                lineRatioS3S4 = Table.read('/Users/lzq/Dropbox/Data/CGM/RegionLinesRatio/'
+                                           'RegionLinesRatio_S3S4.fits')
+                lineRatioS3S4 = lineRatioS3S4[lineRatioS3S4['region'] == text_array[i]]
+
+            z, dz_wing = lineRatioS3S4['z'], lineRatioS3S4['dz_wing']
+            sigma, sigma_wing = lineRatioS3S4['sigma'], lineRatioS3S4['sigma_wing']
+            flux_NeV3346, flux_NeIII3869 = lineRatioS3S4['flux_NeV3346'], lineRatioS3S4['flux_NeIII3869']
+            flux_HeI3889, flux_H8 = lineRatioS3S4['flux_HeI3889'], lineRatioS3S4['flux_H8']
+            flux_NeIII3968, flux_Heps = lineRatioS3S4['flux_NeIII3968'], lineRatioS3S4['flux_Heps']
+            flux_Hdel, flux_Hgam = lineRatioS3S4['flux_Hdel'], lineRatioS3S4['flux_Hgam']
+            flux_OIII4364, flux_HeII4687 = lineRatioS3S4['flux_OIII4364'], lineRatioS3S4['flux_HeII4687']
+            flux_OII, flux_OII_wing = lineRatioS3S4['flux_OII'], lineRatioS3S4['flux_OII_wing']
+            flux_Hbeta, flux_OIII5008 = lineRatioS3S4['flux_Hbeta'], lineRatioS3S4['flux_OIII5008']
+            flux_OIII5008_wing, r_OII = lineRatioS3S4['flux_OIII5008_wing'], lineRatioS3S4['r_OII']
+            r_OII_wing = lineRatioS3S4['r_OII_wing']
+
+            line_model_all = S3S4_model_all(wave_vac_all_plot, z, dz_wing, sigma, sigma_wing, flux_NeV3346,
+                                            flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
+                                            flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII,
+                                            flux_OII_wing, flux_Hbeta, flux_OIII5008, flux_OIII5008_wing,
+                                            r_OII, r_OII_wing, a_NeV3346, b_NeV3346, a_NeIII3869,
+                                            b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968,
+                                            a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687,
+                                            b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960,
+                                            a_OIII5008, b_OIII5008)
+
+        else:
+            line_model_all = model_all(wave_vac_all_plot, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
+                                        flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687,
+                                        flux_OII, flux_Hbeta, flux_OIII5008, r_OII, a_NeV3346, b_NeV3346,
+                                        a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968,
+                                        a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687,
+                                        a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
+
 
         # Weak lines
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
@@ -688,7 +724,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr_0_weak[1].annotate(text=r'$\mathrm{He \, I}$' + '\n' + r'$\mathrm{H8}$', xy=(0.6, 0.53),
                                  xycoords='axes fraction', size=15)
         axarr_0_weak[2].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.20, 0.65), xycoords='axes fraction', size=15)
-        axarr_0_weak[2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.60, 0.65), xycoords='axes fraction', size=15)
         axarr_0_weak[3].annotate(text=r'$\mathrm{H \delta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
         axarr_0_weak[4].annotate(text=r'$\mathrm{H \gamma}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
         axarr_0_weak[4].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
@@ -708,7 +744,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         axarr_i_weak[5].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False,
                                     right='on', labelsize=20, size=5)
         axarr_i_weak[5].tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left=False,
-                                    sright='on', size=3)
+                                    right='on', size=3)
         axarr_i_weak[5].tick_params(axis='y', which='both', left=False, labelleft=False)
         for j in [1, 2, 3, 4]:
             axarr_i_weak[j].tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left=False,
@@ -771,9 +807,10 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
             axarr_0_strong.tick_params(axis='x', which='both', labelbottom=False)
             axarr_1_strong.tick_params(axis='x', which='both', labelbottom=False)
 
-    t = Table(flux_info, names=('flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', 'flux_NeIII3968',
-                                'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364', 'flux_HeII4687',
-                                'flux_OII', 'r_OII', 'flux_Hbeta', 'flux_OIII5008', 'dflux_NeV3346',
+    # Finish the table
+    t = Table(flux_info, names=('z', 'sigma', 'flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8',
+                                'flux_NeIII3968', 'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364',
+                                'flux_HeII4687', 'flux_OII', 'r_OII', 'flux_Hbeta', 'flux_OIII5008', 'dflux_NeV3346',
                                 'dflux_NeIII3869', 'dflux_HeI3889', 'dflux_H8', 'dflux_NeIII3968',
                                 'dflux_Heps', 'dflux_Hdel', 'dflux_Hgam', 'dflux_OIII4364',
                                 'dflux_HeII4687', 'dflux_OII', 'dr_OII', 'dflux_Hbeta', 'dflux_OIII5008'))
@@ -793,12 +830,12 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         fig_strong.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
                              size=20, x=0.03)
     else:
-        fig_weak.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.0)
+        fig_weak.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.05)
         fig_weak.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
-                           size=20, x=0.02)
-        fig_strong.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.07)
+                           size=20,)
+        fig_strong.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.05)
         fig_strong.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
-                             size=20, x=0.05)
+                             size=20)
     if save_figure:
         if deredden:
             fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak_dered.png', bbox_inches='tight')
@@ -816,10 +853,14 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-# PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_all', save_table=True,
-#                save_figure=False, deredden=True)
+# PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas/spectra_gas_paper',
+#                save_table=True, save_figure=False, deredden=True)
+
+paper_sort = [0, 3, 5, 8, 11]
+PlotGasSpectra(ra_array[paper_sort], dec_array[paper_sort], radius_array[paper_sort], text_array[paper_sort],
+               figname='spectra_gas/spectra_gas_paper', save_table=False, save_figure=True, deredden=True)
 
 
-for i in range(len(text_array)):
-    PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
-                   figname='spectra_gas/spectra_gas_' + str(text_array[i]))
+# for i in range(len(text_array)):
+#     PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
+#                    figname='spectra_gas/spectra_gas_' + str(text_array[i]))

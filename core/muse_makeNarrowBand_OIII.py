@@ -123,22 +123,27 @@ for i in range(6):
                                 'image_make_OIII_NB_revised.fits')
     gc = aplpy.FITSFigure(path_subcube, figure=fig, north=True, animated=True)
     gc.set_system_latex(True)
-    gc.show_colorscale(vmin=0, vmid=0.3, vmax=20.0, cmap=newcmp, stretch='arcsinh')
+    # gc.show_colorscale(vmin=0, vmid=0.3, vmax=20.0, cmap=newcmp, stretch='arcsinh')  # [O III] stretch
+    gc.show_colorscale(vmin=0, vmid=0.2, vmax=15.0, cmap=newcmp, stretch='arcsinh')  # [O II] stretch
     gc.add_colorbar()
     # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
     gc.ticks.set_length(30)
     gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=400)
-    # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
+    # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k',
+    # linewidths=0.8, s=100)
+    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/regions/gas_list.reg')
+
+    # Plot regions
     gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linewidths=0.5, alpha=0.7)
     for i in range(len(ra_array)):
         x = regions_label[i].center.ra.degree
         y = regions_label[i].center.dec.degree
         gc.add_label(x, y, text_array[i], size=10)
-    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/regions/gas_list.reg')
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.0)
-    gc.colorbar.set_ticks([2, 4, 6, 8, 10])
+    # gc.colorbar.set_ticks([2, 4, 6, 8, 10])  # [O III] ticks
+    gc.colorbar.set_ticks([1, 5, 10])  # [O II] ticks
     gc.colorbar.set_axis_label_text(r'$\mathrm{Surface \; Brightness \; [10^{-17} \; erg \; cm^{-2} \; '
                                     r's^{-1} \; arcsec^{-2}]}$')
     gc.colorbar.set_font(size=15)
@@ -165,6 +170,6 @@ for i in range(6):
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/NB_movie/image_OIII_' + str("{0:.0f}".format(wave_i_vac)) + '_' +
                 str("{0:.0f}".format(wave_f_vac)) + '.png', bbox_inches='tight')
 
-os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OIII_*.png '
-          '~/dropbox/Data/CGM_plots/NB_movie/OIII_movie.gif')
+# os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OIII_*.png '
+#           '~/dropbox/Data/CGM_plots/NB_movie/OIII_movie.gif')
 
