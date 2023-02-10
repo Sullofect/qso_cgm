@@ -7,9 +7,12 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 from mpdaf.obj import Image
 from astropy import units as u
+from regions import Regions
 from muse_compare_z import compare_z
 from astropy.convolution import convolve
+from muse_RenameGal import ReturnGalLabel
 from astropy.convolution import Gaussian2DKernel
+from regions import RectangleSkyRegion, PixCoord, RectanglePixelRegion
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
@@ -22,16 +25,18 @@ mpl.rcParams['ytick.major.size'] = 10
 def ConvertFits(filename=None, smooth=True):
     path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_narrow', filename + '.fits')
     image = Image(path)
-    image.data[0:60, 0:40] = 0
-    image.data[0:60, 160:200] = 0
-    image.data[140:200, 0:200] = 0
-    image.data[80:200, 180:200] = 0
-    image.data[80:200, 0:20] = 0
     image.write('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', savemask='nan')
     data, hdr = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', 1, header=True)
     if smooth is True:
-        kernel = Gaussian2DKernel(x_stddev=10.0, x_size=7, y_size=7)
+        kernel = Gaussian2DKernel(x_stddev=10.0, x_size=3, y_size=3)
         data = convolve(data, kernel)
+    # Mask the data
+    xx, yy = np.meshgrid(np.arange(len(image.data)), np.arange(len(image.data)))
+    pixel_center = PixCoord(x=100, y=75)
+    pixel_region = RectanglePixelRegion(center=pixel_center, width=90, height=90)
+    pixel_data = PixCoord(x=xx, y=yy)
+    mask = pixel_region.contains(pixel_data)
+    data = np.where(mask, data, np.nan)
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', data, overwrite=True)
     data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', 0, header=True)
     hdr1['BITPIX'], hdr1['NAXIS'], hdr1['NAXIS1'], hdr1['NAXIS2'] = hdr['BITPIX'], hdr['NAXIS'], hdr['NAXIS1'], \
@@ -42,15 +47,15 @@ def ConvertFits(filename=None, smooth=True):
                                                                        hdr['LATPOLE']
     hdr1['CSYER1'], hdr1['CSYER2'], hdr1['MJDREF'], hdr1['RADESYS'] = hdr['CSYER1'], hdr['CSYER2'], hdr['MJDREF'], \
                                                                       hdr['RADESYS']
-    hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] =  hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
+    hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] = hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
 
     # Rescale the data by 1e17
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits',
                  data1 * 1e17, hdr1, overwrite=True)
 
 
-ConvertFits(filename='image_OII_line_SB_offset', smooth=False)
-ConvertFits(filename='image_OIII_5008_line_SB_offset', smooth=False)
+ConvertFits(filename='image_OII_line_SB_offset', smooth=True)
+ConvertFits(filename='image_OIII_5008_line_SB_offset', smooth=True)
 
 #
 path_hb = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data', 'HE0238-1904_drc_offset.fits')
@@ -81,42 +86,60 @@ z_final = z_final[select_gal]
 ra_final = ra_final[select_gal]
 dec_final = dec_final[select_gal]
 
+# Label the galaxy
+path_label = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'galaxy_label_list.reg')
+regions_label = Regions.read(path_label, format='ds9')
+
+# Load galxies infomation
+row_final, ID_final, name_final, z_final, ra_final, dec_final = ReturnGalLabel(sort_row=False, mode='initial')
+ID_sep_final = ReturnGalLabel(sort_row=True, mode='final')[6]
+
 # Calculate the offset between MUSE and HST
 ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
 ra_qso_hst, dec_qso_hst = 40.1359, -18.8643  # Wrong!!!
-# ra_final = ra_final - (ra_qso_hst - ra_qso_muse)  # Wrong!!!
-# dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
 # Plot
 fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
-gc.set_xaxis_coord_type('scalar')
-gc.set_yaxis_coord_type('scalar')
-gc.show_contour(path_OII_SB, levels=[0.15, 0.3, 0.5, 2], colors='blue', linewidths=1, smooth=7)
-gc.show_contour(path_OIII_SB, levels=[0.15, 0.3, 0.5, 2], colors='red', linewidths=1, smooth=7)
-gc.recenter(40.1359, -18.8643, width=40 / 3600, height=40 / 3600)  # 0.02 / 0.01 40''
 gc.set_system_latex(True)
+gc.recenter(40.1359, -18.8643, width=40 / 3600, height=40 / 3600)  # 0.02 / 0.01 40''
 gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+# gc.show_colorscale(cmap='Greys', vmin=0, vmax=4.897e-2)
+gc.show_contour(path_OII_SB, levels=[0.4, 2], colors='blue', linewidths=0.8, smooth=3)
+gc.show_contour(path_OIII_SB, levels=[0.4, 2], colors='red', linewidths=0.8, smooth=3)
+gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=1.5, s=330)
+# for i in range(len(row_final)):
+#     x = regions_label[i].center.ra.degree
+#     y = regions_label[i].center.dec.degree
+#     text = 'G' + str(ID_sep_final[i])
+#     gc.add_label(x, y, text, size=20)
+
+# Colorbar
 gc.add_colorbar()
 gc.colorbar.set_ticks([0])
 gc.colorbar.set_location('bottom')
 gc.colorbar.set_pad(0.0)
 gc.colorbar.hide()
-gc.ticks.set_length(30)
+
+# Scalebar
 gc.add_scalebar(length=15 * u.arcsecond)
-gc.scalebar.set_corner('top left')
+gc.scalebar.set_corner('bottom left')
 gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
-gc.scalebar.set_font_size(15)
+gc.scalebar.set_font_size(20)
+
+# Hide
 gc.ticks.hide()
 gc.tick_labels.hide()
 gc.axis_labels.hide()
-gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-gc.add_label(0.87, 0.93, r'MUSE [O II]', color='blue', size=15, relative=True)
-gc.add_label(0.87, 0.89, r'MUSE [O III]', color='red', size=15, relative=True)
-gc.add_label(0.87, 0.97, r'$\mathrm{ACS+F814W}$', color='k', size=15, relative=True)
-xw, yw = 40.13029488729661, -18.861467749086557
+gc.ticks.set_length(30)
+
+# Label
+xw, yw = 40.13029488729661, -18.862067749086557
 gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
 gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
-gc.add_label(0.9775, 0.85, r'N', size=15, relative=True)
-gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
+gc.add_label(0.9778, 0.80, r'N', size=20, relative=True)
+gc.add_label(0.88, 0.695, r'E', size=20, relative=True)
+gc.add_label(0.85, 0.91, r'MUSE [O II]', color='blue', size=20, relative=True)
+gc.add_label(0.85, 0.86, r'MUSE [O III]', color='red', size=20, relative=True)
+gc.add_label(0.85, 0.96, r'$\mathrm{ACS+F814W}$', color='k', size=20, relative=True)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image.png', bbox_inches='tight')

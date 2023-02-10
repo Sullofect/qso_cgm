@@ -1,12 +1,7 @@
 import os
 import numpy as np
-import numpy.ma as ma
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
-from matplotlib import rc
-from scipy import integrate
-from astropy.io import ascii
-from astropy.table import Table
 from matplotlib import rc
 from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
@@ -73,6 +68,7 @@ mag_auto_red, dmag_auto_red = data_pho_red['MAG_AUTO'], data_pho_red['MAGERR_AUT
 print(row_w[(mag_auto_red < 23) * (mag_auto_red > 22)])
 print(mag_auto_red[(mag_auto_red < 23) * (mag_auto_red > 22)])
 print(mag_auto[mask][(mag_auto[mask] < 23) * (mag_auto[mask] > 22)])
+
 #
 bins = np.linspace(18, 30, 13)
 plt.figure(figsize=(5, 5))
@@ -83,6 +79,32 @@ plt.xlabel('Redshift')
 plt.ylabel('Number')
 plt.legend()
 plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Mag_vs_redshift.png', bbox_inches='tight')
+
+
+# Estimate Gas table
+path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_list_revised.reg')
+ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
+
+area = (radius_array * 100 / 15) ** 2 * np.pi
+print('area =', area)
+
+z_qso = 0.6282144177077355
+
+# Dered ratio
+lineRatio = Table.read('/Users/lzq/Dropbox/Data/CGM/RegionLinesRatio/'
+                       'RegionLinesRatio_dered.fits')
+v_gas = 3e5 * (lineRatio['z'] - z_qso) / (1 + z_qso)
+lineRatio_S3S4 = Table.read('/Users/lzq/Dropbox/Data/CGM/RegionLinesRatio/'
+                            'RegionLinesRatio_S3S4_dered.fits')
+v_gas_S3S4 = 3e5 * (lineRatio_S3S4['z'] - z_qso) / (1 + z_qso)
+print('LOS velocity is', v_gas)
+print('LOS velocity of S3 S4 is', v_gas_S3S4)
+print('LOS velocity dispersion is', lineRatio['sigma'])
+print('LOS velocity dispersion of S3 S4 is', lineRatio_S3S4['sigma'])
+
 
 
 

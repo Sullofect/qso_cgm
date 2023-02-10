@@ -13,6 +13,7 @@ import palettable.colorbrewer.sequential as sequential
 import palettable.scientific.sequential as sequential_s
 import palettable.cmocean.sequential as sequential_c
 import palettable.colorbrewer.diverging as diverging
+from regions import RectangleSkyRegion, PixCoord, RectanglePixelRegion
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
@@ -91,13 +92,22 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
         [z_fit, sigma_fit, flux_fit, fit_success, r_fit, a_fit, b_fit] = fit_info
         [dz_fit, dsigma_fit, dflux_fit, dr_fit, da_fit, db_fit] = fit_info_err
     else:
-    # Load data
+        # Load data
         [z_fit, sigma_fit, flux_fit, fit_success, a_fit, b_fit] = fit_info
         [dz_fit, dsigma_fit, dflux_fit, da_fit, db_fit] = fit_info_err
 
     z_qso = 0.6282144177077355
     v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
     v_gal = 3e5 * (z - z_qso) / (1 + z_qso)
+
+    # Select region
+    xx, yy = np.meshgrid(np.arange(200), np.arange(200))
+    pixel_center = PixCoord(x=100, y=75)
+    pixel_region = RectanglePixelRegion(center=pixel_center, width=100, height=100)
+    pixel_data = PixCoord(x=xx, y=yy)
+    mask = pixel_region.contains(pixel_data)
+    v_fit = np.where(mask, v_fit, np.nan)
+    sigma_fit = np.where(mask, sigma_fit, np.nan)
 
     # Check consistency
     if check is True:
@@ -132,45 +142,47 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc = aplpy.FITSFigure(path_dv, figure=fig, north=True)
     gc.set_system_latex(True)
     gc.show_colorscale(vmin=-300, vmax=300, cmap='coolwarm')
-    gc.add_colorbar()
-    gc.ticks.set_length(30)
-    gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
-                    linewidths=0.5, s=400)
+    gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='lightgrey',
+                    edgecolors='k', linewidths=0.5, s=400)
     gc.show_markers(ra, dec, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
     gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
     gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
+
+    # colorbar
+    gc.add_colorbar()
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_ticks([-200, -100, 0, 100, 200])
     gc.colorbar.set_pad(0.)
     gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
-    gc.colorbar.set_font(size=15)
-    gc.colorbar.set_axis_label_font(size=15)
+    gc.colorbar.set_font(size=20)
+    gc.colorbar.set_axis_label_font(size=20)
+
+    # Scalebar
     gc.add_scalebar(length=15 * u.arcsecond)
     gc.scalebar.set_corner('top left')
     gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
-    gc.scalebar.set_font_size(15)
+    gc.scalebar.set_font_size(20)
+
+    # Hide
     gc.ticks.hide()
     gc.tick_labels.hide()
     gc.axis_labels.hide()
+    gc.ticks.set_length(30)
 
-    # for i in range(len(row)):
-    #     gc.add_label(ra[i] + 0.00014, dec[i] - 0.00008, "{0:.0f}".format(v_gal[i]), size=10, horizontalalignment='right'
-    #                  , verticalalignment='bottom')
-    # label
+    # Label
     if line == 'OIII':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=15, relative=True)
     elif line == 'OII':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=15, relative=True)
     elif line == 'OOHbeta':
-        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{line}} - v_{\mathrm{qso}}$', size=15,
-                     relative=True)
-    xw, yw = gc.pixel2world(195, 150)
+        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{lines}} - v_{\mathrm{qso}}$', size=20, relative=True)
+    xw, yw = gc.pixel2world(195, 140)
     gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
     gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
-    gc.add_label(0.9775, 0.85, r'N', size=15, relative=True)
-    gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' +  method_spe
-                + '.png', bbox_inches='tight')
+    gc.add_label(0.9778, 0.81, r'N', size=20, relative=True)
+    gc.add_label(0.88, 0.70, r'E', size=20, relative=True)
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' + method_spe + '.png',
+                bbox_inches='tight')
 
     # Plot sigma map
     fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -179,43 +191,36 @@ def PlotMap(line='OIII', method='pixel', method_spe=None, check=False, test=True
     gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
     gc.set_system_latex(True)
     gc.show_colorscale(vmin=0, vmax=200, cmap=sequential_s.Acton_6.mpl_colormap)
-    gc.add_colorbar()
-    gc.ticks.set_length(30)
     gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='lightgrey',
                     edgecolors='k', linewidths=0.5, s=400)
-    # gc.show_markers(ra, dec, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-    # gc.show_markers(ra, dec, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300, cmap='coolwarm')
-    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/galaxy_list.reg')
+
+    # Colorbar
+    gc.add_colorbar()
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.)
     gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
     gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
-    gc.colorbar.set_font(size=15)
-    gc.colorbar.set_axis_label_font(size=15)
+    gc.colorbar.set_font(size=20)
+    gc.colorbar.set_axis_label_font(size=20)
+
+    # Scalebar
     gc.add_scalebar(length=15 * u.arcsecond)
     gc.scalebar.set_corner('top left')
     gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
-    gc.scalebar.set_font_size(15)
+    gc.scalebar.set_font_size(20)
+
+    # Hide
     gc.ticks.hide()
     gc.tick_labels.hide()
     gc.axis_labels.hide()
+    gc.ticks.set_length(30)
 
-    # for i in range(len(row)):
-    #     gc.add_label(ra[i] + 0.00014, dec[i] - 0.00008, "{0:.0f}".format(v_gal[i]), size=10, horizontalalignment='right'
-    #                  , verticalalignment='bottom')
-    # label
-    # if line == 'OIII':
-    #     gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=15, relative=True)
-    # elif line == 'OII':
-    #     gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=15, relative=True)
-    # elif line == 'OOHbeta':
-    #     gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II O \, III H \beta]}} - v_{\mathrm{qso}}$', size=15,
-    #                  relative=True)
-    xw, yw = gc.pixel2world(195, 150)
+    # Label
+    xw, yw = gc.pixel2world(195, 140)
     gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
     gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
-    gc.add_label(0.9775, 0.85, r'N', size=15, relative=True)
-    gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
+    gc.add_label(0.9778, 0.81, r'N', size=20, relative=True)
+    gc.add_label(0.88, 0.70, r'E', size=20, relative=True)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_sigma_v_map_' + method + '_' + method_spe
                 + '.png', bbox_inches='tight')
 
@@ -243,11 +248,9 @@ dec_final = dec_final[select_gal]
 # Calculate the offset between MUSE and HST
 ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
 # ra_qso_hst, dec_qso_hst = 40.1359, -18.8643
-# ra_final = ra_final - (ra_qso_hst - ra_qso_muse)  # Wrong!!!
-# dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
 # run
 # PlotMap(line='OII', check=False, snr_thr=2.5, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
 # PlotMap(line='OIII', snr_thr=3, row=row_final, z=z_final, ra=ra_final, dec=dec_final)
-PlotMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, v_thr=np.inf, check=False, row=row_final,
-        z=z_final, ra=ra_final, dec=dec_final)
+PlotMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, v_thr=np.inf, check=False,
+        row=row_final, z=z_final, ra=ra_final, dec=dec_final)

@@ -786,10 +786,11 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
             axarr_0_strong.set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
             axarr_1_strong.set_ylim(flux_OII_i.min() - 0.1, flux_OII_i.max() + 0.1)
 
-        axarr_0_strong.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.6, 0.65), xycoords='axes fraction', size=20)
-        axarr_1_strong.annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
-        axarr_1_strong.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.45, 0.65), xycoords='axes fraction', size=20)
-        axarr_1_strong.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.7, 0.65), xycoords='axes fraction', size=20)
+        if i == 0:
+            axarr_0_strong.annotate(text=r'$\mathrm{[O \, II]}$', xy=(0.6, 0.65), xycoords='axes fraction', size=20)
+            axarr_1_strong.annotate(text=r'$\mathrm{H\beta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=20)
+            axarr_1_strong.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.45, 0.65), xycoords='axes fraction', size=20)
+            axarr_1_strong.annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.7, 0.65), xycoords='axes fraction', size=20)
 
         axarr_0_strong.minorticks_on()
         axarr_1_strong.minorticks_on()
@@ -853,12 +854,12 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-# PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas/spectra_gas_paper',
-#                save_table=True, save_figure=False, deredden=True)
+PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas/spectra_gas_paper',
+               save_table=True, save_figure=False, deredden=True)
 
-paper_sort = [0, 3, 5, 8, 11]
-PlotGasSpectra(ra_array[paper_sort], dec_array[paper_sort], radius_array[paper_sort], text_array[paper_sort],
-               figname='spectra_gas/spectra_gas_paper', save_table=False, save_figure=True, deredden=True)
+# paper_sort = [0, 3, 5, 8, 11]
+# PlotGasSpectra(ra_array[paper_sort], dec_array[paper_sort], radius_array[paper_sort], text_array[paper_sort],
+#                figname='spectra_gas/spectra_gas_paper', save_table=False, save_figure=True, deredden=True)
 
 
 # for i in range(len(text_array)):

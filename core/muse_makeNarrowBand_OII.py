@@ -48,7 +48,7 @@ def ConvertFits(filename=None, smooth=True):
                                                                        hdr['LATPOLE']
     hdr1['CSYER1'], hdr1['CSYER2'], hdr1['MJDREF'], hdr1['RADESYS'] = hdr['CSYER1'], hdr['CSYER2'], hdr['MJDREF'], \
                                                                       hdr['RADESYS']
-    hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] =  hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
+    hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] = hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
 
     # Rescale the data by 1e17
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/' + filename + '_revised.fits',
@@ -81,8 +81,6 @@ dec_final = dec_final[select_gal]
 # Calculate the offset between MUSE and HST
 ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
 # ra_qso_hst, dec_qso_hst = 40.1359, -18.8643
-# ra_final = ra_final - (ra_qso_hst - ra_qso_muse)  # Wrong!!!
-# dec_final = dec_final - (dec_qso_hst - dec_qso_muse)  # Wrong!!!
 
 # Plot the data
 # Read region file
@@ -97,81 +95,100 @@ path_label = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'reg
 regions_label = Regions.read(path_label, format='ds9')
 
 
-for i in range(6):
-    fig = plt.figure(figsize=(8, 8), dpi=300)
-    z_qso = 0.6282144177077355
-    OII_air_1 = 3726.032
-    OII_air_2 = 3728.815
+def MakeOIIMap(gal=False, region=False, video=False):
+    for i in range(6):
+        fig = plt.figure(figsize=(8, 8), dpi=300)
+        z_qso = 0.6282144177077355
+        OII_air_1 = 3726.032
+        OII_air_2 = 3728.815
 
-    # Split by velocity
-    dv_i, dv_f = -500 + 200 * i, -500 + 200 * (i + 1)
-    wave_i = OII_air_2 * (1 + z_qso) * (dv_i / 3e5 + 1)
-    wave_f = OII_air_2 * (1 + z_qso) * (dv_f / 3e5 + 1)
-    wave_i_vac, wave_f_vac = pyasl.airtovac2(wave_i), pyasl.airtovac2(wave_f)
+        # Split by velocity
+        dv_i, dv_f = -500 + 200 * i, -500 + 200 * (i + 1)
+        wave_i = OII_air_2 * (1 + z_qso) * (dv_i / 3e5 + 1)
+        wave_f = OII_air_2 * (1 + z_qso) * (dv_f / 3e5 + 1)
+        wave_i_vac, wave_f_vac = pyasl.airtovac2(wave_i), pyasl.airtovac2(wave_f)
 
-    # Split by wavelength
-    # wave_i = 6050 + 5 * i
-    # wave_f = 6050 + 5 * (i + 1)
-    # wave_i_vac, wave_f_vac = pyasl.airtovac2(wave_i), pyasl.airtovac2(wave_f)
-    # z_qso = 0.6282144177077355
-    # dv_i, dv_f = 3e5 * ((wave_i_vac / 3727.092 - 1) - z_qso)/ (1 + z_qso), \
-    #              3e5 * ((wave_f_vac / 3727.092 - 1) - z_qso)/ (1 + z_qso)
+        # Split by wavelength
+        # wave_i = 6050 + 5 * i
+        # wave_f = 6050 + 5 * (i + 1)
+        # wave_i_vac, wave_f_vac = pyasl.airtovac2(wave_i), pyasl.airtovac2(wave_f)
+        # z_qso = 0.6282144177077355
+        # dv_i, dv_f = 3e5 * ((wave_i_vac / 3727.092 - 1) - z_qso)/ (1 + z_qso), \
+        #              3e5 * ((wave_f_vac / 3727.092 - 1) - z_qso)/ (1 + z_qso)
+
+        # Slice the cube
+        sub_cube = cube_OII.select_lambda(wave_i, wave_f)
+        sub_cube = sub_cube.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2
+        sub_cube.write('/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/image_make_OII_NB.fits')
+        ConvertFits(filename='image_make_OII_NB')
+        path_subcube = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_MakeMovie',
+                                    'image_make_OII_NB_revised.fits')
+
+        # Plot the data
+        gc = aplpy.FITSFigure(path_subcube, figure=fig, north=True, animated=True)
+        gc.set_system_latex(True)
+        gc.show_colorscale(vmin=0, vmid=0.2, vmax=15.0, cmap=newcmp, stretch='arcsinh')
+        gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
+                        linewidths=0.5, s=400, zorder=100)
+        if gal:
+            gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none',
+                            edgecolors='k', linewidths=0.8, s=100)
+
+        # Plot regions
+        if region:
+            gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--', linewidths=1,
+                            alpha=0.3)
+            for j in range(len(ra_array)):
+                x = regions_label[j].center.ra.degree
+                y = regions_label[j].center.dec.degree
+                gc.add_label(x, y, text_array[j], size=20)
+        else:
+            gc.show_contour(path_subcube, levels=[0.3], colors='k', linewidths=0.8, smooth=3)
+
+        # Colorbar
+        gc.add_colorbar()
+        gc.colorbar.set_location('bottom')
+        gc.colorbar.set_pad(0.0)
+        gc.colorbar.set_font(size=20)
+        gc.colorbar.set_ticks([1, 5, 10])
+        gc.colorbar.set_axis_label_font(size=20)
+        gc.colorbar.set_axis_label_text(r'$\mathrm{Surface \; Brightness \; [10^{-17} \; erg \; cm^{-2} \; '
+                                        r's^{-1} \; arcsec^{-2}]}$')
+
+        # Scale bar
+        gc.add_scalebar(length=15 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+        gc.scalebar.set_font_size(20)
+
+        # Hide
+        gc.ticks.hide()
+        gc.tick_labels.hide()
+        gc.axis_labels.hide()
+        gc.ticks.set_length(30)
+
+        # Label
+        xw, yw = gc.pixel2world(195, 140)
+        gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
+        gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
+        gc.add_label(0.9778, 0.81, r'N', size=20, relative=True)
+        gc.add_label(0.88, 0.70, r'E', size=20, relative=True)
+        gc.add_label(0.87, 0.97, r'MUSE [O II]', size=20, relative=True)
+        gc.add_label(0.82, 0.91, r'$\mathrm{\lambda = \,}$' + str("{0:.0f}".format(wave_i_vac)) + ' to '
+                     + str("{0:.0f}".format(wave_f_vac)) + r'$\mathrm{\AA}$', size=20, relative=True)
+        gc.add_label(0.76, 0.85, r'$\mathrm{\Delta} v \approx \,$' + str("{0:.0f}".format(dv_i)) + ' to '
+                     + str("{0:.0f}".format(dv_f)) + r'$\mathrm{\, km \, s^{-1}}$', size=20, relative=True)
+        if region:
+            fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/NB_movie/image_OII_' + str("{0:.0f}".format(dv_i))
+                        + '_' + str("{0:.0f}".format(dv_f)) + '_region.png', bbox_inches='tight')
+        else:
+            fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/NB_movie/image_OII_' + str("{0:.0f}".format(dv_i))
+                        + '_' + str("{0:.0f}".format(dv_f)) + '.png', bbox_inches='tight')
+    if video:
+        os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OII_*.png '
+                  '~/dropbox/Data/CGM_plots/NB_movie/OII_movie.gif')
 
 
-    sub_cube = cube_OII.select_lambda(wave_i, wave_f)
-    sub_cube = sub_cube.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2
-    sub_cube.write('/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/image_make_OII_NB.fits')
-    ConvertFits(filename='image_make_OII_NB')
-    path_subcube = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'image_MakeMovie',
-                                'image_make_OII_NB_revised.fits')
-    gc = aplpy.FITSFigure(path_subcube, figure=fig, north=True, animated=True)
-    gc.set_system_latex(True)
-    # gc.show_colorscale(vmin=0, vmid=0.2, vmax=5.0, cmap=newcmp, stretch='arcsinh')
-    gc.show_colorscale(vmin=0, vmid=0.2, vmax=15.0, cmap=newcmp, stretch='arcsinh')
-    gc.add_colorbar()
-    gc.ticks.set_length(30)
-    gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
-                    linewidths=0.5, s=400)
-    # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none',
-    # edgecolors='k', linewidths=0.8, s=100)
-    # gc.show_regions('/Users/lzq/Dropbox/Data/CGM/regions/gas_list.reg')
-
-    # Plot regions
-    gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linewidths=0.5, alpha=0.7)
-    for i in range(len(ra_array)):
-        x = regions_label[i].center.ra.degree
-        y = regions_label[i].center.dec.degree
-        gc.add_label(x, y, text_array[i], size=10)
-    gc.colorbar.set_location('bottom')
-    gc.colorbar.set_pad(0.0)
-    gc.colorbar.set_ticks([1, 5, 10])
-    # gc.colorbar.set_ticks([2, 8, 10, 15])
-    gc.colorbar.set_axis_label_text(r'$\mathrm{Surface \; Brightness \; [10^{-17} \; erg \; cm^{-2} \; '
-                                    r's^{-1} \; arcsec^{-2}]}$')
-    gc.colorbar.set_font(size=15)
-    gc.colorbar.set_axis_label_font(size=15)
-    # gc.colorbar.set_box([0.1247, 0.0927, 0.7443, 0.03], box_orientation='horizontal')
-    gc.add_scalebar(length=15 * u.arcsecond)
-    gc.scalebar.set_corner('top left')
-    gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
-    gc.scalebar.set_font_size(15)
-    gc.ticks.hide()
-    gc.tick_labels.hide()
-    gc.axis_labels.hide()
-    gc.add_label(0.87, 0.97, r'MUSE [O II]', size=15, relative=True)
-    gc.add_label(0.85, 0.92, r'$\mathrm{\lambda = \,}$' + str("{0:.0f}".format(wave_i_vac)) + ' to '
-                 + str("{0:.0f}".format(wave_f_vac)) + r'$\mathrm{\AA}$', size=15,
-                 relative=True)
-    gc.add_label(0.81, 0.88, r'$\mathrm{\Delta} v \approx \,$' + str("{0:.0f}".format(dv_i)) + ' to '
-                 + str("{0:.0f}".format(dv_f)) + r'$\mathrm{\, km \, s^{-1}}$', size=15,
-                 relative=True)
-    xw, yw = gc.pixel2world(195, 150)
-    gc.show_arrows(xw, yw, -0.00005 * yw, 0, color='k')
-    gc.show_arrows(xw, yw, 0, -0.00005 * yw, color='k')
-    gc.add_label(0.9775, 0.85, r'N', size=15, relative=True)
-    gc.add_label(0.88, 0.75, r'E', size=15, relative=True)
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/NB_movie/image_OII_' + str("{0:.0f}".format(wave_i_vac)) + '_' +
-                str("{0:.0f}".format(wave_f_vac)) + '.png', bbox_inches='tight')
-
-# os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OII_*.png '
-#           '~/dropbox/Data/CGM_plots/NB_movie/OII_movie.gif')
+#
+MakeOIIMap(region=False)
+MakeOIIMap(region=True)
