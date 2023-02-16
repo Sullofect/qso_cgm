@@ -577,17 +577,27 @@ CreateGrid(np.linspace(-1.9, -1.7, 2, dtype='f2'), alpha_array[:3], den_array[17
 
 
 # Check AGN continuum trial 2 with S1
+# den_array_AGN = np.linspace(1.0, 2.4, 8, dtype='f2')
+# z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
+# T_array_AGN = np.linspace(5, 5.5, 3, dtype='f2')
+# alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
+# # alpha_uv_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
+# alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
+# alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
+# # CreateGrid_AGN(den_array_AGN, T_array_AGN, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
+# #                region='S1', trial='AGN_2')
+#
+# # Add more grid point
+# T_array_AGN_add = np.array([4.75, 5.75], dtype='f2')
+# CreateGrid_AGN(den_array_AGN, T_array_AGN_add, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
+#                region='S1', trial='AGN_2_2')
+
+# Check AGN continuum with S7
 den_array_AGN = np.linspace(1.0, 2.4, 8, dtype='f2')
 z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
-T_array_AGN = np.linspace(5, 5.5, 3, dtype='f2')
+T_array_AGN = np.linspace(4.75, 5.75, 5, dtype='f2')
 alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
-# alpha_uv_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
 alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
 alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
-# CreateGrid_AGN(den_array_AGN, T_array_AGN, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
-#                region='S1', trial='AGN_2')
-
-# Add more grid point
-T_array_AGN_add = np.array([4.75, 5.75], dtype='f2')
-CreateGrid_AGN(den_array_AGN, T_array_AGN_add, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
-               region='S1', trial='AGN_2_2')
+CreateGrid_AGN(den_array_AGN, T_array_AGN, z_array_AGN, alpha_ox_array_AGN, alpha_uv_array_AGN, alpha_x_array_AGN,
+               region='S6', trial='AGN')

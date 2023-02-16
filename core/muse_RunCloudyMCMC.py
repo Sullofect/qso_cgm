@@ -545,10 +545,10 @@ def RunCloudyMCMC_AGN_nouv(den_array, z_array, T_array, alpha_ox_array, alpha_uv
 # AGN_2 model
 S1_bnds = np.array([[1.0, 2.4],
                     [-0.5, 0.5],
-                    [5, 5.5],
+                    [4.75, 5.75],
                     [-1.2, 0],
                     [-0.52, -0.48],
-                    [-1.5, -0.5]])
+                    [-1.5, 0.5]])
 S1_param = np.array([['NeV3346', True],
                      ['OII', True],
                      ['NeIII3869', True],

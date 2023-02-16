@@ -143,7 +143,7 @@ def MakeOIIMap(gal=False, region=False, video=False):
                 y = regions_label[j].center.dec.degree
                 gc.add_label(x, y, text_array[j], size=20)
         else:
-            gc.show_contour(path_subcube, levels=[0.3], colors='k', linewidths=0.8, smooth=3)
+            gc.show_contour(path_subcube, levels=[0.2], colors='k', linewidths=0.8, smooth=3)
 
         # Colorbar
         gc.add_colorbar()
