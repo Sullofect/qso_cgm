@@ -413,9 +413,21 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                         ('b_OIII5008', 0.0, False, None, None, None))
 
 
+# Plot the data
+# Read region file
+path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_list_revised.reg')
+ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
+
 # Def Plot function
-def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_1', deredden=True,
-                   save_table=False, save_figure=True):
+def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_table=False, save_figure=True,
+                   return_samples=False, nums_chain=5000, nums_disc=1000):
+    global ra_array, dec_array, radius_array, text_array
+    region_mask = np.in1d(text_array, region)
+    ra_array, dec_array, radius_array, text_array = ra_array[region_mask], dec_array[region_mask], \
+                                                    radius_array[region_mask], text_array[region_mask]
     # Weak emission lines
     fig_weak, axarr_weak = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
                                         gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
@@ -663,15 +675,13 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=(wave_vac_all, flux_MCMC, flux_err_MCMC, z, sigma,
                                                                        a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008,
                                                                        b_OIII5008))
-        state = sampler.run_mcmc(p0, 5000)
-        samples = sampler.get_chain(flat=True, discard=1000)
+        state = sampler.run_mcmc(p0, nums_chain)
+        samples = sampler.get_chain(flat=True, discard=nums_disc)
 
         figure = corner.corner(samples, labels=[r"$\mathrm{n}$", r"$\mathrm{log_{10}(T)}$",
                                                 r"$\mathrm{Flux\_OII}$", r"$\mathrm{Flux\_OIII5008}$"],
                                quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k', title_kwargs={"fontsize": 13},
                                smooth=1., smooth1d=1., bins=25)
-
-
         best_fit = np.percentile(samples, [16, 50, 84], axis=0)
 
         for j in range(3):
@@ -689,8 +699,9 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
             if not np.isin(j, np.arange(0, ndim ** 2, ndim + 1)):
                 ax.tick_params(axis='both', direction='in', top='on', bottom='on', right='on', left='on')
             ax.tick_params(axis='both', direction='in', top='on', bottom='on')
-        figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_MCMC.pdf', bbox_inches='tight')
-        #.close()
+        if save_figure:
+            figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_MCMC.pdf', bbox_inches='tight')
+
         # Weak lines
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
@@ -885,27 +896,23 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
                              size=20, x=0.05)
     if save_figure:
         if deredden:
-            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak_MCMC_dered.png', bbox_inches='tight')
+            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak_MCMC_dered.png',
+                             bbox_inches='tight')
             fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong_MCMC_dered.png',
                                bbox_inches='tight')
         else:
             fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak_MCMC.png', bbox_inches='tight')
             fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong_MCMC.png', bbox_inches='tight')
+    if return_samples:
+        return samples
 
 
-# Plot the data
-# Read region file
-path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_list_revised.reg')
-ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
-dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
-radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
-text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 # PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_all', save_table=True,
 #                save_figure=False)
 
 
-for i in range(len(text_array)):
-# for i in [8, 9]:
-    PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
-                   figname='spectra_gas/spectra_gas_' + str(text_array[i]))
+# for i in range(len(text_array)):
+# # for i in [8, 9]:
+#     PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
+#                    figname='spectra_gas/spectra_gas_' + str(text_array[i]))
