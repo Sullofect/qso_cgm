@@ -37,21 +37,24 @@ def ConvertFits(filename=None, smooth=True):
     pixel_data = PixCoord(x=xx, y=yy)
     mask = pixel_region.contains(pixel_data)
     data = np.where(mask, data, np.nan)
+    # Rename
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', data, overwrite=True)
-    data1, hdr1 = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', 0, header=True)
-    hdr1['BITPIX'], hdr1['NAXIS'], hdr1['NAXIS1'], hdr1['NAXIS2'] = hdr['BITPIX'], hdr['NAXIS'], hdr['NAXIS1'], \
-                                                                    hdr['NAXIS2']
-    hdr1['CRPIX1'], hdr1['CRPIX2'], hdr1['CTYPE1'], hdr1['CTYPE2'] = hdr['CRPIX1'], hdr['CRPIX2'], hdr['CTYPE1'], \
-                                                                     hdr['CTYPE2']
-    hdr1['CRVAL1'], hdr1['CRVAL2'], hdr1['LONPOLE'], hdr1['LATPOLE'] = hdr['CRVAL1'], hdr['CRVAL2'], hdr['LONPOLE'], \
-                                                                       hdr['LATPOLE']
-    hdr1['CSYER1'], hdr1['CSYER2'], hdr1['MJDREF'], hdr1['RADESYS'] = hdr['CSYER1'], hdr['CSYER2'], hdr['MJDREF'], \
-                                                                      hdr['RADESYS']
-    hdr1['CD1_1'], hdr1['CD1_2'], hdr1['CD2_1'], hdr1['CD2_2'] = hdr['CD1_1'], hdr['CD1_2'], hdr['CD2_1'], hdr['CD2_2']
+    data_revised, hdr_revised = fits.getdata('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits', 0, header=True)
+    # Info
+    hdr_revised['BITPIX'], hdr_revised['NAXIS'] = hdr['BITPIX'], hdr['NAXIS']
+    hdr_revised['NAXIS1'], hdr_revised['NAXIS2'] = hdr['NAXIS1'], hdr['NAXIS2']
+    hdr_revised['CRPIX1'], hdr_revised['CRPIX2'] = hdr['CRPIX1'], hdr['CRPIX2']
+    hdr_revised['CTYPE1'], hdr_revised['CTYPE2'] = hdr['CTYPE1'], hdr['CTYPE2']
+    hdr_revised['CRVAL1'], hdr_revised['CRVAL2'] = hdr['CRVAL1'], hdr['CRVAL2']
+    hdr_revised['LONPOLE'], hdr_revised['LATPOLE'] = hdr['LONPOLE'], hdr['LATPOLE']
+    hdr_revised['CSYER1'], hdr_revised['CSYER2'] = hdr['CSYER1'], hdr['CSYER2'],
+    hdr_revised['MJDREF'], hdr_revised['RADESYS'] = hdr['MJDREF'], hdr['RADESYS']
+    hdr_revised['CD1_1'], hdr_revised['CD1_2'] = hdr['CD1_1'], hdr['CD1_2']
+    hdr_revised['CD2_1'], hdr_revised['CD2_2'] = hdr['CD2_1'], hdr['CD2_2']
 
     # Rescale the data by 1e17
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/image_narrow/' + filename + '_revised.fits',
-                 data1 * 1e17, hdr1, overwrite=True)
+                 data_revised * 1e17, hdr_revised, overwrite=True)
 
 
 ConvertFits(filename='image_OII_line_SB_offset', smooth=True)

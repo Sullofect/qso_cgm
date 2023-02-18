@@ -52,10 +52,11 @@ N1 = [np.array([[40.1288438, 40.1428230, 40.1324189, 40.1228938],
                 [-18.8577309, -18.8709429, -18.8766207, -18.8610104]])]
 N2 = [np.array([[40.1289217, 40.1429009, 40.1489166, 40.1394084],
                 [-18.8576894, -18.8709014, -18.8676171, -18.8519788]])]
-gc.show_polygons(N1, color='purple', linestyle='-', lw=2, alpha=0.5)
-gc.show_polygons(N2, color='orange', linestyle='-', lw=2, alpha=0.5)
+gc.show_polygons(N1, color='purple', linestyle='-', lw=2, alpha=0.5, zorder=1)
+gc.show_polygons(N2, color='orange', linestyle='-', lw=2, alpha=0.5, zorder=1)
 gc.recenter(40.1359, -18.8643, width=90/3600, height=90/3600)  # 0.02 / 0.01 40''
-gc.show_rectangles(40.1359, -18.8643, width=40/3600, height=40/3600, color='k', linestyle='--')
+gc.show_rectangles(40.1344150, -18.8656933, width=30 / 3600, height=30 / 3600, color='k', linestyle='--')
+# gc.show_rectangles(40.1359, -18.8643, width=40/3600, height=40/3600, color='k', linestyle='--')
 gc.show_rectangles(40.1359, -18.8643, width=65/3600, height=65/3600, angle=60, color='k', linestyle='--')
 gc1.recenter(40.1359, -18.8643, width=40/3600, height=40/3600)  # 0.02 / 0.01 40''
 for i in range(len(row_final)):
@@ -66,17 +67,17 @@ for i in range(len(row_final)):
 gc.show_arrows(40.1370596, -18.8662000, 40.1368331 - 40.1370596, -18.8658486 + 18.8662000, color='k')
 gc.set_system_latex(True)
 gc1.set_system_latex(True)
-gc1.show_colorscale(cmap='coolwarm', vmin=-1000, vmax=1000, aspect='auto')
+gc1.show_colorscale(cmap='coolwarm', vmin=-1000, vmax=1000)
 gc1.add_colorbar()
 gc1.hide_colorscale()
-gc1.colorbar.set_box([0.15, 0.13, 0.38, 0.02], box_orientation='horizontal')
+gc1.colorbar.set_box([0.15, 0.145, 0.38, 0.02], box_orientation='horizontal')
 gc1.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
 gc1.colorbar.set_axis_label_font(size=12)
 gc1.colorbar.set_axis_label_pad(-40)
 gc1.colorbar.set_location('bottom')
-gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2, aspect='auto')
+gc.show_colorscale(cmap='Greys', stretch='arcsinh', vmin=-0.02, vmid=1e-2, vmax=2e-2)
 gc.add_colorbar()
-gc.colorbar.set_box([0.15, 0.13, 0.38, 0.02], box_orientation='horizontal')
+gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
 gc.colorbar.hide()
 gc.ticks.set_length(30)
 gc1.ticks.set_length(30)
@@ -106,5 +107,5 @@ line = np.array([[40.1289217, 40.1429009], [-18.8576894, -18.8709014]])
 gc.add_label(0.985, 0.85, r'N', size=15, relative=True)
 gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
 gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
-gc.add_label(0.62, 0.74, r"$\rm 40'' \times 40''$", size=15, relative=True)
+gc.add_label(0.55, 0.40, r"$\rm 30'' \times 30''$", size=15, relative=True)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis_ini.png', bbox_inches='tight')
