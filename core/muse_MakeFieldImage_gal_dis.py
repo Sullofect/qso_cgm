@@ -75,7 +75,7 @@ gc1.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}
 gc1.colorbar.set_axis_label_font(size=12)
 gc1.colorbar.set_axis_label_pad(-40)
 gc1.colorbar.set_location('bottom')
-gc.show_colorscale(cmap='Greys', stretch='arcsinh', vmin=0.005, vmid=1e-2, vmax=5e-2)
+gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
 gc.add_colorbar()
 gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
 gc.colorbar.hide()

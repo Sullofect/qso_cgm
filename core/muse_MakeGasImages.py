@@ -132,6 +132,7 @@ def APLpyStyle(gc, type=None):
 
 # Load galxies infomation
 row_final, ID_final, name_final, z_final, ra_final, dec_final = ReturnGalLabel(sort_row=False, mode='initial')
+ID_sep_final = ReturnGalLabel(sort_row=True, mode='final')[6]
 
 # col_ID = np.arange(len(row_final))
 # select_array = np.sort(np.array([6, 7, 181, 182, 80, 81, 82, 179, 4, 5, 64]))
@@ -363,5 +364,5 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 # MakeNarrowBands(region=True)
 # MakeNarrowBands(region=False, band='OIII')
 # MakeNarrowBands(region=True, band='OIII')
-MakeFieldImage()
-MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, v_thr=np.inf, check=False)
+MakeFieldImage(label_gal=True)
+# MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, v_thr=np.inf, check=False)
