@@ -106,7 +106,11 @@ print('LOS velocity dispersion is', lineRatio['sigma'])
 print('LOS velocity dispersion of S3 S4 is', lineRatio_S3S4['sigma'])
 
 
-
-
+# Virial theorem
+G = 6.67e-8
+R_red, v_red = 200 * 3.086e21, 506 * 1e5
+R_blue, v_blue = 100 * 3.086e21, 91 * 1e5
+M_red = 2 * R_red * v_red ** 2 / G / 2e33
+M_blue =2 * R_blue * v_blue ** 2 / G / 2e33
 
 
