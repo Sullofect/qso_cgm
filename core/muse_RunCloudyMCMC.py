@@ -185,15 +185,15 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     E_OIII4364, E_OIII5008, E_OII = 35.12, 35.12, 13.6
     E_HeII4687, E_Hbeta = 54.42, 13.6
 
-    line_param_violin = np.array([line_param[1, 1], line_param[5, 1], line_param[7, 1],
-                                  line_param[2, 1], line_param[6, 1], line_param[0, 1]])
+    line_param_violin = np.array([line_param[1, 1], line_param[7, 1], line_param[2, 1],
+                                  line_param[6, 1], line_param[0, 1]])
     data_x1 = [0, 5]
-    data_x2 = [E_OII / E_Hbeta, E_OIII4364 / E_Hbeta - 0.5, E_OIII5008 / E_Hbeta - 0.5,
-               E_NeIII3869 / E_Hbeta + 0.2, E_HeII4687 / E_Hbeta, E_NeV3346 / E_Hbeta - 2]
-    data_y2 = np.array([logflux_OII, logflux_OIII4364, logflux_OIII5008,
-                        logflux_NeIII3869, logflux_HeII4687, logflux_NeV3346], dtype=object).reshape(len(data_x2))
-    data_y2err = np.array([dlogflux_OII, dlogflux_OIII4364, dlogflux_OIII5008,
-                           dlogflux_NeIII3869, dlogflux_HeII4687, dlogflux_NeV3346], dtype=object).reshape(len(data_x2))
+    data_x2 = [E_OII / E_Hbeta, E_OIII5008 / E_Hbeta - 0.5, E_NeIII3869 / E_Hbeta + 0.2,
+               E_HeII4687 / E_Hbeta, E_NeV3346 / E_Hbeta - 2]
+    data_y2 = np.array([logflux_OII, logflux_OIII5008, logflux_NeIII3869,
+                        logflux_HeII4687, logflux_NeV3346], dtype=object).reshape(len(data_x2))
+    data_y2err = np.array([dlogflux_OII, dlogflux_OIII5008, dlogflux_NeIII3869,
+                           dlogflux_HeII4687, dlogflux_NeV3346], dtype=object).reshape(len(data_x2))
 
     # Mask
     data_y2 = np.where(line_param_violin, data_y2, np.nan)
@@ -212,8 +212,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         model = (samples_draw[:, 0], samples_draw[:, 1], samples_draw[:, 2],
                  samples_draw[:, 3], samples_draw[:, 4])
 
-    model_y2 = np.array([f_OII(model), f_OIII4364(model), f_OIII5008(model),
-                         f_NeIII3869(model), f_HeII4687(model), f_NeV3346(model)])
+    model_y2 = np.array([f_OII(model), f_OIII5008(model), f_NeIII3869(model), f_HeII4687(model), f_NeV3346(model)])
 
     #
     if line_param[5, 1]:
@@ -229,7 +228,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     # Plot data
     model_y2 = np.where(line_param_violin[:, np.newaxis], model_y2, np.nan)
     model_y2 = [np.array(model_y2[0, :]), np.array(model_y2[1, :]), np.array(model_y2[2, :]),
-                np.array(model_y2[3, :]), np.array(model_y2[4, :]), np.array(model_y2[5, :])]
+                np.array(model_y2[3, :]), np.array(model_y2[4, :])]
     ax[0].errorbar(data_x1, data_y1, data_y1err, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
     ax[1].errorbar(data_x2, data_y2, data_y2err, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
     violin_parts_0 = ax[0].violinplot(model_y1, positions=data_x1, points=500, widths=0.5, showmeans=False,
@@ -246,13 +245,13 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     ax[1].annotate("", xy=(0.57, 0.935), xytext=(0.34, 0.935), xycoords='figure fraction',
                    arrowprops=dict(arrowstyle="->"))
     ax[0].set_ylabel(r'$\mathrm{log[line \, ratio]}$', size=20)
-    ax[1].set_xticks(data_x2, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{}$',
-                               r'$\mathrm{\frac{[O \, III]}{H\beta}}$', r'$\mathrm{\frac{[Ne \, III]}{H\beta}}$',
-                               r'$\mathrm{\frac{He \, II}{H\beta}}$', r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'])
-    ax[1].annotate(r'$\mathrm{\lambda 4363}$', xy=(0.30, 0.2), xycoords='figure fraction', size=15)
-    ax[1].annotate(r'$\mathrm{\lambda 5007}$', xy=(0.30, 0.8), xycoords='figure fraction', size=15)
-    ax[0].set_xticks([1, 4], [r'$\mathrm{[O \, II]}$' + '\n' + r'$\mathrm{\frac{\lambda 3729}{\lambda 3727}}$',
-                              r'$\mathrm{[O \, III]}$' + '\n' + r'$\mathrm{\frac{\lambda 4363}{\lambda 5007}}$'], y=0.9)
+    ax[1].set_xticks(data_x2, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$',
+                               r'$\mathrm{\frac{[Ne \, III]}{H\beta}}$', r'$\mathrm{\frac{He \, II}{H\beta}}$',
+                               r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'])
+    # ax[1].annotate(r'$\mathrm{\lambda 4363}$', xy=(0.30, 0.2), xycoords='figure fraction', size=15)
+    # ax[1].annotate(r'$\mathrm{\lambda 5007}$', xy=(0.30, 0.8), xycoords='figure fraction', size=15)
+    ax[0].set_xticks([0, 5], [r'$\mathrm{[O \, II]}$' + '\n' + r'$\mathrm{\frac{\lambda 3729}{\lambda 3727}}$',
+                              r'$\mathrm{[O \, III]}$' + '\n' + r'$\mathrm{\frac{\lambda 4363}{\lambda 5007}}$'])
     ax[0].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=15,
                       size=5)
     ax[0].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
@@ -274,11 +273,11 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         ax[2].hist(samples[:, 0], bins=bins_cloudy, range=(1.5, np.log10(sample_max//10 * 10 + 10)),
                    density=True, facecolor='brown', histtype='stepfilled',
                    alpha=0.5, label=r'$\rm Cloudy$')
-        ax[2].hist(np.log10(samples_OII[:, 0]), bins=bins_cloudy,
-                   density=True, facecolor='blue', histtype='stepfilled',
-                   alpha=0.5, label=r'$\rm [O \, II]$')
-        # ax[2].annotate("", xy=(0.9, 0.90), xytext=(0.93, 0.90), xycoords='figure fraction',
-        #                arrowprops=dict(arrowstyle="->"))
+        nums, _, __ = ax[2].hist(np.log10(samples_OII[:, 0]), bins=bins_cloudy,
+                                 density=True, facecolor='blue', histtype='stepfilled',
+                                 alpha=0.5, label=r'$\rm [O \, II]$')
+        ax[2].annotate("", xy=(1.6, np.max(nums) + 0.5), xytext=(1.8, np.max(nums) + 0.5), xycoords='data',
+                       arrowprops=dict(arrowstyle="->"))
         ax[2].minorticks_on()
         ax[2].set_xlim(1.5, np.log10(sample_max//10 * 10 + 10))
         ax[2].set_xlabel(r'$\mathrm{log(n/cm^{-3})}$', size=20)
@@ -429,34 +428,34 @@ S6_param = np.array([['NeV3346', True],
                      ['HeII4687', True],
                      ['OIII5008', True]], dtype=bool)
 Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 3.4, 4, dtype='f2')))
-RunCloudyMCMC(region='S6', trial='t1', bnds=S6_bnds, line_param=S6_param, deredden=False,
-              den_array=Hden_ext, nums_chain=5000, nums_disc=1000)
+RunCloudyMCMC(den_array=Hden_ext, region='S6', trial='t1', bnds=S6_bnds, line_param=S6_param, deredden=False,
+              nums_chain=5000, nums_disc=1000)
 # RunCloudyMCMC(region='S6', trial='t2', bnds=S6_bnds, line_param=S6_param, deredden=False, nums_chain=5000, nums_disc=1000)
 
 # S6 AGN
-# S6_bnds = np.array([[1.0, 2.4],
-#                     [-0.5, 0.5],
-#                     [4.75, 5.75],
-#                     [-1.2, 0],
-#                     [-0.52, -0.48],
-#                     [-1.5, 0.5]])
-# S6_param = np.array([['NeV3346', True],
-#                      ['OII', True],
-#                      ['NeIII3869', True],
-#                      ['Hdel', True],
-#                      ['Hgam', True],
-#                      ['OIII4364', True],
-#                      ['HeII4687', True],
-#                      ['OIII5008', True]], dtype=bool)
-# den_array_AGN = np.linspace(1.0, 2.4, 8, dtype='f2')
-# Z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
-# T_array_AGN = np.linspace(4.75, 5.75, 5, dtype='f2')
-# alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
-# alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
-# alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
-# RunCloudyMCMC(den_array=den_array_AGN, Z_array=Z_array_AGN, T_array=T_array_AGN, alpha_ox_array=alpha_ox_array_AGN,
-#               alpha_uv_array=alpha_uv_array_AGN, alpha_x_array=alpha_x_array_AGN, region='S6', trial='AGN',
-#               bnds=S6_bnds, line_param=S6_param, deredden=False, mode='AGN_nouv', nums_chain=5000, nums_disc=1000)
+S6_bnds = np.array([[1.0, 3.4],
+                    [-0.5, 0.5],
+                    [4.75, 5.75],
+                    [-1.2, 0],
+                    [-0.52, -0.48],
+                    [-1.5, 0.5]])
+S6_param = np.array([['NeV3346', True],
+                     ['OII', True],
+                     ['NeIII3869', True],
+                     ['Hdel', True],
+                     ['Hgam', True],
+                     ['OIII4364', True],
+                     ['HeII4687', True],
+                     ['OIII5008', True]], dtype=bool)
+den_array_AGN = np.linspace(1.0, 3.4, 13, dtype='f2')
+Z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
+T_array_AGN = np.linspace(4.75, 5.75, 5, dtype='f2')
+alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
+alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
+alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
+RunCloudyMCMC(den_array=den_array_AGN, Z_array=Z_array_AGN, T_array=T_array_AGN, alpha_ox_array=alpha_ox_array_AGN,
+              alpha_uv_array=alpha_uv_array_AGN, alpha_x_array=alpha_x_array_AGN, region='S6', trial='AGN',
+              bnds=S6_bnds, line_param=S6_param, deredden=False, mode='AGN_nouv', nums_chain=5000, nums_disc=1000)
 
 # S7
 # S7_bnds = np.array([[-2, 4.6],
