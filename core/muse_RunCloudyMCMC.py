@@ -1,9 +1,12 @@
+import os
 import emcee
 import corner
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import interpolate
+import matplotlib.gridspec as gridspec
 from matplotlib import rc
+from scipy import interpolate
+from matplotlib.ticker import FormatStrFormatter
 from muse_LoadCloudy import format_cloudy
 from muse_LoadCloudy import format_cloudy_nogrid
 from muse_LoadCloudy import format_cloudy_nogrid_AGN
@@ -153,14 +156,24 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         p0 = np.array([1.6, -0.3, 5.2, -0.7, -1.0]) + 0.1 * np.random.randn(nwalkers, ndim)
         labels = [r"$\mathrm{log_{10}(n)}$", r"$\mathrm{log_{10}(Z/Z_{\odot})}$", r"$\mathrm{log_{10}(T)}$",
                   r"$\mathrm{\alpha_{ox}}$", r"$\mathrm{\alpha_x}$"]
+    if deredden:
+        filename = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '_dered.h5'
+        figname_MCMC = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '_dered.pdf'
+    else:
+        filename = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '.h5'
+        figname_MCMC = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '.pdf'
+    backend = emcee.backends.HDFBackend(filename)
 
-    args = (bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869, f_Hdel, f_Hgam, f_OIII4364, f_HeII4687,
-            f_OIII5008, logflux_NeV3346, logflux_OII, logflux_NeIII3869, logflux_Hdel, logflux_Hgam,
-            logflux_OIII4364, logflux_HeII4687, logflux_OIII5008, dlogflux_NeV3346, dlogflux_OII,
-            dlogflux_NeIII3869, dlogflux_Hdel, dlogflux_Hgam, dlogflux_OIII4364, dlogflux_HeII4687, dlogflux_OIII5008)
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=args)
-    state = sampler.run_mcmc(p0, nums_chain)
-    samples = sampler.get_chain(flat=True, discard=nums_disc)
+    if os.path.exists(filename):
+        samples = backend.get_chain(flat=True, discard=nums_disc)
+    else:
+        args = (bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869, f_Hdel, f_Hgam, f_OIII4364, f_HeII4687,
+                f_OIII5008, logflux_NeV3346, logflux_OII, logflux_NeIII3869, logflux_Hdel, logflux_Hgam,
+                logflux_OIII4364, logflux_HeII4687, logflux_OIII5008, dlogflux_NeV3346, dlogflux_OII,
+                dlogflux_NeIII3869, dlogflux_Hdel, dlogflux_Hgam, dlogflux_OIII4364, dlogflux_HeII4687, dlogflux_OIII5008)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=args, backend=backend)
+        state = sampler.run_mcmc(p0, nums_chain)
+        samples = sampler.get_chain(flat=True, discard=nums_disc)
 
     figure = corner.corner(samples, labels=labels, quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k',
                            title_kwargs={"fontsize": 13}, smooth=1., smooth1d=1., bins=25)
@@ -169,27 +182,26 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         if not np.isin(i, np.arange(0, ndim ** 2, ndim + 1)):
             ax.tick_params(axis='both', direction='in', top='on', bottom='on', left='on', right='on')
         ax.tick_params(axis='both', direction='in', top='on', bottom='on')
-    if deredden:
-        figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial +
-                       '_dered.pdf', bbox_inches='tight')
-    else:
-        figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial +
-                       '.pdf', bbox_inches='tight')
+    figure.savefig(figname_MCMC, bbox_inches='tight')
 
     # Violin plot
     if compare_hist:
-        fig, ax = plt.subplots(1, 3, figsize=(15, 5), gridspec_kw={'width_ratios': [1, 3, 1]}, dpi=300)
+        gridspec = dict(wspace=0, width_ratios=[1, 0.25, 3, 0, 1])
+        fig, ax = plt.subplots(1, 5, figsize=(15, 5), gridspec_kw=gridspec, dpi=300)
     else:
         fig, ax = plt.subplots(1, 2, figsize=(12, 5), gridspec_kw={'width_ratios': [1, 3]}, dpi=300)
+    ax[1].set_visible(False)
+    ax[3].set_visible(False)
     E_NeV3346, E_NeIII3869 = 97.11, 40.96  # in ev
     E_OIII4364, E_OIII5008, E_OII = 35.12, 35.12, 13.6
     E_HeII4687, E_Hbeta = 54.42, 13.6
 
     line_param_violin = np.array([line_param[1, 1], line_param[7, 1], line_param[2, 1],
                                   line_param[6, 1], line_param[0, 1]])
-    data_x1 = [0, 5]
+    data_x1 = [0, 3]
     data_x2 = [E_OII / E_Hbeta, E_OIII5008 / E_Hbeta - 0.5, E_NeIII3869 / E_Hbeta + 0.2,
-               E_HeII4687 / E_Hbeta, E_NeV3346 / E_Hbeta - 2]
+               E_HeII4687 / E_Hbeta + 0.3, E_NeV3346 / E_Hbeta - 2]
+    data_x2_plot = np.arange(1, 4.75, 0.75)
     data_y2 = np.array([logflux_OII, logflux_OIII5008, logflux_NeIII3869,
                         logflux_HeII4687, logflux_NeV3346], dtype=object).reshape(len(data_x2))
     data_y2err = np.array([dlogflux_OII, dlogflux_OIII5008, dlogflux_NeIII3869,
@@ -230,10 +242,10 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     model_y2 = [np.array(model_y2[0, :]), np.array(model_y2[1, :]), np.array(model_y2[2, :]),
                 np.array(model_y2[3, :]), np.array(model_y2[4, :])]
     ax[0].errorbar(data_x1, data_y1, data_y1err, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
-    ax[1].errorbar(data_x2, data_y2, data_y2err, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
+    ax[2].errorbar(data_x2_plot, data_y2, data_y2err, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
     violin_parts_0 = ax[0].violinplot(model_y1, positions=data_x1, points=500, widths=0.5, showmeans=False,
                                       showextrema=False, showmedians=False)
-    violin_parts_1 = ax[1].violinplot(model_y2, positions=data_x2, points=500, widths=0.5, showmeans=False,
+    violin_parts_1 = ax[2].violinplot(model_y2, positions=data_x2_plot, points=500, widths=0.5, showmeans=False,
                                       showextrema=False, showmedians=False)
 
     for pc in violin_parts_0['bodies']:
@@ -241,23 +253,28 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     for pc in violin_parts_1['bodies']:
         pc.set_facecolor('C1')
     ax[0].set_xlim(-1, 6)
-    ax[1].set_title(r'$\mathrm{Ionization \, energy}$', size=20, y=1.04)
-    ax[1].annotate("", xy=(0.57, 0.935), xytext=(0.34, 0.935), xycoords='figure fraction',
+    ax[2].set_xlim(data_x2_plot.min() - 0.3, data_x2_plot.max() + 0.3)
+    ax[2].set_title(r'$\mathrm{Ionization \, energy}$', size=20, y=1.04)
+    ax[2].annotate("", xy=(0.57, 0.935), xytext=(0.34, 0.935), xycoords='figure fraction',
                    arrowprops=dict(arrowstyle="->"))
     ax[0].set_ylabel(r'$\mathrm{log[line \, ratio]}$', size=20)
-    ax[1].set_xticks(data_x2, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$',
-                               r'$\mathrm{\frac{[Ne \, III]}{H\beta}}$', r'$\mathrm{\frac{He \, II}{H\beta}}$',
-                               r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'])
+    ax[2].set_xticks(data_x2_plot, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$',
+                                    r'$\mathrm{\frac{[Ne \, III]}{H\beta}}$', r'$\mathrm{\frac{He \, II}{H\beta}}$',
+                                    r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'])
     # ax[1].annotate(r'$\mathrm{\lambda 4363}$', xy=(0.30, 0.2), xycoords='figure fraction', size=15)
     # ax[1].annotate(r'$\mathrm{\lambda 5007}$', xy=(0.30, 0.8), xycoords='figure fraction', size=15)
-    ax[0].set_xticks([0, 5], [r'$\mathrm{[O \, II]}$' + '\n' + r'$\mathrm{\frac{\lambda 3729}{\lambda 3727}}$',
-                              r'$\mathrm{[O \, III]}$' + '\n' + r'$\mathrm{\frac{\lambda 4363}{\lambda 5007}}$'])
-    ax[0].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=15,
+    ax[0].set_xticks([0, 5], [r'$\mathrm{[O \, II]}$' + r'$\mathrm{\frac{\lambda 3729}{\lambda 3727}}$',
+                              r'$\mathrm{[O \, III]}$' + r'$\mathrm{\frac{\lambda 4363}{\lambda 5007}}$'])
+    ax[0].minorticks_on()
+    ax[2].minorticks_on()
+    ax[0].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right=False, labelsize=20,
                       size=5)
-    ax[0].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-    ax[1].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20,
+    ax[0].tick_params(axis='both', which='minor', direction='in', bottom=False, left='on', right=False, size=3)
+    ax[2].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right=False, labelsize=20,
                       size=5)
-    ax[1].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
+    ax[2].tick_params(axis='both', which='minor', direction='in', bottom=False, left='on', right=False, size=3)
+    ax[0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    ax[2].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
     # Hist comparison
     if compare_hist:
@@ -270,21 +287,34 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         sample_max = np.maximum(sample_max_OII, sample_max_cloudy)
         bins_cloudy = np.arange(1.5, np.log10(sample_max//10 * 10 + 10), 0.1)
 
-        ax[2].hist(samples[:, 0], bins=bins_cloudy, range=(1.5, np.log10(sample_max//10 * 10 + 10)),
-                   density=True, facecolor='brown', histtype='stepfilled',
+        #
+        # bins_mid = (bins_cloudy[:-1] + bins_cloudy[1:]) / 2
+        nums_cloudy, _ = np.histogram(samples[:, 0], bins=bins_cloudy,
+                                      range=(1.5, np.log10(sample_max//10 * 10 + 10)))
+        weights = np.ones_like(samples[:, 0]) / nums_cloudy.max()
+        # nums_cloudy /= nums_cloudy.max()
+        # ax[4].plot(bins_mid, nums_cloudy, color='brown', fillstyle='full', alpha=0.5, label=r'$\rm Cloudy$',
+        #            drawstyle='steps-mid')
+        ax[4].hist(samples[:, 0], bins=bins_cloudy, range=(1.5, np.log10(sample_max//10 * 10 + 10)),
+                   weights=weights, facecolor='brown', histtype='stepfilled',
                    alpha=0.5, label=r'$\rm Cloudy$')
-        nums, _, __ = ax[2].hist(np.log10(samples_OII[:, 0]), bins=bins_cloudy,
-                                 density=True, facecolor='blue', histtype='stepfilled',
+        nums_OII, _ = np.histogram(np.log10(samples_OII[:, 0]), bins=bins_cloudy,
+                                   range=(1.5, np.log10(sample_max//10 * 10 + 10)))
+        weights = np.ones_like(samples_OII[:, 0]) / nums_OII.max()
+        nums, _, __ = ax[4].hist(np.log10(samples_OII[:, 0]), bins=bins_cloudy,
+                                 range=(1.5, np.log10(sample_max//10 * 10 + 10)),
+                                 weights=weights, facecolor='blue', histtype='stepfilled',
                                  alpha=0.5, label=r'$\rm [O \, II]$')
-        ax[2].annotate("", xy=(1.6, np.max(nums) + 0.5), xytext=(1.8, np.max(nums) + 0.5), xycoords='data',
+        ax[4].annotate("", xy=(1.52, np.max(nums) + 0.05), xytext=(1.9, np.max(nums) + 0.05), xycoords='data',
                        arrowprops=dict(arrowstyle="->"))
-        ax[2].minorticks_on()
-        ax[2].set_xlim(1.5, np.log10(sample_max//10 * 10 + 10))
-        ax[2].set_xlabel(r'$\mathrm{log(n/cm^{-3})}$', size=20)
-        ax[2].tick_params(axis='both', which='major', direction='in', bottom='on', left='on', right='on', labelsize=20,
-                          size=5)
-        ax[2].tick_params(axis='both', which='minor', direction='in', bottom='on', left='on', right='on', size=3)
-        ax[2].legend(loc=1)
+        ax[4].minorticks_on()
+        ax[4].set_xlim(1.5, np.log10(sample_max//10 * 10 + 10))
+        ax[4].set_ylim(0, np.max(nums) + 0.2)
+        ax[4].set_xlabel(r'$\mathrm{log(n/cm^{-3})}$', size=20)
+        ax[4].tick_params(axis='both', which='major', direction='in', bottom='on', left=False, right=False,
+                          labelleft=False, labelright=False, labelsize=20, size=5)
+        ax[4].tick_params(axis='both', which='minor', direction='in', bottom='on', left=False, right=False, size=3)
+        ax[4].legend(loc=1)
     if deredden:
         fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '_violin_dered.png',
                     bbox_inches='tight')
@@ -433,29 +463,29 @@ RunCloudyMCMC(den_array=Hden_ext, region='S6', trial='t1', bnds=S6_bnds, line_pa
 # RunCloudyMCMC(region='S6', trial='t2', bnds=S6_bnds, line_param=S6_param, deredden=False, nums_chain=5000, nums_disc=1000)
 
 # S6 AGN
-S6_bnds = np.array([[1.0, 3.4],
-                    [-0.5, 0.5],
-                    [4.75, 5.75],
-                    [-1.2, 0],
-                    [-0.52, -0.48],
-                    [-1.5, 0.5]])
-S6_param = np.array([['NeV3346', True],
-                     ['OII', True],
-                     ['NeIII3869', True],
-                     ['Hdel', True],
-                     ['Hgam', True],
-                     ['OIII4364', True],
-                     ['HeII4687', True],
-                     ['OIII5008', True]], dtype=bool)
-den_array_AGN = np.linspace(1.0, 3.4, 13, dtype='f2')
-Z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
-T_array_AGN = np.linspace(4.75, 5.75, 5, dtype='f2')
-alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
-alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
-alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
-RunCloudyMCMC(den_array=den_array_AGN, Z_array=Z_array_AGN, T_array=T_array_AGN, alpha_ox_array=alpha_ox_array_AGN,
-              alpha_uv_array=alpha_uv_array_AGN, alpha_x_array=alpha_x_array_AGN, region='S6', trial='AGN',
-              bnds=S6_bnds, line_param=S6_param, deredden=False, mode='AGN_nouv', nums_chain=5000, nums_disc=1000)
+# S6_bnds = np.array([[1.0, 3.4],
+#                     [-0.5, 0.5],
+#                     [4.75, 5.75],
+#                     [-1.2, 0],
+#                     [-0.52, -0.48],
+#                     [-1.5, 0.5]])
+# S6_param = np.array([['NeV3346', True],
+#                      ['OII', True],
+#                      ['NeIII3869', True],
+#                      ['Hdel', True],
+#                      ['Hgam', True],
+#                      ['OIII4364', True],
+#                      ['HeII4687', True],
+#                      ['OIII5008', True]], dtype=bool)
+# den_array_AGN = np.linspace(1.0, 3.4, 13, dtype='f2')
+# Z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
+# T_array_AGN = np.linspace(4.75, 5.75, 5, dtype='f2')
+# alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
+# alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
+# alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
+# RunCloudyMCMC(den_array=den_array_AGN, Z_array=Z_array_AGN, T_array=T_array_AGN, alpha_ox_array=alpha_ox_array_AGN,
+#               alpha_uv_array=alpha_uv_array_AGN, alpha_x_array=alpha_x_array_AGN, region='S6', trial='AGN',
+#               bnds=S6_bnds, line_param=S6_param, deredden=False, mode='AGN_nouv', nums_chain=5000, nums_disc=1000)
 
 # S7
 # S7_bnds = np.array([[-2, 4.6],
@@ -486,7 +516,7 @@ RunCloudyMCMC(den_array=den_array_AGN, Z_array=Z_array_AGN, T_array=T_array_AGN,
 #                      ['HeII4687', False],
 #                      ['OIII5008', True]], dtype=bool)
 # Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 4.6, 10, dtype='f2')))
-# RunCloudyMCMC(region='S8', trial='t1', bnds=S8_bnds, line_param=S8_param, deredden=False, Hden=Hden_ext)
+# RunCloudyMCMC(den_array=Hden_ext, region='S8', trial='t1', bnds=S8_bnds, line_param=S8_param, deredden=False)
 # RunCloudyMCMC(region='S8', trial='t2', bnds=S8_bnds, line_param=S8_param, deredden=False, Hden=Hden_ext)
 
 

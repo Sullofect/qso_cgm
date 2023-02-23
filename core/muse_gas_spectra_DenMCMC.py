@@ -670,16 +670,28 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
         flux_MCMC = np.hstack((flux_OII_i, flux_OIII4364_i, flux_OIII5008_i))
         flux_err_MCMC = np.hstack((flux_OII_err_i, flux_OIII4364_err_i, flux_OIII5008_err_i))
 
-        ndim, nwalkers = 4, 40
-        p0 = np.array([5, 4.3, flux_OII, flux_OIII5008]) + 0.1 * np.random.randn(nwalkers, ndim)
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=(wave_vac_all, flux_MCMC, flux_err_MCMC, z, sigma,
-                                                                       a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008,
-                                                                       b_OIII5008))
-        state = sampler.run_mcmc(p0, nums_chain)
-        samples = sampler.get_chain(flat=True, discard=nums_disc)
+        if deredden:
+            filename = '/Users/lzq/Dropbox/Data/CGM_plots/spectra_gas/' + region + '_dered.h5'
+            figname_MCMC = '/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_MCMC_dered.pdf'
+        else:
+            filename = '/Users/lzq/Dropbox/Data/CGM_plots/spectra_gas/' + region + '.h5'
+            figname_MCMC = '/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_MCMC.pdf'
 
-        figure = corner.corner(samples, labels=[r"$\mathrm{n}$", r"$\mathrm{log_{10}(T)}$",
-                                                r"$\mathrm{Flux\_OII}$", r"$\mathrm{Flux\_OIII5008}$"],
+        ndim, nwalkers = 4, 40
+        backend = emcee.backends.HDFBackend(filename)
+
+        if os.path.exists(filename):
+            samples = backend.get_chain(flat=True, discard=nums_disc)
+        else:
+            args = (wave_vac_all, flux_MCMC, flux_err_MCMC, z, sigma, a_OIII4364, b_OIII4364,
+                    a_OII, b_OII, a_OIII5008, b_OIII5008)
+            p0 = np.array([5, 4.3, flux_OII, flux_OIII5008]) + 0.1 * np.random.randn(nwalkers, ndim)
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=args, backend=backend)
+            state = sampler.run_mcmc(p0, nums_chain)
+            samples = sampler.get_chain(flat=True, discard=nums_disc)
+
+        figure = corner.corner(samples, labels=[r"$\mathrm{n}$", r"$\mathrm{log_{10}(T)}$", r"$\mathrm{Flux\_OII}$",
+                                                r"$\mathrm{Flux\_OIII5008}$"],
                                quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k', title_kwargs={"fontsize": 13},
                                smooth=1., smooth1d=1., bins=25)
         best_fit = np.percentile(samples, [16, 50, 84], axis=0)
@@ -700,7 +712,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
                 ax.tick_params(axis='both', direction='in', top='on', bottom='on', right='on', left='on')
             ax.tick_params(axis='both', direction='in', top='on', bottom='on')
         if save_figure:
-            figure.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_MCMC.pdf', bbox_inches='tight')
+            figure.savefig(figname_MCMC, bbox_inches='tight')
 
         # Weak lines
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
@@ -896,13 +908,13 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
                              size=20, x=0.05)
     if save_figure:
         if deredden:
-            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak_MCMC_dered.png',
+            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + region + '_weak_MCMC_dered.png',
                              bbox_inches='tight')
-            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong_MCMC_dered.png',
+            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + region + '_strong_MCMC_dered.png',
                                bbox_inches='tight')
         else:
-            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak_MCMC.png', bbox_inches='tight')
-            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong_MCMC.png', bbox_inches='tight')
+            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + region + '_weak_MCMC.png', bbox_inches='tight')
+            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + region + '_strong_MCMC.png', bbox_inches='tight')
     if return_samples:
         return samples
 
