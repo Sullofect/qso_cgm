@@ -363,10 +363,21 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                          ('a_OIII5008', 0.0, False, None, None, None),
                          ('b_OIII5008', 0.0, False, None, None, None))
 
+# Read region file
+path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_list_revised.reg')
+ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
+
 
 # Def Plot function
-def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas_1', deredden=True,
-                   save_table=False, save_figure=True):
+def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_table=False, save_figure=True):
+    global ra_array, dec_array, radius_array, text_array
+    region_mask = np.in1d(text_array, region)
+    ra_array, dec_array, radius_array, text_array = ra_array[region_mask], dec_array[region_mask], \
+                                                    radius_array[region_mask], text_array[region_mask]
+
     # Weak emission lines
     fig_weak, axarr_weak = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
                                         gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
@@ -847,21 +858,14 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
 
 # Plot the data
-# Read region file
-path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_list_revised.reg')
-ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
-dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
-radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
-text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spectra_gas/spectra_gas_paper',
-               save_table=True, save_figure=False, deredden=True)
+# PlotGasSpectra(region=text_array, figname='spectra_gas/spectra_gas_paper',
+#                save_table=True, save_figure=False, deredden=True)
 
-# paper_sort = [0, 3, 5, 8, 11]
-# PlotGasSpectra(ra_array[paper_sort], dec_array[paper_sort], radius_array[paper_sort], text_array[paper_sort],
-#                figname='spectra_gas/spectra_gas_paper', save_table=False, save_figure=True, deredden=True)
+region_paper = ['S1', 'S4', 'S6', 'S8', 'S9', 'B2']
+PlotGasSpectra(region=region_paper, figname='spectra_gas/spectra_gas_paper',
+               save_table=False, save_figure=True, deredden=True)
 
 
 # for i in range(len(text_array)):
-#     PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
-#                    figname='spectra_gas/spectra_gas_' + str(text_array[i]))
+#     PlotGasSpectra(region=text_array[i], figname='spectra_gas/spectra_gas_' + str(text_array[i]))

@@ -4,17 +4,13 @@ import numpy as np
 import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
+import palettable.scientific.sequential as sequential_s
 from matplotlib import rc
-from matplotlib import cm
 from regions import Regions
 from PyAstronomy import pyasl
 from astropy import units as u
-from muse_compare_z import compare_z
 from astropy.convolution import convolve
-from astropy.cosmology import FlatLambdaCDM
-from matplotlib.colors import ListedColormap
 from muse_RenameGal import ReturnGalLabel
-import palettable.scientific.sequential as sequential_s
 from astropy.convolution import Gaussian2DKernel, Box2DKernel
 from mpdaf.obj import Image, Cube, WCS, WaveCoord, iter_spe, iter_ima
 from regions import RectangleSkyRegion, PixCoord, RectanglePixelRegion
@@ -56,7 +52,7 @@ def ConvertFits(table=None, type=None, mask=None, filename=None, smooth=True, sm
         # Mask the data
         xx, yy = np.meshgrid(np.arange(200), np.arange(200))
         pixel_center = PixCoord(x=100, y=75)
-        pixel_region = RectanglePixelRegion(center=pixel_center, width=90, height=90)
+        pixel_region = RectanglePixelRegion(center=pixel_center, width=99, height=90)
         pixel_data = PixCoord(x=xx, y=yy)
         mask = pixel_region.contains(pixel_data)
         data = np.where(mask, data, np.nan)
@@ -104,9 +100,12 @@ def APLpyStyle(gc, type=None):
     elif type == 'GasMap':
         gc.colorbar.set_ticks([-200, -100, 0, 100, 200])
         gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
-    else:
+    elif type == 'GasMap_sigma':
         gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
         gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
+    else:
+        gc.colorbar.set_ticks([-0.5, 0.0, 0.5, 1.0, 1.5])
+        gc.colorbar.set_axis_label_text(r'$\rm log([O \, III]/[O \, II])$')
 
     # Scale bar
     gc.add_scalebar(length=15 * u.arcsecond)
@@ -133,14 +132,14 @@ def APLpyStyle(gc, type=None):
 # Load galxies infomation
 row_final, ID_final, name_final, z_final, ra_final, dec_final = ReturnGalLabel(sort_row=False, mode='initial')
 ID_sep_final = ReturnGalLabel(sort_row=True, mode='final')[6]
-
-# col_ID = np.arange(len(row_final))
-# select_array = np.sort(np.array([6, 7, 181, 182, 80, 81, 82, 179, 4, 5, 64]))
-# select_gal = np.in1d(row_final, select_array)
-# row_final = row_final[select_gal]
-# z_final = z_final[select_gal]
-# ra_final = ra_final[select_gal]
-# dec_final = dec_final[select_gal]
+col_ID = np.arange(len(row_final), dtype=int)
+select_array = np.sort(np.array([1, 2, 3, 4, 5, 6, 7, 8, 13, 18, 20, 22]))
+select_gal = np.in1d(ID_sep_final, select_array)
+ID_sep_final = ID_sep_final[select_gal]
+row_final = row_final[select_gal]
+z_final = z_final[select_gal]
+ra_final = ra_final[select_gal]
+dec_final = dec_final[select_gal]
 
 # Calculate the offset between MUSE and HST
 z_qso = 0.6282144177077355
@@ -158,8 +157,10 @@ radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 #
-path_label = path_data + 'regions/gas_label_list.reg'
-regions_label = Regions.read(path_label, format='ds9')
+path_gas_label = path_data + 'regions/gas_label_list.reg'
+regions_label = Regions.read(path_gas_label, format='ds9')
+path_gal_label = path_data + 'regions/galaxy_label_zoom_list.reg'
+gal_labels = Regions.read(path_gal_label, format='ds9')
 
 
 def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
@@ -183,11 +184,12 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
         # Slice the cube
         sub_cube = cube.select_lambda(wave_i, wave_f)
         sub_cube = sub_cube.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2
-        sub_cube.write(path_data + 'image_MakeMovie/image_make_NB.fits')
-        ConvertFits(type='NarrowBand', mask=False, filename='image_make_NB', smooth=True)
-        ConvertFits(type='NarrowBand', mask=False, filename='image_make_NB', smooth=False, contour=True)
-        path_subcube = path_data + 'image_MakeMovie/image_make_NB_revised.fits'
-        path_contour = path_data + 'image_MakeMovie/image_make_NB_contour_revised.fits'
+        path_image_make_NB = band + '_' + str(dv_i) + '_' + str(dv_f)
+        sub_cube.write(path_data + 'image_MakeMovie/' + path_image_make_NB + '.fits')
+        ConvertFits(type='NarrowBand', mask=False, filename=path_image_make_NB, smooth=True)
+        ConvertFits(type='NarrowBand', mask=False, filename=path_image_make_NB, smooth=False, contour=True)
+        path_subcube = path_data + 'image_MakeMovie/' + path_image_make_NB + '_revised.fits'
+        path_contour = path_data + 'image_MakeMovie/' + path_image_make_NB + '_revised.fits'
 
         # Plot the data
         gc = aplpy.FITSFigure(path_subcube, figure=fig, north=True)
@@ -240,26 +242,23 @@ def MakeFieldImage(label_gal=False):
 
     #
     path_hb = path_data + 'raw_data/HE0238-1904_drc_offset.fits'
-    data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
-    path_OII_SB = path_data + 'image_narrow/image_OII_line_SB_offset_revised.fits'
-    path_OIII_SB = path_data + 'image_narrow/image_OIII_5008_line_SB_offset_revised.fits'
-
-    # Load galxies infomation
-    ID_sep_final = ReturnGalLabel(sort_row=True, mode='final')[6]
-
+    path_OII_SB = path_data + 'image_MakeMovie/OII_-100_100_contour_revised.fits'
+    path_OIII_SB = path_data + 'image_MakeMovie/OIII_-100_100_contour_revised.fits'
 
     # Plot
     fig = plt.figure(figsize=(8, 8), dpi=300)
     gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
     gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
     # gc.show_colorscale(cmap='Greys', vmin=0, vmax=4.897e-2)
-    gc.show_contour(path_OII_SB, levels=[0.4, 2], colors='blue', linewidths=0.8, smooth=3)
-    gc.show_contour(path_OIII_SB, levels=[0.4, 2], colors='red', linewidths=0.8, smooth=3)
+    gc.show_contour(path_OII_SB, levels=[0.15, 0.3], kernel='gauss', colors='blue', linewidths=0.8, smooth=3)
+    gc.show_contour(path_OIII_SB, levels=[0.15, 0.3], kernel='gauss', colors='red', linewidths=0.8, smooth=3)
     gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=1.5, s=330)
     if label_gal:
-        for i in range(len(row_final)):
-            x = regions_label[i].center.ra.degree
-            y = regions_label[i].center.dec.degree
+        gc.show_arrows(40.1370596, -18.8662000, 40.1368331 - 40.1370596, -18.8658486 + 18.8662000, color='k')
+        gc.show_arrows(40.1364678, -18.8662600, 40.1362533 - 40.1364678, -18.8656948 + 18.8662600, color='k')
+        for i, ix in enumerate(col_ID[select_gal]):
+            x = gal_labels[ix].center.ra.degree
+            y = gal_labels[ix].center.dec.degree
             text = 'G' + str(ID_sep_final[i])
             gc.add_label(x, y, text, size=20)
 
@@ -310,17 +309,23 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     if line == 'OOHbeta':
         flux_stack = np.stack((flux_fit_OII, flux_fit_Hbeta, flux_fit_OIII5008), axis=0)
         dflux_stack = np.stack((dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII5008), axis=0)
+        log_OIII_OII_fit = np.log10(flux_fit_OIII5008 / flux_fit_OII)
+
         fit_max = np.amax(flux_stack / dflux_stack, axis=0)
+        log_OIII_OII_fit = np.where((fit_max > snr_thr), log_OIII_OII_fit, np.nan)
         v_fit = np.where((fit_max > snr_thr), v_fit, np.nan)
         sigma_fit = np.where((fit_max > snr_thr), sigma_fit, np.nan)
+        log_OIII_OII_fit = np.where((v_fit < v_thr), log_OIII_OII_fit, np.nan)
         sigma_fit = np.where((v_fit < v_thr), sigma_fit, np.nan)
         v_fit = np.where((v_fit < v_thr), v_fit, np.nan)
+
     else:
         # Final data
         v_fit = np.where((flux_fit / dflux_fit > snr_thr), v_fit, np.nan)
         sigma_fit = np.where((flux_fit / dflux_fit > snr_thr), sigma_fit, np.nan)
         sigma_fit = np.where((v_fit < v_thr), sigma_fit, np.nan)
         v_fit = np.where((v_fit < v_thr), v_fit, np.nan)
+        log_OIII_OII_fit = np.log10(flux_fit_OIII5008 / flux_fit_OII)
 
     ConvertFits(table=v_fit, type='GasMap', mask=True, smooth=False, filename='image_' + line + '_fitline')
 
@@ -345,15 +350,25 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' + method_spe + '.png',
                 bbox_inches='tight')
 
-    ConvertFits(table=sigma_fit, type='GasMap', mask=True, smooth=False, filename='image_' + line + '_fitline')
-
     # Plot sigma map
+    ConvertFits(table=sigma_fit, type='GasMap', mask=True, smooth=False, filename='image_' + line + '_fitline')
     fig = plt.figure(figsize=(8, 8), dpi=300)
-    path_sigma_v = path_data + 'image_plot/image_' + line + '_fitline_sigma_v_revised.fits'
+    path_sigma_v = path_data + 'image_plot/image_' + line + '_fitline_revised.fits'
     gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
     gc.show_colorscale(vmin=0, vmax=200, cmap=sequential_s.Acton_6.mpl_colormap)
-    APLpyStyle(gc, type='GasMap_simga')
+    APLpyStyle(gc, type='GasMap_sigma')
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_sigma_v_map_' + method + '_' + method_spe
+                + '.png', bbox_inches='tight')
+
+    # Plot line ratio map
+    ConvertFits(table=log_OIII_OII_fit, type='GasMap', mask=True, smooth=False, filename='image_' + line + '_fitline')
+
+    fig = plt.figure(figsize=(8, 8), dpi=300)
+    path_sigma_v = path_data + 'image_plot/image_' + line + '_fitline_revised.fits'
+    gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
+    gc.show_colorscale(vmin=-1, vmax=2, cmap=sequential_s.Buda_20.mpl_colormap)
+    APLpyStyle(gc, type='else')
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_logOIII_OII_map_' + method + '_' + method_spe
                 + '.png', bbox_inches='tight')
 
 
@@ -365,4 +380,4 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 # MakeNarrowBands(region=False, band='OIII')
 # MakeNarrowBands(region=True, band='OIII')
 MakeFieldImage(label_gal=True)
-# MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, v_thr=np.inf, check=False)
+# sMakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, v_thr=np.inf, check=False)
