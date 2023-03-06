@@ -254,8 +254,8 @@ def MakeFieldImage(label_gal=False):
     gc.show_contour(path_OIII_SB, levels=[0.15, 0.3], kernel='gauss', colors='red', linewidths=0.8, smooth=3)
     gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=1.5, s=330)
     if label_gal:
-        gc.show_arrows(40.1370596, -18.8662000, 40.1368331 - 40.1370596, -18.8658486 + 18.8662000, color='k')
-        gc.show_arrows(40.1364678, -18.8662600, 40.1362533 - 40.1364678, -18.8656948 + 18.8662600, color='k')
+        gc.show_arrows(40.1370596, -18.8662000, 40.1366338 - 40.1370596, -18.8656749 + 18.8662000, color='k')
+        gc.show_arrows(40.1365946, -18.8666200, 40.1364435 - 40.1365946, -18.8660348 + 18.8666200, color='k')
         for i, ix in enumerate(col_ID[select_gal]):
             x = gal_labels[ix].center.ra.degree
             y = gal_labels[ix].center.dec.degree

@@ -80,6 +80,7 @@ def log_prob(x, bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869, f_Hdel, f
                           chi2_HeII4687, chi2_OIII5008])
     return - 0.5 * np.nansum(sum_array[line_param[:, 1]])
 
+
 # Default values
 den_default = np.linspace(-2, 2.6, 24, dtype='f2') # log # 0.25
 Z_default = np.linspace(-1.5, 0.5, 11, dtype='f2')
