@@ -416,18 +416,19 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
 # Plot the data
 # Read region file
 path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_list_revised.reg')
-ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
-dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
-radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
-text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
+ra_array_input = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+dec_array_input = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+radius_array_input = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+text_array_input = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
+
 
 # Def Plot function
 def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_table=False, save_figure=True,
                    return_samples=False, nums_chain=5000, nums_disc=1000):
-    global ra_array, dec_array, radius_array, text_array
-    region_mask = np.in1d(text_array, region)
-    ra_array, dec_array, radius_array, text_array = ra_array[region_mask], dec_array[region_mask], \
-                                                    radius_array[region_mask], text_array[region_mask]
+    global ra_array_input, dec_array_input, radius_array_input, text_array_input
+    region_mask = np.in1d(text_array_input, region)
+    ra_array, dec_array, radius_array, text_array = ra_array_input[region_mask], dec_array_input[region_mask], \
+                                                    radius_array_input[region_mask], text_array_input[region_mask]
     # Weak emission lines
     fig_weak, axarr_weak = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
                                         gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)

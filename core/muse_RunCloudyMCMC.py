@@ -324,18 +324,18 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
                     bbox_inches='tight')
 
 # S1
-# S1_bnds = np.array([[-2, 2.6],
-#                     [-1.8, 0],
-#                     [-1.5, 0.5]])
-# S1_param = np.array([['NeV3346', True],
-#                      ['OII', True],
-#                      ['NeIII3869', True],
-#                      ['Hdel', True],
-#                      ['Hgam', True],
-#                      ['OIII4364', True],
-#                      ['HeII4687', True],
-#                      ['OIII5008', True]], dtype=bool)
-# RunCloudyMCMC(region='S1', trial='t1', bnds=S1_bnds, line_param=S1_param, deredden=False)
+S1_bnds = np.array([[-2, 2.6],
+                    [-1.8, 0],
+                    [-1.5, 0.5]])
+S1_param = np.array([['NeV3346', True],
+                     ['OII', True],
+                     ['NeIII3869', False],
+                     ['Hdel', True],
+                     ['Hgam', True],
+                     ['OIII4364', True],
+                     ['HeII4687', True],
+                     ['OIII5008', True]], dtype=bool)
+RunCloudyMCMC(region='S1', trial='t1', bnds=S1_bnds, line_param=S1_param, deredden=False)
 
 # AGN model
 # S1_bnds = np.array([[1.0, 2.4],
@@ -461,7 +461,7 @@ S6_param = np.array([['NeV3346', True],
 # Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 3.4, 4, dtype='f2')))
 # RunCloudyMCMC(den_array=Hden_ext, region='S6', trial='t1', bnds=S6_bnds, line_param=S6_param, deredden=False,
 #               nums_chain=5000, nums_disc=1000)
-RunCloudyMCMC(region='S6', trial='t2', bnds=S6_bnds, line_param=S6_param, deredden=False, nums_chain=5000, nums_disc=1000)
+# RunCloudyMCMC(region='S6', trial='t2', bnds=S6_bnds, line_param=S6_param, deredden=False, nums_chain=5000, nums_disc=1000)
 
 # S6 AGN
 # S6_bnds = np.array([[1.0, 3.4],
