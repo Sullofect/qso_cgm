@@ -52,7 +52,7 @@ def ConvertFits(table=None, type=None, mask=None, filename=None, smooth=True, sm
         # Mask the data
         xx, yy = np.meshgrid(np.arange(200), np.arange(200))
         pixel_center = PixCoord(x=100, y=75)
-        pixel_region = RectanglePixelRegion(center=pixel_center, width=99, height=90)
+        pixel_region = RectanglePixelRegion(center=pixel_center, width=129, height=90)
         pixel_data = PixCoord(x=xx, y=yy)
         mask = pixel_region.contains(pixel_data)
         data = np.where(mask, data, np.nan)
@@ -208,7 +208,7 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
                 y = regions_label[j].center.dec.degree
                 gc.add_label(x, y, text_array[j], size=20)
         else:
-            gc.show_contour(path_contour, levels=[0.15, 0.3], kernel='gauss', colors='k', linewidths=0.8, smooth=3)
+            gc.show_contour(path_contour, levels=[0.08, 0.3], kernel='gauss', colors='k', linewidths=0.8, smooth=3)
 
         APLpyStyle(gc, type='NarrowBand')
         gc.add_label(0.82, 0.91, r'$\mathrm{\lambda = \,}$' + str("{0:.0f}".format(wave_i_vac)) + ' to '
@@ -250,8 +250,8 @@ def MakeFieldImage(label_gal=False):
     gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
     gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
     # gc.show_colorscale(cmap='Greys', vmin=0, vmax=4.897e-2)
-    gc.show_contour(path_OII_SB, levels=[0.15, 0.3], kernel='gauss', colors='blue', linewidths=0.8, smooth=3)
-    gc.show_contour(path_OIII_SB, levels=[0.15, 0.3], kernel='gauss', colors='red', linewidths=0.8, smooth=3)
+    gc.show_contour(path_OII_SB, levels=[0.1, 0.3], kernel='gauss', colors='blue', linewidths=0.8, smooth=3)
+    gc.show_contour(path_OIII_SB, levels=[0.1, 0.3], kernel='gauss', colors='red', linewidths=0.8, smooth=3)
     gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=1.5, s=330)
     if label_gal:
         gc.show_arrows(40.1370596, -18.8662000, 40.1366338 - 40.1370596, -18.8656749 + 18.8662000, color='k')
@@ -330,10 +330,12 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     ConvertFits(table=v_fit, type='GasMap', mask=True, smooth=False, filename='image_' + line + '_fitline')
 
     # Plot velocity map
+    path_OII_SB = path_data + 'image_MakeMovie/OII_-100_100_contour_revised.fits'
     fig = plt.figure(figsize=(8, 8), dpi=300)
     path_dv = path_data + 'image_plot/image_' + line + '_fitline_revised.fits'
     gc = aplpy.FITSFigure(path_dv, figure=fig, north=True)
     gc.show_colorscale(vmin=-300, vmax=300, cmap='coolwarm')
+    gc.show_contour(path_OII_SB, levels=[-np.inf, 0.03], filled=True, kernel='gauss', colors='white', linewidths=0.8, smooth=None)
     gc.show_markers(ra_final, dec_final, facecolor='white', marker='o', c='white',
                     edgecolors='none', linewidths=0.8, s=100)
     gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
@@ -379,5 +381,5 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 # MakeNarrowBands(region=True)
 # MakeNarrowBands(region=False, band='OIII')
 # MakeNarrowBands(region=True, band='OIII')
-MakeFieldImage(label_gal=True)
-# sMakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, v_thr=np.inf, check=False)
+# MakeFieldImage(label_gal=True)
+MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=-np.inf, v_thr=np.inf, check=False)
