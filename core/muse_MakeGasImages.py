@@ -308,16 +308,21 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 
     if line == 'OOHbeta':
         flux_stack = np.stack((flux_fit_OII, flux_fit_Hbeta, flux_fit_OIII5008), axis=0)
+        print(len(flux_stack[np.isnan(flux_stack)]))
         dflux_stack = np.stack((dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII5008), axis=0)
+        print(len(dflux_stack[np.isnan(dflux_stack)]))
         log_OIII_OII_fit = np.log10(flux_fit_OIII5008 / flux_fit_OII)
 
-        fit_max = np.amax(flux_stack / dflux_stack, axis=0)
-        log_OIII_OII_fit = np.where((fit_max > snr_thr), log_OIII_OII_fit, np.nan)
-        v_fit = np.where((fit_max > snr_thr), v_fit, np.nan)
-        sigma_fit = np.where((fit_max > snr_thr), sigma_fit, np.nan)
-        log_OIII_OII_fit = np.where((v_fit < v_thr), log_OIII_OII_fit, np.nan)
-        sigma_fit = np.where((v_fit < v_thr), sigma_fit, np.nan)
-        v_fit = np.where((v_fit < v_thr), v_fit, np.nan)
+        # v_fit = np.where(fit_success == 1, v_fit, np.nan)
+        # sigma_fit = np.where(fit_success == 1, sigma_fit, np.nan)
+        # log_OIII_OII_fit = np.where(fit_success == 1, log_OIII_OII_fit, np.nan)
+        # fit_max = np.nanmax(flux_stack / dflux_stack, axis=0)
+        # log_OIII_OII_fit = np.where((fit_max > snr_thr), log_OIII_OII_fit, np.nan)
+        # v_fit = np.where((fit_max > snr_thr), v_fit, np.nan)
+        # sigma_fit = np.where((fit_max > snr_thr), sigma_fit, np.nan)
+        # log_OIII_OII_fit = np.where((v_fit <= v_thr), log_OIII_OII_fit, np.nan)
+        # sigma_fit = np.where((v_fit <= v_thr), sigma_fit, np.nan)
+        # v_fit = np.where((v_fit <= v_thr), v_fit, np.nan)
 
     else:
         # Final data
@@ -327,15 +332,17 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
         v_fit = np.where((v_fit < v_thr), v_fit, np.nan)
         log_OIII_OII_fit = np.log10(flux_fit_OIII5008 / flux_fit_OII)
 
-    ConvertFits(table=v_fit, type='GasMap', mask=True, smooth=False, filename='image_' + line + '_fitline')
+    ConvertFits(table=v_fit, type='GasMap', mask=False, smooth=False, filename='image_' + line + '_fitline')
 
     # Plot velocity map
     path_OII_SB = path_data + 'image_MakeMovie/OII_-100_100_contour_revised.fits'
+    path_OIII_SB = path_data + 'image_MakeMovie/OIII_-100_100_contour_revised.fits'
     fig = plt.figure(figsize=(8, 8), dpi=300)
     path_dv = path_data + 'image_plot/image_' + line + '_fitline_revised.fits'
     gc = aplpy.FITSFigure(path_dv, figure=fig, north=True)
     gc.show_colorscale(vmin=-300, vmax=300, cmap='coolwarm')
-    gc.show_contour(path_OII_SB, levels=[-np.inf, 0.03], filled=True, kernel='gauss', colors='white', linewidths=0.8, smooth=None)
+    gc.show_contour(path_OII_SB, levels=[-np.inf, 0.1], filled=False, kernel='gauss', colors='black', linewidths=0.8, smooth=3)
+    gc.show_contour(path_OIII_SB, levels=[0.1], filled=False, kernel='gauss', colors='red', linewidths=0.8, smooth=3)
     gc.show_markers(ra_final, dec_final, facecolor='white', marker='o', c='white',
                     edgecolors='none', linewidths=0.8, s=100)
     gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
@@ -377,9 +384,9 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 
 
 #
-# MakeNarrowBands(region=False)
+MakeNarrowBands(region=False, video=True)
 # MakeNarrowBands(region=True)
 # MakeNarrowBands(region=False, band='OIII')
 # MakeNarrowBands(region=True, band='OIII')
 # MakeFieldImage(label_gal=True)
-MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=-np.inf, v_thr=np.inf, check=False)
+# MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0', test=False, snr_thr=5, v_thr=np.inf, check=False)

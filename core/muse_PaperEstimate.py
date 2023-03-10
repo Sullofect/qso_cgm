@@ -65,9 +65,9 @@ number_red, x_image_red, y_image_red = data_pho_red['NUMBER'], data_pho_red['X_I
 mag_iso_red, dmag_iso_red = data_pho_red['MAG_ISO'], data_pho_red['MAGERR_ISO']
 mag_isocor_red, dmag_isocor_red = data_pho_red['MAG_ISOCOR'], data_pho_red['MAGERR_ISOCOR']
 mag_auto_red, dmag_auto_red = data_pho_red['MAG_AUTO'], data_pho_red['MAGERR_AUTO']
-print(row_w[(mag_auto_red < 23) * (mag_auto_red > 22)])
-print(mag_auto_red[(mag_auto_red < 23) * (mag_auto_red > 22)])
-print(mag_auto[mask][(mag_auto[mask] < 23) * (mag_auto[mask] > 22)])
+# print(row_w[(mag_auto_red < 23) * (mag_auto_red > 22)])
+# print(mag_auto_red[(mag_auto_red < 23) * (mag_auto_red > 22)])
+# print(mag_auto[mask][(mag_auto[mask] < 23) * (mag_auto[mask] > 22)])
 
 #
 bins = np.linspace(18, 30, 13)
@@ -89,7 +89,7 @@ radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 area = (radius_array * 100 / 15) ** 2 * np.pi
-print('area =', area)
+# print('area =', area)
 
 z_qso = 0.6282144177077355
 
@@ -100,10 +100,30 @@ v_gas = 3e5 * (lineRatio['z'] - z_qso) / (1 + z_qso)
 lineRatio_S3S4 = Table.read('/Users/lzq/Dropbox/Data/CGM/RegionLinesRatio/'
                             'RegionLinesRatio_S3S4_dered.fits')
 v_gas_S3S4 = 3e5 * (lineRatio_S3S4['z'] - z_qso) / (1 + z_qso)
-print('LOS velocity is', v_gas)
-print('LOS velocity of S3 S4 is', v_gas_S3S4)
-print('LOS velocity dispersion is', lineRatio['sigma'])
-print('LOS velocity dispersion of S3 S4 is', lineRatio_S3S4['sigma'])
+v_gas_S3S4_wing = 3e5 * (lineRatio_S3S4['z'] + lineRatio_S3S4['dz_wing'] - z_qso) / (1 + z_qso)
+# print('flux in [O II]', np.round(lineRatio['flux_OII'], 2))
+# print('flux in Hbeta', np.round(lineRatio['flux_Hbeta'], 2))
+# print('flux in [O III]]', np.round(lineRatio['flux_OIII5008'], 2))
+# print('flux in [Ne V]]', np.round(lineRatio['flux_NeV3346'], 2))
+# print('flux in [O III]]', np.round(lineRatio['flux_OIII4364'], 2))
+# print('flux in [He II]]', np.round(lineRatio['flux_HeII4687'], 2))
+# print('LOS velocity is', np.round(v_gas, 0))
+# print('LOS velocity dispersion is', np.round(lineRatio['sigma'], 0))
+
+# Account for the wing
+print('flux in [O II] S3 S4', np.round(lineRatio_S3S4['flux_OII'], 2))
+print('flux in Hbeta S3 S4', np.round(lineRatio_S3S4['flux_Hbeta'], 2))
+print('flux in [O III]] S3 S4', np.round(lineRatio_S3S4['flux_OIII5008'], 2))
+print('flux in [Ne V]] S3 S4', np.round(lineRatio_S3S4['flux_NeV3346'], 2))
+print('flux in [O III]] S3 S4', np.round(lineRatio_S3S4['flux_OIII4364'], 2))
+print('flux in [He II]] S3 S4', np.round(lineRatio_S3S4['flux_HeII4687'], 2))
+
+print('flux in [O II] S3 S4 wing', np.round(lineRatio_S3S4['flux_OII_wing'], 2))
+print('flux in [O III]] S3 S4 wing', np.round(lineRatio_S3S4['flux_OIII5008_wing'], 2))
+print('LOS velocity of S3 S4 is', np.round(v_gas_S3S4, 0))
+print('LOS velocity of S3 S4 wing is', np.round(v_gas_S3S4_wing, 0))
+print('LOS velocity dispersion of S3 S4 is', np.round(lineRatio_S3S4['sigma'], 0))
+print('LOS velocity dispersion of S3 S4 wing is', np.round(lineRatio_S3S4['sigma_wing'], 0))
 
 
 # Virial theorem
