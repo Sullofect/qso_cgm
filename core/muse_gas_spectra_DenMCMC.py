@@ -2,6 +2,7 @@ import os
 import emcee
 import lmfit
 import corner
+import extinction
 import numpy as np
 import pyneb as pn
 import astropy.io.fits as fits
@@ -909,13 +910,13 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
                              size=20, x=0.05)
     if save_figure:
         if deredden:
-            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + region + '_weak_MCMC_dered.png',
+            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak_MCMC_dered.png',
                              bbox_inches='tight')
-            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + region + '_strong_MCMC_dered.png',
+            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong_MCMC_dered.png',
                                bbox_inches='tight')
         else:
-            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + region + '_weak_MCMC.png', bbox_inches='tight')
-            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + region + '_strong_MCMC.png', bbox_inches='tight')
+            fig_weak.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_weak_MCMC.png', bbox_inches='tight')
+            fig_strong.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + figname + '_strong_MCMC.png', bbox_inches='tight')
     if return_samples:
         return samples
 
@@ -925,7 +926,5 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 #                save_figure=False)
 
 
-# for i in range(len(text_array)):
-# # for i in [8, 9]:
-#     PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
-#                    figname='spectra_gas/spectra_gas_' + str(text_array[i]))
+# for i in np.hstack((text_array_input[:2], text_array_input[4:])):
+#     PlotGasSpectra(i, figname='spectra_gas/spectra_gas_' + str(i), deredden=True)

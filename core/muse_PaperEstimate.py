@@ -8,6 +8,7 @@ from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astropy import units as u
 from regions import PixCoord
+from astropy.cosmology import FlatLambdaCDM
 from regions import RectangleSkyRegion, RectanglePixelRegion
 path_savefig = '/Users/lzq/Dropbox/Data/CGM_plots/'
 path_savetab = '/Users/lzq/Dropbox/Data/CGM_tables/'
@@ -131,6 +132,14 @@ G = 6.67e-8
 R_red, v_red = 200 * 3.086e21, 506 * 1e5
 R_blue, v_blue = 100 * 3.086e21, 91 * 1e5
 M_red = 2 * R_red * v_red ** 2 / G / 2e33
-M_blue =2 * R_blue * v_blue ** 2 / G / 2e33
+M_blue = 2 * R_blue * v_blue ** 2 / G / 2e33
+print(np.format_float_scientific(M_red), np.format_float_scientific(M_blue))
 
-
+# Munari et al. 2013
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+h_z = cosmo.H(z_qso).value / 100
+sigma_red, sigma_blue = 506, 91
+M_200_red = (sigma_red / 1100) ** 3 * 1e15 / h_z
+M_200_blue = (sigma_blue / 1100) ** 3 * 1e15 / h_z
+print(np.format_float_scientific(M_200_red), np.format_float_scientific(M_200_blue))
+#
