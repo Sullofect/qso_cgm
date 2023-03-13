@@ -255,7 +255,7 @@ def extinction_ndarray(wave_ndarray, A_v):
 
 # Read Data
 path_cube = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data',
-                        'ESO_DEEP_offset_zapped.fits_SUBTRACTED.fits')
+                         'ESO_DEEP_offset_zapped.fits_SUBTRACTED.fits')
 path_OII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
                         'CUBE_OII_line_offset_zapped.fits')
 path_Hbeta = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
@@ -380,7 +380,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 
     # Weak emission lines
     fig_weak, axarr_weak = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
-                                        gridspec_kw={'width_ratios': [1, 1, 1, 1, 1, 1]}, dpi=300)
+                                        gridspec_kw={'width_ratios': [1, -0.2, 0, 1, 1, 1]}, dpi=300)
     fig_weak.subplots_adjust(hspace=0)
     fig_weak.subplots_adjust(wspace=0.2)
 
@@ -658,21 +658,21 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
         axarr_i_weak[0].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
-        axarr_i_weak[0].set_xlim(5350, 5500)
+        axarr_i_weak[0].set_xlim(5380, 5530)
         axarr_i_weak[0].set_title(text_array[i], x=0.3, y=0.75, size=20)
 
-        axarr_i_weak[1].plot(wave_NeIII3869_vac, flux_NeIII3869_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[1].plot(wave_NeIII3869_vac, flux_NeIII3869_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[1].plot(wave_HeI3889_vac, flux_HeI3889_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[1].plot(wave_HeI3889_vac, flux_HeI3889_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[1].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
-        axarr_i_weak[1].set_xlim(6250, 6400)
-        axarr_i_weak[1].set_xticks([6300, 6400], ['6300', ''])
-
-        axarr_i_weak[2].plot(wave_Heps_vac, flux_Heps_i, color='k', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[2].plot(wave_Heps_vac, flux_Heps_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
-        axarr_i_weak[2].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
-        axarr_i_weak[2].set_xlim(6400, 6550)
+        # axarr_i_weak[1].plot(wave_NeIII3869_vac, flux_NeIII3869_i, color='k', drawstyle='steps-mid', lw=1)
+        # axarr_i_weak[1].plot(wave_NeIII3869_vac, flux_NeIII3869_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        # axarr_i_weak[1].plot(wave_HeI3889_vac, flux_HeI3889_i, color='k', drawstyle='steps-mid', lw=1)
+        # axarr_i_weak[1].plot(wave_HeI3889_vac, flux_HeI3889_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        # axarr_i_weak[1].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
+        # axarr_i_weak[1].set_xlim(6250, 6400)
+        # axarr_i_weak[1].set_xticks([6300, 6400], ['6300', ''])
+        #
+        # axarr_i_weak[2].plot(wave_Heps_vac, flux_Heps_i, color='k', drawstyle='steps-mid', lw=1)
+        # axarr_i_weak[2].plot(wave_Heps_vac, flux_Heps_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
+        # axarr_i_weak[2].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
+        # axarr_i_weak[2].set_xlim(6400, 6550)
 
         axarr_i_weak[3].plot(wave_Hdel_vac, flux_Hdel_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[3].plot(wave_Hdel_vac, flux_Hdel_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
@@ -702,6 +702,8 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
         axarr_i_weak[4].spines['right'].set_visible(False)
         axarr_i_weak[4].spines['left'].set_visible(False)
         axarr_i_weak[5].spines['left'].set_visible(False)
+        axarr_i_weak[1].set_visible(False)
+        axarr_i_weak[2].set_visible(False)
 
         # Mark line info
         # [Ne V] 3346.79, [O II] 3727, 3729, [Ne III] 3869, He I 3889 and H8, NeIII3968 and Hepsilon. Hdelta, Hgamma,
@@ -716,28 +718,28 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
                                     pyasl.airtovac2(5006.843)])
         ymin, ymax = -5 * np.ones_like(lines), 100 * np.ones_like(lines)
         axarr_i_weak[0].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
-        axarr_i_weak[1].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
-        axarr_i_weak[2].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
+        # axarr_i_weak[1].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
+        # axarr_i_weak[2].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
         axarr_i_weak[3].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
         axarr_i_weak[4].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
         axarr_i_weak[5].vlines(lines, ymin=ymin, ymax=ymax, linestyles='dashed', colors='grey', lw=1, zorder=-10)
 
 
-        axarr_i_weak[0].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i_weak[1].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i_weak[2].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i_weak[3].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i_weak[4].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
-        axarr_i_weak[5].set_ylim(-0.15, flux_NeIII3869_i.max() + 0.15)
+        axarr_i_weak[0].set_ylim(-0.05, flux_Hgam_i.max() + 0.10)
+        axarr_i_weak[1].set_ylim(-0.05, flux_Hgam_i.max() + 0.10)
+        axarr_i_weak[2].set_ylim(-0.05, flux_Hgam_i.max() + 0.10)
+        axarr_i_weak[3].set_ylim(-0.05, flux_Hgam_i.max() + 0.10)
+        axarr_i_weak[4].set_ylim(-0.05, flux_Hgam_i.max() + 0.10)
+        axarr_i_weak[5].set_ylim(-0.05, flux_Hgam_i.max() + 0.10)
 
         axarr_0_weak[0].annotate(text=r'$\mathrm{[Ne \, V]}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
-        axarr_0_weak[1].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.25, 0.65), xycoords='axes fraction', size=15)
-        axarr_0_weak[1].annotate(text=r'$\mathrm{He \, I}$' + '\n' + r'$\mathrm{H8}$', xy=(0.6, 0.53),
-                                 xycoords='axes fraction', size=15)
-        axarr_0_weak[2].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.20, 0.65), xycoords='axes fraction', size=15)
-        axarr_0_weak[2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.60, 0.65), xycoords='axes fraction', size=15)
-        axarr_0_weak[3].annotate(text=r'$\mathrm{H \delta}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
-        axarr_0_weak[4].annotate(text=r'$\mathrm{H \gamma}$', xy=(0.1, 0.65), xycoords='axes fraction', size=15)
+        # axarr_0_weak[1].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.25, 0.65), xycoords='axes fraction', size=15)
+        # axarr_0_weak[1].annotate(text=r'$\mathrm{He \, I}$' + '\n' + r'$\mathrm{H8}$', xy=(0.6, 0.53),
+        #                          xycoords='axes fraction', size=15)
+        # axarr_0_weak[2].annotate(text=r'$\mathrm{[Ne \, III]}$', xy=(-0.20, 0.65), xycoords='axes fraction', size=15)
+        # axarr_0_weak[2].annotate(text=r'$\mathrm{H \epsilon}$', xy=(0.60, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[3].annotate(text=r'$\mathrm{H \delta}$', xy=(0.2, 0.65), xycoords='axes fraction', size=15)
+        axarr_0_weak[4].annotate(text=r'$\mathrm{H \gamma}$', xy=(0.2, 0.65), xycoords='axes fraction', size=15)
         axarr_0_weak[4].annotate(text=r'$\mathrm{[O \, III]}$', xy=(0.74, 0.65), xycoords='axes fraction', size=15)
         axarr_0_weak[5].annotate(text=r'$\mathrm{He \, II}$', xy=(0.6, 0.65), xycoords='axes fraction', size=15)
 
