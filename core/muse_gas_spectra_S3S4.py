@@ -17,8 +17,50 @@ def getSigma_MUSE(wave):
     return (5.866e-8 * wave ** 2 - 9.187e-4 * wave + 6.04) / 2.355
 
 
-def model_OII(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing, r_OII3729_3727,
-              r_OII3729_3727_wing, a, b):
+# def model_OII(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing, r_OII3729_3727,
+#               r_OII3729_3727_wing, a, b):
+#     # Constants
+#     c_kms = 2.998e5
+#     wave_OII3727_vac = 3727.092
+#     wave_OII3729_vac = 3729.875
+#
+#     wave_OII3727_obs = wave_OII3727_vac * (1 + z)
+#     wave_OII3729_obs = wave_OII3729_vac * (1 + z)
+#
+#     sigma_OII3727_A = np.sqrt((sigma_kms / c_kms * wave_OII3727_obs) ** 2 + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
+#     sigma_OII3729_A = np.sqrt((sigma_kms / c_kms * wave_OII3729_obs) ** 2 + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
+#
+#     flux_OII3727 = flux_OII / (1 + r_OII3729_3727)
+#     flux_OII3729 = flux_OII / (1 + 1.0 / r_OII3729_3727)
+#
+#     peak_OII3727 = flux_OII3727 / np.sqrt(2 * sigma_OII3727_A ** 2 * np.pi)
+#     peak_OII3729 = flux_OII3729 / np.sqrt(2 * sigma_OII3729_A ** 2 * np.pi)
+#
+#     OII3727_gaussian = peak_OII3727 * np.exp(-(wave_vac - wave_OII3727_obs) ** 2 / 2 / sigma_OII3727_A ** 2)
+#     OII3729_gaussian = peak_OII3729 * np.exp(-(wave_vac - wave_OII3729_obs) ** 2 / 2 / sigma_OII3729_A ** 2)
+#
+#     # Redshifted wing
+#     wave_OII3727_wing = wave_OII3727_vac * (1 + z + dz_wing)
+#     wave_OII3729_wing = wave_OII3729_vac * (1 + z + dz_wing)
+#
+#     sigma_OII3727_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3727_wing) ** 2
+#                                    + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
+#     sigma_OII3729_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3729_wing) ** 2
+#                                    + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
+#
+#     flux_OII3727_wing = flux_OII_wing / (1 + r_OII3729_3727_wing)
+#     flux_OII3729_wing = flux_OII_wing / (1 + 1.0 / r_OII3729_3727_wing)
+#
+#     peak_OII3727_wing = flux_OII3727_wing / np.sqrt(2 * sigma_OII3727_A_wing ** 2 * np.pi)
+#     peak_OII3729_wing = flux_OII3729_wing / np.sqrt(2 * sigma_OII3729_A_wing ** 2 * np.pi)
+#
+#     OII3727_gaussian_wing = peak_OII3727_wing * np.exp(-(wave_vac - wave_OII3727_wing) ** 2 / 2
+#                                                        / sigma_OII3727_A_wing ** 2)
+#     OII3729_gaussian_wing = peak_OII3729_wing * np.exp(-(wave_vac - wave_OII3729_wing) ** 2 / 2
+#                                                        / sigma_OII3729_A_wing ** 2)
+#     return OII3727_gaussian + OII3729_gaussian + OII3727_gaussian_wing + OII3729_gaussian_wing + a * wave_vac + b
+
+def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OII3727_vac = 3727.092
@@ -39,26 +81,7 @@ def model_OII(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OI
     OII3727_gaussian = peak_OII3727 * np.exp(-(wave_vac - wave_OII3727_obs) ** 2 / 2 / sigma_OII3727_A ** 2)
     OII3729_gaussian = peak_OII3729 * np.exp(-(wave_vac - wave_OII3729_obs) ** 2 / 2 / sigma_OII3729_A ** 2)
 
-    # Redshifted wing
-    wave_OII3727_wing = wave_OII3727_vac * (1 + z + dz_wing)
-    wave_OII3729_wing = wave_OII3729_vac * (1 + z + dz_wing)
-
-    sigma_OII3727_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3727_wing) ** 2
-                                   + (getSigma_MUSE(wave_OII3727_obs)) ** 2)
-    sigma_OII3729_A_wing = np.sqrt((sigma_kms_wing / c_kms * wave_OII3729_wing) ** 2
-                                   + (getSigma_MUSE(wave_OII3729_obs)) ** 2)
-
-    flux_OII3727_wing = flux_OII_wing / (1 + r_OII3729_3727_wing)
-    flux_OII3729_wing = flux_OII_wing / (1 + 1.0 / r_OII3729_3727_wing)
-
-    peak_OII3727_wing = flux_OII3727_wing / np.sqrt(2 * sigma_OII3727_A_wing ** 2 * np.pi)
-    peak_OII3729_wing = flux_OII3729_wing / np.sqrt(2 * sigma_OII3729_A_wing ** 2 * np.pi)
-
-    OII3727_gaussian_wing = peak_OII3727_wing * np.exp(-(wave_vac - wave_OII3727_wing) ** 2 / 2
-                                                       / sigma_OII3727_A_wing ** 2)
-    OII3729_gaussian_wing = peak_OII3729_wing * np.exp(-(wave_vac - wave_OII3729_wing) ** 2 / 2
-                                                       / sigma_OII3729_A_wing ** 2)
-    return OII3727_gaussian + OII3729_gaussian + OII3727_gaussian_wing + OII3729_gaussian_wing + a * wave_vac + b
+    return OII3727_gaussian + OII3729_gaussian + a * wave_vac + b
 
 
 def model_Hbeta(wave_vac, z, sigma_kms, flux_Hbeta, a, b):
@@ -75,7 +98,46 @@ def model_Hbeta(wave_vac, z, sigma_kms, flux_Hbeta, a, b):
     return Hbeta_gaussian + a * wave_vac + b
 
 
-def model_OIII4960(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII4960, flux_OIII4960_wing, a, b):
+# def model_OIII4960(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII4960, flux_OIII4960_wing, a, b):
+#     # Constants
+#     c_kms = 2.998e5
+#     wave_OIII4960_vac = 4960.295
+#
+#     wave_OIII4960_obs = wave_OIII4960_vac * (1 + z)
+#     sigma_OIII4960_A = np.sqrt((sigma_kms / c_kms * wave_OIII4960_obs) ** 2 + (getSigma_MUSE(wave_OIII4960_obs)) ** 2)
+#
+#     peak_OIII4960 = flux_OIII4960 / np.sqrt(2 * sigma_OIII4960_A ** 2 * np.pi)
+#     OIII4960_gaussian = peak_OIII4960 * np.exp(-(wave_vac - wave_OIII4960_obs) ** 2 / 2 / sigma_OIII4960_A ** 2)
+#
+#     # Redshifted wing
+#     wave_OIII4960_wing = wave_OIII4960_vac * (1 + z + dz_wing)
+#     sigma_wing_A = np.sqrt((sigma_kms_wing / c_kms * wave_OIII4960_wing) ** 2 + (getSigma_MUSE(wave_OIII4960_obs)) ** 2)
+#     peak_wing = flux_OIII4960_wing / np.sqrt(2 * sigma_wing_A ** 2 * np.pi)
+#     OIII4960_wing = peak_wing * np.exp(-(wave_vac - wave_OIII4960_wing) ** 2 / 2 / sigma_wing_A ** 2)
+#
+#     return OIII4960_gaussian + OIII4960_wing + a * wave_vac + b
+#
+#
+# def model_OIII5008(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing, a, b):
+#     # Constants
+#     c_kms = 2.998e5
+#     wave_OIII5008_vac = 5008.239
+#
+#     wave_OIII5008_obs = wave_OIII5008_vac * (1 + z)
+#     sigma_OIII5008_A = np.sqrt((sigma_kms / c_kms * wave_OIII5008_obs) ** 2 + (getSigma_MUSE(wave_OIII5008_obs)) ** 2)
+#
+#     peak_OIII5008 = flux_OIII5008 / np.sqrt(2 * sigma_OIII5008_A ** 2 * np.pi)
+#     OIII5008_gaussian = peak_OIII5008 * np.exp(-(wave_vac - wave_OIII5008_obs) ** 2 / 2 / sigma_OIII5008_A ** 2)
+#
+#     # Redshifted wing
+#     wave_OIII5008_wing = wave_OIII5008_vac * (1 + z + dz_wing)
+#     sigma_wing_A = np.sqrt((sigma_kms_wing / c_kms * wave_OIII5008_wing) ** 2 + (getSigma_MUSE(wave_OIII5008_obs)) ** 2)
+#     peak_wing = flux_OIII5008_wing / np.sqrt(2 * sigma_wing_A ** 2 * np.pi)
+#     OIII5008_wing = peak_wing * np.exp(-(wave_vac - wave_OIII5008_wing) ** 2 / 2 / sigma_wing_A ** 2)
+#     return OIII5008_gaussian + OIII5008_wing + a * wave_vac + b
+
+
+def model_OIII4960(wave_vac, z, sigma_kms, flux_OIII4960, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OIII4960_vac = 4960.295
@@ -86,16 +148,10 @@ def model_OIII4960(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII496
     peak_OIII4960 = flux_OIII4960 / np.sqrt(2 * sigma_OIII4960_A ** 2 * np.pi)
     OIII4960_gaussian = peak_OIII4960 * np.exp(-(wave_vac - wave_OIII4960_obs) ** 2 / 2 / sigma_OIII4960_A ** 2)
 
-    # Redshifted wing
-    wave_OIII4960_wing = wave_OIII4960_vac * (1 + z + dz_wing)
-    sigma_wing_A = np.sqrt((sigma_kms_wing / c_kms * wave_OIII4960_wing) ** 2 + (getSigma_MUSE(wave_OIII4960_obs)) ** 2)
-    peak_wing = flux_OIII4960_wing / np.sqrt(2 * sigma_wing_A ** 2 * np.pi)
-    OIII4960_wing = peak_wing * np.exp(-(wave_vac - wave_OIII4960_wing) ** 2 / 2 / sigma_wing_A ** 2)
-
-    return OIII4960_gaussian + OIII4960_wing + a * wave_vac + b
+    return OIII4960_gaussian + a * wave_vac + b
 
 
-def model_OIII5008(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing, a, b):
+def model_OIII5008(wave_vac, z, sigma_kms, flux_OIII5008, a, b):
     # Constants
     c_kms = 2.998e5
     wave_OIII5008_vac = 5008.239
@@ -106,12 +162,7 @@ def model_OIII5008(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII500
     peak_OIII5008 = flux_OIII5008 / np.sqrt(2 * sigma_OIII5008_A ** 2 * np.pi)
     OIII5008_gaussian = peak_OIII5008 * np.exp(-(wave_vac - wave_OIII5008_obs) ** 2 / 2 / sigma_OIII5008_A ** 2)
 
-    # Redshifted wing
-    wave_OIII5008_wing = wave_OIII5008_vac * (1 + z + dz_wing)
-    sigma_wing_A = np.sqrt((sigma_kms_wing / c_kms * wave_OIII5008_wing) ** 2 + (getSigma_MUSE(wave_OIII5008_obs)) ** 2)
-    peak_wing = flux_OIII5008_wing / np.sqrt(2 * sigma_wing_A ** 2 * np.pi)
-    OIII5008_wing = peak_wing * np.exp(-(wave_vac - wave_OIII5008_wing) ** 2 / 2 / sigma_wing_A ** 2)
-    return OIII5008_gaussian + OIII5008_wing + a * wave_vac + b
+    return OIII5008_gaussian + a * wave_vac + b
 
 
 def model_NeV3346(wave_vac, z, sigma_kms, flux_NeV3346, a, b):
@@ -242,10 +293,12 @@ def model_HeII4687(wave_vac, z, sigma_kms, flux_HeII4687, a, b):
     return HeII4687_gaussian + a * wave_vac + b
 
 
-def model_all(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
-              flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, flux_OII_wing,
-              flux_Hbeta, flux_OIII5008, flux_OIII5008_wing, r_OII3729_3727, r_OII3729_3727_wing,
-              a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968,
+def model_all(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_NeV3346, flux_NeV3346_wing, flux_NeIII3869,
+              flux_NeIII3869_wing, flux_HeI3889, flux_HeI3889_wing, flux_H8, flux_H8_wing, flux_NeIII3968,
+              flux_NeIII3968_wing, flux_Heps, flux_Heps_wing, flux_Hdel, flux_Hdel_wing, flux_Hgam,
+              flux_Hgam_wing, flux_OIII4364, flux_OIII4364_wing, flux_HeII4687, flux_HeII4687_wing, flux_OII,
+              flux_OII_wing, flux_Hbeta, flux_Hbeta_wing, flux_OIII5008, flux_OIII5008_wing, r_OII3729_3727,
+              r_OII3729_3727_wing, a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968,
               b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687,
               b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008):
     # Weak lines
@@ -259,16 +312,44 @@ def model_all(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_NeV3346, flu
     m_OIII4364 = model_OIII4364(wave_vac[6], z, sigma_kms, flux_OIII4364, a_OIII4364, b_OIII4364)
     m_HeII4687 = model_HeII4687(wave_vac[7], z, sigma_kms, flux_HeII4687, a_HeII4687, b_HeII4687)
 
+    m_NeV3356_wing = model_NeV3346(wave_vac[0], z + dz_wing, sigma_kms_wing, flux_NeV3346_wing, a_NeV3346, b_NeV3346)
+    m_NeIII3869_wing = model_NeIII3869(wave_vac[1], z + dz_wing, sigma_kms_wing, flux_NeIII3869_wing,
+                                       a_NeIII3869, b_NeIII3869)
+    m_HeI3889andH8_wing = model_HeI3889andH8(wave_vac[2], z + dz_wing, sigma_kms_wing, flux_HeI3889_wing,
+                                             flux_H8_wing, a_HeI3889, b_HeI3889)
+    m_NeIII3968andHeps_wing = model_NeIII3968andHeps(wave_vac[3], z + dz_wing, sigma_kms_wing, flux_NeIII3968_wing,
+                                                     flux_Heps_wing, a_NeIII3968, b_NeIII3968)
+    m_Hdel_wing = model_Hdel(wave_vac[4], z + dz_wing, sigma_kms_wing, flux_Hdel_wing, a_Hdel, b_Hdel)
+    m_Hgam_wing = model_Hgam(wave_vac[5], z + dz_wing, sigma_kms_wing, flux_Hgam_wing, a_Hgam, b_Hgam)
+    m_OIII4364_wing = model_OIII4364(wave_vac[6], z + dz_wing, sigma_kms_wing, flux_OIII4364_wing, a_OIII4364, b_OIII4364)
+    m_HeII4687_wing = model_HeII4687(wave_vac[7], z + dz_wing, sigma_kms_wing, flux_HeII4687_wing, a_HeII4687, b_HeII4687)
+
     # Strong lines
-    m_OII = model_OII(wave_vac[8], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing,
-                      r_OII3729_3727, r_OII3729_3727_wing, a_OII, b_OII)
+    m_OII = model_OII(wave_vac[8], z, sigma_kms, flux_OII, r_OII3729_3727, a_OII, b_OII)
     m_Hbeta = model_Hbeta(wave_vac[9], z, sigma_kms, flux_Hbeta, a_Hbeta, b_Hbeta)
-    m_OIII4960 = model_OIII4960(wave_vac[10], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008 / 3,
-                                flux_OIII5008_wing / 3, a_OIII4960, b_OIII4960)
-    m_OIII5008 = model_OIII5008(wave_vac[11], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing,
-                                a_OIII5008, b_OIII5008)
-    return np.hstack((m_NeV3356, m_NeIII3869, m_HeI3889andH8, m_NeIII3968andHeps, m_Hdel, m_Hgam, m_OIII4364,
-                      m_HeII4687, m_OII, m_Hbeta, m_OIII4960, m_OIII5008))
+    m_OIII4960 = model_OIII4960(wave_vac[10], z, sigma_kms, flux_OIII5008 / 3, a_OIII4960, b_OIII4960)
+    m_OIII5008 = model_OIII5008(wave_vac[11], z, sigma_kms, flux_OIII5008, a_OIII5008, b_OIII5008)
+
+    m_OII_wing = model_OII(wave_vac[8], z + dz_wing, sigma_kms_wing, flux_OII_wing, r_OII3729_3727_wing, a_OII, b_OII)
+    m_Hbeta_wing = model_Hbeta(wave_vac[9], z + dz_wing, sigma_kms_wing, flux_Hbeta_wing, a_Hbeta, b_Hbeta)
+    m_OIII4960_wing = model_OIII4960(wave_vac[10], z + dz_wing, sigma_kms_wing, flux_OIII5008_wing / 3,
+                                     a_OIII4960, b_OIII4960)
+    m_OIII5008_wing = model_OIII5008(wave_vac[11], z + dz_wing, sigma_kms_wing, flux_OIII5008_wing,
+                                     a_OIII5008, b_OIII5008)
+
+
+    # m_OII = model_OII(wave_vac[8], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing,
+    #                   r_OII3729_3727, r_OII3729_3727_wing, a_OII, b_OII)
+    # m_Hbeta = model_Hbeta(wave_vac[9], z, sigma_kms, flux_Hbeta, a_Hbeta, b_Hbeta)
+    # m_OIII4960 = model_OIII4960(wave_vac[10], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008 / 3,
+    #                             flux_OIII5008_wing / 3, a_OIII4960, b_OIII4960)
+    # m_OIII5008 = model_OIII5008(wave_vac[11], z, dz_wing, sigma_kms, sigma_kms_wing, flux_OIII5008, flux_OIII5008_wing,
+    #                             a_OIII5008, b_OIII5008)
+
+    return np.hstack((m_NeV3356 + m_NeV3356_wing, m_NeIII3869 + m_NeIII3869_wing, m_HeI3889andH8 + m_HeI3889andH8_wing,
+                      m_NeIII3968andHeps + m_NeIII3968andHeps_wing, m_Hdel + m_Hdel_wing, m_Hgam + m_Hgam_wing,
+                      m_OIII4364 + m_OIII4364_wing, m_HeII4687 + m_HeII4687_wing, m_OII + m_OII_wing,
+                      m_Hbeta + m_Hbeta_wing, m_OIII4960 + m_OIII4960_wing, m_OIII5008 + m_OIII5008_wing))
 
 
 def expand_wave(wave, stack=True, times=3):
@@ -367,18 +448,29 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                         ('sigma_kms', sigma_kms_guess, True, 10, 500, None),
                         ('sigma_kms_wing', 300, True, 10, 1000, None),
                         ('flux_NeV3346', 0.01, True, None, None, None),
+                        ('flux_NeV3346_wing', 0.01, True, None, None, None),
                         ('flux_NeIII3869', 0.05, True, None, None, None),
+                        ('flux_NeIII3869_wing', 0.05, True, None, None, None),
                         ('flux_HeI3889', 0.01, True, None, None, None),
+                        ('flux_HeI3889_wing', 0.01, True, None, None, None),
                         ('flux_H8', 0.01, True, None, None, None),
+                        ('flux_H8_wing', 0.01, True, None, None, None),
                         ('flux_NeIII3968', 0.01, True, None, None, None),
+                        ('flux_NeIII3968_wing', 0.01, True, None, None, None),
                         ('flux_Heps', 0.03, True, None, None, None),
+                        ('flux_Heps_wing', 0.03, True, None, None, None),
                         ('flux_Hdel', 0.01, True, None, None, None),
+                        ('flux_Hdel_wing', 0.01, True, None, None, None),
                         ('flux_Hgam', 0.01, True, None, None, None),
+                        ('flux_Hgam_wing', 0.01, True, None, None, None),
                         ('flux_OIII4364', 0.1, True, None, None, None),
+                        ('flux_OIII4364_wing', 0.1, True, None, None, None),
                         ('flux_HeII4687', 0.005, True, None, None, None),
+                        ('flux_HeII4687_wing', 0.005, True, None, None, None),
                         ('flux_OII', 0.01, True, 0, None, None),
                         ('flux_OII_wing', 0.005, True, 0, None, None),
                         ('flux_Hbeta', 0.02, True, None, None, None),
+                        ('flux_Hbeta_wing', 0.02, True, None, None, None),
                         ('flux_OIII5008', 0.1, True, None, None, None),
                         ('flux_OIII5008_wing', 0.05, True, 0, None, None),
                         ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
@@ -424,7 +516,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
     fig_strong.subplots_adjust(hspace=0)
     fig_strong.subplots_adjust(wspace=0.1)
 
-    flux_info = np.zeros((len(ra_array), 38))
+    flux_info = np.zeros((len(ra_array), 60))
     for i in range(len(ra_array)):
         if len(ra_array) == 1:
             axarr_0_strong = axarr_strong[0]
@@ -595,10 +687,12 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         flux_OII_wing, dflux_OII_wing = result_all.best_values['flux_OII_wing'], \
                                         result_all.params['flux_OII_wing'].stderr
         flux_Hbeta, dflux_Hbeta = result_all.best_values['flux_Hbeta'], result_all.params['flux_Hbeta'].stderr
-        flux_OIII5008, dflux_OIII5008 = result_all.best_values['flux_OIII5008'], result_all.params[
-            'flux_OIII5008'].stderr
-        flux_OIII5008_wing, dflux_OIII5008_wing = result_all.best_values['flux_OIII5008_wing'], result_all.params[
-            'flux_OIII5008_wing'].stderr
+        flux_Hbeta_wing, dflux_Hbeta_wing = result_all.best_values['flux_Hbeta_wing'], \
+                                            result_all.params['flux_Hbeta_wing'].stderr
+        flux_OIII5008, dflux_OIII5008 = result_all.best_values['flux_OIII5008'], \
+                                        result_all.params['flux_OIII5008'].stderr
+        flux_OIII5008_wing, dflux_OIII5008_wing = result_all.best_values['flux_OIII5008_wing'], \
+                                                  result_all.params['flux_OIII5008_wing'].stderr
         r_OII, dr_OII = result_all.best_values['r_OII3729_3727'], result_all.params['r_OII3729_3727'].stderr
         r_OII_wing, dr_OII_wing = result_all.best_values['r_OII3729_3727_wing'], \
                                   result_all.params['r_OII3729_3727_wing'].stderr
@@ -615,19 +709,38 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
 
         # Weak lines
         flux_NeV3346, dflux_NeV3346 = result_all.best_values['flux_NeV3346'], result_all.params['flux_NeV3346'].stderr
+        flux_NeV3346_wing, dflux_NeV3346_wing = result_all.best_values['flux_NeV3346_wing'], \
+                                                result_all.params['flux_NeV3346_wing'].stderr
         flux_NeIII3869, dflux_NeIII3869 = result_all.best_values['flux_NeIII3869'], \
                                           result_all.params['flux_NeIII3869'].stderr
+        flux_NeIII3869_wing, dflux_NeIII3869_wing = result_all.best_values['flux_NeIII3869_wing'], \
+                                                    result_all.params['flux_NeIII3869_wing'].stderr
         flux_HeI3889, dflux_HeI3889 = result_all.best_values['flux_HeI3889'], result_all.params['flux_HeI3889'].stderr
+        flux_HeI3889_wing, dflux_HeI3889_wing = result_all.best_values['flux_HeI3889_wing'], \
+                                                result_all.params['flux_HeI3889_wing'].stderr
         flux_H8, dflux_H8 = result_all.best_values['flux_H8'], result_all.params['flux_H8'].stderr
+        flux_H8_wing, dflux_H8_wing = result_all.best_values['flux_H8_wing'], result_all.params['flux_H8_wing'].stderr
         flux_NeIII3968, dflux_NeIII3968 = result_all.best_values['flux_NeIII3968'], \
                                           result_all.params['flux_NeIII3968'].stderr
+        flux_NeIII3968_wing, dflux_NeIII3968_wing = result_all.best_values['flux_NeIII3968_wing'], \
+                                                    result_all.params['flux_NeIII3968_wing'].stderr
         flux_Heps, dflux_Heps = result_all.best_values['flux_Heps'], result_all.params['flux_Heps'].stderr
+        flux_Heps_wing, dflux_Heps_wing = result_all.best_values['flux_Heps_wing'], \
+                                          result_all.params['flux_Heps_wing'].stderr
         flux_Hdel, dflux_Hdel = result_all.best_values['flux_Hdel'], result_all.params['flux_Hdel'].stderr
+        flux_Hdel_wing, dflux_Hdel_wing = result_all.best_values['flux_Hdel_wing'], \
+                                          result_all.params['flux_Hdel_wing'].stderr
         flux_Hgam, dflux_Hgam = result_all.best_values['flux_Hgam'], result_all.params['flux_Hgam'].stderr
+        flux_Hgam_wing, dflux_Hgam_wing = result_all.best_values['flux_Hgam_wing'], \
+                                          result_all.params['flux_Hgam_wing'].stderr
         flux_OIII4364, dflux_OIII4364 = result_all.best_values['flux_OIII4364'], \
                                         result_all.params['flux_OIII4364'].stderr
+        flux_OIII4364_wing, dflux_OIII4364_wing = result_all.best_values['flux_OIII4364_wing'], \
+                                                  result_all.params['flux_OIII4364_wing'].stderr
         flux_HeII4687, dflux_HeII4687 = result_all.best_values['flux_HeII4687'], \
                                         result_all.params['flux_HeII4687'].stderr
+        flux_HeII4687_wing, dflux_HeII4687_wing = result_all.best_values['flux_HeII4687_wing'], \
+                                        result_all.params['flux_HeII4687_wing'].stderr
 
         # Weak lines conti
         a_NeV3346, da_NeV3346 = result_all.best_values['a_NeV3346'], result_all.params['a_NeV3346'].stderr
@@ -648,18 +761,26 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         b_HeII4687, db_HeII4687 = result_all.best_values['b_HeII4687'], result_all.params['b_HeII4687'].stderr
 
         # Save the fitted result
-        flux_info[i, :] = np.array([z, dz_wing, sigma, sigma_wing, flux_NeV3346, flux_NeIII3869, flux_HeI3889,
-                                    flux_H8, flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364,
-                                    flux_HeII4687, flux_OII, flux_OII_wing, r_OII,
-                                    r_OII_wing, flux_Hbeta, flux_OIII5008, flux_OIII5008_wing, dflux_NeV3346,
-                                    dflux_NeIII3869, dflux_HeI3889, dflux_H8, dflux_NeIII3968, dflux_Heps, dflux_Hdel,
-                                    dflux_Hgam, dflux_OIII4364, dflux_HeII4687, dflux_OII, dflux_OII_wing, dr_OII,
-                                    dr_OII_wing, dflux_Hbeta, dflux_OIII5008, dflux_OIII5008_wing])
+        flux_info[i, :] = np.array([z, dz_wing, sigma, sigma_wing, flux_NeV3346, flux_NeV3346_wing, flux_NeIII3869,
+                                    flux_NeIII3869_wing, flux_HeI3889, flux_HeI3889_wing, flux_H8, flux_H8_wing,
+                                    flux_NeIII3968, flux_NeIII3968_wing, flux_Heps, flux_Heps_wing, flux_Hdel,
+                                    flux_Hdel_wing, flux_Hgam, flux_Hgam_wing, flux_OIII4364, flux_OIII4364_wing,
+                                    flux_HeII4687, flux_HeII4687_wing, flux_OII, flux_OII_wing, r_OII,
+                                    r_OII_wing, flux_Hbeta, flux_Hbeta_wing, flux_OIII5008, flux_OIII5008_wing,
+                                    dflux_NeV3346, dflux_NeV3346_wing, dflux_NeIII3869, dflux_NeIII3869_wing,
+                                    dflux_HeI3889, dflux_HeI3889_wing, dflux_H8, dflux_H8_wing, dflux_NeIII3968,
+                                    dflux_NeIII3968_wing, dflux_Heps, dflux_Heps_wing, dflux_Hdel, dflux_Hdel_wing,
+                                    dflux_Hgam, dflux_Hgam_wing, dflux_OIII4364, dflux_OIII4364_wing, dflux_HeII4687,
+                                    dflux_HeII4687_wing, dflux_OII, dflux_OII_wing, dr_OII,
+                                    dr_OII_wing, dflux_Hbeta, dflux_Hbeta_wing, dflux_OIII5008, dflux_OIII5008_wing])
 
-        line_model_all = model_all(wave_vac_all_plot, z, dz_wing, sigma, sigma_wing, flux_NeV3346, flux_NeIII3869,
-                                   flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam,
-                                   flux_OIII4364, flux_HeII4687, flux_OII, flux_OII_wing, flux_Hbeta, flux_OIII5008,
-                                   flux_OIII5008_wing, r_OII, r_OII_wing, a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869,
+        line_model_all = model_all(wave_vac_all_plot, z, dz_wing, sigma, sigma_wing, flux_NeV3346, flux_NeV3346_wing,
+                                   flux_NeIII3869, flux_NeIII3869_wing, flux_HeI3889,
+                                   flux_HeI3889_wing, flux_H8, flux_H8_wing, flux_NeIII3968, flux_NeIII3968_wing,
+                                   flux_Heps, flux_Heps_wing, flux_Hdel, flux_Hdel_wing, flux_Hgam, flux_Hgam_wing,
+                                   flux_OIII4364, flux_OIII4364_wing, flux_HeII4687, flux_HeII4687_wing, flux_OII,
+                                   flux_OII_wing, flux_Hbeta, flux_Hbeta_wing, flux_OIII5008, flux_OIII5008_wing,
+                                   r_OII, r_OII_wing, a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869,
                                    a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam,
                                    a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta,
                                    a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
@@ -832,12 +953,19 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
             axarr_0_strong.tick_params(axis='x', which='both', labelbottom=False)
             axarr_1_strong.tick_params(axis='x', which='both', labelbottom=False)
 
-    t = Table(flux_info, names=('z', 'dz_wing', 'sigma', 'sigma_wing', 'flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8', 'flux_NeIII3968',
-                                'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364', 'flux_HeII4687',
-                                'flux_OII', 'flux_OII_wing', 'r_OII', 'r_OII_wing', 'flux_Hbeta', 'flux_OIII5008',
-                                'flux_OIII5008_wing', 'dflux_NeV3346', 'dflux_NeIII3869', 'dflux_HeI3889', 'dflux_H8',
-                                'dflux_NeIII3968', 'dflux_Heps', 'dflux_Hdel', 'dflux_Hgam', 'dflux_OIII4364',
-                                'dflux_HeII4687', 'dflux_OII', 'dflux_OII_wing', 'dr_OII', 'dr_OII_wing', 'dflux_Hbeta',
+    t = Table(flux_info, names=('z', 'dz_wing', 'sigma', 'sigma_wing', 'flux_NeV3346', 'flux_NeV3346_wing',
+                                'flux_NeIII3869', 'flux_NeIII3869_wing', 'flux_HeI3889', 'flux_HeI3889_wing',
+                                'flux_H8', 'flux_H8_wing', 'flux_NeIII3968', 'flux_NeIII3968_wing',
+                                'flux_Heps', 'flux_Heps_wing', 'flux_Hdel', 'flux_Hdel_wing', 'flux_Hgam',
+                                'flux_Hgam_wing', 'flux_OIII4364', 'flux_OIII4364_wing', 'flux_HeII4687',
+                                'flux_HeII4687_wing', 'flux_OII', 'flux_OII_wing', 'r_OII', 'r_OII_wing',
+                                'flux_Hbeta', 'flux_Hbeta_wing', 'flux_OIII5008', 'flux_OIII5008_wing',
+                                'dflux_NeV3346', 'dflux_NeV3346_wing', 'dflux_NeIII3869', 'dflux_NeIII3869_wing',
+                                'dflux_HeI3889', 'dflux_HeI3889_wing', 'dflux_H8', 'dflux_H8_wing',
+                                'dflux_NeIII3968', 'dflux_NeIII3968_wing', 'dflux_Heps', 'dflux_Heps_wing',
+                                'dflux_Hdel', 'dflux_Hdel_wing', 'dflux_Hgam', 'dflux_Hgam_wing', 'dflux_OIII4364',
+                                'dflux_OIII4364_wing', 'dflux_HeII4687', 'dflux_HeII4687_wing', 'dflux_OII',
+                                'dflux_OII_wing', 'dr_OII', 'dr_OII_wing', 'dflux_Hbeta', 'dflux_Hbeta_wing',
                                 'dflux_OIII5008', 'dflux_OIII5008_wing'))
     t['region'] = text_array
     if save_table is True:
@@ -881,7 +1009,7 @@ radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 PlotGasSpectra(ra_array[2:4], dec_array[2:4], radius_array[2:4], text_array[2:4], figname='spectra_gas/spectra_gas_S3S4',
-               save_table=True, save_figure=True, deredden=False)
+               save_table=True, save_figure=True, deredden=True)
 
 
 # for i in range(len(text_array)):

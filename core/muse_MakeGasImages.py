@@ -250,8 +250,8 @@ def MakeFieldImage(label_gal=False):
     gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
     gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
     # gc.show_colorscale(cmap='Greys', vmin=0, vmax=4.897e-2)
-    gc.show_contour(path_OII_SB, levels=[0.1, 0.3], kernel='gauss', colors='blue', linewidths=0.8, smooth=3)
-    gc.show_contour(path_OIII_SB, levels=[0.1, 0.3], kernel='gauss', colors='red', linewidths=0.8, smooth=3)
+    gc.show_contour(path_OII_SB, levels=[0.08, 0.3], kernel='gauss', colors='blue', linewidths=0.8, smooth=3)
+    gc.show_contour(path_OIII_SB, levels=[0.08, 0.3], kernel='gauss', colors='red', linewidths=0.8, smooth=3)
     gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=1.5, s=330)
     if label_gal:
         gc.show_arrows(40.1370596, -18.8662000, 40.1366338 - 40.1370596, -18.8656749 + 18.8662000, color='k')
@@ -391,9 +391,9 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 
 
 #
-MakeNarrowBands(region=False)
-MakeNarrowBands(region=True)
-MakeNarrowBands(region=False, band='OIII')
-MakeNarrowBands(region=True, band='OIII')
-# MakeFieldImage(label_gal=True)
-MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped', test=False, snr_thr=8, v_thr=np.inf, check=False)
+# MakeNarrowBands(region=False)
+# MakeNarrowBands(region=True)
+# MakeNarrowBands(region=False, band='OIII')
+# MakeNarrowBands(region=True, band='OIII')
+MakeFieldImage(label_gal=True)
+# MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped', test=False, snr_thr=8, v_thr=np.inf, check=False)
