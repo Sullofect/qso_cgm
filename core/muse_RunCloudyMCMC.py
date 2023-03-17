@@ -430,20 +430,20 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 # RunCloudyMCMC(region='S4', trial='t1', bnds=S4_bnds, line_param=S4_param, deredden=False)
 
 # S5
-S5_bnds = np.array([[-2, 6.6],
-                    [-1.8, 0],
-                    [-1.5, 0.5]])
-S5_param = np.array([['NeV3346', False],
-                     ['OII', True],
-                     ['NeIII3869', False],
-                     ['Hdel', False],
-                     ['Hgam', False],
-                     ['OIII4364', False],
-                     ['HeII4687', False],
-                     ['OIII5008', True]], dtype=bool)
-Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 6.6, 20, dtype='f2')))
-RunCloudyMCMC(region='S5', trial='t1', bnds=S5_bnds, line_param=S5_param, deredden=True,
-              den_array=Hden_ext)
+# S5_bnds = np.array([[-2, 6.6],
+#                     [-1.8, 0],
+#                     [-1.5, 0.5]])
+# S5_param = np.array([['NeV3346', False],
+#                      ['OII', True],
+#                      ['NeIII3869', False],
+#                      ['Hdel', False],
+#                      ['Hgam', False],
+#                      ['OIII4364', False],
+#                      ['HeII4687', False],
+#                      ['OIII5008', True]], dtype=bool)
+# Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 6.6, 20, dtype='f2')))
+# RunCloudyMCMC(region='S5', trial='t1', bnds=S5_bnds, line_param=S5_param, deredden=True,
+#               den_array=Hden_ext)
 # S5_bnds = np.array([[-2, 4.6],
 #                     [-1.8, 0],
 #                     [-1.5, 0.5]])
@@ -540,6 +540,30 @@ RunCloudyMCMC(region='S5', trial='t1', bnds=S5_bnds, line_param=S5_param, deredd
 # RunCloudyMCMC(den_array=Hden_ext, region='S9', trial='t1', bnds=S9_bnds, line_param=S9_param, deredden=True)
 # RunCloudyMCMC(den_array=Hden_ext, region='S9', trial='t2', bnds=S9_bnds, line_param=S9_param, deredden=True)
 
+# S9 AGN
+S9_bnds = np.array([[1.0, 4.6],
+                    [-0.5, 0.5],
+                    [4.75, 5.75],
+                    [-1.2, 0],
+                    [-0.52, -0.48],
+                    [-1.5, 0.5]])
+S9_param = np.array([['NeV3346', False],
+                     ['OII', True],
+                     ['NeIII3869', False],
+                     ['Hdel', False],
+                     ['Hgam', False],
+                     ['OIII4364', False],
+                     ['HeII4687', False],
+                     ['OIII5008', True]], dtype=bool)
+den_array_AGN = np.linspace(1.0, 4.6, 19, dtype='f2')
+z_array_AGN = np.linspace(-0.5, 0.5, 6, dtype='f2')
+T_array_AGN = np.linspace(4.75, 5.75, 5, dtype='f2')
+alpha_ox_array_AGN = np.linspace(-1.2, 0, 7, dtype='f2')
+alpha_uv_array_AGN = np.array([-0.5], dtype='f2')
+alpha_x_array_AGN = np.linspace(-1.5, 0.5, 11, dtype='f2')
+RunCloudyMCMC(den_array=den_array_AGN, Z_array=z_array_AGN, T_array=T_array_AGN, alpha_ox_array=alpha_ox_array_AGN,
+              alpha_uv_array=alpha_uv_array_AGN, alpha_x_array=alpha_x_array_AGN, region='S9', trial='AGN',
+              mode='AGN_nouv', bnds=S9_bnds, line_param=S9_param, deredden=True)
 
 # S10
 # S10_bnds = np.array([[-2, 4.6],

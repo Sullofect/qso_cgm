@@ -642,16 +642,17 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
             flux_Hbeta_wing, flux_OIII5008_wing = lineRatioS3S4['flux_Hbeta_wing'], lineRatioS3S4['flux_OIII5008_wing']
             r_OII, r_OII_wing = lineRatioS3S4['r_OII'], lineRatioS3S4['r_OII_wing']
 
-            line_model_all = model_all(wave_vac_all_plot, z, dz_wing, sigma, sigma_wing, flux_NeV3346,
-                                       flux_NeV3346_wing, flux_NeIII3869, flux_NeIII3869_wing, flux_HeI3889,
-                                       flux_HeI3889_wing, flux_H8, flux_H8_wing, flux_NeIII3968, flux_NeIII3968_wing,
-                                       flux_Heps, flux_Heps_wing, flux_Hdel, flux_Hdel_wing, flux_Hgam, flux_Hgam_wing,
-                                       flux_OIII4364, flux_OIII4364_wing, flux_HeII4687, flux_HeII4687_wing, flux_OII,
-                                       flux_OII_wing, flux_Hbeta, flux_Hbeta_wing, flux_OIII5008, flux_OIII5008_wing,
-                                       r_OII, r_OII_wing, a_NeV3346, b_NeV3346, a_NeIII3869, b_NeIII3869,
-                                       a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968, a_Hdel, b_Hdel, a_Hgam, b_Hgam,
-                                       a_OIII4364, b_OIII4364, a_HeII4687, b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta,
-                                       a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
+            line_model_all = S3S4_model_all(wave_vac_all_plot, z, dz_wing, sigma, sigma_wing, flux_NeV3346,
+                                            flux_NeV3346_wing, flux_NeIII3869, flux_NeIII3869_wing, flux_HeI3889,
+                                            flux_HeI3889_wing, flux_H8, flux_H8_wing, flux_NeIII3968,
+                                            flux_NeIII3968_wing, flux_Heps, flux_Heps_wing, flux_Hdel, flux_Hdel_wing,
+                                            flux_Hgam, flux_Hgam_wing, flux_OIII4364, flux_OIII4364_wing, flux_HeII4687,
+                                            flux_HeII4687_wing, flux_OII, flux_OII_wing, flux_Hbeta, flux_Hbeta_wing,
+                                            flux_OIII5008, flux_OIII5008_wing, r_OII, r_OII_wing, a_NeV3346, b_NeV3346,
+                                            a_NeIII3869, b_NeIII3869, a_HeI3889, b_HeI3889, a_NeIII3968, b_NeIII3968,
+                                            a_Hdel, b_Hdel, a_Hgam, b_Hgam, a_OIII4364, b_OIII4364, a_HeII4687,
+                                            b_HeII4687, a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960,
+                                            a_OIII5008, b_OIII5008)
 
         else:
             line_model_all = model_all(wave_vac_all_plot, z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
