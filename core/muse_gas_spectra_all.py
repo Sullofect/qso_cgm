@@ -873,7 +873,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 # PlotGasSpectra(region=text_array, figname='spectra_gas/spectra_gas_paper',
 #                save_table=True, save_figure=False, deredden=True)
 
-region_paper = ['S1', 'S4', 'S6', 'S8', 'S9', 'B2']
+region_paper = ['S2', 'S4', 'S6', 'S8', 'S9', 'B2']
 PlotGasSpectra(region=region_paper, figname='spectra_gas/spectra_gas_paper',
                save_table=False, save_figure=True, deredden=True)
 

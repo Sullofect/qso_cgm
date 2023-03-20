@@ -1008,8 +1008,8 @@ dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
 radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
 text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
-PlotGasSpectra(ra_array[2:4], dec_array[2:4], radius_array[2:4], text_array[2:4], figname='spectra_gas/spectra_gas_S3S4',
-               save_table=True, save_figure=True, deredden=True)
+# PlotGasSpectra(ra_array[2:4], dec_array[2:4], radius_array[2:4], text_array[2:4], figname='spectra_gas/spectra_gas_S3S4',
+#                save_table=True, save_figure=True, deredden=True)
 
 
 # for i in range(len(text_array)):
