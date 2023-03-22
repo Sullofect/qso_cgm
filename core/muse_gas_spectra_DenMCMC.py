@@ -697,7 +697,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
                                quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k', title_kwargs={"fontsize": 13},
                                smooth=1., smooth1d=1., bins=25)
         best_fit = np.percentile(samples, [16, 50, 84], axis=0)
-
+        print(region + '_95th', np.log10(np.percentile(samples, [95], axis=0))[0, 0])
         for j in range(3):
             model_MCMC_j = model_MCMC(wave_vac_all, z, sigma, best_fit[j, 0], best_fit[j, 1], best_fit[j, 2],
                                       best_fit[j, 3], a_OIII4364, b_OIII4364, a_OII, b_OII, a_OIII5008, b_OIII5008)
@@ -926,7 +926,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 #                save_figure=False)
 
 
-# for i in np.hstack((text_array_input[:2], text_array_input[4:])):
-#     PlotGasSpectra(i, figname='spectra_gas/spectra_gas_' + str(i), deredden=True)
+for i in np.hstack((text_array_input[:2], text_array_input[4:])):
+    PlotGasSpectra(i, figname='spectra_gas/spectra_gas_' + str(i), deredden=True)
 
-PlotGasSpectra('S6', figname='spectra_gas/spectra_gas_S6', deredden=True)
+# PlotGasSpectra('S6', figname='spectra_gas/spectra_gas_S6', deredden=True)
