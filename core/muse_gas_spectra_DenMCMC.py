@@ -926,7 +926,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 #                save_figure=False)
 
 
-for i in np.hstack((text_array_input[:2], text_array_input[4:])):
-    PlotGasSpectra(i, figname='spectra_gas/spectra_gas_' + str(i), deredden=True)
+# for i in np.hstack((text_array_input[:2], text_array_input[4:])):
+#     PlotGasSpectra(i, figname='spectra_gas/spectra_gas_' + str(i), deredden=True)
 
 # PlotGasSpectra('S6', figname='spectra_gas/spectra_gas_S6', deredden=True)
