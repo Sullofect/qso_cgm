@@ -25,7 +25,7 @@ z = 0.6282144177077355
 limit = 912 * (1 + z)
 
 #
-mask = np.where((wave < limit  + 100) * (wave > limit - 100))
+mask = np.where((wave < limit + 100) * (wave > limit - 100))
 wave = wave[mask]
 flux = flux[mask]
 
