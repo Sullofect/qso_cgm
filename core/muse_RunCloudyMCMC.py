@@ -89,7 +89,7 @@ alpha_default = np.linspace(-1.8, 0, 10, dtype='f2')
 
 def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_array=alpha_default,
                   alpha_ox_array=None, alpha_uv_array=None, alpha_x_array=None, region=None, trial=None, bnds=None,
-                  line_param=None, deredden=True, norm='Hbeta', mode='power_law',
+                  line_param=None, deredden=True, norm='Hbeta', mode='power_law', figname_extra='',
                   nums_chain=5000, nums_disc=1000, compare_hist=True):
     # Load the actual measurement
     logflux_Hbeta, dlogflux_Hbeta, logflux_NeV3346, dlogflux_NeV3346, logflux_OII, dlogflux_OII, logr_OII, \
@@ -101,7 +101,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     if region == 'S2':
         den_array = np.arange(-2, 2.6, 0.1)  # log
         Z_array = np.array([-1.5, -1.4, -1.3, -1.2, -1.1, -1., -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3,
-                          -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5])  # log
+                            -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5])  # log
         alpha_array = np.array([-1.8, -1.75, -1.7, -1.65, -1.6, -1.55, -1.5, -1.45, -1.4, -1.35, -1.3, -1.25, -1.2,
                           -1.15, -1.1, -1.05, -1.0, -0.95, -0.9, -0.85, -0.8, -0.75, -0.7, -0.65, -0.6])
         output, ind = format_cloudy(filename=[Z_array, alpha_array], path='/Users/lzq/Dropbox/Data/CGM/cloudy/trial2/')
@@ -125,9 +125,9 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         output = output
     elif norm == 'OII':
         output = output - output[3]  # in log
-        print(output[3])
     elif norm == 'HeII':
         output = output - output[8]
+
     f_NeV3346 = interpolate.RegularGridInterpolator(var_array, output[0],
                                                     bounds_error=False, fill_value=None)
     f_OII3727 = interpolate.RegularGridInterpolator(var_array, output[1],
@@ -165,11 +165,13 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         labels = [r"$\mathrm{log_{10}(n)}$", r"$\mathrm{log_{10}(Z/Z_{\odot})}$", r"$\mathrm{log_{10}(T)}$",
                   r"$\mathrm{\alpha_{ox}}$", r"$\mathrm{\alpha_x}$"]
     if deredden:
-        filename = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '_dered.h5'
-        figname_MCMC = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '_dered.pdf'
+        filename = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + \
+                   figname_extra + '_dered.h5'
+        figname_MCMC = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + figname_extra \
+                       + '_dered.pdf'
     else:
-        filename = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '.h5'
-        figname_MCMC = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '.pdf'
+        filename = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + figname_extra + '.h5'
+        figname_MCMC = '/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + figname_extra + '.pdf'
     backend = emcee.backends.HDFBackend(filename)
 
     if os.path.exists(filename):
@@ -232,7 +234,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
                  samples_draw[:, 3], samples_draw[:, 4])
 
     model_y2 = np.array([f_OII(model), f_OIII5008(model), f_HeII4687(model), f_NeV3346(model)])
-    print(model_y2[0])
+
     #
     if line_param[5, 1]:
         data_y1 = np.array([logr_OII, logflux_OIII4364 - logflux_OIII5008], dtype=object).reshape(len(data_x1))
@@ -243,7 +245,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         data_y1 = np.array([logr_OII, np.nan], dtype=object).reshape(len(data_x1))
         data_y1err = np.array([dlogr_OII, np.nan], dtype=object).reshape(len(data_x1))
         model_y1 = [f_OII3730(model) - f_OII3727(model), np.nan * np.zeros(len(f_OII3727(model)))]
-    print(data_y1, data_y1err)
+
     # Plot data
     model_y2 = np.where(line_param_violin[:, np.newaxis], model_y2, np.nan)
     model_y2 = [np.array(model_y2[0, :]), np.array(model_y2[1, :]), np.array(model_y2[2, :]), np.array(model_y2[3, :])]
@@ -337,11 +339,11 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         ax[4].xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         ax[4].legend(loc=1)
     if deredden:
-        fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '_violin_dered.png',
-                    bbox_inches='tight')
+        fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + figname_extra +
+                    '_violin_dered.png', bbox_inches='tight')
     else:
-        fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + '_violin.png',
-                    bbox_inches='tight')
+        fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + figname_extra +
+                    '_violin.png', bbox_inches='tight')
 
 # S1
 # S1_bnds = np.array([[-2, 2.6],
@@ -617,7 +619,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 # RunCloudyMCMC(region='B1', trial='t1', bnds=B1_bnds, line_param=B1_param, deredden=True, norm='OII')
 
 # # B2
-B2_bnds = np.array([[-2, 2.6],
+B2_bnds = np.array([[-2, 4.6],
                     [-1.8, 0],
                     [-1.5, 0.5]])
 B2_param = np.array([['NeV3346', False],
@@ -631,15 +633,15 @@ B2_param = np.array([['NeV3346', False],
 RunCloudyMCMC(region='B2', trial='t1', bnds=B2_bnds, line_param=B2_param, deredden=True, norm='OII')
 
 # # B3
-B3_bnds = np.array([[-2, 2.6],
-                    [-1.8, 0],
-                    [-1.5, 0.5]])
-B3_param = np.array([['NeV3346', False],
-                     ['OII', True],
-                     ['NeIII3869', False],
-                     ['Hdel', False],
-                     ['Hgam', False],
-                     ['OIII4364', False],
-                     ['HeII4687', False],
-                     ['OIII5008', True]], dtype=bool)
-RunCloudyMCMC(region='B3', trial='t1', bnds=B3_bnds, line_param=B3_param, deredden=True, norm='OII')
+# B3_bnds = np.array([[-2, 2.6],
+#                     [-1.8, 0],
+#                     [-1.5, 0.5]])
+# B3_param = np.array([['NeV3346', False],
+#                      ['OII', True],
+#                      ['NeIII3869', False],
+#                      ['Hdel', False],
+#                      ['Hgam', False],
+#                      ['OIII4364', False],
+#                      ['HeII4687', False],
+#                      ['OIII5008', True]], dtype=bool)
+# RunCloudyMCMC(region='B3', trial='t1', bnds=B3_bnds, line_param=B3_param, deredden=True, norm='OII')
