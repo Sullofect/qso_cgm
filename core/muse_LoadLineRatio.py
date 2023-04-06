@@ -2,7 +2,7 @@ import os
 import numpy as np
 import astropy.io.fits as fits
 
-def load_lineratio(region=None, deredden=True):
+def load_lineratio(region=None, deredden=True, norm='Hbeta'):
     if deredden:
         if region == 'S3' or region == 'S4':
             path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'RegionLinesRatio',
@@ -23,37 +23,48 @@ def load_lineratio(region=None, deredden=True):
     if region != 'all':
         data_fit_info_sr = data_fit_info_sr[data_fit_info_sr['region'] == region]
 
-    flux_Hbeta, dflux_Hbeta = data_fit_info_sr['flux_Hbeta'], data_fit_info_sr['dflux_Hbeta']
-    print(flux_Hbeta, dflux_Hbeta)
-    flux_OII = data_fit_info_sr['flux_OII'] / flux_Hbeta
+    # Norm by
+    if norm == 'Hbeta':
+        flux_norm, dflux_norm = data_fit_info_sr['flux_Hbeta'], data_fit_info_sr['dflux_Hbeta']
+    elif norm == 'OII':
+        flux_norm, dflux_norm = data_fit_info_sr['flux_OII'], data_fit_info_sr['dflux_OII']
+    elif norm == 'HeII':
+        flux_norm, dflux_norm = data_fit_info_sr['flux_HeII4687'], data_fit_info_sr['dflux_HeII4687']
+
+    #
+    print(norm, flux_norm, dflux_norm)
+    flux_Hbeta = data_fit_info_sr['flux_Hbeta'] / flux_norm
+    dflux_Hbeta = flux_Hbeta * np.sqrt((data_fit_info_sr['dflux_Hbeta'] / data_fit_info_sr['flux_Hbeta']) ** 2
+                                       + (dflux_norm / flux_norm) ** 2)
+    flux_OII = data_fit_info_sr['flux_OII'] / flux_norm
     dflux_OII = flux_OII * np.sqrt((data_fit_info_sr['dflux_OII'] / data_fit_info_sr['flux_OII']) ** 2
-                                   + (dflux_Hbeta / flux_Hbeta) ** 2)
+                                   + (dflux_norm / flux_norm) ** 2)
     r_OII, dr_OII = data_fit_info_sr['r_OII'], data_fit_info_sr['dr_OII']
-    flux_NeV3346 = data_fit_info_sr['flux_NeV3346'] / flux_Hbeta
+    flux_NeV3346 = data_fit_info_sr['flux_NeV3346'] / flux_norm
     dflux_NeV3346 = flux_NeV3346 * np.sqrt((data_fit_info_sr['dflux_NeV3346'] / data_fit_info_sr['flux_NeV3346']) ** 2
-                                           + (dflux_Hbeta / flux_Hbeta) ** 2)
-    flux_NeIII3869 = data_fit_info_sr['flux_NeIII3869'] / flux_Hbeta
+                                           + (dflux_norm / flux_norm) ** 2)
+    flux_NeIII3869 = data_fit_info_sr['flux_NeIII3869'] / flux_norm
     dflux_NeIII3869 = flux_NeIII3869 * np.sqrt(
         (data_fit_info_sr['dflux_NeIII3869'] / data_fit_info_sr['flux_NeIII3869']) ** 2
-        + (dflux_Hbeta / flux_Hbeta) ** 2)
-    flux_Hdel = data_fit_info_sr['flux_Hdel'] / flux_Hbeta
+        + (dflux_norm / flux_norm) ** 2)
+    flux_Hdel = data_fit_info_sr['flux_Hdel'] / flux_norm
     dflux_Hdel = flux_Hdel * np.sqrt((data_fit_info_sr['dflux_Hdel'] / data_fit_info_sr['flux_Hdel']) ** 2
-                                     + (dflux_Hbeta / flux_Hbeta) ** 2)
-    flux_Hgam = data_fit_info_sr['flux_Hgam'] / flux_Hbeta
+                                     + (dflux_norm / flux_norm) ** 2)
+    flux_Hgam = data_fit_info_sr['flux_Hgam'] / flux_norm
     dflux_Hgam = flux_Hgam * np.sqrt((data_fit_info_sr['dflux_Hgam'] / data_fit_info_sr['flux_Hgam']) ** 2
-                                     + (dflux_Hbeta / flux_Hbeta) ** 2)
-    flux_OIII4364 = data_fit_info_sr['flux_OIII4364'] / flux_Hbeta
+                                     + (dflux_norm / flux_norm) ** 2)
+    flux_OIII4364 = data_fit_info_sr['flux_OIII4364'] / flux_norm
     dflux_OIII4364 = flux_OIII4364 * np.sqrt(
         (data_fit_info_sr['dflux_OIII4364'] / data_fit_info_sr['flux_OIII4364']) ** 2
-        + (dflux_Hbeta / flux_Hbeta) ** 2)
-    flux_HeII4687 = data_fit_info_sr['flux_HeII4687'] / flux_Hbeta
+        + (dflux_norm / flux_norm) ** 2)
+    flux_HeII4687 = data_fit_info_sr['flux_HeII4687'] / flux_norm
     dflux_HeII4687 = flux_HeII4687 * np.sqrt(
         (data_fit_info_sr['dflux_HeII4687'] / data_fit_info_sr['flux_HeII4687']) ** 2
-        + (dflux_Hbeta / flux_Hbeta) ** 2)
-    flux_OIII5008 = data_fit_info_sr['flux_OIII5008'] / flux_Hbeta
+        + (dflux_norm / flux_norm) ** 2)
+    flux_OIII5008 = data_fit_info_sr['flux_OIII5008'] / flux_norm
     dflux_OIII5008 = flux_OIII5008 * np.sqrt(
         (data_fit_info_sr['dflux_OIII5008'] / data_fit_info_sr['flux_OIII5008']) ** 2
-        + (dflux_Hbeta / flux_Hbeta) ** 2)
+        + (dflux_norm / flux_norm) ** 2)
 
     # Take the log
     logflux_Hbeta, dlogflux_Hbeta = np.log10(flux_Hbeta), dflux_Hbeta / (flux_Hbeta * np.log(10))
@@ -70,8 +81,9 @@ def load_lineratio(region=None, deredden=True):
     logflux_OIII4364, dlogflux_OIII4364 = np.log10(flux_OIII4364), np.sqrt((dflux_OIII4364 /
                                                                             (flux_OIII4364 * np.log(
                                                                                 10))) ** 2 + 0.0 ** 2)
-    logflux_HeII4687, dlogflux_HeII4687 =  np.log10(flux_HeII4687), np.sqrt((dflux_HeII4687 /
-                                                                             (flux_HeII4687 * np.log(10))) ** 2 + 0.0 ** 2)
+    logflux_HeII4687, dlogflux_HeII4687 = np.log10(flux_HeII4687), np.sqrt((dflux_HeII4687 /
+                                                                             (flux_HeII4687 * np.log(10))) ** 2
+                                                                            + 0.0 ** 2)
     logflux_OIII5008, dlogflux_OIII5008 = np.log10(flux_OIII5008), np.sqrt((dflux_OIII5008 /
                                                                             (flux_OIII5008 * np.log(
                                                                                 10))) ** 2 + 0.0 ** 2)
