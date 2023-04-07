@@ -549,14 +549,14 @@ def CreateGrid_AGN(den_array, T_array, z_array, alpha_ox_array, alpha_uv_array, 
 # CreateGrid(z_array, alpha_array, den_array, region='B1', trial='t1')
 #
 # # B2
-CreateGrid(z_array, alpha_array, den_array, region='B2', trial='t1')
-den_array_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
-CreateGrid(z_array, alpha_array, den_array_2, region='B2', trial='t1_2')
+# CreateGrid(z_array, alpha_array, den_array, region='B2', trial='t1')
+# den_array_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_2, region='B2', trial='t1_2')
 #
 # B3
-CreateGrid(z_array, alpha_array, den_array, region='B3', trial='t1')
-den_array_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
-CreateGrid(z_array, alpha_array, den_array_2, region='B3', trial='t1_2')
+# CreateGrid(z_array, alpha_array, den_array, region='B3', trial='t1')
+# den_array_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+# CreateGrid(z_array, alpha_array, den_array_2, region='B3', trial='t1_2')
 #
 # # B4
 # CreateGrid(z_array, alpha_array, den_array, region='B4', trial='t1')
@@ -659,7 +659,11 @@ CreateGrid(z_array, alpha_array, den_array_2, region='B3', trial='t1_2')
 #                region='S9', trial='AGN')
 
 # Crete BB for S2
-# z_array = np.linspace(-1.5, 0.5, 11, dtype='f2')
-# T_array = np.linspace(4, 6.5, 13, dtype='f2')
+z_array = np.linspace(-1.5, 0.5, 11, dtype='f2')
+T_array = np.linspace(4, 6.5, 13, dtype='f2')
 # den_array = np.linspace(-2, 2.6, 24, dtype='f2')
 # CreateGrid_BB(z_array, T_array, den_array, L_qso=46.54, region='S2', trial='BB_t1')
+
+# BB for S2 extension
+den_array_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+CreateGrid_BB(z_array, T_array, den_array_2, L_qso=46.54, region='S2', trial='BB_t1_2')

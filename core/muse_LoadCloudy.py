@@ -1,5 +1,6 @@
 import numpy as np
 
+
 # Load lineratio
 def load_cloudy(filename=None, path=None):
     # Line profile
@@ -10,6 +11,7 @@ def load_cloudy(filename=None, path=None):
     data = np.vstack((NeV3346, OII3727, OII3730, OII3727 + OII3730, NeIII3869, Hdel, Hgam, OIII4364, HeII4687, OIII5008))
     return np.log10(data)
 
+
 def load_cloudy_nogrid(filename=None, path=None):
     # Line profile
     line = np.genfromtxt(path + filename + '.lin', delimiter=None)
@@ -18,6 +20,7 @@ def load_cloudy_nogrid(filename=None, path=None):
     OIII4364, HeII4687, OIII5008 = line[10], line[11], line[13]
     data = np.vstack((NeV3346, OII3727, OII3730, OII3727 + OII3730, NeIII3869, Hdel, Hgam, OIII4364, HeII4687, OIII5008))
     return np.log10(data)
+
 
 def format_cloudy(filename=None, path=None):
     for i in range(len(filename[0])):
@@ -41,6 +44,7 @@ def format_cloudy(filename=None, path=None):
             ind =  np.concatenate((ind, ind_j[:, :, :, np.newaxis]), axis=3)
     return output, ind
 
+
 def format_cloudy_nogrid(filename=None, path=None):
     for k in range(len(filename[2])):
         metal_k = filename[2][k]
@@ -49,6 +53,30 @@ def format_cloudy_nogrid(filename=None, path=None):
             for i in range(len(filename[0])):
                 density_i = filename[0][i]
                 filename_jki = 'alpha_' + str(alpha_j) + '_' + str(metal_k) + '_' + str(density_i)
+                if i == 0:
+                    output_i = load_cloudy_nogrid(filename_jki, path=path)[:, 0]
+                else:
+                    c_i = load_cloudy_nogrid(filename_jki, path=path)[:, 0]
+                    output_i = np.vstack((output_i, c_i))
+            if j == 0:
+                output_j = output_i.T
+            else:
+                output_j = np.dstack((output_j, output_i.T))
+        if k == 0:
+            output = output_j[:, :, :, np.newaxis]
+        else:
+            output = np.concatenate((output, output_j[:, :, :, np.newaxis]), axis=3)
+    return output
+
+
+def format_cloudy_nogrid_BB(filename=None, path=None):
+    for k in range(len(filename[2])):
+        metal_k = filename[2][k]
+        for j in range(len(filename[1])):
+            alpha_j = filename[1][j]
+            for i in range(len(filename[0])):
+                density_i = filename[0][i]
+                filename_jki = 'T_' + str(alpha_j) + '_Z_' + str(metal_k) + '_n_' + str(density_i)
                 if i == 0:
                     output_i = load_cloudy_nogrid(filename_jki, path=path)[:, 0]
                 else:
