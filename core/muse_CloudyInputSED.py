@@ -1,8 +1,9 @@
 import os
 import numpy as np
-from astropy.table import Table
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from scipy import integrate
+from astropy.table import Table
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 
@@ -49,9 +50,20 @@ def f_AGN(nu, alpha_ox, alpha_uv, alpha_x, T_BB):
 #* np.exp(- nu / nu_high) * np.exp(- nu_low / nu)
 data = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cloudy', 'CheckContinuum', 'continuum.txt')
 CheckContinuum = np.loadtxt(data, usecols=[0, 1, 2])
+data_BB = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cloudy', 'CheckContinuum', 'continuum_BB.txt')
+CheckContinuum_BB = np.loadtxt(data_BB, usecols=[0, 1, 2])
 data_AGN = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cloudy',
                         'CheckContinuum', 'continuum_AGN.txt')
 CheckContinuum_AGN = np.loadtxt(data_AGN, usecols=[0, 1, 2])
+data_LineEmis = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cloudy', 'CheckContinuum', 'lines.str')
+LineEmis = np.loadtxt(data_LineEmis, usecols=[0, 1, 2, 3, 4])
+LineEmis = LineEmis[172:258, :]
+Sum_Hbeta = integrate.simpson(LineEmis[:, 1], LineEmis[:, 0])
+Sum_OII = integrate.simpson(LineEmis[:, 4], LineEmis[:, 0])
+Sum_OIII = integrate.simpson(LineEmis[:, 2], LineEmis[:, 0])
+print(LineEmis[:, 2][:50])
+print('EMISS=', Sum_OII / Sum_Hbeta)
+print('EMISS=', Sum_OIII / Sum_Hbeta)
 
 
 hv = np.linspace(hv_low, hv_high, 1000)
@@ -65,8 +77,9 @@ ax.plot(hv, nu * f(nu, -1.2), lw=0.2, label=r'$\alpha = -1.2$')
 ax.plot(hv_AGN, nu_AGN * f_AGN(nu_AGN, -1.2, -0.5, -1, 10 ** 5.25), lw=0.2, label=r'AGN')
 ax.plot(CheckContinuum[::5, 0], CheckContinuum[::5, 1], '-', lw=0.2,  label=r'Cloudy $\alpha = -1.4$')
 ax.plot(CheckContinuum_AGN[::5, 0], CheckContinuum_AGN[::5, 1], '-', lw=0.1, label=r'Cloudy AGN')
+ax.plot(CheckContinuum_BB[::5, 0], CheckContinuum_BB[::5, 1], '-', lw=1, label=r'Cloudy BB')
 ax.set_xlim(1e-3, 1e6)
-ax.set_ylim(1e45, 5e47)
+ax.set_ylim(1e45, 5e49)
 ax.set_xlabel(r'$h\nu (\mathrm{Ryd})$', size=15)
 ax.set_ylabel(r'$\nu f_{\nu}(\mathrm{arbitrary \, unit})$', size=15)
 ax.minorticks_on()

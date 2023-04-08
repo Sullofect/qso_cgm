@@ -454,6 +454,53 @@ def CreateGrid(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=
                 command_array = np.hstack((command_array, command))
     np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
 
+def CreateGrid_Emi(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=None):
+    global text_array
+    dis = np.around(distance[text_array == region][0], decimals=2)
+    command_array = np.array([])
+    os.makedirs('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial, exist_ok=True)
+    os.popen('cp /Users/lzq/Dropbox/Data/CGM/cloudy/S1_t1/linelist.dat'
+             ' /Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/linelist.dat')
+    for i in range(len(z_array)):
+        for j in range(len(alpha_array)):
+            for k in range(len(den_array)):
+                lines = np.array(['Table power law spectral index ' + str(alpha_array[j]) + ', low=0.37, high=73.5 ',
+                                  'nuL(nu) = ' + str(L_qso) + ' at 1.0 Ryd',
+                                  'hden ' + str(den_array[k]),
+                                  'metals ' + str(z_array[i]) + ' log',
+                                  'radius ' + str(dis),
+                                  'iterative to convergence',
+                                  'save line list absolute "alpha_' + str(alpha_array[j]) + '_' + str(z_array[i]) + '_'
+                                  + str(den_array[k]) + '.lin" from "linelist.dat" last',
+                                  'save lines, emissivity, ' + '"alpha_' + str(alpha_array[j]) + '_' + str(z_array[i])
+                                  + '_' + str(den_array[k]) + '.emi" last',
+                                  'Ne 5 3345.99A',
+                                  'Blnd 3726A',
+                                  'Blnd 3729A',
+                                  'Ne 3 3868.76A',
+                                  'He 1 3888.63A',
+                                  'H  1 3970.07A',
+                                  'H  1 4101.73A',
+                                  'H  1 4340.46A',
+                                  'O  3 4363.21A',
+                                  'He 2 4685.64A',
+                                  'H  1 4861.33A',
+                                  'o  3 5006.84A',
+                                  'o  3 4958.91A',
+                                  'Blnd 5007.00A',
+                                  'end of lines'])
+
+                np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial
+                           + '/alpha_' + str(alpha_array[j]) + '_'
+                           + str(z_array[i]) + '_' + str(den_array[k]) + '.in', lines, fmt="%s")
+
+                # Command
+                command = np.array(['$cloudy -r ' + 'alpha_' + str(alpha_array[j]) + '_'
+                                    + str(z_array[i]) + '_' + str(den_array[k])])
+
+                command_array = np.hstack((command_array, command))
+    np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
+
 def CreateGrid_BB(z_array, T_array, den_array, L_qso=46.54, region=None, trial=None):
     global text_array
     dis = np.around(distance[text_array == region][0], decimals=2)
@@ -659,11 +706,15 @@ def CreateGrid_AGN(den_array, T_array, z_array, alpha_ox_array, alpha_uv_array, 
 #                region='S9', trial='AGN')
 
 # Crete BB for S2
-z_array = np.linspace(-1.5, 0.5, 11, dtype='f2')
-T_array = np.linspace(4, 6.5, 13, dtype='f2')
+# z_array = np.linspace(-1.5, 0.5, 11, dtype='f2')
+# T_array = np.linspace(4, 6.5, 13, dtype='f2')
 # den_array = np.linspace(-2, 2.6, 24, dtype='f2')
 # CreateGrid_BB(z_array, T_array, den_array, L_qso=46.54, region='S2', trial='BB_t1')
 
 # BB for S2 extension
-den_array_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
-CreateGrid_BB(z_array, T_array, den_array_2, L_qso=46.54, region='S2', trial='BB_t1_2')
+# den_array_2 = np.linspace(2.8, 4.6, 10, dtype='f2')
+# CreateGrid_BB(z_array, T_array, den_array_2, L_qso=46.54, region='S2', trial='BB_t1_2')
+
+
+# S1 Emissivity
+CreateGrid_Emi(z_array, alpha_array, den_array, region='S1', trial='t1_Emi')
