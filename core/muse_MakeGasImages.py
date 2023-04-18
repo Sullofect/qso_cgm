@@ -172,6 +172,8 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
         path_cube = path_data + 'cube_narrow/CUBE_OIII_5008_line_offset.fits'
         wave_center = OIII_air
     cube = Cube(path_cube)
+    OII_label_array = ['', 'd', 'e', 'f', '', '']
+    OIII_label_array = ['', 'g', 'h', 'i', '', '']
     for i in range(6):
         fig = plt.figure(figsize=(8, 8), dpi=300)
 
@@ -208,13 +210,15 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
                 y = regions_label[j].center.dec.degree
                 gc.add_label(x, y, text_array[j], size=20)
         else:
+            gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--', linewidths=1,
+                            alpha=0.25, zorder=10)
             gc.show_contour(path_contour, levels=[0.08, 0.3], layer='O#', kernel='gauss', colors='k',
                             linewidths=0.8, smooth=3)
-            x = gc.get_layer('O#').collections[1].get_paths()[0].vertices[:, 0]
-            y = gc.get_layer('O#').collections[1].get_paths()[0].vertices[:, 1]
-            area = np.abs(0.5 * np.sum(y[:-1] * np.diff(x) - x[:-1] * np.diff(y)))
-                   # * 0.2 ** 2 * 6.66 ** 2
-            print(path_image_make_NB, area)
+            # x = gc.get_layer('O#').collections[1].get_paths()[0].vertices[:, 0]
+            # y = gc.get_layer('O#').collections[1].get_paths()[0].vertices[:, 1]
+            # area = np.abs(0.5 * np.sum(y[:-1] * np.diff(x) - x[:-1] * np.diff(y)))
+            #        # * 0.2 ** 2 * 6.66 ** 2
+            # print(path_image_make_NB, area)
 
         APLpyStyle(gc, type='NarrowBand')
         gc.add_label(0.82, 0.91, r'$\mathrm{\lambda = \,}$' + str("{0:.0f}".format(wave_i_vac)) + ' to '
@@ -225,9 +229,11 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
         if band == 'OII':
             gc.add_label(0.87, 0.97, r'MUSE [O II]', size=20, relative=True)
             figname += 'image_OII_' + str("{0:.0f}".format(dv_i)) + '_' + str("{0:.0f}".format(dv_f))
+            gc.add_label(0.05, 0.05, OII_label_array[i], color='k', size=40, relative=True)
         elif band == 'OIII':
             gc.add_label(0.87, 0.97, r'MUSE [O III]', size=20, relative=True)
             figname += 'image_OIII_' + str("{0:.0f}".format(dv_i)) + '_' + str("{0:.0f}".format(dv_f))
+            gc.add_label(0.05, 0.05, OIII_label_array[i], color='k', size=40, relative=True)
         if region:
             figname += '_region'
         fig.savefig(figname + '.png', bbox_inches='tight')
@@ -248,8 +254,8 @@ def MakeFieldImage(label_gal=False):
 
     #
     path_hb = path_data + 'raw_data/HE0238-1904_drc_offset.fits'
-    path_OII_SB = path_data + 'image_MakeMovie/OII_-100_-100_contour_revised.fits'
-    path_OIII_SB = path_data + 'image_MakeMovie/OIII_-100_-100_contour_revised.fits'
+    path_OII_SB = path_data + 'image_MakeMovie/OII_-100_100_contour_revised.fits'
+    path_OIII_SB = path_data + 'image_MakeMovie/OIII_-100_100_contour_revised.fits'
 
     # Plot
     fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -282,6 +288,7 @@ def MakeFieldImage(label_gal=False):
     gc.add_label(0.85, 0.91, r'MUSE [O II]', color='blue', size=20, relative=True)
     gc.add_label(0.85, 0.86, r'MUSE [O III]', color='red', size=20, relative=True)
     gc.add_label(0.85, 0.96, r'$\mathrm{ACS+F814W}$', color='k', size=20, relative=True)
+    gc.add_label(0.05, 0.05, 'a', color='k', size=40, relative=True)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image.png', bbox_inches='tight')
 
 
@@ -331,8 +338,6 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
         else:
             flux_stack = np.stack((flux_fit_OII, flux_fit_Hbeta, flux_fit_OIII5008), axis=0)
             dflux_stack = np.stack((dflux_fit_OII, dflux_fit_Hbeta, dflux_fit_OIII5008), axis=0)
-        print(len(flux_stack[np.isnan(flux_stack)]))
-        print(len(dflux_stack[np.isnan(dflux_stack)]))
 
         v_fit = np.where(fit_success == 1, v_fit, np.nan)
         sigma_fit = np.where(fit_success == 1, sigma_fit, np.nan)
@@ -379,6 +384,7 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=20, relative=True)
     elif line == 'OOHbeta':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{lines}} - v_{\mathrm{qso}}$', size=20, relative=True)
+    gc.add_label(0.05, 0.05, 'b', color='k', size=40, relative=True)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' + method_spe + '.png',
                 bbox_inches='tight')
 
@@ -400,6 +406,7 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
     gc.show_colorscale(vmin=-1, vmax=2, cmap=sequential_s.Buda_20.mpl_colormap)
     APLpyStyle(gc, type='else')
+    gc.add_label(0.05, 0.05, 'c', color='k', size=40, relative=True)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_logOIII_OII_map_' + method + '_' + method_spe
                 + '.png', bbox_inches='tight')
 
@@ -411,5 +418,6 @@ MakeNarrowBands(region=False)
 # MakeNarrowBands(region=True)
 MakeNarrowBands(region=False, band='OIII')
 # MakeNarrowBands(region=True, band='OIII')
-MakeFieldImage(label_gal=True)
-# MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped', test=False, snr_thr=8, v_thr=np.inf, check=False)
+# MakeFieldImage(label_gal=True)
+# MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',
+#            test=False, snr_thr=8, v_thr=np.inf, check=False)
