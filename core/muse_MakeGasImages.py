@@ -51,11 +51,18 @@ def ConvertFits(table=None, type=None, mask=None, filename=None, smooth=True, sm
     if mask:
         # Mask the data
         xx, yy = np.meshgrid(np.arange(200), np.arange(200))
-        pixel_center = PixCoord(x=100, y=75)
-        pixel_region = RectanglePixelRegion(center=pixel_center, width=129, height=90)
+        pixel_center = PixCoord(x=122, y=68)
+        pixel_region = RectanglePixelRegion(center=pixel_center, width=100, height=120)
         pixel_data = PixCoord(x=xx, y=yy)
         mask = pixel_region.contains(pixel_data)
         data = np.where(mask, data, np.nan)
+
+        # Second round
+        pixel_center = PixCoord(x=80, y=30)
+        pixel_region = RectanglePixelRegion(center=pixel_center, width=40, height=40)
+        mask = pixel_region.contains(pixel_data)
+        data = np.where(~mask, data, np.nan)
+        print(data)
     # Rename
     fits.writeto(path_revised, data, overwrite=True)
     data_revised, hdr_revised = fits.getdata(path_revised, 0, header=True)
@@ -210,8 +217,8 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
                 y = regions_label[j].center.dec.degree
                 gc.add_label(x, y, text_array[j], size=20)
         else:
-            gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--', linewidths=1,
-                            alpha=0.25, zorder=10)
+            # gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--', linewidths=1,
+            #                 alpha=0.25, zorder=10)
             gc.show_contour(path_contour, levels=[0.08, 0.3], layer='O#', kernel='gauss', colors='k',
                             linewidths=0.8, smooth=3)
             # x = gc.get_layer('O#').collections[1].get_paths()[0].vertices[:, 0]
@@ -415,9 +422,9 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 
 #
 MakeNarrowBands(region=False)
-# MakeNarrowBands(region=True)
+MakeNarrowBands(region=True)
 MakeNarrowBands(region=False, band='OIII')
-# MakeNarrowBands(region=True, band='OIII')
+MakeNarrowBands(region=True, band='OIII')
 # MakeFieldImage(label_gal=True)
 # MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',
 #            test=False, snr_thr=8, v_thr=np.inf, check=False)

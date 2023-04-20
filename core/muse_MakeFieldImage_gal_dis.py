@@ -98,7 +98,7 @@ gc.add_label(40.13564948691202 - 0.0015, -18.864301804042814, 'QSO', size=10)
 gc.show_markers(ra_final, dec_final, marker='o', facecolor='none', c='none',
                 edgecolors=plt.cm.coolwarm(norm(v_gal)), linewidths=1.2, s=80)
 gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
-gc.add_label(0.87, 0.97, r'$\mathrm{ACS+F814W}$', color='k', size=15, relative=True)
+gc.add_label(0.87, 0.97, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=15, relative=True)
 xw, yw = 40.1231559, -18.8580071
 gc.show_arrows(xw, yw, -0.0001 * yw, 0, color='k')
 gc.show_arrows(xw, yw, 0, -0.0001 * yw, color='k')

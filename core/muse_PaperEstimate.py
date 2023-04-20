@@ -1,4 +1,6 @@
 import os
+import muse_kc
+import pyneb as pn
 import numpy as np
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
@@ -153,6 +155,10 @@ print('LOS velocity of S3 S4 wing is', np.round(v_gas_S3S4_wing, 0))
 print('LOS velocity dispersion of S3 S4 is', np.round(lineRatio_S3S4['sigma'], 0))
 print('LOS velocity dispersion of S3 S4 wing is', np.round(lineRatio_S3S4['sigma_wing'], 0))
 
+# Ratio between Hgamma, Hdelta
+print('Balmer line Hgam / Hbeta ratio', np.round(lineRatio['flux_Hgam'] / lineRatio['flux_Hbeta'], 2))
+print('Balmer line Hdel / Hbeta ratio', np.round(lineRatio['flux_Hdel'] / lineRatio['flux_Hbeta'], 2))
+print('Balmer line Hdel / Hgam ratio', np.round(lineRatio['flux_Hdel'] / lineRatio['flux_Hgam'], 2))
 
 # Virial theorem
 G = 6.67e-8
@@ -167,6 +173,14 @@ cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 h_z = cosmo.H(z_qso).value / 100
 sigma_red, sigma_blue = 506, 91
 M_200_red = (sigma_red / 1100) ** 3 * 1e15 / h_z
+M_200_red_test = (370 / 1100) ** 3 * 1e15 / h_z
 M_200_blue = (sigma_blue / 1100) ** 3 * 1e15 / h_z
-print(np.format_float_scientific(M_200_red), np.format_float_scientific(M_200_blue))
+print('Halo mass are', np.format_float_scientific(M_200_red), np.format_float_scientific(M_200_blue))
+print('Halo mass test are', np.format_float_scientific(M_200_red_test),
+      np.format_float_scientific(M_200_blue))
 #
+
+
+# Estimate typical L star is like at z=0.63
+m_abs_Lstar = muse_kc.abs2app(m_abs=-21.5, z=0.63, model='Scd', filter_e='Bessell_B', filter_o='ACS_f814W')
+print('Apparent magnitude of L* is', m_abs_Lstar)

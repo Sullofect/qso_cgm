@@ -186,29 +186,23 @@ def PlotVelDis():
         mu1, sigma1, mu2, sigma2, p1 = x_0[0], x_0[1], x_0[2], x_0[3], x_0[4]
         return -1 * np.sum(np.log(p1 * gauss(x, mu1, sigma1) + (1 - p1) * gauss(x, mu2, sigma2)))
 
-    # def loglikelihood(x_0, x):
-    #     vals = x_0.valuesdict()
-    #     mu1 = vals['mu1']
-    #     sigma1 = vals['sigma1']
-    #     mu2 = vals['mu2']
-    #     sigma2 = vals['sigma2']
-    #     p1 = vals['p1']
-    #     return -1 * np.sum(np.log(p1 * gauss(x, mu1, sigma1) + (1 - p1) * gauss(x, mu2, sigma2)))
-
-
     guesses = [-80, 200, 500, 500, 0.3]
     bnds = ((-100, 0), (0, 500), (200, 1000), (0, 1000), (0, 1))
     result = minimize(loglikelihood, guesses, (v_gal), bounds=bnds, method="Powell")
     print(result.x)
 
     # Bootstrap
-    result_array = np.zeros((50, 5))
+    result_array = np.zeros((1000, 5))
     for i in range(len(result_array)):
         v_gal_i = np.random.choice(v_gal, replace=True, size=len(v_gal))
         result_i = minimize(loglikelihood, guesses, (v_gal_i), bounds=bnds, method="Powell")
         result_array[i, :] = result_i.x
     result_std = np.std(result_array, axis=0)
+    print(result_std)
 
+    # Test with "outliers" rejection
+    mu_test, scale_test = norm.fit(v_above[v_above > 0])
+    print(mu_test, scale_test)
 
     # parameters_all = lmfit.Parameters()
     # parameters_all.add_many(('mu1', -80, True, -100, 0, None),
@@ -223,47 +217,30 @@ def PlotVelDis():
     # Plot
     rv = np.linspace(-2000, 2000, 1000)
     plt.figure(figsize=(8, 5), dpi=300)
-    plt.vlines(0, 0, 15, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
-    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
-             (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-k', lw=1, alpha=1)
+    # plt.vlines(0, 0, 15, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
     plt.hist(v_gal, bins=bins_final, color='k', histtype='step', label=r'$v_{\rm all}$')
     plt.hist(v_above, bins=bins_final, facecolor='orange', histtype='stepfilled', alpha=0.5,
              label=r'$v_{\rm orange}$')
     plt.hist(v_below, bins=bins_final, facecolor='purple', histtype='stepfilled', alpha=0.5,
              label=r'$v_{\rm purple}$')
-    # plt.plot(rv, normalization_all * norm.pdf(rv, mu_all, scale_all), '-k', lw=1, alpha=1,
-    #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_all)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-    #                str("{0:.0f}".format(scale_all)) + r'$\mathrm{\, km/s}$')
-    # plt.plot(rv, normalization_above * norm.pdf(rv, mu_above, scale_above), '-r', lw=1, alpha=1,
-    #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_above)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-    #                str("{0:.0f}".format(scale_above)) + r'$\mathrm{\, km/s}$')
-    # plt.plot(rv, normalization_below * norm.pdf(rv, mu_below, scale_below), '-b', lw=1, alpha=1,
-    #          label=r'$\mu = \, $' + str("{0:.0f}".format(mu_below)) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $' +
-    #                str("{0:.0f}".format(scale_below)) + r'$\mathrm{\, km/s}$')
-    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '-', c='purple', lw=1,
+    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '--', c='b', lw=1,
              alpha=1, label=r'$P_{1} = \,$' + str("{0:.2f}".format(result.x[4])) +
-                            '\n' + r'$\mu = \, $' + str("{0:.0f}".format(result.x[0])) + r'$\mathrm{\, km/s}$, ' +
-                            '\n' + r'$\sigma = \, $' + str("{0:.0f}".format(result.x[1])) + r'$\mathrm{\, km/s}$')
-    plt.plot(rv, (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-', c='orange', lw=1,
+                            '\n' + r'$\mu_{1} = \, $' + str("{0:.0f}".format(result.x[0]))
+                            + r'$\mathrm{\, km \, s^{-1}}$' + '\n'
+                            + r'$\sigma_{1} = \, $'
+                            + str("{0:.0f}".format(result.x[1])) + r'$\mathrm{\, km \, s^{-1}}$')
+    plt.plot(rv, (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '--', c='red', lw=1,
              alpha=1, label=r'$P_{2} = \,$' + str("{0:.2f}".format(1 - result.x[4])) +
-                            '\n' + r'$\mu = \, $' + str("{0:.0f}".format(result.x[2])) + r'$\mathrm{\, km/s}$, ' +
-                            '\n' + r'$\sigma = \, $' + str("{0:.0f}".format(result.x[3])) + r'$\mathrm{\, km/s}$')
-    # plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '-', c='purple', lw=1, alpha=1,
-    #          label=r'$P_{1} = \,$' + str("{0:.2f}".format(result.x[4])) + r'$\pm$'
-    #                + str("{0:.2f}".format(result_std[4])) + '\n' + r'$\mu = \, $'
-    #                + str("{0:.0f}".format(result.x[0])) + r'$\pm$'
-    #                + str("{0:.0f}".format(result_std[0])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
-    #                + str("{0:.0f}".format(result.x[1])) + r'$\pm$'
-    #                + str("{0:.0f}".format(result_std[1])) + r'$\mathrm{\, km/s}$', zorder=110)
-    # plt.plot(rv, (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-', c='orange', lw=1,
-    #          alpha=1, label=r'$P_{2} = \,$' + str("{0:.2f}".format(1 - result.x[4])) + r'$\mp$'
-    #                         + str("{0:.2f}".format(result_std[4])) + '\n' + r'$\mu = \, $'
-    #                         + str("{0:.0f}".format(result.x[2])) + r'$\pm$'
-    #                         + str("{0:.0f}".format(result_std[2])) + r'$\mathrm{\, km/s}$, ' + '\n' + r'$\sigma = \, $'
-    #                         + str("{0:.0f}".format(result.x[3])) + r'$\pm$'
-    #                         + str("{0:.0f}".format(result_std[3])) + r'$\mathrm{\, km/s}$', zorder=100)
+                            '\n' + r'$\mu_{2} = \, $' + str("{0:.0f}".format(result.x[2]))
+                            + r'$\mathrm{\, km \, s^{-1}}$' + '\n' + r'$\sigma_{2} = \, $'
+                            + str("{0:.0f}".format(result.x[3])) + r'$\mathrm{\, km \, s^{-1}}$')
+    plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]) +
+             (1 - result.x[4]) * normalization_all * norm.pdf(rv, result.x[2], result.x[3]), '-k',
+             lw=1, alpha=1, label=r'$P_{1}N(\mu_{1}\mathrm{,} \, \sigma_{1}^2) + $'
+                                  + '\n' + r'$P_{2}N(\mu_{2}\mathrm{,} \, \sigma_{2}^2)$', zorder=-100)
     plt.xlim(-2000, 2000)
     plt.ylim(0, 12)
+    plt.yticks([2, 4, 6, 8, 10, 12])
     plt.minorticks_on()
     plt.xlabel(r'$\Delta v [\mathrm{km \; s^{-1}}]$', size=20)
     plt.ylabel(r'$\mathrm{Numbers}$', size=20)
@@ -274,4 +251,4 @@ def PlotVelDis():
     plt.savefig(path_savefig + 'galaxy_velocity_all', bbox_inches='tight')
 
 
-# PlotVelDis()
+PlotVelDis()

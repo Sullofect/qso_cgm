@@ -72,7 +72,18 @@ def app2abs(m_app=None, z=None, model=None, filter_o=None, filter_e=None):
     K = KC(z=z, model=model, filter_o=filter_o, filter_e=filter_e)
 
     # Combine apparent magnitude, distance modulus, and kcorrection to get absolute magnitude
-    abs = m_app - DM - K
-    return abs
+    m_abs = m_app - DM - K
+    return m_abs
+
+def abs2app(m_abs=None, z=None, model=None, filter_o=None, filter_e=None):
+    # Get the kcorrection term
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    d_l = cosmo.luminosity_distance(z).to(u.pc).value
+    DM = 5 * np.log10(d_l / 10)
+    K = KC(z=z, model=model, filter_o=filter_o, filter_e=filter_e)
+
+    # Combine apparent magnitude, distance modulus, and kcorrection to get absolute magnitude
+    m_app = m_abs + DM + K
+    return m_app
 
 
