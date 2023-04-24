@@ -11,6 +11,7 @@ from astropy.table import Table
 from astropy import units as u
 from regions import PixCoord
 from astropy.cosmology import FlatLambdaCDM
+from muse_RenameGal import ReturnGalLabel
 from regions import RectangleSkyRegion, RectanglePixelRegion
 path_savefig = '/Users/lzq/Dropbox/Data/CGM_plots/'
 path_savetab = '/Users/lzq/Dropbox/Data/CGM_tables/'
@@ -175,12 +176,19 @@ sigma_red, sigma_blue = 506, 91
 M_200_red = (sigma_red / 1100) ** 3 * 1e15 / h_z
 M_200_red_test = (370 / 1100) ** 3 * 1e15 / h_z
 M_200_blue = (sigma_blue / 1100) ** 3 * 1e15 / h_z
+M_200_blue_test = (50 / 1100) ** 3 * 1e15 / h_z
 print('Halo mass are', np.format_float_scientific(M_200_red), np.format_float_scientific(M_200_blue))
 print('Halo mass test are', np.format_float_scientific(M_200_red_test),
-      np.format_float_scientific(M_200_blue))
-#
-
+      np.format_float_scientific(M_200_blue_test))
 
 # Estimate typical L star is like at z=0.63
 m_abs_Lstar = muse_kc.abs2app(m_abs=-21.5, z=0.63, model='Scd', filter_e='Bessell_B', filter_o='ACS_f814W')
 print('Apparent magnitude of L* is', m_abs_Lstar)
+
+# Use Chen+2019
+area_arcsec = np.pi * radius_array ** 2  # in arcsec ** 2
+SB_Halpha = 3 * lineRatio['flux_Hbeta'][:13] * 1e-17 / area_arcsec
+C = 1  # Clumping factor
+l = 30  # in kpc
+n_e = np.sqrt(SB_Halpha * (1 + z_qso) ** 4 / C / l / 1.7e-15)
+print(np.round(n_e, 2))
