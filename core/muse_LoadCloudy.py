@@ -18,7 +18,9 @@ def load_cloudy_nogrid(filename=None, path=None):
     NeV3346, OII3727, OII3730 = line[2], line[3], line[4]
     NeIII3869, Hdel, Hgam = line[5], line[8], line[9]
     OIII4364, HeII4687, OIII5008 = line[10], line[11], line[13]
-    data = np.vstack((NeV3346, OII3727, OII3730, OII3727 + OII3730, NeIII3869, Hdel, Hgam, OIII4364, HeII4687, OIII5008))
+    Hbeta = line[12]
+    data = np.vstack((NeV3346, OII3727, OII3730, OII3727 + OII3730, NeIII3869, Hdel, Hgam, OIII4364, HeII4687, OIII5008,
+                      Hbeta))
     return np.log10(data)
 
 
@@ -41,7 +43,7 @@ def format_cloudy(filename=None, path=None):
             output = output_j[:, :, :, np.newaxis]
         else:
             output = np.concatenate((output, output_j[:, :, :, np.newaxis]), axis=3)
-            ind =  np.concatenate((ind, ind_j[:, :, :, np.newaxis]), axis=3)
+            ind = np.concatenate((ind, ind_j[:, :, :, np.newaxis]), axis=3)
     return output, ind
 
 

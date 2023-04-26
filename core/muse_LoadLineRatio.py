@@ -30,6 +30,8 @@ def load_lineratio(region=None, deredden=True, norm='Hbeta'):
         flux_norm, dflux_norm = data_fit_info_sr['flux_OII'], data_fit_info_sr['dflux_OII']
     elif norm == 'HeII':
         flux_norm, dflux_norm = data_fit_info_sr['flux_HeII4687'], data_fit_info_sr['dflux_HeII4687']
+    elif norm == 'LHIS':
+        flux_norm, dflux_norm = 1, 1
 
     #
     print(norm, flux_norm, dflux_norm)
