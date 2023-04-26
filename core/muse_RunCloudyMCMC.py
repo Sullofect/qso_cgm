@@ -479,8 +479,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     # ax[4].plot(bins_mid, nums_cloudy, color='brown', fillstyle='full', alpha=0.5, label=r'$\rm Cloudy$',
     #            drawstyle='steps-mid')
     ax[4].hist(samples[:, 0], bins=bins_cloudy, range=(1.5, np.log10(sample_max//10 * 10 + 10)),
-               weights=weights, color='C1', histtype='stepfilled', lw=2,
-               alpha=0.6, label=r'$\rm Cloudy$')
+               weights=weights, color='C1', histtype='stepfilled', lw=2, alpha=0.6, label=r'$\rm Cloudy$')
     nums_OII, _ = np.histogram(np.log10(samples_OII[:, 0]), bins=bins_cloudy,
                                range=(1.5, np.log10(sample_max//10 * 10 + 10)))
     weights = np.ones_like(samples_OII[:, 0]) / nums_OII.max()
@@ -606,6 +605,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 #               bnds=S1_bnds, line_param=S1_param, deredden=False, mode='AGN_nouv', nums_chain=5000, nums_disc=1000)
 #
 
+
 # S1 LHIS
 S1_bnds = np.array([[-2, 2.6],
                     [-1.8, 0],
@@ -619,7 +619,7 @@ S1_param = np.array([['NeV3346', True],
                      ['HeII4687', True],
                      ['OIII5008', True]], dtype=bool)
 RunCloudyMCMC(region='S1', trial='t1_Emi', norm='LHIS', bnds=S1_bnds, line_param=S1_param, deredden=True,
-              nums_chain=2000, nums_disc=1000)
+              nums_chain=5000, nums_disc=1000)
 
 # S2
 # S2_bnds = np.array([[-2, 2.6],
