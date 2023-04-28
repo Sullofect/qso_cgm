@@ -215,7 +215,11 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
             for j in range(len(ra_array)):
                 x = regions_label[j].center.ra.degree
                 y = regions_label[j].center.dec.degree
-                gc.add_label(x, y, text_array[j], size=20)
+                if j > 9:
+                    text_j = text_array[j][:-4]
+                else:
+                    text_j = text_array[j]
+                gc.add_label(x, y, text_j, size=20)
         else:
             # gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--', linewidths=1,
             #                 alpha=0.25, zorder=10)
@@ -425,6 +429,6 @@ MakeNarrowBands(region=False)
 MakeNarrowBands(region=True)
 MakeNarrowBands(region=False, band='OIII')
 MakeNarrowBands(region=True, band='OIII')
-MakeFieldImage(label_gal=True)
-MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',
-           test=False, snr_thr=8, v_thr=np.inf, check=False)
+# MakeFieldImage(label_gal=True)
+# MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',
+#            test=False, snr_thr=8, v_thr=np.inf, check=False)

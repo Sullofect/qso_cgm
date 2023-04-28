@@ -88,12 +88,16 @@ def log_prob_LHIS(x, bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869, f_Hd
                  dlogflux_NeIII3869, dlogflux_Hdel, dlogflux_Hgam, dlogflux_OIII4364, dlogflux_HeII4687,
                  dlogflux_OIII5008, dlogflux_Hbeta):
     if mode == 'power_law' or mode == 'BB':
-        logden, logden_HIS, ratio, alpha, logz = x[0], x[1], x[2], x[3], x[4]
+        logden, logden_HIS, ratio_a, ratio_b, alpha, logz = x[0], x[1], x[2], x[3], x[4], x[5]
+        ratio_a /= 1e4
+        ratio_b /= 1e4
         if logden < bnds[0, 0] or logden > bnds[0, 1]:
             return -np.inf
         elif logden_HIS < bnds[0, 0] or logden_HIS > bnds[0, 1]:
             return -np.inf
-        elif ratio > 1 or ratio < 0:
+        elif ratio_a <= 0 or ratio_a > 10:
+            return -np.inf
+        elif ratio_b <= 0 or ratio_b > 10:
             return -np.inf
         elif alpha < bnds[1, 0] or alpha > bnds[1, 1]:
             return -np.inf
@@ -137,25 +141,40 @@ def log_prob_LHIS(x, bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869, f_Hd
             pass
 
     factor = 1 / 4 / np.pi / 1.15185925e+28 ** 2 / 1e-17
-    f_NeV3346_total = np.log10(ratio * 10 ** f_NeV3346(var_array)
-                               + (1 - ratio) * 10 ** f_NeV3346(var_array_HIS)) + np.log10(factor)
-    f_OII_total = np.log10(ratio * 10 ** f_OII(var_array)
-                           + (1 - ratio) * 10 ** f_OII(var_array_HIS)) + np.log10(factor)
-    f_NeIII3869_total = np.log10(ratio * 10 ** f_NeIII3869(var_array)
-                                 + (1 - ratio) * 10 ** f_NeIII3869(var_array_HIS)) + np.log10(factor)
-    f_Hdel_total = np.log10(ratio * 10 ** f_Hdel(var_array)
-                            + (1 - ratio) * 10 ** f_Hdel(var_array_HIS)) + np.log10(factor)
-    f_Hgam_total = np.log10(ratio * 10 ** f_Hgam(var_array)
-                            + (1 - ratio) * 10 ** f_Hgam(var_array_HIS)) + np.log10(factor)
-    f_OIII4364_total = np.log10(ratio * 10 ** f_OIII4364(var_array)
-                                + (1 - ratio) * 10 ** f_OIII4364(var_array_HIS)) + np.log10(factor)
-    f_HeII4687_total = np.log10(ratio * 10 ** f_HeII4687(var_array)
-                                + (1 - ratio) * 10 ** f_HeII4687(var_array_HIS)) + np.log10(factor)
-    f_OIII5008_total = np.log10(ratio * 10 ** f_OIII5008(var_array)
-                                + (1 - ratio) * 10 ** f_OIII5008(var_array_HIS)) + np.log10(factor)
-    f_Hbeta_total = np.log10(ratio * 10 ** f_Hbeta(var_array)
-                             + (1 - ratio) * 10 ** f_Hbeta(var_array_HIS)) + np.log10(factor)
+    f_NeV3346_total = np.log10(ratio_a * 10 ** f_NeV3346(var_array)
+                               + ratio_b * 10 ** f_NeV3346(var_array_HIS)) + np.log10(factor)
+    f_OII_total = np.log10(ratio_a * 10 ** f_OII(var_array)
+                           + ratio_b * 10 ** f_OII(var_array_HIS)) + np.log10(factor)
+    # f_OII_total = np.log10(10 ** f_OII(var_array)) + np.log10(factor)
+    f_NeIII3869_total = np.log10(ratio_a * 10 ** f_NeIII3869(var_array)
+                                 + ratio_b * 10 ** f_NeIII3869(var_array_HIS)) + np.log10(factor)
+    f_Hbeta_total = np.log10(ratio_a * 10 ** f_Hbeta(var_array)
+                             + ratio_b * 10 ** f_Hbeta(var_array_HIS)) + np.log10(factor)
+    f_Hdel_total = np.log10(ratio_a * 10 ** f_Hdel(var_array)
+                            + ratio_b * 10 ** f_Hdel(var_array_HIS)) + np.log10(factor)
+    f_Hgam_total = np.log10(ratio_a * 10 ** f_Hgam(var_array)
+                            + ratio_b * 10 ** f_Hgam(var_array_HIS)) + np.log10(factor)
+    # f_Hbeta_total = np.log10(10 ** f_Hbeta(var_array)) + np.log10(factor)
+    # f_Hdel_total = np.log10(10 ** f_Hdel(var_array)) + np.log10(factor)
+    # f_Hgam_total = np.log10(10 ** f_Hgam(var_array)) + np.log10(factor)
+    f_OIII4364_total = np.log10(ratio_a * 10 ** f_OIII4364(var_array)
+                                + ratio_b * 10 ** f_OIII4364(var_array_HIS)) + np.log10(factor)
+    f_HeII4687_total = np.log10(ratio_a * 10 ** f_HeII4687(var_array)
+                                + ratio_b * 10 ** f_HeII4687(var_array_HIS)) + np.log10(factor)
+    f_OIII5008_total = np.log10(ratio_a * 10 ** f_OIII5008(var_array)
+                                + ratio_b * 10 ** f_OIII5008(var_array_HIS)) + np.log10(factor)
+    # f_OIII5008_total = np.log10(10 ** f_OIII5008(var_array)) + np.log10(factor)
+
     #
+    # chi2_NeV3346 = ((f_NeV3346_total - f_Hbeta_total - logflux_NeV3346) / dlogflux_NeV3346) ** 2
+    # chi2_OII = ((f_OII_total - f_Hbeta_total - logflux_OII) / dlogflux_OII) ** 2
+    # chi2_NeIII3869 = ((f_NeIII3869_total - f_Hbeta_total - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
+    # chi2_Hdel = ((f_Hdel_total - f_Hbeta_total - logflux_Hdel) / dlogflux_Hdel) ** 2
+    # chi2_Hgam = ((f_Hgam_total - f_Hbeta_total - logflux_Hgam) / dlogflux_Hgam) ** 2
+    # chi2_OIII4364 = ((f_OIII4364_total - f_Hbeta_total - logflux_OIII4364) / dlogflux_OIII4364) ** 2
+    # chi2_HeII4687 = ((f_HeII4687_total - f_Hbeta_total - logflux_HeII4687) / dlogflux_HeII4687) ** 2
+    # chi2_OIII5008 = ((f_OIII5008_total - f_Hbeta_total - logflux_OIII5008) / dlogflux_OIII5008) ** 2
+
     chi2_NeV3346 = ((f_NeV3346_total - logflux_NeV3346) / dlogflux_NeV3346) ** 2
     chi2_OII = ((f_OII_total - logflux_OII) / dlogflux_OII) ** 2
     chi2_NeIII3869 = ((f_NeIII3869_total - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
@@ -166,9 +185,12 @@ def log_prob_LHIS(x, bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869, f_Hd
     chi2_OIII5008 = ((f_OIII5008_total - logflux_OIII5008) / dlogflux_OIII5008) ** 2
     chi2_Hbeta = ((f_Hbeta_total - logflux_Hbeta) / dlogflux_Hbeta) ** 2
 
-    sum_array = np.array([chi2_NeV3346, chi2_OII, chi2_NeIII3869, chi2_Hdel, chi2_Hgam, chi2_OIII4364,
+    # sum_array = np.array([chi2_NeV3346, chi2_OII, chi2_Hdel, chi2_Hgam, chi2_OIII4364,
+    #                       chi2_HeII4687, chi2_OIII5008])
+    sum_array = np.array([chi2_NeV3346, chi2_OII, chi2_Hdel, chi2_Hgam, chi2_Hbeta, chi2_OIII4364,
                           chi2_HeII4687, chi2_OIII5008])
-    return - 0.5 * np.nansum(sum_array[line_param[:, 1]] + chi2_Hbeta)
+    # sum_array = np.array([chi2_OII, chi2_OIII5008])
+    return - 0.5 * np.nansum(sum_array)
 
 
 # Default values
@@ -252,10 +274,11 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         p0 = np.array([1.8, -1.5, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
         labels = [r"$\mathrm{log_{10}(n/cm^{-3})}$", r"$\mathrm{\alpha}$", r"$\mathrm{log_{10}(Z/Z_{\odot})}$"]
         if norm == 'LHIS':
-            ndim = 5
-            p0 = np.array([1.8, 0.8, 0.5, -1.5, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
+            ndim = 6
+            p0 = np.array([1.8, 0.8, 0.5, 0.5, -1.5, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
             labels = [r"$\mathrm{log_{10}(n_{lI}/cm^{-3})}$", r"$\mathrm{log_{10}(n_{hI}/cm^{-3})}$",
-                      r"$\mathrm{Ratio}$", r"$\mathrm{\alpha}$", r"$\mathrm{log_{10}(Z/Z_{\odot})}$"]
+                      r"$\mathrm{Ratio_a}$", r"$\mathrm{Ratio_b}$", r"$\mathrm{\alpha}$",
+                      r"$\mathrm{log_{10}(Z/Z_{\odot})}$"]
     elif mode == 'BB':
         ndim = 3
         p0 = np.array([1.8, 5, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
@@ -349,34 +372,34 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         data_y2err = np.where(line_param_violin, data_y2err, 0)
 
         #
-        model_ratio = samples_draw[:, 2]
-        model = (samples_draw[:, 0], samples_draw[:, 3], samples_draw[:, 4])
-        model_HIS = (samples_draw[:, 1], samples_draw[:, 3], samples_draw[:, 4])
-        norm = np.log10(model_ratio * 10 ** f_Hbeta(model)
-                        + (1 - model_ratio) * 10 ** f_Hbeta(model_HIS))
-        model_y2 = np.array([np.log10(model_ratio * 10 ** f_OII(model)
-                                      + (1 - model_ratio) * 10 ** f_OII(model_HIS)) - norm,
-                             np.log10(model_ratio * 10 ** f_OIII5008(model)
-                                      + (1 - model_ratio) * 10 ** f_OIII5008(model_HIS)) - norm,
-                             np.log10(model_ratio * 10 ** f_HeII4687(model)
-                                      + (1 - model_ratio) * 10 ** f_HeII4687(model_HIS)) - norm,
-                             np.log10(model_ratio * 10 ** f_NeV3346(model)
-                                      + (1 - model_ratio) * 10 ** f_NeV3346(model_HIS)) - norm])
+        model_ratio_a = samples_draw[:, 2] / 1e4
+        model_ratio_b = samples_draw[:, 3] / 1e4
+        model = (samples_draw[:, 0], samples_draw[:, 4], samples_draw[:, 5])
+        model_HIS = (samples_draw[:, 1], samples_draw[:, 4], samples_draw[:, 5])
+        norm_Hbeta = np.log10(model_ratio_a * 10 ** f_Hbeta(model) + model_ratio_b * 10 ** f_Hbeta(model_HIS))
+        model_y2 = np.array([np.log10(model_ratio_a * 10 ** f_OII(model)
+                                      + model_ratio_b * 10 ** f_OII(model_HIS)) - norm_Hbeta,
+                             np.log10(model_ratio_a * 10 ** f_OIII5008(model)
+                                      + model_ratio_b * 10 ** f_OIII5008(model_HIS)) - norm_Hbeta,
+                             np.log10(model_ratio_a * 10 ** f_HeII4687(model)
+                                      + model_ratio_b * 10 ** f_HeII4687(model_HIS)) - norm_Hbeta,
+                             np.log10(model_ratio_a * 10 ** f_NeV3346(model)
+                                      + model_ratio_b * 10 ** f_NeV3346(model_HIS)) - norm_Hbeta])
         #
         if line_param[5, 1]:
-            model_y1 = [np.log10(model_ratio * 10 ** f_OII3730(model)
-                                 + (1 - model_ratio) * 10 ** f_OII3730(model_HIS))
-                        - np.log10(model_ratio * 10 ** f_OII3727(model)
-                                   + (1 - model_ratio) * 10 ** f_OII3727(model_HIS)),
-                        np.log10(model_ratio * 10 ** f_OIII4364(model)
-                                 + (1 - model_ratio) * 10 ** f_OIII4364(model_HIS))
-                        - np.log10(model_ratio * 10 ** f_OIII5008(model))
-                        + (1 - model_ratio) * 10 ** f_OIII5008(model_HIS)]
+            model_y1 = [np.log10(model_ratio_a * 10 ** f_OII3730(model)
+                                 + model_ratio_b * 10 ** f_OII3730(model_HIS))
+                        - np.log10(model_ratio_a * 10 ** f_OII3727(model)
+                                   + model_ratio_b * 10 ** f_OII3727(model_HIS)),
+                        np.log10(model_ratio_a * 10 ** f_OIII4364(model)
+                                 + model_ratio_b * 10 ** f_OIII4364(model_HIS))
+                        - np.log10(model_ratio_a * 10 ** f_OIII5008(model)
+                        + model_ratio_b * 10 ** f_OIII5008(model_HIS))]
         else:
-            model_y1 = [np.log10(model_ratio * 10 ** f_OII3730(model)
-                                 + (1 - model_ratio) * 10 ** f_OII3730(model_HIS))
-                        - np.log10(model_ratio * 10 ** f_OII3727(model)
-                                   + (1 - model_ratio) * 10 ** f_OII3727(model_HIS)),
+            model_y1 = [np.log10(model_ratio_a * 10 ** f_OII3730(model)
+                                 + model_ratio_b * 10 ** f_OII3730(model_HIS))
+                        - np.log10(model_ratio_a * 10 ** f_OII3727(model)
+                                   + model_ratio_b * 10 ** f_OII3727(model_HIS)),
                         np.nan * np.zeros(len(f_OII3727(model)))]
 
     else:
@@ -439,10 +462,8 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
                                         r'$\mathrm{\frac{He \, II}{He \, II}}$',
                                         r'$\mathrm{\frac{[Ne \, V]}{He \, II}}$'])
     elif norm == 'LHIS':
-        ax[2].set_xticks(data_x2_plot, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$',
-                                        r'$\mathrm{\frac{[O \, III]}{He \, II}}$',
-                                        r'$\mathrm{\frac{He \, II}{He \, II}}$',
-                                        r'$\mathrm{\frac{[Ne \, V]}{He \, II}}$'])
+        ax[2].set_xticks(data_x2_plot, [r'$\mathrm{\frac{[O \, II]}{H\beta}}$', r'$\mathrm{\frac{[O \, III]}{H\beta}}$',
+                                        r'$\mathrm{\frac{He \, II}{H\beta}}$', r'$\mathrm{\frac{[Ne \, V]}{H\beta}}$'])
     ax[2].annotate(r'$13.6\mathrm{eV}$', xy=(0.30, 0.87), xycoords='subfigure fraction', size=15)
     ax[2].annotate(r'$35.1\mathrm{eV}$', xy=(0.43, 0.87), xycoords='subfigure fraction', size=15)
     ax[2].annotate(r'$54.4\mathrm{eV}$', xy=(0.56, 0.87), xycoords='subfigure fraction', size=15)
