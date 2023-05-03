@@ -3,7 +3,6 @@ import emcee
 import corner
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 from matplotlib import rc
 from scipy import interpolate
 from matplotlib.ticker import FormatStrFormatter
@@ -87,110 +86,132 @@ def log_prob_LHIS(x, bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869, f_Hd
                  logflux_OIII4364, logflux_HeII4687, logflux_OIII5008, logflux_Hbeta, dlogflux_NeV3346, dlogflux_OII,
                  dlogflux_NeIII3869, dlogflux_Hdel, dlogflux_Hgam, dlogflux_OIII4364, dlogflux_HeII4687,
                  dlogflux_OIII5008, dlogflux_Hbeta):
-    if mode == 'power_law' or mode == 'BB':
-        logden, logden_HIS, ratio_a, ratio_b, alpha, logz = x[0], x[1], x[2], x[3], x[4], x[5]
-        ratio_a /= 1e4
-        ratio_b /= 1e4
-        if logden < bnds[0, 0] or logden > bnds[0, 1]:
-            return -np.inf
-        elif logden_HIS < bnds[0, 0] or logden_HIS > bnds[0, 1]:
-            return -np.inf
-        elif ratio_a <= 0 or ratio_a > 10:
-            return -np.inf
-        elif ratio_b <= 0 or ratio_b > 10:
-            return -np.inf
-        elif alpha < bnds[1, 0] or alpha > bnds[1, 1]:
-            return -np.inf
-        elif logz < bnds[2, 0] or logz > bnds[2, 1]:
-            return -np.inf
-        else:
-            var_array = (logden, alpha, logz)
-            var_array_HIS = (logden_HIS, alpha, logz)
-            pass
-    elif mode == 'AGN':
-        logden, logz, logT, alpha_ox, alpha_uv, alpha_x = x[0], x[1], x[2], x[3], x[4], x[5]
-        if logden < bnds[0, 0] or logden > bnds[0, 1]:
-            return -np.inf
-        elif logz < bnds[1, 0] or logz > bnds[1, 1]:
-            return -np.inf
-        elif logT < bnds[2, 0] or logT > bnds[2, 1]:
-            return -np.inf
-        elif alpha_ox < bnds[3, 0] or alpha_ox > bnds[3, 1]:
-            return -np.inf
-        elif alpha_uv < bnds[4, 0] or alpha_uv > bnds[4, 1]:
-            return -np.inf
-        elif alpha_x < bnds[5, 0] or alpha_x > bnds[5, 1]:
-            return -np.inf
-        else:
-            var_array = (logden, logz, logT, alpha_ox, alpha_uv, alpha_x)
-            pass
-    elif mode == 'AGN_nouv':
-        logden, logz, logT, alpha_ox, alpha_x = x[0], x[1], x[2], x[3], x[4]
-        if logden < bnds[0, 0] or logden > bnds[0, 1]:
-            return -np.inf
-        elif logz < bnds[1, 0] or logz > bnds[1, 1]:
-            return -np.inf
-        elif logT < bnds[2, 0] or logT > bnds[2, 1]:
-            return -np.inf
-        elif alpha_ox < bnds[3, 0] or alpha_ox > bnds[3, 1]:
-            return -np.inf
-        elif alpha_x < bnds[5, 0] or alpha_x > bnds[5, 1]:
-            return -np.inf
-        else:
-            var_array = (logden, logz, logT, alpha_ox, alpha_x)
-            pass
+    # if mode == 'power_law' or mode == 'BB':
+    logden, logden_HIS, ratio_a, ratio_b, alpha, logz = x[0], x[1], x[2], x[3], x[4], x[5]
+    a_ab = ratio_a / (ratio_a + ratio_b)
+    b_ab = ratio_b / (ratio_a + ratio_b)
+    # ratio_a /= 1e4
+    # ratio_b /= 1e4
+    # if alpha < -0.5 or alpha > -0.1:
+    #     L = -np.inf
+        # return -np.inf
+    if logden < bnds[0, 0] or logden > bnds[0, 1]:
+        L = -np.inf
+        # return -np.inf
+    elif logden_HIS < bnds[0, 0] or logden_HIS > bnds[0, 1]:
+        L = -np.inf
+        # return -np.inf
+    elif logden < logden_HIS:
+        L = -np.inf
+    # elif ratio_a <= 0.0 or ratio_a > 1e7:
+    #     L = -np.inf
+    #     # return -np.inf
+    # elif ratio_b <= 0.0 or ratio_a > 1e7:
+    #     L = -np.inf
+        # return -np.inf
+    elif a_ab < 0.1:
+        L = -np.inf
+    elif b_ab < 0.1:
+        L = -np.inf
+    elif alpha < bnds[1, 0] or alpha > bnds[1, 1]:
+        L = -np.inf
+        # return -np.inf
+    elif logz < bnds[2, 0] or logz > bnds[2, 1]:
+        L = -np.inf
+        # return -np.inf
+    else:
+        var_array = (logden, alpha, logz)
+        var_array_HIS = (logden_HIS, alpha, logz)
+    #         pass
+    # elif mode == 'AGN':
+    #     logden, logz, logT, alpha_ox, alpha_uv, alpha_x = x[0], x[1], x[2], x[3], x[4], x[5]
+    #     if logden < bnds[0, 0] or logden > bnds[0, 1]:
+    #         return -np.inf
+    #     elif logz < bnds[1, 0] or logz > bnds[1, 1]:
+    #         return -np.inf
+    #     elif logT < bnds[2, 0] or logT > bnds[2, 1]:
+    #         return -np.inf
+    #     elif alpha_ox < bnds[3, 0] or alpha_ox > bnds[3, 1]:
+    #         return -np.inf
+    #     elif alpha_uv < bnds[4, 0] or alpha_uv > bnds[4, 1]:
+    #         return -np.inf
+    #     elif alpha_x < bnds[5, 0] or alpha_x > bnds[5, 1]:
+    #         return -np.inf
+    #     else:
+    #         var_array = (logden, logz, logT, alpha_ox, alpha_uv, alpha_x)
+    #         pass
+    # elif mode == 'AGN_nouv':
+    #     logden, logz, logT, alpha_ox, alpha_x = x[0], x[1], x[2], x[3], x[4]
+    #     if logden < bnds[0, 0] or logden > bnds[0, 1]:
+    #         return -np.inf
+    #     elif logz < bnds[1, 0] or logz > bnds[1, 1]:
+    #         return -np.inf
+    #     elif logT < bnds[2, 0] or logT > bnds[2, 1]:
+    #         return -np.inf
+    #     elif alpha_ox < bnds[3, 0] or alpha_ox > bnds[3, 1]:
+    #         return -np.inf
+    #     elif alpha_x < bnds[5, 0] or alpha_x > bnds[5, 1]:
+    #         return -np.inf
+    #     else:
+    #         var_array = (logden, logz, logT, alpha_ox, alpha_x)
+    #         pass
 
-    factor = 1 / 4 / np.pi / 1.15185925e+28 ** 2 / 1e-17
-    f_NeV3346_total = np.log10(ratio_a * 10 ** f_NeV3346(var_array)
-                               + ratio_b * 10 ** f_NeV3346(var_array_HIS)) + np.log10(factor)
-    f_OII_total = np.log10(ratio_a * 10 ** f_OII(var_array)
-                           + ratio_b * 10 ** f_OII(var_array_HIS)) + np.log10(factor)
-    # f_OII_total = np.log10(10 ** f_OII(var_array)) + np.log10(factor)
-    f_NeIII3869_total = np.log10(ratio_a * 10 ** f_NeIII3869(var_array)
-                                 + ratio_b * 10 ** f_NeIII3869(var_array_HIS)) + np.log10(factor)
-    f_Hbeta_total = np.log10(ratio_a * 10 ** f_Hbeta(var_array)
-                             + ratio_b * 10 ** f_Hbeta(var_array_HIS)) + np.log10(factor)
-    f_Hdel_total = np.log10(ratio_a * 10 ** f_Hdel(var_array)
-                            + ratio_b * 10 ** f_Hdel(var_array_HIS)) + np.log10(factor)
-    f_Hgam_total = np.log10(ratio_a * 10 ** f_Hgam(var_array)
-                            + ratio_b * 10 ** f_Hgam(var_array_HIS)) + np.log10(factor)
-    # f_Hbeta_total = np.log10(10 ** f_Hbeta(var_array)) + np.log10(factor)
-    # f_Hdel_total = np.log10(10 ** f_Hdel(var_array)) + np.log10(factor)
-    # f_Hgam_total = np.log10(10 ** f_Hgam(var_array)) + np.log10(factor)
-    f_OIII4364_total = np.log10(ratio_a * 10 ** f_OIII4364(var_array)
-                                + ratio_b * 10 ** f_OIII4364(var_array_HIS)) + np.log10(factor)
-    f_HeII4687_total = np.log10(ratio_a * 10 ** f_HeII4687(var_array)
-                                + ratio_b * 10 ** f_HeII4687(var_array_HIS)) + np.log10(factor)
-    f_OIII5008_total = np.log10(ratio_a * 10 ** f_OIII5008(var_array)
-                                + ratio_b * 10 ** f_OIII5008(var_array_HIS)) + np.log10(factor)
-    # f_OIII5008_total = np.log10(10 ** f_OIII5008(var_array)) + np.log10(factor)
+        factor = 1 / 4 / np.pi / 1.15185925e+28 ** 2 / 1e-17
+        f_NeV3346_total = np.log10(ratio_a * 10 ** f_NeV3346(var_array)
+                                   + ratio_b * 10 ** f_NeV3346(var_array_HIS)) + np.log10(factor)
+        f_OII_total = np.log10(ratio_a * 10 ** f_OII(var_array)
+                               + ratio_b * 10 ** f_OII(var_array_HIS)) + np.log10(factor)
+        # f_OII_total = np.log10(10 ** f_OII(var_array)) + np.log10(factor)
+        f_NeIII3869_total = np.log10(ratio_a * 10 ** f_NeIII3869(var_array)
+                                     + ratio_b * 10 ** f_NeIII3869(var_array_HIS)) + np.log10(factor)
+        f_Hbeta_total = np.log10(ratio_a * 10 ** f_Hbeta(var_array)
+                                 + ratio_b * 10 ** f_Hbeta(var_array_HIS)) + np.log10(factor)
+        f_Hdel_total = np.log10(ratio_a * 10 ** f_Hdel(var_array)
+                                + ratio_b * 10 ** f_Hdel(var_array_HIS)) + np.log10(factor)
+        f_Hgam_total = np.log10(ratio_a * 10 ** f_Hgam(var_array)
+                                + ratio_b * 10 ** f_Hgam(var_array_HIS)) + np.log10(factor)
+        # f_Hbeta_total = np.log10(10 ** f_Hbeta(var_array)) + np.log10(factor)
+        # f_Hdel_total = np.log10(10 ** f_Hdel(var_array)) + np.log10(factor)
+        # f_Hgam_total = np.log10(10 ** f_Hgam(var_array)) + np.log10(factor)
+        f_OIII4364_total = np.log10(ratio_a * 10 ** f_OIII4364(var_array)
+                                    + ratio_b * 10 ** f_OIII4364(var_array_HIS)) + np.log10(factor)
+        f_HeII4687_total = np.log10(ratio_a * 10 ** f_HeII4687(var_array)
+                                    + ratio_b * 10 ** f_HeII4687(var_array_HIS)) + np.log10(factor)
+        f_OIII5008_total = np.log10(ratio_a * 10 ** f_OIII5008(var_array)
+                                    + ratio_b * 10 ** f_OIII5008(var_array_HIS)) + np.log10(factor)
+        # f_OIII5008_total = np.log10(10 ** f_OIII5008(var_array)) + np.log10(factor)
 
-    #
-    # chi2_NeV3346 = ((f_NeV3346_total - f_Hbeta_total - logflux_NeV3346) / dlogflux_NeV3346) ** 2
-    # chi2_OII = ((f_OII_total - f_Hbeta_total - logflux_OII) / dlogflux_OII) ** 2
-    # chi2_NeIII3869 = ((f_NeIII3869_total - f_Hbeta_total - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
-    # chi2_Hdel = ((f_Hdel_total - f_Hbeta_total - logflux_Hdel) / dlogflux_Hdel) ** 2
-    # chi2_Hgam = ((f_Hgam_total - f_Hbeta_total - logflux_Hgam) / dlogflux_Hgam) ** 2
-    # chi2_OIII4364 = ((f_OIII4364_total - f_Hbeta_total - logflux_OIII4364) / dlogflux_OIII4364) ** 2
-    # chi2_HeII4687 = ((f_HeII4687_total - f_Hbeta_total - logflux_HeII4687) / dlogflux_HeII4687) ** 2
-    # chi2_OIII5008 = ((f_OIII5008_total - f_Hbeta_total - logflux_OIII5008) / dlogflux_OIII5008) ** 2
+        #
+        chi2_NeV3346 = ((f_NeV3346_total - f_Hbeta_total - logflux_NeV3346) / dlogflux_NeV3346) ** 2
+        chi2_OII = ((f_OII_total - f_Hbeta_total - logflux_OII) / dlogflux_OII) ** 2
+        chi2_NeIII3869 = ((f_NeIII3869_total - f_Hbeta_total - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
+        chi2_Hdel = ((f_Hdel_total - f_Hbeta_total - logflux_Hdel) / dlogflux_Hdel) ** 2
+        chi2_Hgam = ((f_Hgam_total - f_Hbeta_total - logflux_Hgam) / dlogflux_Hgam) ** 2
+        chi2_OIII4364 = ((f_OIII4364_total - f_Hbeta_total - logflux_OIII4364) / dlogflux_OIII4364) ** 2
+        chi2_HeII4687 = ((f_HeII4687_total - f_Hbeta_total - logflux_HeII4687) / dlogflux_HeII4687) ** 2
+        chi2_OIII5008 = ((f_OIII5008_total - f_Hbeta_total - logflux_OIII5008) / dlogflux_OIII5008) ** 2
 
-    chi2_NeV3346 = ((f_NeV3346_total - logflux_NeV3346) / dlogflux_NeV3346) ** 2
-    chi2_OII = ((f_OII_total - logflux_OII) / dlogflux_OII) ** 2
-    chi2_NeIII3869 = ((f_NeIII3869_total - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
-    chi2_Hdel = ((f_Hdel_total - logflux_Hdel) / dlogflux_Hdel) ** 2
-    chi2_Hgam = ((f_Hgam_total - logflux_Hgam) / dlogflux_Hgam) ** 2
-    chi2_OIII4364 = ((f_OIII4364_total - logflux_OIII4364) / dlogflux_OIII4364) ** 2
-    chi2_HeII4687 = ((f_HeII4687_total - logflux_HeII4687) / dlogflux_HeII4687) ** 2
-    chi2_OIII5008 = ((f_OIII5008_total - logflux_OIII5008) / dlogflux_OIII5008) ** 2
-    chi2_Hbeta = ((f_Hbeta_total - logflux_Hbeta) / dlogflux_Hbeta) ** 2
-
-    # sum_array = np.array([chi2_NeV3346, chi2_OII, chi2_Hdel, chi2_Hgam, chi2_OIII4364,
-    #                       chi2_HeII4687, chi2_OIII5008])
-    sum_array = np.array([chi2_NeV3346, chi2_OII, chi2_Hdel, chi2_Hgam, chi2_Hbeta, chi2_OIII4364,
-                          chi2_HeII4687, chi2_OIII5008])
-    # sum_array = np.array([chi2_OII, chi2_OIII5008])
-    return - 0.5 * np.nansum(sum_array)
+        # chi2_NeV3346 = ((f_NeV3346_total - logflux_NeV3346) / dlogflux_NeV3346) ** 2
+        # # print(chi2_NeV3346)
+        # chi2_OII = ((f_OII_total - logflux_OII) / dlogflux_OII) ** 2
+        # chi2_NeIII3869 = ((f_NeIII3869_total - logflux_NeIII3869) / dlogflux_NeIII3869) ** 2
+        # chi2_Hdel = ((f_Hdel_total - logflux_Hdel) / dlogflux_Hdel) ** 2
+        # chi2_Hgam = ((f_Hgam_total - logflux_Hgam) / dlogflux_Hgam) ** 2
+        # chi2_OIII4364 = ((f_OIII4364_total - logflux_OIII4364) / dlogflux_OIII4364) ** 2
+        # chi2_HeII4687 = ((f_HeII4687_total - logflux_HeII4687) / dlogflux_HeII4687) ** 2
+        # chi2_OIII5008 = ((f_OIII5008_total - logflux_OIII5008) / dlogflux_OIII5008) ** 2
+        # chi2_Hbeta = ((f_Hbeta_total - logflux_Hbeta) / dlogflux_Hbeta) ** 2
+        # print(chi2_OII)
+        sum_array = np.array([chi2_NeV3346, chi2_OII, chi2_Hdel, chi2_Hgam, chi2_OIII4364,
+                              chi2_HeII4687, chi2_OIII5008])
+        # sum_array = np.array([chi2_NeV3346, chi2_OII, chi2_Hdel, chi2_Hgam, chi2_Hbeta, chi2_OIII4364,
+        #                       chi2_HeII4687, chi2_OIII5008])
+        # sum_array = np.array([chi2_OII, chi2_OIII5008])
+        L = - 0.5 * np.nansum(sum_array)
+        if L == 0:
+            L = -np.inf
+        # print(L)
+    return L
 
 
 # Default values
@@ -275,9 +296,9 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         labels = [r"$\mathrm{log_{10}(n/cm^{-3})}$", r"$\mathrm{\alpha}$", r"$\mathrm{log_{10}(Z/Z_{\odot})}$"]
         if norm == 'LHIS':
             ndim = 6
-            p0 = np.array([1.8, 0.8, 0.5, 0.5, -1.5, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
+            p0 = np.array([1.8, 0.8, 0.9, 0.5, -1.4, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
             labels = [r"$\mathrm{log_{10}(n_{lI}/cm^{-3})}$", r"$\mathrm{log_{10}(n_{hI}/cm^{-3})}$",
-                      r"$\mathrm{Ratio_a}$", r"$\mathrm{Ratio_b}$", r"$\mathrm{\alpha}$",
+                      r"$\mathrm{\frac{a}{a + b}}$", r"$\mathrm{\frac{b}{a + b}}$", r"$\mathrm{\alpha}$",
                       r"$\mathrm{log_{10}(Z/Z_{\odot})}$"]
     elif mode == 'BB':
         ndim = 3
@@ -304,6 +325,10 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 
     if os.path.exists(filename):
         samples = backend.get_chain(flat=True, discard=nums_disc)
+        samples_corner = np.copy(samples)
+        if norm == 'LHIS':
+            samples_corner[:, 2] = samples[:, 2] / (samples[:, 2] + samples[:, 3])
+            samples_corner[:, 3] = samples[:, 3] / (samples[:, 2] + samples[:, 3])
     else:
         if norm == 'LHIS':
             args = (bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869, f_Hdel, f_Hgam, f_OIII4364, f_HeII4687,
@@ -312,6 +337,11 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
                     dlogflux_OII, dlogflux_NeIII3869, dlogflux_Hdel, dlogflux_Hgam, dlogflux_OIII4364,
                     dlogflux_HeII4687, dlogflux_OIII5008, dlogflux_Hbeta)
             sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob_LHIS, args=args, backend=backend)
+            state = sampler.run_mcmc(p0, nums_chain)
+            samples = sampler.get_chain(flat=True, discard=nums_disc)
+            samples_corner = np.copy(samples)
+            samples_corner[:, 2] = samples[:, 2] / (samples[:, 2] + samples[:, 3])
+            samples_corner[:, 3] = samples[:, 3] / (samples[:, 2] + samples[:, 3])
         else:
             args = (bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869, f_Hdel, f_Hgam, f_OIII4364,
                     f_HeII4687, f_OIII5008, logflux_NeV3346, logflux_OII, logflux_NeIII3869, logflux_Hdel, logflux_Hgam,
@@ -319,10 +349,11 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
                     dlogflux_NeIII3869, dlogflux_Hdel, dlogflux_Hgam, dlogflux_OIII4364,
                     dlogflux_HeII4687, dlogflux_OIII5008)
             sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=args, backend=backend)
-        state = sampler.run_mcmc(p0, nums_chain)
-        samples = sampler.get_chain(flat=True, discard=nums_disc)
+            state = sampler.run_mcmc(p0, nums_chain)
+            samples = sampler.get_chain(flat=True, discard=nums_disc)
+            samples_corner = np.copy(samples)
 
-    figure = corner.corner(samples, labels=labels, quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k',
+    figure = corner.corner(samples_corner, labels=labels, quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k',
                            title_kwargs={"fontsize": 13}, smooth=1., smooth1d=1., bins=25)
 
     for i, ax in enumerate(figure.get_axes()):
@@ -345,7 +376,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     data_x1 = [0, 4]
     data_x2 = [E_OII / E_Hbeta, E_OIII5008 / E_Hbeta - 0.5, E_HeII4687 / E_Hbeta + 0.3, E_NeV3346 / E_Hbeta - 2]
     data_x2_plot = np.arange(1, 5, 1)
-    draw = np.random.choice(len(samples), size=500, replace=False)
+    draw = np.random.choice(len(samples), size=4000, replace=False)
     samples_draw = samples[draw]
     #
     if line_param[5, 1]:
@@ -372,8 +403,8 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         data_y2err = np.where(line_param_violin, data_y2err, 0)
 
         #
-        model_ratio_a = samples_draw[:, 2] / 1e4
-        model_ratio_b = samples_draw[:, 3] / 1e4
+        model_ratio_a = samples_draw[:, 2]
+        model_ratio_b = samples_draw[:, 3]
         model = (samples_draw[:, 0], samples_draw[:, 4], samples_draw[:, 5])
         model_HIS = (samples_draw[:, 1], samples_draw[:, 4], samples_draw[:, 5])
         norm_Hbeta = np.log10(model_ratio_a * 10 ** f_Hbeta(model) + model_ratio_b * 10 ** f_Hbeta(model_HIS))
@@ -385,6 +416,19 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
                                       + model_ratio_b * 10 ** f_HeII4687(model_HIS)) - norm_Hbeta,
                              np.log10(model_ratio_a * 10 ** f_NeV3346(model)
                                       + model_ratio_b * 10 ** f_NeV3346(model_HIS)) - norm_Hbeta])
+        OII_ratio = model_ratio_a * 10 ** f_OII(model) / (model_ratio_a * 10 ** f_OII(model)
+                                                          + model_ratio_b * 10 ** f_OII(model_HIS))
+        OIII_ratio = model_ratio_a * 10 ** f_OIII5008(model) / (model_ratio_a * 10 ** f_OIII5008(model)
+                                                          + model_ratio_b * 10 ** f_OIII5008(model_HIS))
+        plt.figure(figsize=(3, 3), dpi=300)
+        plt.hist(OII_ratio, histtype='step', label='[O II]')
+        plt.hist(OIII_ratio, label='[O III]')
+        plt.legend()
+        plt.xlabel(r'$\rm [O \, II] HighDen/AllDen$')
+        plt.ylabel(r'Number of chain')
+        plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial +
+                    '_OII_ratio_check.png', bbox_inches='tight')
+
         #
         if line_param[5, 1]:
             model_y1 = [np.log10(model_ratio_a * 10 ** f_OII3730(model)
@@ -774,6 +818,22 @@ RunCloudyMCMC(region='S1', trial='t1_Emi', norm='LHIS', bnds=S1_bnds, line_param
 # RunCloudyMCMC(den_array=Hden_ext, region='S6', trial='t1', bnds=S6_bnds, line_param=S6_param, deredden=True)
 # RunCloudyMCMC(region='S6', trial='t2', bnds=S6_bnds, line_param=S6_param, deredden=True)
 
+# S6 LHIS
+S6_bnds = np.array([[-2, 3.4],
+                    [-1.8, 0],
+                    [-1.5, 0.5]])
+S6_param = np.array([['NeV3346', True],
+                     ['OII', True],
+                     ['NeIII3869', False],
+                     ['Hdel', True],
+                     ['Hgam', True],
+                     ['OIII4364', True],
+                     ['HeII4687', True],
+                     ['OIII5008', True]], dtype=bool)
+Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 3.4, 4, dtype='f2')))
+# RunCloudyMCMC(den_array=Hden_ext, region='S6', trial='t1_Emi', norm='LHIS', bnds=S6_bnds, line_param=S6_param,
+#               deredden=True, nums_chain=5000, nums_disc=1000)
+
 # S6 low ionizaton
 # S6_param = np.array([['NeV3346', False],
 #                      ['OII', True],
@@ -967,3 +1027,31 @@ RunCloudyMCMC(region='S1', trial='t1_Emi', norm='LHIS', bnds=S1_bnds, line_param
 #                      ['HeII4687', False],
 #                      ['OIII5008', True]], dtype=bool)
 # RunCloudyMCMC(region='B3', trial='t1', bnds=B3_bnds, line_param=B3_param, deredden=True, norm='OII')
+
+# B3_new
+B3_new_bnds = np.array([[-2, 4.6],
+                    [-1.8, 0],
+                    [-1.5, 0.5]])
+B3_new_param = np.array([['NeV3346', False],
+                     ['OII', True],
+                     ['NeIII3869', False],
+                     ['Hdel', False],
+                     ['Hgam', False],
+                     ['OIII4364', False],
+                     ['HeII4687', False],
+                     ['OIII5008', True]], dtype=bool)
+# RunCloudyMCMC(region='B3_new', trial='t1_Emi', bnds=B3_new_bnds, line_param=B3_new_param, deredden=True, norm='OII')
+
+# B4_new
+B4_new_bnds = np.array([[-2, 4.6],
+                    [-1.8, 0],
+                    [-1.5, 0.5]])
+B4_new_param = np.array([['NeV3346', False],
+                     ['OII', True],
+                     ['NeIII3869', False],
+                     ['Hdel', False],
+                     ['Hgam', False],
+                     ['OIII4364', False],
+                     ['HeII4687', False],
+                     ['OIII5008', True]], dtype=bool)
+# RunCloudyMCMC(region='B4_new', trial='t1_Emi', bnds=B4_new_bnds, line_param=B4_new_param, deredden=True, norm='OII')

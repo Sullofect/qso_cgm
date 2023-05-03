@@ -101,10 +101,16 @@ z_qso = 0.6282144177077355
 lineRatio = Table.read('/Users/lzq/Dropbox/Data/CGM/RegionLinesRatio/'
                        'RegionLinesRatio_dered.fits')
 v_gas = 3e5 * (lineRatio['z'] - z_qso) / (1 + z_qso)
+dv_gas = np.sqrt((3e5 * (lineRatio['dz']) / (1 + z_qso)) ** 2 + 3 ** 2) # Weilbacher+2020
+dsigma_gas = np.sqrt(lineRatio['dsigma'] ** 2 + 4 ** 2)  # Kamann+2016
 lineRatio_S3S4 = Table.read('/Users/lzq/Dropbox/Data/CGM/RegionLinesRatio/'
                             'RegionLinesRatio_S3S4_dered.fits')
 v_gas_S3S4 = 3e5 * (lineRatio_S3S4['z'] - z_qso) / (1 + z_qso)
+dv_gas_S3S4 = np.sqrt((3e5 * (lineRatio_S3S4['dz']) / (1 + z_qso)) ** 2 + 3 ** 2)
+dsigma_S3S4 = np.sqrt(lineRatio_S3S4['dsigma'] ** 2 + 4 ** 2)
 v_gas_S3S4_wing = 3e5 * (lineRatio_S3S4['z'] + lineRatio_S3S4['dz_wing'] - z_qso) / (1 + z_qso)
+dv_gas_S3S4_wing = np.sqrt((3e5 * (lineRatio_S3S4['ddz_wing']) / (1 + z_qso)) ** 2 + 3 ** 2)
+dsigma_S3S4_wing = np.sqrt(lineRatio_S3S4['dsigma_wing'] ** 2 + 4 ** 2)
 # print('flux in [O II]', np.round(lineRatio['flux_OII'], 2))
 # print('flux in Hbeta', np.round(lineRatio['flux_Hbeta'], 2))
 # print('flux in [O III]]', np.round(lineRatio['flux_OIII5008'], 2))
@@ -119,8 +125,8 @@ v_gas_S3S4_wing = 3e5 * (lineRatio_S3S4['z'] + lineRatio_S3S4['dz_wing'] - z_qso
 # print('dflux in [Ne V]]', np.round(lineRatio['dflux_NeV3346'], 2))
 # print('dflux in [O III]]', np.round(lineRatio['dflux_OIII4364'], 2))
 # print('dflux in [He II]]', np.round(lineRatio['dflux_HeII4687'], 2))
-# print('LOS velocity is', np.round(v_gas, 0))
-# print('LOS velocity dispersion is', np.round(lineRatio['sigma'], 0))
+print('LOS velocity is', np.round(v_gas, 0), np.round(dv_gas, 0))
+print('LOS velocity dispersion is', np.round(lineRatio['sigma'], 0), np.round(dsigma_gas, 0))
 
 # S3 S4 Account for the wing
 print('flux in [O II] S3 S4', np.round(lineRatio_S3S4['flux_OII'], 2))
@@ -151,10 +157,10 @@ print('dflux in [Ne V]] S3 S4 wing', np.round(lineRatio_S3S4['dflux_NeV3346_wing
 print('dflux in [O III]] S3 S4 wing', np.round(lineRatio_S3S4['dflux_OIII4364_wing'], 2))
 print('dflux in [He II]] S3 S4 wing', np.round(lineRatio_S3S4['dflux_HeII4687_wing'], 2))
 
-print('LOS velocity of S3 S4 is', np.round(v_gas_S3S4, 0))
-print('LOS velocity of S3 S4 wing is', np.round(v_gas_S3S4_wing, 0))
-print('LOS velocity dispersion of S3 S4 is', np.round(lineRatio_S3S4['sigma'], 0))
-print('LOS velocity dispersion of S3 S4 wing is', np.round(lineRatio_S3S4['sigma_wing'], 0))
+print('LOS velocity of S3 S4 is', np.round(v_gas_S3S4, 0), np.round(dv_gas_S3S4, 0))
+print('LOS velocity of S3 S4 wing is', np.round(v_gas_S3S4_wing, 0), np.round(dv_gas_S3S4_wing, 0))
+print('LOS velocity dispersion of S3 S4 is', np.round(lineRatio_S3S4['sigma'], 0), np.round(dsigma_S3S4, 0))
+print('LOS velocity dispersion of S3 S4 wing is', np.round(lineRatio_S3S4['sigma_wing'], 0), np.round(dsigma_S3S4_wing, 0))
 
 # Ratio between Hgamma, Hdelta
 print('Balmer line Hgam / Hbeta ratio', np.round(lineRatio['flux_Hgam'] / lineRatio['flux_Hbeta'], 2))
@@ -187,7 +193,7 @@ print('Apparent magnitude of L* is', m_abs_Lstar)
 
 # Use Chen+2019
 area_arcsec = np.pi * radius_array ** 2  # in arcsec ** 2
-SB_Halpha = 3 * lineRatio['flux_Hbeta'][:13] * 1e-17 / area_arcsec
+SB_Halpha = 3 * lineRatio['flux_Hbeta'] * 1e-17 / area_arcsec
 C = 1  # Clumping factor
 l = 30  # in kpc
 n_e = np.sqrt(SB_Halpha * (1 + z_qso) ** 4 / C / l / 1.7e-15)

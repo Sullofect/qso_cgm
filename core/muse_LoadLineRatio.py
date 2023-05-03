@@ -17,8 +17,6 @@ def load_lineratio(region=None, deredden=True, norm='Hbeta'):
         else:
             path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'RegionLinesRatio',
                                             'RegionLinesRatio.fits')
-
-
     data_fit_info_sr = fits.getdata(path_fit_info_sr, ignore_missing_end=True)
     if region != 'all':
         data_fit_info_sr = data_fit_info_sr[data_fit_info_sr['region'] == region]
@@ -31,8 +29,7 @@ def load_lineratio(region=None, deredden=True, norm='Hbeta'):
     elif norm == 'HeII':
         flux_norm, dflux_norm = data_fit_info_sr['flux_HeII4687'], data_fit_info_sr['dflux_HeII4687']
     elif norm == 'LHIS':
-        flux_norm, dflux_norm = 1, 0
-            # data_fit_info_sr['flux_Hbeta'], data_fit_info_sr['dflux_Hbeta']
+        flux_norm, dflux_norm = data_fit_info_sr['flux_Hbeta'], data_fit_info_sr['dflux_Hbeta']
             # 1, 0
 
     #

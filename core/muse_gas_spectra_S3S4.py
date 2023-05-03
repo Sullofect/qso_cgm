@@ -467,14 +467,14 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
                         ('flux_OIII4364_wing', 0.1, True, None, None, None),
                         ('flux_HeII4687', 0.005, True, None, None, None),
                         ('flux_HeII4687_wing', 0.005, True, None, None, None),
-                        ('flux_OII', 0.01, True, None, None, None),
-                        ('flux_OII_wing', 0.005, True, None, None, None),
-                        ('flux_Hbeta', 0.02, True, None, None, None),
-                        ('flux_Hbeta_wing', 0.02, True, None, None, None),
-                        ('flux_OIII5008', 0.1, True, None, None, None),
+                        ('flux_OII', 0.01, True, 0., None, None),
+                        ('flux_OII_wing', 0.005, True, 0., None, None),
+                        ('flux_Hbeta', 0.02, True, 0, None, None),
+                        ('flux_Hbeta_wing', 0.02, True, 0, None, None),
+                        ('flux_OIII5008', 0.1, True, 0, None, None),
                         ('flux_OIII5008_wing', 0.05, True, 0, None, None),
-                        ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.2, None, None),
-                        ('r_OII3729_3727_wing', r_OII3729_3727_guess, True, 0.2, None, None),
+                        ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.0, None, None),
+                        ('r_OII3729_3727_wing', r_OII3729_3727_guess, True, 0.0, None, None),
                         ('a_NeV3346', 0.0, False, None, None, None),
                         ('b_NeV3346', 0.0, False, None, None, None),
                         ('a_NeIII3869', 0.0, False, None, None, None),
@@ -516,7 +516,7 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
     fig_strong.subplots_adjust(hspace=0)
     fig_strong.subplots_adjust(wspace=0.1)
 
-    flux_info = np.zeros((len(ra_array), 60))
+    flux_info = np.zeros((len(ra_array), 64))
     for i in range(len(ra_array)):
         if len(ra_array) == 1:
             axarr_0_strong = axarr_strong[0]
@@ -761,7 +761,8 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
         b_HeII4687, db_HeII4687 = result_all.best_values['b_HeII4687'], result_all.params['b_HeII4687'].stderr
 
         # Save the fitted result
-        flux_info[i, :] = np.array([z, dz_wing, sigma, sigma_wing, flux_NeV3346, flux_NeV3346_wing, flux_NeIII3869,
+        flux_info[i, :] = np.array([z, dz, dz_wing, ddz_wing, sigma, dsigma, sigma_wing, dsigma_wing, flux_NeV3346,
+                                    flux_NeV3346_wing, flux_NeIII3869,
                                     flux_NeIII3869_wing, flux_HeI3889, flux_HeI3889_wing, flux_H8, flux_H8_wing,
                                     flux_NeIII3968, flux_NeIII3968_wing, flux_Heps, flux_Heps_wing, flux_Hdel,
                                     flux_Hdel_wing, flux_Hgam, flux_Hgam_wing, flux_OIII4364, flux_OIII4364_wing,
@@ -953,7 +954,8 @@ def PlotGasSpectra(ra_array, dec_array, radius_array, text_array, figname='spect
             axarr_0_strong.tick_params(axis='x', which='both', labelbottom=False)
             axarr_1_strong.tick_params(axis='x', which='both', labelbottom=False)
 
-    t = Table(flux_info, names=('z', 'dz_wing', 'sigma', 'sigma_wing', 'flux_NeV3346', 'flux_NeV3346_wing',
+    t = Table(flux_info, names=('z', 'dz', 'dz_wing', 'ddz_wing', 'sigma', 'dsigma', 'sigma_wing', 'dsigma_wing',
+                                'flux_NeV3346', 'flux_NeV3346_wing',
                                 'flux_NeIII3869', 'flux_NeIII3869_wing', 'flux_HeI3889', 'flux_HeI3889_wing',
                                 'flux_H8', 'flux_H8_wing', 'flux_NeIII3968', 'flux_NeIII3968_wing',
                                 'flux_Heps', 'flux_Heps_wing', 'flux_Hdel', 'flux_Hdel_wing', 'flux_Hgam',

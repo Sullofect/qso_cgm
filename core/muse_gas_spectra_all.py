@@ -365,18 +365,18 @@ parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
 
 # Read region file
 path_region = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'regions', 'gas_list_revised.reg')
-ra_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
-dec_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
-radius_array = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
-text_array = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
+ra_array_input = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 0]
+dec_array_input = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 1]
+radius_array_input = np.loadtxt(path_region, usecols=[0, 1, 2], delimiter=',')[:, 2]
+text_array_input = np.loadtxt(path_region, dtype=str, usecols=[3], delimiter=',')
 
 
 # Def Plot function
 def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_table=False, save_figure=True):
-    global ra_array, dec_array, radius_array, text_array
-    region_mask = np.in1d(text_array, region)
-    ra_array, dec_array, radius_array, text_array = ra_array[region_mask], dec_array[region_mask], \
-                                                    radius_array[region_mask], text_array[region_mask]
+    global ra_array_input, dec_array_input, radius_array_input, text_array_input
+    region_mask = np.in1d(text_array_input, region)
+    ra_array, dec_array, radius_array, text_array = ra_array_input[region_mask], dec_array_input[region_mask], \
+                                                    radius_array_input[region_mask], text_array_input[region_mask]
 
     # Weak emission lines
     fig_weak, axarr_weak = plt.subplots(len(ra_array), 6, figsize=(10, len(ra_array) * 2.5),
@@ -390,7 +390,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
     fig_strong.subplots_adjust(hspace=0)
     fig_strong.subplots_adjust(wspace=0.1)
 
-    flux_info = np.zeros((len(ra_array), 30))
+    flux_info = np.zeros((len(ra_array), 32))
     for i in range(len(ra_array)):
         if len(ra_array) == 1:
             axarr_0_strong = axarr_strong[0]
@@ -606,8 +606,9 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
         b_HeII4687, db_HeII4687 = result_all.best_values['b_HeII4687'], result_all.params['b_HeII4687'].stderr
 
         # Save the fitted result
-        flux_info[i, :] = np.array([z, sigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8, flux_NeIII3968, flux_Heps,
-                                    flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687, flux_OII, r_OII, flux_Hbeta,
+        flux_info[i, :] = np.array([z, dz, sigma, dsigma, flux_NeV3346, flux_NeIII3869, flux_HeI3889, flux_H8,
+                                    flux_NeIII3968, flux_Heps, flux_Hdel, flux_Hgam, flux_OIII4364, flux_HeII4687,
+                                    flux_OII, r_OII, flux_Hbeta,
                                     flux_OIII5008, dflux_NeV3346, dflux_NeIII3869, dflux_HeI3889, dflux_H8,
                                     dflux_NeIII3968, dflux_Heps, dflux_Hdel, dflux_Hgam, dflux_OIII4364,
                                     dflux_HeII4687, dflux_OII, dr_OII, dflux_Hbeta, dflux_OIII5008])
@@ -663,12 +664,17 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
                                         a_OII, b_OII, a_Hbeta, b_Hbeta, a_OIII4960, b_OIII4960, a_OIII5008, b_OIII5008)
 
 
+        # Set title
+        text_i = text_array[i]
+        if len(text_i) > 5:
+            text_i = text_i[:-4]
+
         # Weak lines
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_i, color='k', drawstyle='steps-mid', lw=1)
         axarr_i_weak[0].plot(wave_NeV3346_vac, flux_NeV3346_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
         axarr_i_weak[0].plot(wave_vac_all_stack[:idx_weak], line_model_all[:idx_weak], '-r', lw=1)
         axarr_i_weak[0].set_xlim(5380, 5530)
-        axarr_i_weak[0].set_title(text_array[i], x=0.3, y=0.75, size=20)
+        axarr_i_weak[0].set_title(text_i, x=0.3, y=0.75, size=20)
 
         # axarr_i_weak[1].plot(wave_NeIII3869_vac, flux_NeIII3869_i, color='k', drawstyle='steps-mid', lw=1)
         # axarr_i_weak[1].plot(wave_NeIII3869_vac, flux_NeIII3869_err_i, color='lightgrey', drawstyle='steps-mid', lw=1)
@@ -792,7 +798,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
         axarr_1_strong.plot(wave_vac_strong_stack, flux_err_strong, color='lightgrey', lw=1)
         axarr_1_strong.plot(wave_vac_all_stack[idx_weak:idx_all], line_model_all[idx_weak:idx_all], '-r', lw=1)
 
-        axarr_0_strong.set_title(text_array[i], x=0.2, y=0.75, size=20)
+        axarr_0_strong.set_title(text_i, x=0.2, y=0.75, size=20)
         axarr_0_strong.set_xlim(6020, 6120)
         axarr_1_strong.set_xlim(7900, 8200)
         axarr_0_strong.spines['right'].set_visible(False)
@@ -831,8 +837,8 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
             axarr_1_strong.tick_params(axis='x', which='both', labelbottom=False)
 
     # Finish the table
-    t = Table(flux_info, names=('z', 'sigma', 'flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889', 'flux_H8',
-                                'flux_NeIII3968', 'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364',
+    t = Table(flux_info, names=('z', 'dz', 'sigma', 'dsigma', 'flux_NeV3346', 'flux_NeIII3869', 'flux_HeI3889',
+                                'flux_H8', 'flux_NeIII3968', 'flux_Heps', 'flux_Hdel', 'flux_Hgam', 'flux_OIII4364',
                                 'flux_HeII4687', 'flux_OII', 'r_OII', 'flux_Hbeta', 'flux_OIII5008', 'dflux_NeV3346',
                                 'dflux_NeIII3869', 'dflux_HeI3889', 'dflux_H8', 'dflux_NeIII3968',
                                 'dflux_Heps', 'dflux_Hdel', 'dflux_Hgam', 'dflux_OIII4364',
@@ -870,13 +876,14 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 
 # Plot the data
 
-# PlotGasSpectra(region=text_array, figname='spectra_gas/spectra_gas_paper',
-#                save_table=True, save_figure=False, deredden=True)
+# PlotGasSpectra(region=text_array, figname='spectra_gas/all',
+#                save_table=True, save_figure=True, deredden=True)
 
-region_paper = ['S2', 'S4', 'S6', 'S8', 'S9', 'B2']
-PlotGasSpectra(region=region_paper, figname='spectra_gas/spectra_gas_paper',
-               save_table=False, save_figure=True, deredden=True)
+# region_paper = ['S2', 'S4', 'S6', 'S8', 'S9', 'B2']
+# PlotGasSpectra(region=region_paper, figname='spectra_gas/spectra_gas_paper',
+#                save_table=False, save_figure=True, deredden=True)
 
 
-# for i in range(len(text_array)):
-#     PlotGasSpectra(region=text_array[i], figname='spectra_gas/spectra_gas_' + str(text_array[i]))
+for i in range(len(text_array_input[:-2])):
+    text_i = text_array_input[i]
+    PlotGasSpectra(region=text_i, figname='spectra_gas/spectra_gas_' + str(text_i))

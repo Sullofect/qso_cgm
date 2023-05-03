@@ -215,14 +215,15 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
             for j in range(len(ra_array)):
                 x = regions_label[j].center.ra.degree
                 y = regions_label[j].center.dec.degree
-                if j > 9:
+                if j > 10:
                     text_j = text_array[j][:-4]
                 else:
                     text_j = text_array[j]
                 gc.add_label(x, y, text_j, size=20)
         else:
-            # gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--', linewidths=1,
-            #                 alpha=0.25, zorder=10)
+            gc.show_circles(ra_array[:-2], dec_array[:-2], radius_array[:-2] / 3600, edgecolors='k', linestyles='--',
+                            linewidths=1,
+                            alpha=0.25, zorder=10)
             gc.show_contour(path_contour, levels=[0.08, 0.3], layer='O#', kernel='gauss', colors='k',
                             linewidths=0.8, smooth=3)
             # x = gc.get_layer('O#').collections[1].get_paths()[0].vertices[:, 0]
@@ -251,8 +252,8 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
     if video:
         if band == 'OII':
             os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OII_*.png '
-                      '~/dropbox/Data/CGM_plots/NB_movie/OII_movie.gif')
-        elif band == 'OII':
+                      '~/dropbox/Data/CGM_plots/NB_movie/OII_movie.gif | ls -lt ~/dropbox/Data/CGM_plots/NB_movie/image_OII_*.png')
+        elif band == 'OIII':
             os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OIII_*.png '
                       '~/dropbox/Data/CGM_plots/NB_movie/OIII_movie.gif')
 
@@ -425,9 +426,9 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 
 
 #
-MakeNarrowBands(region=False)
+MakeNarrowBands(region=False, video=True)
 MakeNarrowBands(region=True)
-MakeNarrowBands(region=False, band='OIII')
+MakeNarrowBands(region=False, band='OIII', video=True)
 MakeNarrowBands(region=True, band='OIII')
 # MakeFieldImage(label_gal=True)
 # MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',
