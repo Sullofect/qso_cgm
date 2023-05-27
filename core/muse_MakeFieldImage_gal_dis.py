@@ -208,8 +208,8 @@ N1 = [np.array([[40.1288438, 40.1428230, 40.1324189, 40.1228938],
                 [-18.8577309, -18.8709429, -18.8766207, -18.8610104]])]
 N2 = [np.array([[40.1289217, 40.1429009, 40.1489166, 40.1394084],
                 [-18.8576894, -18.8709014, -18.8676171, -18.8519788]])]
-gc.show_polygons(N1, color='purple', linestyle='-', lw=2, alpha=0.5, zorder=1)
-gc.show_polygons(N2, color='orange', linestyle='-', lw=2, alpha=0.5, zorder=1)
+# gc.show_polygons(N1, color='purple', linestyle='-', lw=2, alpha=0.5, zorder=1)
+# gc.show_polygons(N2, color='orange', linestyle='-', lw=2, alpha=0.5, zorder=1)
 
 #
 gc.recenter(40.1359, -18.8643, width=90/3600, height=90/3600)
@@ -218,12 +218,12 @@ gc.show_rectangles(40.1344150, -18.8656933, width=30 / 3600, height=30 / 3600, c
 gc.show_rectangles(40.1359, -18.8643, width=65/3600, height=65/3600, angle=60, color='k', linestyle='--')
 
 # Label galaxies
-for i in range(len(row_final)):
-    x = regions_label[i].center.ra.degree
-    y = regions_label[i].center.dec.degree
-    text = 'G' + str(ID_sep_final[i])
-    gc.add_label(x, y, text, size=10)
-gc.show_arrows(40.1370596, -18.8662000, 40.1368331 - 40.1370596, -18.8658486 + 18.8662000, color='k')
+# for i in range(len(row_final)):
+#     x = regions_label[i].center.ra.degree
+#     y = regions_label[i].center.dec.degree
+#     text = 'G' + str(ID_sep_final[i])
+#     gc.add_label(x, y, text, size=10)
+# gc.show_arrows(40.1370596, -18.8662000, 40.1368331 - 40.1370596, -18.8658486 + 18.8662000, color='k')
 
 #
 gc.set_system_latex(True)
@@ -236,7 +236,7 @@ gc1.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}
 gc1.colorbar.set_axis_label_font(size=12)
 gc1.colorbar.set_axis_label_pad(-40)
 gc1.colorbar.set_location('bottom')
-# gc1.colorbar.hide()
+gc1.colorbar.hide()
 gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
 gc.add_colorbar()
 gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
@@ -260,16 +260,16 @@ gc1.axis_labels.hide()
 norm = mpl.colors.Normalize(vmin=-1000, vmax=1000)
 
 # Markers
-gc.show_markers(ra_center_all, dec_center_all, marker=(6, 2, 0), c='white', s=30)
-gc.show_markers(ra_center_red, dec_center_red, marker=(6, 2, 0), facecolor='r', s=30)
-gc.show_markers(ra_center_blue, dec_center_blue, marker=(6, 2, 0), facecolor='b', s=30)
-gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
-                linewidths=0.5, s=400)
-gc.add_label(40.13564948691202 - 0.0015, -18.864301804042814, 'QSO', size=10)
-gc.show_markers(ra_final, dec_final, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
-                linewidths=1.2, s=80)
+# gc.show_markers(ra_center_all, dec_center_all, marker=(6, 2, 0), c='white', s=30)
+# gc.show_markers(ra_center_red, dec_center_red, marker=(6, 2, 0), facecolor='r', s=30)
+# gc.show_markers(ra_center_blue, dec_center_blue, marker=(6, 2, 0), facecolor='b', s=30)
+# gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
+#                 linewidths=0.5, s=400)
+# gc.add_label(40.13564948691202 - 0.0015, -18.864301804042814, 'QSO', size=10)
+# gc.show_markers(ra_final, dec_final, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
+#                 linewidths=1.2, s=80)
 gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
-line = np.array([[40.1289217, 40.1429009], [-18.8576894, -18.8709014]])
+# line = np.array([[40.1289217, 40.1429009], [-18.8576894, -18.8709014]])
 # gc.show_lines([line], color='k', alpha=0.3, linestyle='--')
 
 # Labels
@@ -281,4 +281,4 @@ gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
 gc.add_label(0.87, 0.97, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=15, relative=True)
 gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
 gc.add_label(0.47, 0.30, r"$\rm 30'' \times 30''$", size=15, relative=True)
-fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis_bkg.png', bbox_inches='tight')
+fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis_bkg_2.png', bbox_inches='tight')

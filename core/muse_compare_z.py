@@ -1,5 +1,4 @@
 import os
-import lmfit
 import numpy as np
 import numpy.ma as ma
 import astropy.io.fits as fits
@@ -114,14 +113,16 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
     ra_ggp, dec_ggp = ra_qua[select_v], dec_qua[select_v]
     output = np.array([bins_ggp, row_ggp, ID_ggp, z_ggp, v_ggp, name_ggp, ql_ggp, ra_ggp, dec_ggp], dtype=object)
     #
-    t = Table()
-    t['row'] = row_ggp
-    t['ID'] = ID_ggp
-    t['z'] = z_ggp
-    t['v'] = v_ggp
-    t['name'] = name_ggp
-    t['ql'] = ql_ggp
-    t['ra'] = ra_ggp
-    t['dec'] = dec_ggp
-    t.write('/Users/lzq/Dropbox/Data/CGM/gal_info.fits', format='fits', overwrite=True)
+    filename = '/Users/lzq/Dropbox/Data/CGM/GalaxyInfo/gal_info.fits'
+    if os.path.isfile(filename) is not True:
+        t = Table()
+        t['row'] = row_ggp
+        t['ID'] = ID_ggp
+        t['z'] = z_ggp
+        t['v'] = v_ggp
+        t['name'] = name_ggp
+        t['ql'] = ql_ggp
+        t['ra'] = ra_ggp
+        t['dec'] = dec_ggp
+        t.write(filename, format='fits', overwrite=True)
     return output

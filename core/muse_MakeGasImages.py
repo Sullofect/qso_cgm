@@ -221,9 +221,9 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
                     text_j = text_array[j]
                 gc.add_label(x, y, text_j, size=20)
         else:
-            gc.show_circles(ra_array[:-2], dec_array[:-2], radius_array[:-2] / 3600, edgecolors='k', linestyles='--',
-                            linewidths=1,
-                            alpha=0.25, zorder=10)
+            # gc.show_circles(ra_array[:-2], dec_array[:-2], radius_array[:-2] / 3600, edgecolors='k', linestyles='--',
+            #                 linewidths=1,
+            #                 alpha=0.25, zorder=10)
             gc.show_contour(path_contour, levels=[0.08, 0.3], layer='O#', kernel='gauss', colors='k',
                             linewidths=0.8, smooth=3)
             # x = gc.get_layer('O#').collections[1].get_paths()[0].vertices[:, 0]

@@ -18,17 +18,17 @@ O2 = pn.Atom('O', 2)
 O3 = pn.Atom('O', 3)
 
 # Load S2 line ratio
-path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'moreline_profile_selected_region.fits')
-data_fit_info_sr = fits.getdata(path_fit_info_sr, 0, ignore_missing_end=True)
-r_OII = data_fit_info_sr[:, 11]
-dr_OII = data_fit_info_sr[:, 25]
-r_OIII = data_fit_info_sr[:, 8] / data_fit_info_sr[:, 13]
-dr_OIII = r_OIII * np.sqrt((data_fit_info_sr[:, 22] / data_fit_info_sr[:, 8] ) ** 2
-                           + (data_fit_info_sr[:, 27] / data_fit_info_sr[:, 13]) ** 2)
-logr_OII = np.log10(r_OII)[0]
-logr_OIII = np.log10(r_OIII)[0]
-logdr_OII = dr_OII[0] / (r_OII[0] * np.log(10))
-logdr_OIII = dr_OIII[0] / (r_OIII[0] * np.log(10))
+# path_fit_info_sr = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'moreline_profile_selected_region.fits')
+# data_fit_info_sr = fits.getdata(path_fit_info_sr, 0, ignore_missing_end=True)
+# r_OII = data_fit_info_sr[:, 11]
+# dr_OII = data_fit_info_sr[:, 25]
+# r_OIII = data_fit_info_sr[:, 8] / data_fit_info_sr[:, 13]
+# dr_OIII = r_OIII * np.sqrt((data_fit_info_sr[:, 22] / data_fit_info_sr[:, 8] ) ** 2
+#                            + (data_fit_info_sr[:, 27] / data_fit_info_sr[:, 13]) ** 2)
+# logr_OII = np.log10(r_OII)[0]
+# logr_OIII = np.log10(r_OIII)[0]
+# logdr_OII = dr_OII[0] / (r_OII[0] * np.log(10))
+# logdr_OIII = dr_OIII[0] / (r_OIII[0] * np.log(10))
 
 # [Ne V] 3346.79, [Ne III] 3869, He I 3889 and H8, NeIII3968 and Hepsilon. Hdelta, Hgamma, [O III] 4364, He II 4687
 # lines_more = (1 + z) * np.array([3346.79, 3869.86, 3889.00, 3890.16, 3968.59, 3971.20, 4102.89, 4341.68,
@@ -54,6 +54,9 @@ OII3729_den = O2.getEmissivity(tem=tem_array_den, den=den_array_den, wave=3729)
 for i in range(len(tem_array_den)):
     axarr[0].plot(np.log10(den_array_den), np.log10(OII3729_den/OII3727_den)[i, :], '-',
                   label='T=' + str(tem_array_den[i]))
+    axarr[0].plot(np.log10(den_array_den), np.gradient(np.log10(OII3729_den/OII3727_den)[1, :],
+                                                       np.log10(den_array_den)), '--k')
+# print())
 axarr[0].set_xlabel(r"$\mathrm{log_{10}[Hydrogen \, density]}$", size=15)
 axarr[0].set_ylabel(r'$\mathrm{log( [O \, II] \lambda 3729 / \lambda 3727)}$', size=15)
 axarr[0].legend(prop={'size': 15}, framealpha=0, loc=1, fontsize=15)

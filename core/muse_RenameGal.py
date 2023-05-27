@@ -1,4 +1,6 @@
+import os
 import numpy as np
+from astropy.table import Table
 from astropy.coordinates import FK5
 from muse_compare_z import compare_z
 from astropy.coordinates import SkyCoord
@@ -79,4 +81,15 @@ def ReturnGalLabel(sort_row=False, mode='final'):
     # print(row_final)
     # print(ID_sep_final)
     if mode == 'final':
+        filename = '/Users/lzq/Dropbox/Data/CGM/GalaxyInfo/gal_info_re.fits'
+        if os.path.isfile(filename) is not True:
+            t = Table()
+            t['ra'] = ra_final
+            t['dec'] = dec_final
+            t['row'] = row_final
+            t['ID'] = ID_final
+            t['z'] = z_final
+            t['name'] = name_final
+            t['G#'] = ID_sep_final
+            t.write(filename, format='fits', overwrite=True)
         return ra_final, dec_final, row_final, ID_final, z_final, name_final, ID_sep_final

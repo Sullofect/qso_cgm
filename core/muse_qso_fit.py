@@ -371,3 +371,19 @@ log_M_BH = np.log10((fwhm/1000) ** 2 * (waveL_5100/1e44) ** 0.5) + 6.91
 print('Monochromatic luminosity is', waveL_5100, 'erg/s')
 print('Bolometric Luminosity is', L_bol, 'erg/s')
 print('logM_Blackhole is ', log_M_BH, 'solar mass')
+
+
+#
+print(q.linelist[4][0])
+print(q.line_result[27:33])
+fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[4][0], q.line_result[27:33], 'narrow')
+print('[O III] both', "FWHM (km/s)", np.round(fwhm, 1))
+print("Sigma (km/s)", np.round(sigma, 1))
+
+fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[4][0], q.line_result[27:30], 'narrow')
+print('[O III] First', "FWHM (km/s)", np.round(fwhm, 1))
+print("Sigma (km/s)", np.round(sigma, 1))
+
+fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[4][0], q.line_result[30:33], 'narrow')
+print('[O III] second', "FWHM (km/s)", np.round(fwhm, 1))
+print("Sigma (km/s)", np.round(sigma, 1))
