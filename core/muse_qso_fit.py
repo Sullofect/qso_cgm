@@ -375,7 +375,11 @@ print('logM_Blackhole is ', log_M_BH, 'solar mass')
 
 #
 print(q.linelist[4][0])
-print(q.line_result[27:33])
+print(q.line_result[18:21])
+fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[1][0], q.line_result[18:21], 'narrow')
+print('Hbeta both', "FWHM (km/s)", np.round(fwhm, 1))
+print("Sigma (km/s)", np.round(sigma, 1))
+
 fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[4][0], q.line_result[27:33], 'narrow')
 print('[O III] both', "FWHM (km/s)", np.round(fwhm, 1))
 print("Sigma (km/s)", np.round(sigma, 1))
