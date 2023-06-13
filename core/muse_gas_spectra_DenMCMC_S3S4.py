@@ -4,6 +4,7 @@ import lmfit
 import corner
 import numpy as np
 import pyneb as pn
+import extinction
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc

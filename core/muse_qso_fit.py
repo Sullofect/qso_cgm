@@ -361,7 +361,7 @@ fig.savefig(path_savefig + 'spectra_qso', bbox_inches='tight')
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 d_l = cosmo.luminosity_distance(z).to(u.cm).value
 fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[1][0], q.line_result[6:15], 'broad')
-print(fwhm)
+print(fwhm, ew)
 L_5100 = 4 * np.pi * d_l ** 2 * float(q.conti_result[13]) * (5100.0/3000.0) ** float(q.conti_result[14])
 waveL_5100 = 10 ** 46.21
 # 5100 * L_5100
@@ -376,11 +376,13 @@ print('logM_Blackhole is ', log_M_BH, 'solar mass')
 #
 print(q.linelist[4][0])
 print(q.line_result[18:21])
-fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[1][0], q.line_result[18:21], 'narrow')
+fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[1][0], q.line_result[15:21], 'narrow')
+print(ew)
 print('Hbeta both', "FWHM (km/s)", np.round(fwhm, 1))
 print("Sigma (km/s)", np.round(sigma, 1))
 
 fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[4][0], q.line_result[27:33], 'narrow')
+print('[O III] both EW', ew)
 print('[O III] both', "FWHM (km/s)", np.round(fwhm, 1))
 print("Sigma (km/s)", np.round(sigma, 1))
 

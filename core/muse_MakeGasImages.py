@@ -389,6 +389,19 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     gc.show_markers(ra_final, dec_final, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300,
                     cmap='coolwarm')
     APLpyStyle(gc, type='GasMap')
+
+    # For Mandy
+    gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--', linewidths=1,
+                    alpha=0.3)
+    for j in range(len(ra_array)):
+        x = regions_label[j].center.ra.degree
+        y = regions_label[j].center.dec.degree
+        if j > 10:
+            text_j = text_array[j][:-4]
+        else:
+            text_j = text_array[j]
+        gc.add_label(x, y, text_j, size=20)
+
     # Label
     if line == 'OIII':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=20, relative=True)
@@ -397,7 +410,7 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     elif line == 'OOHbeta':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{lines}} - v_{\mathrm{qso}}$', size=20, relative=True)
     gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' + method_spe + '.png',
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' + method_spe + '_mandy.png',
                 bbox_inches='tight')
 
     # Plot sigma map
@@ -426,10 +439,10 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 
 
 #
-MakeNarrowBands(region=False, video=True)
-MakeNarrowBands(region=True)
-MakeNarrowBands(region=False, band='OIII', video=True)
-MakeNarrowBands(region=True, band='OIII')
+# MakeNarrowBands(region=False, video=True)
+# MakeNarrowBands(region=True)
+# MakeNarrowBands(region=False, band='OIII', video=True)
+# MakeNarrowBands(region=True, band='OIII')
 # MakeFieldImage(label_gal=True)
-# MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',
-#            test=False, snr_thr=8, v_thr=np.inf, check=False)
+MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',
+           test=False, snr_thr=8, v_thr=np.inf, check=False)

@@ -423,9 +423,9 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         plt.figure(figsize=(3, 3), dpi=300)
         plt.hist(OII_ratio, histtype='step', label='[O II]')
         plt.hist(OIII_ratio, label='[O III]')
-        plt.legend()
-        plt.xlabel(r'$\rm [O \, II] HighDen/AllDen$')
-        plt.ylabel(r'Number of chain')
+        plt.legend(loc=2)
+        plt.xlabel(r'$\rm Flux\_highden / (Flux\_highden + Flux\_lowden)$')
+        plt.ylabel(r'Posterior Probability')
         plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial +
                     '_OII_ratio_check.png', bbox_inches='tight')
 
@@ -487,7 +487,10 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         pc.set_facecolor('C1')
     ax[0].set_xlim(-1, 6)
     ax[2].set_xlim(data_x2_plot.min() - 0.3, data_x2_plot.max() + 0.3)
-    ax[2].annotate(region, xy=(0.7, 0.75), size=30, xycoords='subfigure fraction',)
+    region_i = region
+    if len(region_i) > 5:
+        region_i = region_i[:-4]
+    ax[2].annotate(region_i, xy=(0.7, 0.75), size=30, xycoords='subfigure fraction',)
     ax[2].set_title(r'$\mathrm{Ionization \, energy}$', size=20, y=1.1)
     ax[2].annotate("", xy=(0.63, 0.920), xytext=(0.4, 0.920), xycoords='subfigure fraction',
                    arrowprops=dict(arrowstyle="->"))

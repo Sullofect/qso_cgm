@@ -930,3 +930,5 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 #     PlotGasSpectra(i, figname='spectra_gas/spectra_gas_' + str(i), deredden=True)
 
 # PlotGasSpectra('S6', figname='spectra_gas/spectra_gas_S6', deredden=True)
+
+PlotGasSpectra('B3_new', figname='spectra_gas/spectra_gas_B3_new', deredden=True)
