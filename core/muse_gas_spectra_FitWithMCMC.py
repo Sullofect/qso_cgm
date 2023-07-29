@@ -296,30 +296,31 @@ def extinction_ndarray(wave_ndarray, A_v):
         output = np.hstack((output, ext_i))
     return output
 
+
 # Define the log likelihood function and run MCMC
-def log_prob(x, flux, dflux, wave_vac, a_OII, b_OII, a_OIII5008, b_OIII5008):
+def log_prob(x, wave_vac, flux, dflux, a_OII, b_OII, a_OIII5008, b_OIII5008):
     z, dz_wing, sigma_kms, sigma_kms_wing, \
     flux_OII, flux_OII_wing, flux_OIII5008, \
-    flux_OIII5008_wing, r_OII3729_3727, r_OII3729_3727_wing = x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9]
-    if z < 0.61 or z > 0.65:
+    flux_OIII5008_wing, r_OII3729_3727, r_OII3729_3727_wing = x[:]
+    if z < 0.62 or z > 0.63:
         return -np.inf
-    elif dz_wing < -0.05 or dz_wing > 0:
+    elif dz_wing < -0.002 or dz_wing > -0.0001:
         return -np.inf
     elif sigma_kms < 0 or sigma_kms > 200:
         return -np.inf
-    elif sigma_kms_wing < 0 or sigma_kms_wing > 500:
+    elif sigma_kms_wing < 0 or sigma_kms_wing > 300:
         return -np.inf
-    elif flux_OII < 0 or flux_OII > 10:
+    elif flux_OII < 0 or flux_OII > 1:
         return -np.inf
-    elif flux_OII_wing < 0 or flux_OII_wing > 10:
+    elif flux_OII_wing < 0 or flux_OII_wing > 1.5:
         return -np.inf
-    elif flux_OIII5008 < 0 or flux_OIII5008 > 10:
+    elif flux_OIII5008 < 0 or flux_OIII5008 > 1:
         return -np.inf
-    elif flux_OIII5008_wing < 0 or flux_OIII5008_wing > 10:
+    elif flux_OIII5008_wing < 0 or flux_OIII5008_wing > 1:
         return -np.inf
-    elif r_OII3729_3727 < 0 or r_OII3729_3727 > 5:
+    elif r_OII3729_3727 < 1.3 or r_OII3729_3727 > 1.5:
         return -np.inf
-    elif r_OII3729_3727_wing < 0 or r_OII3729_3727_wing > 5:
+    elif r_OII3729_3727_wing < 0.8 or r_OII3729_3727_wing > 1.0:
         return -np.inf
     else:
         model = model_MCMC(wave_vac, z, dz_wing, sigma_kms, sigma_kms_wing, flux_OII, flux_OII_wing, flux_OIII5008,
@@ -775,9 +776,9 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
             samples = backend.get_chain(flat=True, discard=nums_disc)
         else:
             p0 = np.array([z, dz_wing, sigma, sigma_wing, flux_OII, flux_OII_wing, flux_OIII5008, flux_OIII5008_wing,
-                           r_OII, r_OII_wing]) + 0.1 * np.random.randn(nwalkers, ndim)
+                           r_OII, r_OII_wing]) + 0.001 * np.random.randn(nwalkers, ndim)
             sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob,
-                                            args=(flux_MCMC, flux_err_MCMC, wave_vac_all, a_OII, b_OII,
+                                            args=(wave_vac_all, flux_MCMC, flux_err_MCMC, a_OII, b_OII,
                                                   a_OIII5008, b_OIII5008), backend=backend)
             state = sampler.run_mcmc(p0, nums_chain)
             samples = sampler.get_chain(flat=True, discard=nums_disc)
@@ -795,7 +796,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
         for j in range(3):
             z_j, dz_wing_j, sigma_j, sigma_wing_j, flux_OII_j, \
             flux_OII_wing_j, flux_OIII5008_j, flux_OIII5008_wing_j, r_j, r_wing_j = best_fit[j, :]
-            # [z, dz_wing, sigma, sigma_wing, flux_OII, flux_OII_wing, flux_OIII5008, flux_OIII5008_wing, r_OII, r_OII_wing]
+
             print(z_j, dz_wing_j)
             model_MCMC_j = model_MCMC(wave_vac_all, z_j, dz_wing_j, sigma_j, sigma_wing_j, flux_OII_j,
                                       flux_OII_wing_j, flux_OIII5008_j, flux_OIII5008_wing_j, r_j, r_wing_j,
@@ -1035,4 +1036,4 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 #                    figname='spectra_gas/spectra_gas_' + str(text_array[i]))
 
 PlotGasSpectra(region='B4_new', figname='spectra_gas/spectra_gas_B4',
-               save_table=False, save_figure=True, deredden=True, nums_chain=8000, nums_disc=2000)
+               save_table=False, save_figure=True, deredden=True, nums_chain=8000, nums_disc=1000)

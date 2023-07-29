@@ -542,9 +542,22 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
         flux_all = np.hstack((flux_NeV3346_i, flux_NeIII3869_i, flux_HeI3889_i, flux_Heps_i, flux_Hdel_i, flux_Hgam_i,
                               flux_OIII4364_i, flux_HeII4687_i, flux_OII_i, flux_Hbeta_i, flux_OIII4960_i,
                               flux_OIII5008_i))
-        flux_err_all =  np.hstack((flux_NeV3346_err_i, flux_NeIII3869_err_i, flux_HeI3889_err_i, flux_Heps_err_i,
+        flux_err_all = np.hstack((flux_NeV3346_err_i, flux_NeIII3869_err_i, flux_HeI3889_err_i, flux_Heps_err_i,
                                    flux_Hdel_err_i, flux_Hgam_err_i, flux_OIII4364_err_i, flux_HeII4687_err_i,
                                    flux_OII_err_i, flux_Hbeta_err_i, flux_OIII4960_err_i, flux_OIII5008_err_i))
+
+        # Save spec data for proposal
+        # Table_spec_data = Table()
+        # Table_spec_data['wave'] = np.hstack((wave_OII_vac, wave_Hbeta_vac, wave_OIII4960_vac, wave_OIII5008_vac))
+        # Table_spec_data['flux'] = np.hstack((flux_OII_i, flux_Hbeta_i, flux_OIII4960_i, flux_OIII5008_i))
+        # Table_spec_data['flux_err'] = np.hstack((flux_OII_err_i, flux_Hbeta_err_i,
+        #                                          flux_OIII4960_err_i, flux_OIII5008_err_i))
+        # Table_spec_data.write('/Users/lzq/Dropbox/Data/CGM/RegionsSpecData/StrongSpecData_' + region + '.fits',
+        #                       format='fits', overwrite=True)
+        # wave_vac_all = np.array([wave_NeV3346_vac, wave_NeIII3869_vac, wave_HeI3889_vac, wave_Heps_vac, wave_Hdel_vac,
+        #                          wave_Hgam_vac, wave_OIII4364_vac, wave_HeII4687_vac, wave_OII_vac, wave_Hbeta_vac,
+        #                          wave_OIII4960_vac, wave_OIII5008_vac], dtype=object)
+
 
         # Fit
         spec_model_all = lmfit.Model(model_all, missing='drop')

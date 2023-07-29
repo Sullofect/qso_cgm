@@ -20,14 +20,15 @@ rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 
 path_savefig = '/Users/lzq/Dropbox/Data/CGM_plots/'
-path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'ESO_DEEP_offset.fits')
+path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data', 'ESO_DEEP_offset.fits')
 cube = Cube(path)
 
 # Calculate the white image
-image_white = cube.sum(axis=0)
-p, q = image_white.peak()['p'], image_white.peak()['q']
-y, x = image_white.peak()['y'], image_white.peak()['x']
-print(y, x)
+# image_white = cube.sum(axis=0)
+p, q = 231.01781907579925, 228.86688579081402
+# p, q = image_white.peak()['p'], image_white.peak()['q']
+# y, x = image_white.peak()['y'], image_white.peak()['x']
+# print(y, x)
 # plt.figure(figsize=(8, 5), dpi=300)
 # plt.imshow(np.arcsinh(image_white.data), origin='lower', vmin=9, cmap='hot')
 # cbar = plt.colorbar()
@@ -38,16 +39,23 @@ print(y, x)
 # EE Curve
 wave = pyasl.airtovac2(cube.wave.coord())
 EE_ape = cube.subcube_circle_aperture((p, q), 10, unit_center=None)  # in arcsec
-source_100 = EE_ape[350, :, :]  # change to wavelength instead of index
+wave_100, wave_200 = 3729 * (1 + 0.6282144177077355), 5008 * (1 + 0.6282144177077355)
+# wave_100, wave_200 = 5000, 9000
+idx_100, idx_200 = np.argmin(np.abs(wave - wave_100)), np.argmin(np.abs(wave - wave_200))
+source_100 = EE_ape[idx_100, :, :]  # change to wavelength instead of index
 radius_100, ee_100 = source_100.eer_curve(unit_center=None)
-source_200 = EE_ape[3000, :, :]
+source_200 = EE_ape[idx_200, :, :]
 radius_200, ee_200 = source_200.eer_curve(unit_center=None)
 
 # Determine the seeing
 ee_max_100 = np.max(ee_100)
 ee_max_200 = np.max(ee_200)
+f_r_100 = interp1d(radius_100, ee_100)
+f_r_200 = interp1d(radius_200, ee_200)
 f_100 = interp1d(ee_100, radius_100)
 f_200 = interp1d(ee_200, radius_200)
+print(f_r_100(0.7))
+print(f_r_200(0.7))
 print(f_100(ee_max_100 * 0.5) * 2)
 print(f_200(ee_max_200 * 0.5) * 2)
 
@@ -60,13 +68,14 @@ gfit = EE_ape.sum(axis=0).gauss_fit(plot=False)
 
 # Make the EE plot
 plt.figure(figsize=(8, 5), dpi=300)
-plt.plot(radius_100, ee_100, label=r'$\lambda = $' + str(wave[350]))
-plt.plot(radius_200, ee_200, label=r'$\lambda = $' + str(wave[3000]))
+plt.plot(radius_100, ee_100, label=r'$\lambda = $' + str(wave[idx_100]))
+plt.plot(radius_200, ee_200, label=r'$\lambda = $' + str(wave[idx_200]))
 plt.vlines(f_100(ee_max_100 * 0.5), ymin=0, ymax=1)
 plt.vlines(f_200(ee_max_200 * 0.5), ymin=0, ymax=1)
 plt.xlabel(r'$\mathrm{Arcseconds}$', size=20)
 plt.ylabel(r'$\mathrm{Ratio}$', size=20)
 plt.minorticks_on()
+plt.legend()
 plt.tick_params(axis='both', which='major', direction='in', top='on', bottom='on', left='on', right='on',
                 labelsize=20, size=5)
 plt.tick_params(axis='both', which='minor', direction='in', top='on', bottom='on', left='on', right='on',

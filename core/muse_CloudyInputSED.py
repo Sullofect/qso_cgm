@@ -1,8 +1,10 @@
 import os
+import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from scipy import integrate
+from muse_LoadCloudy import load_cloudy_nogrid
 from astropy.table import Table
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -89,3 +91,34 @@ ax.set_xscale('log')
 ax.set_yscale('log')
 ax.legend()
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_powerlaw.png', bbox_inches='tight')
+
+
+# Test for S1
+data_LineEmis = glob.glob('/Users/lzq/Dropbox/Data/CGM/cloudy/S1_t1_Emi/*.emi')
+
+R = 10 ** 23.15
+Sum_OII_array = np.zeros(len(data_LineEmis))
+OII_array = np.zeros(len(data_LineEmis))
+for i in range(len(data_LineEmis[:10])):
+    LineEmis = np.loadtxt(data_LineEmis[i], usecols=[0, 1, 2, 3, 4])
+    print(data_LineEmis[i])
+    data_i = 10 ** load_cloudy_nogrid(filename=data_LineEmis[i][:-4], path='')
+    LineEmis = LineEmis[:, :]
+    # Sum_Hbeta = integrate.simpson(LineEmis[:, 1], LineEmis[:, 0]) * 4 * np.pi * R ** 2
+    Sum_OII = integrate.simpson(LineEmis[:, 3], LineEmis[:, 0]) * 4 * np.pi * R ** 2
+    Sum_OII_array[i] = Sum_OII
+    OII_array[i] = data_i[3]
+
+    # Sum_OIII = integrate.simpson(LineEmis[:, 4], LineEmis[:, 0]) * 4 * np.pi * R ** 2
+    # print(LineEmis[:, 2][:50])
+# print('EMISS=', Sum_OII)
+# print('EMISS=', Sum_OIII / Sum_Hbeta)
+print(data_LineEmis[:10])
+print(np.log10(Sum_OII_array))
+print(np.log10(OII_array))
+plt.figure(figsize=(8, 5))
+plt.plot(np.log10(Sum_OII_array), np.log10(OII_array), '.')
+plt.plot([0, 50], [0, 50], '-')
+plt.xlim(34, 50)
+plt.ylim(34, 50)
+plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Cloudy_CheckVolume.png', bbox_inches='tight')

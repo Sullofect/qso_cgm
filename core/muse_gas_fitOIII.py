@@ -29,10 +29,11 @@ def model(wave_vac, z, sigma_kms, flux_OIII5008, a, b):
 
 
 # Fitting the narrow band image profile
-path_cube_OIII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'CUBE_OIII_5008_line_offset.fits')
+path_cube_OIII = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cube_narrow',
+                              'CUBE_OIII_5008_line_offset_zapped.fits')
 cube_OIII = Cube(path_cube_OIII)
 # cube_OIII = cube_OIII.subcube((80, 100), 5, unit_center=None, unit_size=None)
-cube_OIII[0, :, :].write('/Users/lzq/Dropbox/Data/CGM/image_OIII_fitline.fits')
+cube_OIII[0, :, :].write('/Users/lzq/Dropbox/Data/CGM/image_plot/image_OIII_fitline_zapped.fits')
 
 redshift_guess = 0.63
 sigma_kms_guess = 150.0
@@ -88,5 +89,5 @@ v_fit = 3e5 * (z_fit - z_qso) / (1 + z_qso)
 
 info = np.array([z_fit, sigma_fit, flux_fit, a_fit, b_fit])
 info_err = np.array([dz_fit, dsigma_fit, dflux_fit, da_fit, db_fit])
-fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOIII_info.fits', info, overwrite=True)
-fits.writeto('/Users/lzq/Dropbox/Data/CGM/fitOIII_info_err.fits', info_err, overwrite=True)
+fits.writeto('/Users/lzq/Dropbox/Data/CGM/fit_OIII/fitOIII_info_zapped.fits', info, overwrite=True)
+fits.writeto('/Users/lzq/Dropbox/Data/CGM/fit_OIII/fitOIII_info_err_zapped.fits', info_err, overwrite=True)

@@ -731,5 +731,5 @@ def CreateGrid_AGN(den_array, T_array, z_array, alpha_ox_array, alpha_uv_array, 
 # CreateGrid_Emi(z_array, alpha_array, den_array_S6_Emi, region='S6', trial='t1_Emi')
 
 # S5 Emissivity
-den_array_S5_Emi = np.linspace(-2, 5.6, 39, dtype='f2')
-CreateGrid_Emi(z_array, alpha_array, den_array_S5_Emi, region='S5', trial='t1_Emi')
+# den_array_S5_Emi = np.linspace(-2, 5.6, 39, dtype='f2')
+# CreateGrid_Emi(z_array, alpha_array, den_array_S5_Emi, region='S5', trial='t1_Emi')
