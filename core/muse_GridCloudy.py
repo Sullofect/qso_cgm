@@ -19,7 +19,7 @@ d_l = cosmo.angular_diameter_distance(z=z)
 ratio = (1 * u.radian).to(u.arcsec).value
 arcsec_15 = (15 * d_l / ratio).to(u.kpc).value
 ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
-ra_s2, dec_s2 =  40.1364401, -18.8655766
+ra_s2, dec_s2 = 40.1364401, -18.8655766
 
 
 c_qso = SkyCoord(ra_qso_muse, dec_qso_muse, frame='icrs', unit='deg')
@@ -501,6 +501,54 @@ def CreateGrid_Emi(z_array, alpha_array, den_array, L_qso=46.54, region=None, tr
                 command_array = np.hstack((command_array, command))
     np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
 
+def CreateGrid_Emi_PP(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=None):
+    global text_array
+    dis = np.around(distance[text_array == region][0], decimals=2)
+    dep = dis - 1
+    command_array = np.array([])
+    os.makedirs('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial, exist_ok=True)
+    os.popen('cp /Users/lzq/Dropbox/Data/CGM/cloudy/S1_t1/linelist.dat'
+             ' /Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/linelist.dat')
+    for i in range(len(z_array)):
+        for j in range(len(alpha_array)):
+            for k in range(len(den_array)):
+                lines = np.array(['Table power law spectral index ' + str(alpha_array[j]) + ', low=0.37, high=73.5 ',
+                                  'nuL(nu) = ' + str(L_qso) + ' at 1.0 Ryd',
+                                  'hden ' + str(den_array[k]),
+                                  'metals ' + str(z_array[i]) + ' log',
+                                  'radius ' + str(dis) + ' ' + str(dep),
+                                  'iterative to convergence',
+                                  'save line list absolute "alpha_' + str(alpha_array[j]) + '_' + str(z_array[i]) + '_'
+                                  + str(den_array[k]) + '.lin" from "linelist.dat" last',
+                                  'save lines, emissivity, ' + '"alpha_' + str(alpha_array[j]) + '_' + str(z_array[i])
+                                  + '_' + str(den_array[k]) + '.emi" last',
+                                  'Ne 5 3345.99A',
+                                  'Blnd 3726A',
+                                  'Blnd 3729A',
+                                  'Ne 3 3868.76A',
+                                  'He 1 3888.63A',
+                                  'H  1 3970.07A',
+                                  'H  1 4101.73A',
+                                  'H  1 4340.46A',
+                                  'O  3 4363.21A',
+                                  'He 2 4685.64A',
+                                  'H  1 4861.33A',
+                                  'o  3 5006.84A',
+                                  'o  3 4958.91A',
+                                  'Blnd 5007.00A',
+                                  'end of lines'])
+
+                np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial
+                           + '/alpha_' + str(alpha_array[j]) + '_'
+                           + str(z_array[i]) + '_' + str(den_array[k]) + '.in', lines, fmt="%s")
+
+                # Command
+                command = np.array(['$cloudy -r ' + 'alpha_' + str(alpha_array[j]) + '_'
+                                    + str(z_array[i]) + '_' + str(den_array[k])])
+
+                command_array = np.hstack((command_array, command))
+    np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
+
 def CreateGrid_BB(z_array, T_array, den_array, L_qso=46.54, region=None, trial=None):
     global text_array
     dis = np.around(distance[text_array == region][0], decimals=2)
@@ -733,3 +781,18 @@ def CreateGrid_AGN(den_array, T_array, z_array, alpha_ox_array, alpha_uv_array, 
 # S5 Emissivity
 # den_array_S5_Emi = np.linspace(-2, 5.6, 39, dtype='f2')
 # CreateGrid_Emi(z_array, alpha_array, den_array_S5_Emi, region='S5', trial='t1_Emi')
+
+# S1 Emissivity plane parallel
+# den_array_S1_Emi_PP = np.linspace(-2, 3.6, 29, dtype='f2')
+# CreateGrid_Emi_PP(z_array, alpha_array, den_array_S1_Emi_PP, region='S1', trial='t1_Emi_PP')
+
+# S5 Emissivity plane parallel
+# den_array_S5_Emi = np.linspace(-2, 5.6, 39, dtype='f2')
+# CreateGrid_Emi_PP(z_array, alpha_array, den_array_S5_Emi, region='S5', trial='t1_Emi_PP')
+
+# S6 Emissivity plane parallel
+# den_array_S6_Emi = np.linspace(-2, 4.6, 34, dtype='f2')
+# CreateGrid_Emi_PP(z_array, alpha_array, den_array_S6_Emi, region='S6', trial='t1_Emi_PP')
+# Extended
+den_array_S6_Emi_2 = np.linspace(4.8, 6.6, 10, dtype='f2')
+CreateGrid_Emi_PP(z_array, alpha_array, den_array_S6_Emi_2, region='S6', trial='t1_Emi_PP_2')

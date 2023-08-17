@@ -100,12 +100,13 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
 # Load information
 ra_final, dec_final, row_final, ID_final, z_final, name_final, ID_sep_final = ReturnGalLabel()
 
-# for i in row_final:
-#     mask = row_final == i
-#     PlotGalSpectra(row_array=[i], qls=False, figname="spectra_gal_" + str(i) + '_' + str(ID_sep_final[mask][0]))
-#
-# for i in [5, 6, 7, 181, 182]:
-#     mask = row_final == i
-#     PlotGalSpectra(row_array=[i], qls=True, figname="spectra_gal_" + str(i) + '_' + str(ID_sep_final[mask][0]))
+#### for i in *.png ; do convert -quality 25 "$i" "${i%.*}.jpeg" ; done ####
+for i in row_final:
+    mask = row_final == i
+    PlotGalSpectra(row_array=[i], qls=False, figname="spectra_gal_" + str(ID_sep_final[mask][0]))
 
-PlotGalSpectra(row_array=[64, 35, 1], qls=False, figname="spectra_gal_paper")
+for i in [5, 6, 7, 181, 182]:
+    mask = row_final == i
+    PlotGalSpectra(row_array=[i], qls=True, figname="spectra_gal_" + str(ID_sep_final[mask][0]))
+
+# PlotGalSpectra(row_array=[64, 35, 1], qls=False, figname="spectra_gal_paper")

@@ -232,7 +232,7 @@ def log_prob_lognormal(x, bnds, line_param, mode, f_NeV3346, f_OII, f_NeIII3869,
     # if mode == 'power_law' or mode == 'BB':
     logmu, sigma, alpha, logz = x[:]
 
-    logn = np.linspace(bnds[0, 0], bnds[0, 1], 1000)
+    logn = np.linspace(-2, bnds[0, 1], 1000)
     prob = lognormal(logn, logmu, sigma, mode='logL')
 
     if logmu < bnds[0, 0] or logmu > bnds[0, 1]:
@@ -366,7 +366,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 
         elif norm == 'lognormal':
             ndim = 4
-            p0 = np.array([1.5, 0.2, -1.4, -0.3]) + 0.1 * np.random.randn(nwalkers, ndim)
+            p0 = np.array([1.5, 3, -1.4, -0.3]) + 0.01 * np.random.randn(nwalkers, ndim)
             labels = [r"$\mathrm{log_{10}(\mu/cm^{-3})}$", r"$\mathrm{\sigma}$", r"$\mathrm{\alpha}$",
                       r"$\mathrm{log_{10}(Z/Z_{\odot})}$"]
 
@@ -544,15 +544,19 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         logn_X, alpha_Y = np.meshgrid(logn_draw, alpha_draw)
         logn_X, logz_Z = np.meshgrid(logn_draw, logz_draw)
         model = (logn_X, alpha_Y, logz_Z)
-        print(np.shape(f_Hbeta(model)))
-        print(np.shape(prob_draw))
         norm_Hbeta = np.log10(np.sum(prob_draw * 10 ** f_Hbeta(model), axis=1))
-        model_y2 = np.array([np.log10(np.sum(prob_draw * 10 ** f_OII(model), axis=1)) - norm_Hbeta,
+        model_y2 = [np.log10(np.sum(prob_draw * 10 ** f_OII(model), axis=1)) - norm_Hbeta,
                              np.log10(np.sum(prob_draw * 10 ** f_OIII5008(model), axis=1)) - norm_Hbeta,
                              np.log10(np.sum(prob_draw * 10 ** f_HeII4687(model), axis=1)) - norm_Hbeta,
-                             np.log10(np.sum(prob_draw * 10 ** f_NeV3346(model), axis=1)) - norm_Hbeta])
-        print(np.shape(model_y2))
-        #
+                             np.log10(np.sum(prob_draw * 10 ** f_NeV3346(model), axis=1)) - norm_Hbeta]
+        model_y2[1] = model_y2[1][~np.isnan(model_y2[0])]
+        model_y2[2] = model_y2[2][~np.isnan(model_y2[0])]
+        model_y2[3] = model_y2[3][~np.isnan(model_y2[0])]
+        model_y2[0] = model_y2[0][~np.isnan(model_y2[0])]
+        model_y2 = np.asarray(model_y2)
+        print(np.shape(model_y2[0]), np.shape(model_y2[1]), np.shape(model_y2[2]), np.shape(model_y2[3]))
+
+        # For subplot
         if line_param[5, 1]:
             model_y1 = [np.log10(np.sum(prob_draw * 10 ** f_OII3730(model), axis=1))
                         - np.log10(np.sum(prob_draw * 10 ** f_OII3727(model), axis=1)),
@@ -562,8 +566,9 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
             model_y1 = [np.log10(np.sum(prob_draw * 10 ** f_OII3730(model), axis=1))
                         - np.log10(np.sum(prob_draw * 10 ** f_OII3727(model), axis=1)),
                         np.nan * np.zeros(len(f_OII3727(model)))]
+        model_y1[0] = model_y1[0][~np.isnan(model_y1[0])]
 
-        # lognormal diagnosis plot # 1
+        # Lognormal diagnosis plot # 1
         plt.figure(figsize=(3, 3), dpi=300)
         plt.plot(logn_draw, prob_draw.T, lw=0.1)
         plt.legend(loc=2)
@@ -574,14 +579,26 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 
         # 2
         plt.figure(figsize=(3, 3), dpi=300)
-        plt.scatter(logmu_draw, sigma_draw, c=model_y2[1], s=0.1)
-        plt.colorbar(label=r'$\mathrm{\frac{[O \, III]}{H\beta}}$')
+        plt.scatter(logmu_draw, sigma_draw, c=np.log10(np.sum(prob_draw * 10 ** f_OII3730(model), axis=1))
+                        - np.log10(np.sum(prob_draw * 10 ** f_OII3727(model), axis=1)), s=0.1)
+        plt.colorbar(label=r'$\mathrm{\frac{[O \, II3729]}{[O \, II3727]}}$')
         plt.legend(loc=2)
         plt.xlabel(r'$\rm log(\mu)$')
         plt.ylabel(r'$\rm sigma$')
         plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial +
                     '_CheckLognormal#2.png', bbox_inches='tight')
 
+        # 3
+        logn_OII_weighted = np.sum(logn_draw * prob_draw * 10 ** f_OII(model), axis=1) / \
+                            np.sum(prob_draw * 10 ** f_OII(model), axis=1)
+        plt.figure(figsize=(3, 3), dpi=300)
+        plt.scatter(logmu_draw, sigma_draw, c=logn_OII_weighted, s=0.1)
+        plt.colorbar(label=r'$\rm logn_{[O \, II]}$')
+        plt.legend(loc=2)
+        plt.xlabel(r'$\rm log(\mu)$')
+        plt.ylabel(r'$\rm sigma$')
+        plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial +
+                    '_CheckLognormal#3.png', bbox_inches='tight')
 
     else:
         data_y2 = np.array([logflux_OII, logflux_OIII5008, logflux_HeII4687, logflux_NeV3346],
@@ -611,6 +628,7 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     model_y2 = np.where(line_param_violin[:, np.newaxis], model_y2, np.nan)
     model_y2 = [np.array(model_y2[0, :]), np.array(model_y2[1, :]), np.array(model_y2[2, :]),
                 np.array(model_y2[3, :])]
+    print(np.shape(model_y2))
     ax[0].errorbar(data_x1, data_y1, data_y1err, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
     ax[2].errorbar(data_x2_plot, data_y2, data_y2err, fmt='.k', capsize=2, elinewidth=1, mfc='red', ms=10)
     violin_parts_0 = ax[0].violinplot(model_y1, positions=data_x1, points=500, widths=1.5, showmeans=False,
@@ -826,6 +844,22 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 # RunCloudyMCMC(region='S1', trial='t1_Emi', norm='LHIS', bnds=S1_bnds, line_param=S1_param, deredden=True,
 #               nums_chain=5000, nums_disc=1000)
 
+# S1 lognormal
+# S1_bnds = np.array([[0, 3.6],
+#                     [-1.8, 0],
+#                     [-1.5, 0.5]])
+# S1_param = np.array([['NeV3346', True],
+#                      ['OII', True],
+#                      ['NeIII3869', False],
+#                      ['Hdel', True],
+#                      ['Hgam', True],
+#                      ['OIII4364', True],
+#                      ['HeII4687', True],
+#                      ['OIII5008', True]], dtype=bool)
+# den_array_S1_Emi = np.linspace(-2, 3.6, 29, dtype='f2')
+# RunCloudyMCMC(den_array=den_array_S1_Emi, region='S1', trial='t1_Emi_PP', norm='lognormal', bnds=S1_bnds, line_param=S1_param,
+#               deredden=True, nums_chain=5000, nums_disc=2000, figname_extra='_lognormal_4')
+
 # S2
 # S2_bnds = np.array([[-2, 2.6],
 #                     [-1.8, 0],
@@ -921,36 +955,36 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 # RunCloudyMCMC(region='S4', trial='t1', bnds=S4_bnds, line_param=S4_param, deredden=False)
 
 # S5
-S5_bnds = np.array([[-2, 6.6],
-                    [-1.8, 0],
-                    [-1.5, 0.5]])
-S5_param = np.array([['NeV3346', False],
-                     ['OII', True],
-                     ['NeIII3869', False],
-                     ['Hdel', False],
-                     ['Hgam', False],
-                     ['OIII4364', False],
-                     ['HeII4687', False],
-                     ['OIII5008', True]], dtype=bool)
-Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 6.6, 20, dtype='f2')))
+# S5_bnds = np.array([[-2, 6.6],
+#                     [-1.8, 0],
+#                     [-1.5, 0.5]])
+# S5_param = np.array([['NeV3346', False],
+#                      ['OII', True],
+#                      ['NeIII3869', False],
+#                      ['Hdel', False],
+#                      ['Hgam', False],
+#                      ['OIII4364', False],
+#                      ['HeII4687', False],
+#                      ['OIII5008', True]], dtype=bool)
+# Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 6.6, 20, dtype='f2')))
 # RunCloudyMCMC(region='S5', trial='t1', bnds=S5_bnds, line_param=S5_param, deredden=True,
 #               den_array=Hden_ext)
 
 # S5 lognormal
-S5_bnds = np.array([[-2, 5.6],
-                    [-1.8, 0],
-                    [-1.5, 0.5]])
-S5_param = np.array([['NeV3346', False],
-                     ['OII', True],
-                     ['NeIII3869', False],
-                     ['Hdel', False],
-                     ['Hgam', False],
-                     ['OIII4364', False],
-                     ['HeII4687', False],
-                     ['OIII5008', True]], dtype=bool)
-den_array_S5_Emi = np.linspace(-2, 5.6, 39, dtype='f2')
-RunCloudyMCMC(den_array=den_array_S5_Emi, region='S5', trial='t1_Emi', norm='lognormal', bnds=S5_bnds, line_param=S5_param,
-              deredden=True, nums_chain=5000, nums_disc=1000, figname_extra='_lognormal')
+# S5_bnds = np.array([[1, 5.6],
+#                     [-1.8, 0],
+#                     [-1.5, 0.5]])
+# S5_param = np.array([['NeV3346', False],
+#                      ['OII', True],
+#                      ['NeIII3869', False],
+#                      ['Hdel', False],
+#                      ['Hgam', False],
+#                      ['OIII4364', False],
+#                      ['HeII4687', False],
+#                      ['OIII5008', True]], dtype=bool)
+# den_array_S5_Emi = np.linspace(-2, 5.6, 39, dtype='f2')
+# RunCloudyMCMC(den_array=den_array_S5_Emi, region='S5', trial='t1_Emi', norm='lognormal', bnds=S5_bnds, line_param=S5_param,
+#               deredden=True, nums_chain=1000, nums_disc=200, figname_extra='_lognormal')
 
 # S5_bnds = np.array([[-2, 4.6],
 #                     [-1.8, 0],
@@ -976,7 +1010,7 @@ RunCloudyMCMC(den_array=den_array_S5_Emi, region='S5', trial='t1_Emi', norm='log
 # RunCloudyMCMC(region='S6', trial='t2', bnds=S6_bnds, line_param=S6_param, deredden=True)
 
 # S6 lognormal
-S6_bnds = np.array([[-2, 3.4],
+S6_bnds = np.array([[1, 6.6],
                     [-1.8, 0],
                     [-1.5, 0.5]])
 S6_param = np.array([['NeV3346', True],
@@ -987,9 +1021,9 @@ S6_param = np.array([['NeV3346', True],
                      ['OIII4364', True],
                      ['HeII4687', True],
                      ['OIII5008', True]], dtype=bool)
-Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 3.4, 4, dtype='f2')))
-# RunCloudyMCMC(den_array=Hden_ext, region='S6', trial='t1_Emi', norm='lognormal', bnds=S6_bnds, line_param=S6_param,
-#               deredden=True, nums_chain=5000, nums_disc=1000, figname_extra='_lognormal')
+den_array_S6_Emi = np.linspace(-2, 6.6, 44, dtype='f2')
+RunCloudyMCMC(den_array=den_array_S6_Emi, region='S6', trial='t1_Emi_PP', norm='lognormal', bnds=S6_bnds,
+              line_param=S6_param, deredden=True, nums_chain=5000, nums_disc=1000, figname_extra='_lognormal')
 
 # S6 LHIS
 # S6_bnds = np.array([[-2, 3.4],

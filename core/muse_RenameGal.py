@@ -1,13 +1,16 @@
 import os
 import numpy as np
+from astropy import units as u
+import astropy.io.fits as fits
 from astropy.table import Table
 from astropy.coordinates import FK5
 from muse_compare_z import compare_z
 from astropy.coordinates import SkyCoord
+from astropy.cosmology import FlatLambdaCDM
 
 
 # Turn Galaxy label
-def ReturnGalLabel(sort_row=False, mode='final'):
+def ReturnGalLabel(sort_row=False, mode='final', return_HST=False, return_bins=False, print_radec=False):
     # Load info
     ggp_info = compare_z(cat_sean='ESO_DEEP_offset_zapped_objects_sean.fits',
                          cat_will='ESO_DEEP_offset_zapped_objects.fits')
@@ -31,14 +34,39 @@ def ReturnGalLabel(sort_row=False, mode='final'):
     ra_final = ra_final[select_gal]
     dec_final = dec_final[select_gal]
 
+    # Getting photometry zero point
+    path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'gal_all',
+                            'HE0238-1904_sex_gal_all.fits')
+    data_pho = fits.getdata(path_pho, 1, ignore_missing_end=True)
+    catalog = SkyCoord(data_pho['AlPHAWIN_J2000'], data_pho['DELTAWIN_J2000'], unit="deg")
+    c = SkyCoord(ra_final, dec_final, unit="deg")
+    idx, d2d, d3d = c.match_to_catalog_sky(catalog)
+
+    # Photometry
+    data_pho_gal = data_pho[idx]
+    ra_hst, dec_hst = data_pho_gal['AlPHAWIN_J2000'], data_pho_gal['DELTAWIN_J2000']
+    galaxy_no_change = np.array([6, 7, 129, 140, 149, 181, 182])
+    select_no_change = np.in1d(select_array, galaxy_no_change)
+    ra_hst[select_no_change] = ra_final[select_no_change]
+    dec_hst[select_no_change] = dec_final[select_no_change]
+
     if mode == 'initial':
-        return row_final, ID_final, name_final, z_final, ra_final, dec_final
+        if return_HST:
+            if return_bins:
+                return row_final, ID_final, name_final, z_final, ra_hst, dec_hst, bins_final
+            else:
+                return row_final, ID_final, name_final, z_final, ra_hst, dec_hst
+        else:
+            return row_final, ID_final, name_final, z_final, ra_final, dec_final
 
     # Calculate the offset between MUSE and gaia
     ra_qso_muse, dec_qso_muse = 40.13564948691202, -18.864301804042814
     ra_qso_gaia, dec_qso_gaia = 40.13576715640353, -18.86426977828008
+    ra_qso_hst, dec_qso_hst = data_pho['AlPHAWIN_J2000'][1296], data_pho['DELTAWIN_J2000'][1296]
     ra_final = ra_final - (ra_qso_gaia - ra_qso_muse)
     dec_final = dec_final - (dec_qso_gaia - dec_qso_muse)
+    ra_hst = ra_hst - (ra_qso_gaia - ra_qso_hst)
+    dec_hst = dec_hst - (dec_qso_gaia - dec_qso_hst)
 
     # Change coordinate for galaxy with row = 1
     row_1_sort = np.where(row_final == 1)
@@ -51,20 +79,31 @@ def ReturnGalLabel(sort_row=False, mode='final'):
     # Report angular separation and ra dec
     skycoord_host = SkyCoord(ra_qso_gaia, dec_qso_gaia, unit='deg', frame=FK5)
     # print(skycoord_host.to_string('hmsdms', sep=':'))
-    skycoord = SkyCoord(ra_final, dec_final, unit='deg', frame=FK5)
+    skycoord = SkyCoord(ra_hst, dec_hst, unit='deg', frame=FK5)
     # print(skycoord.to_string('hmsdms', sep=':'))
-    sep_final = skycoord.separation(skycoord_host)
+    sep_final = skycoord.separation(skycoord_host).arcsecond
 
     # Rename the galaxy
     sort_sep = np.argsort(sep_final)
     sep_final = sep_final[sort_sep]
     ra_final = ra_final[sort_sep]
     dec_final = dec_final[sort_sep]
+
     row_final = row_final[sort_sep]
     ID_final = ID_final[sort_sep]
     z_final = z_final[sort_sep]
     name_final = name_final[sort_sep]
     ID_sep_final = np.arange(len(sep_final)) + 1
+
+    if print_radec:
+        z = 0.6282144177077355
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        d_l = cosmo.angular_diameter_distance(z=z)
+        ratio = (1 * u.radian).to(u.arcsec).value
+        d_sep = (sep_final * d_l / ratio).to(u.kpc).value
+
+        print(np.vstack((sep_final, d_sep, row_final, ID_sep_final,
+                         skycoord[sort_sep].to_string('hmsdms', sep=':', precision=1))).T)
 
     if sort_row:
         sort_row = np.argsort(row_final)
@@ -93,3 +132,5 @@ def ReturnGalLabel(sort_row=False, mode='final'):
             t['G#'] = ID_sep_final
             t.write(filename, format='fits', overwrite=True)
         return ra_final, dec_final, row_final, ID_final, z_final, name_final, ID_sep_final
+
+# ReturnGalLabel(print_radec=True)

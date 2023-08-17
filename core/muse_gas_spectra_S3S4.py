@@ -444,7 +444,7 @@ r_OII3729_3727_guess = 2
 
 parameters_all = lmfit.Parameters()
 parameters_all.add_many(('z', redshift_guess, True, 0.62, 0.64, None),
-                        ('dz_wing', 0.0006, True, -0.005, 0.005, None),
+                        ('dz_wing', 0.0006, True, 0, 0.005, None),
                         ('sigma_kms', sigma_kms_guess, True, 10, 500, None),
                         ('sigma_kms_wing', 300, True, 10, 1000, None),
                         ('flux_NeV3346', 0.01, True, None, None, None),
@@ -1021,7 +1021,7 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 PlotGasSpectra(region=['S3', 'S4', 'B4_new'], figname='spectra_gas/spectra_gas_S3S4B4',
                save_table=True, save_figure=True, deredden=True)
 
-# PlotGasSpectra(region='B4_new', figname='spectra_gas/spectra_gas_B4',
+# PlotGasSpectra(region='B4_new', figname='spectra_gas/spectra_gas_B4_new',
 #                save_table=False, save_figure=True, deredden=True)
 
 # for i in range(len(text_array)):

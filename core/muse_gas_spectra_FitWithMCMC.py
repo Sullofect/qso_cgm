@@ -790,7 +790,8 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
                                                 r"$\mathrm{Flux\_OII}$", r"$\mathrm{Flux\_OII\_wing}$",
                                                 r"$\mathrm{Flux\_OIII5008}$", r"$\mathrm{Flux\_OIII5008\_wing}$",
                                                 r"$\mathrm{r\_OII}$", r"$\mathrm{r\_OII\_wing}$"],
-                               quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k', title_kwargs={"fontsize": 13},
+                               quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt='.6f', color='k',
+                               title_kwargs={"fontsize": 13},
                                smooth=1., smooth1d=1., bins=25)
         best_fit = np.percentile(samples, [16, 50, 84], axis=0)
         for j in range(3):
@@ -1035,5 +1036,5 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 #     PlotGasSpectra([ra_array[i]], [dec_array[i]], [radius_array[i]], [text_array[i]],
 #                    figname='spectra_gas/spectra_gas_' + str(text_array[i]))
 
-PlotGasSpectra(region='B4_new', figname='spectra_gas/spectra_gas_B4',
+PlotGasSpectra(region='B4_new', figname='spectra_gas/spectra_gas_B4_new',
                save_table=False, save_figure=True, deredden=True, nums_chain=8000, nums_disc=1000)

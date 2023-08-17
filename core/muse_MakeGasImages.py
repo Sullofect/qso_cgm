@@ -86,9 +86,9 @@ def ConvertFits(table=None, type=None, mask=None, filename=None, smooth=True, sm
 
 
 def APLpyStyle(gc, type=None):
-    # gc.recenter(40.1344150, -18.8656933, width=30 / 3600, height=30 / 3600)
+    gc.recenter(40.1344150, -18.8656933, width=30 / 3600, height=30 / 3600)
     # gc.recenter(40.1354150, -18.8656933, width=15 / 3600, height=15 / 3600)
-    gc.recenter(40.1364171, -18.8656242, width=4 / 3600, height=4 / 3600)
+    # gc.recenter(40.1364171, -18.8656242, width=4 / 3600, height=4 / 3600)
     gc.show_markers(ra_qso_muse, dec_qso_muse, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=600, zorder=100)
     gc.set_system_latex(True)
@@ -100,12 +100,12 @@ def APLpyStyle(gc, type=None):
     gc.colorbar.set_font(size=20)
     gc.colorbar.set_axis_label_font(size=20)
     if type == 'NarrowBand':
-        gc.colorbar.set_location('top')
+        gc.colorbar.set_location('bottom')
         gc.colorbar.set_ticks([1, 5, 10])
-        gc.colorbar.set_font(size=60)
+        gc.colorbar.set_font(size=20)
         gc.colorbar.set_axis_label_text(r'$\mathrm{Surface \; Brightness \; [10^{-17} \; erg \; cm^{-2} \; '
                                         r's^{-1} \; arcsec^{-2}]}$')
-        gc.colorbar.set_axis_label_text('')
+        # gc.colorbar.set_axis_label_text('')
         # gc.colorbar.hide()
     elif type == 'FieldImage':
         gc.colorbar.hide()
@@ -121,11 +121,11 @@ def APLpyStyle(gc, type=None):
 
     # Scale bar
     # gc.add_scalebar(length=3 * u.arcsecond)
-    # gc.add_scalebar(length=15 * u.arcsecond)
-    # gc.scalebar.set_corner('top left')
-    # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+    gc.add_scalebar(length=15 * u.arcsecond)
+    gc.scalebar.set_corner('top left')
+    gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
     # gc.scalebar.set_label(r"$3'' \approx 20 \mathrm{\; pkpc}$")
-    # gc.scalebar.set_font_size(20)
+    gc.scalebar.set_font_size(20)
 
     # Hide
     gc.ticks.hide()
@@ -136,27 +136,28 @@ def APLpyStyle(gc, type=None):
     # Label
     # xw, yw = gc.pixel2world(195, 140)  # original figure
     # xw, yw = gc.pixel2world(196, 105)
-    # xw, yw = 40.1302360960119, -18.863967747328896
-    # gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
-    # gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
-    xw, yw = 40.1333130960119, -18.864847747328896
-    gc.show_arrows(xw, yw, -0.000020 * yw, 0, color='k')
-    gc.show_arrows(xw, yw, 0, -0.000020 * yw, color='k')
-    # gc.add_label(0.9778, 0.81, r'N', size=20, relative=True)
-    # gc.add_label(0.88, 0.70, r'E', size=20, relative=True)
+    xw, yw = 40.1302360960119, -18.863967747328896
+    gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
+    gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
+    # xw, yw = 40.1333130960119, -18.864847747328896
+    # gc.show_arrows(xw, yw, -0.000020 * yw, 0, color='k')
+    # gc.show_arrows(xw, yw, 0, -0.000020 * yw, color='k')
+    gc.add_label(0.9778, 0.81, r'N', size=20, relative=True)
+    gc.add_label(0.88, 0.70, r'E', size=20, relative=True)
 
 
 # Load galxies infomation
-row_final, ID_final, name_final, z_final, ra_final, dec_final = ReturnGalLabel(sort_row=False, mode='initial')
+row_final, ID_final, name_final, z_final, ra_hst, dec_hst = ReturnGalLabel(sort_row=False, mode='initial',
+                                                                           return_HST=True)
 ID_sep_final = ReturnGalLabel(sort_row=True, mode='final')[6]
 col_ID = np.arange(len(row_final), dtype=int)
-select_array = np.sort(np.array([1, 2, 3, 4, 5, 6, 7, 8, 13, 18, 20, 22]))
+select_array = np.sort(np.array([1, 2, 3, 4, 5, 6, 7, 8, 13, 16, 20, 22]))
 select_gal = np.in1d(ID_sep_final, select_array)
 ID_sep_final = ID_sep_final[select_gal]
 row_final = row_final[select_gal]
 z_final = z_final[select_gal]
-ra_final = ra_final[select_gal]
-dec_final = dec_final[select_gal]
+ra_hst = ra_hst[select_gal]
+dec_hst = dec_hst[select_gal]
 
 # Calculate the offset between MUSE and HST
 z_qso = 0.6282144177077355
@@ -183,10 +184,10 @@ gal_labels = Regions.read(path_gal_label, format='ds9')
 def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
     # Make movie OII
     if band == 'OII':
-        path_cube = path_data + 'cube_narrow/CUBE_OII_line_offset_zapped.fits'
+        path_cube = path_data + 'cube_narrow/CUBE_OII_line_offset.fits'
         wave_center = OII_air_2
     elif band == 'OIII':
-        path_cube = path_data + 'cube_narrow/CUBE_OIII_5008_line_offset_zapped.fits'
+        path_cube = path_data + 'cube_narrow/CUBE_OIII_5008_line_offset.fits'
         wave_center = OIII_air
     cube = Cube(path_cube)
     OII_label_array = ['', '(d)', '(e)', '(f)', '', '']
@@ -205,24 +206,24 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
         sub_cube = sub_cube.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2
         path_image_make_NB = band + '_' + str(dv_i) + '_' + str(dv_f)
         sub_cube.write(path_data + 'image_MakeMovie/' + path_image_make_NB + '.fits')
-        ConvertFits(type='NarrowBand', mask=False, filename=path_image_make_NB, smooth=False)
+        ConvertFits(type='NarrowBand', mask=False, filename=path_image_make_NB, smooth=True)
         ConvertFits(type='NarrowBand', mask=False, filename=path_image_make_NB, smooth=False, contour=True)
         path_subcube = path_data + 'image_MakeMovie/' + path_image_make_NB + '_revised.fits'
         path_contour = path_data + 'image_MakeMovie/' + path_image_make_NB + '_contour_revised.fits'
 
         # Plot the data
         gc = aplpy.FITSFigure(path_subcube, figure=fig, north=True)
-        # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15.0, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
-        gc.show_colorscale(vmin=0, vmid=10, vmax=20.0, cmap=plt.get_cmap('Blues'), stretch='arcsinh')  # [O III] tidal
+        gc.show_colorscale(vmin=0, vmid=0.2, vmax=15.0, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
+        # gc.show_colorscale(vmin=0, vmid=10, vmax=20.0, cmap=plt.get_cmap('Blues'), stretch='arcsinh')  # [O III] tidal
         # gc.show_colorscale(vmin=0, vmid=1, vmax=3, cmap=plt.get_cmap('Blues'), stretch='arcsinh')  # [O II] tidal
         # gc.show_colorscale(vmin=-0.2, vmid=0.2, vmax=7.0, cmap=newcmp, stretch='linear')
         if gal:
             # Select G3 and G5
             select_array = np.sort(np.array([3, 5]))
             select_G3G5 = np.in1d(ID_sep_final, select_array)
-            # gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none',
+            # gc.show_markers(ra_hst, dec_hst, facecolor='none', marker='o', c='none',
             #                 edgecolors='k', linewidths=0.8, s=150)
-            gc.show_markers(ra_final[select_G3G5], dec_final[select_G3G5], facecolor='none', marker='o', c='none',
+            gc.show_markers(ra_hst[select_G3G5], dec_hst[select_G3G5], facecolor='none', marker='o', c='none',
                             edgecolors='k', linewidths=3, s=5000)
 
         # Plot regions
@@ -238,12 +239,10 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
                     text_j = text_array[j]
                 gc.add_label(x, y, text_j, size=20)
         else:
-            print('yeah')
-            # gc.show_circles(ra_array[:-2], dec_array[:-2], radius_array[:-2] / 3600, edgecolors='k', linestyles='--',
-            #                 linewidths=1,
-            #                 alpha=0.25, zorder=10)
-            # gc.show_contour(path_contour, levels=[0.08, 0.3], layer='O#', kernel='gauss', colors='k',
-            #                 linewidths=0.8, smooth=3)
+            gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--',
+                            linewidths=1, alpha=0.25, zorder=10)
+            gc.show_contour(path_contour, levels=[0.08, 0.3], layer='O#', kernel='gauss', colors='k',
+                            linewidths=0.8, smooth=3)
 
             # Area
             # x = gc.get_layer('O#').collections[1].get_paths()[0].vertices[:, 0]
@@ -253,24 +252,25 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
             # print(path_image_make_NB, area)
 
         APLpyStyle(gc, type='NarrowBand')
-        # gc.add_label(0.82, 0.91, r'$\mathrm{\lambda = \,}$' + str("{0:.0f}".format(wave_i_vac)) + ' to '
-        #              + str("{0:.0f}".format(wave_f_vac)) + r'$\mathrm{\AA}$', size=20, relative=True)
-        # gc.add_label(0.76, 0.85, r'$\mathrm{\Delta} v \approx \,$' + str("{0:.0f}".format(dv_i)) + ' to '
-        #              + str("{0:.0f}".format(dv_f)) + r'$\mathrm{\, km \, s^{-1}}$', size=20, relative=True)
+        gc.add_label(0.82, 0.91, r'$\mathrm{\lambda = \,}$' + str("{0:.0f}".format(wave_i_vac)) + ' to '
+                     + str("{0:.0f}".format(wave_f_vac)) + r'$\mathrm{\AA}$', size=20, relative=True)
+        gc.add_label(0.76, 0.85, r'$\mathrm{\Delta} v \approx \,$' + str("{0:.0f}".format(dv_i)) + ' to '
+                     + str("{0:.0f}".format(dv_f)) + r'$\mathrm{\, km \, s^{-1}}$', size=20, relative=True)
         figname = '/Users/lzq/Dropbox/Data/CGM_plots/NB_movie/'
         if band == 'OII':
             gc.add_label(0.87, 0.97, r'MUSE [O II]', size=20, relative=True)
             figname += 'image_OII_' + str("{0:.0f}".format(dv_i)) + '_' + str("{0:.0f}".format(dv_f))
-            # gc.add_label(0.08, 0.08, OII_label_array[i], color='k', size=40, relative=True)
+            gc.add_label(0.08, 0.08, OII_label_array[i], color='k', size=40, relative=True)
         elif band == 'OIII':
-            # gc.add_label(0.87, 0.97, r'MUSE [O III]', size=20, relative=True)
+            gc.add_label(0.87, 0.97, r'MUSE [O III]', size=20, relative=True)
             figname += 'image_OIII_' + str("{0:.0f}".format(dv_i)) + '_' + str("{0:.0f}".format(dv_f))
-            # gc.add_label(0.08, 0.08, OIII_label_array[i], color='k', size=40, relative=True)
+            gc.add_label(0.08, 0.08, OIII_label_array[i], color='k', size=40, relative=True)
         if region:
             figname += '_region'
         fig.savefig(figname + '.png', bbox_inches='tight')
     if video:
         if band == 'OII':
+            # for i in *.png ; do convert -quality 25 "$i" "${i%.*}.jpeg" ; done   ### in bash
             os.system('convert -delay 75 ~/dropbox/Data/CGM_plots/NB_movie/image_OII_*.png '
                       '~/dropbox/Data/CGM_plots/NB_movie/OII_movie.gif | ls -lt ~/dropbox/Data/CGM_plots/NB_movie/image_OII_*.png')
         elif band == 'OIII':
@@ -306,7 +306,7 @@ def MakeFieldImage(label_gal=False):
     area_OIII = np.abs(0.5 * np.sum(y_OIII[:-1] * np.diff(x_OIII) - x_OIII[:-1]
                                     * np.diff(y_OIII))) * 0.05 ** 2 * 6.66 ** 2
     print(area_OII, area_OIII)
-    gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=1.5, s=330)
+    gc.show_markers(ra_hst, dec_hst, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=1.5, s=330)
     if label_gal:
         gc.show_arrows(40.1371817, -18.8663804, 40.1366338 - 40.1371817, -18.8656749 + 18.8663804, color='k')
         gc.show_arrows(40.1366225, -18.8668026, 40.1364435 - 40.1366225, -18.8660348 + 18.8668026, color='k')
@@ -403,24 +403,24 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     gc.show_colorscale(vmin=-300, vmax=300, cmap='coolwarm')
     # gc.show_contour(path_OII_SB, levels=[-np.inf, 0.1], filled=False, kernel='gauss', colors='black', linewidths=0.8, smooth=3)
     # gc.show_contour(path_OIII_SB, levels=[0.1], filled=False, kernel='gauss', colors='red', linewidths=0.8, smooth=3)
-    gc.show_markers(ra_final, dec_final, facecolor='white', marker='o', c='white',
+    gc.show_markers(ra_hst, dec_hst, facecolor='white', marker='o', c='white',
                     edgecolors='none', linewidths=0.8, s=100)
-    gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-    gc.show_markers(ra_final, dec_final, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300,
+    gc.show_markers(ra_hst, dec_hst, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
+    gc.show_markers(ra_hst, dec_hst, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-300, vmax=300,
                     cmap='coolwarm')
     APLpyStyle(gc, type='GasMap')
 
     # For Mandy
-    gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--', linewidths=1,
-                    alpha=0.3)
-    for j in range(len(ra_array)):
-        x = regions_label[j].center.ra.degree
-        y = regions_label[j].center.dec.degree
-        if j > 10:
-            text_j = text_array[j][:-4]
-        else:
-            text_j = text_array[j]
-        gc.add_label(x, y, text_j, size=20)
+    # gc.show_circles(ra_array, dec_array, radius_array / 3600, edgecolors='k', linestyles='--', linewidths=1,
+    #                 alpha=0.3)
+    # for j in range(len(ra_array)):
+    #     x = regions_label[j].center.ra.degree
+    #     y = regions_label[j].center.dec.degree
+    #     if j > 10:
+    #         text_j = text_array[j][:-4]
+    #     else:
+    #         text_j = text_array[j]
+    #     gc.add_label(x, y, text_j, size=20)
 
     # Label
     if line == 'OIII':
@@ -430,7 +430,7 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     elif line == 'OOHbeta':
         gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{lines}} - v_{\mathrm{qso}}$', size=20, relative=True)
     gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' + method_spe + '_mandy.png',
+    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' + method_spe + '.png',
                 bbox_inches='tight')
 
     # Plot sigma map
@@ -439,7 +439,7 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     path_sigma_v = path_data + 'image_plot/image_' + line + '_fitline_revised.fits'
     gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
     gc.show_colorscale(vmin=0, vmax=200, cmap=sequential_s.Acton_6.mpl_colormap)
-    gc.show_markers(ra_final, dec_final, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=150)
+    gc.show_markers(ra_hst, dec_hst, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=150)
     APLpyStyle(gc, type='GasMap_sigma')
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_sigma_v_map_' + method + '_' + method_spe
                 + '.png', bbox_inches='tight')
@@ -460,12 +460,12 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 
 
 #
-# MakeNarrowBands(region=False, video=False, gal=False)
+MakeNarrowBands(region=False, video=False, gal=False)
 # MakeNarrowBands(region=True)
-MakeNarrowBands(region=False, band='OIII', video=False, gal=True)
+MakeNarrowBands(region=False, band='OIII', video=False, gal=False)
 # MakeNarrowBands(region=True, band='OIII')
 # MakeFieldImage(label_gal=True)
 # MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',
 #            test=False, snr_thr=8, v_thr=np.inf, check=False)
-MakeGasMap(line='OIII', method='pixel', method_spe='zapped',
-           test=False, snr_thr=8, v_thr=np.inf, check=False)
+# MakeGasMap(line='OOHbeta', method='aperture_1.0', method_spe='zapped',
+#            test=False, snr_thr=8, v_thr=np.inf, check=False)
