@@ -460,9 +460,9 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 
 
 #
-MakeNarrowBands(region=False, video=False, gal=False)
+# MakeNarrowBands(region=False, video=False, gal=False)
 # MakeNarrowBands(region=True)
-MakeNarrowBands(region=False, band='OIII', video=False, gal=False)
+# MakeNarrowBands(region=False, band='OIII', video=False, gal=False)
 # MakeNarrowBands(region=True, band='OIII')
 # MakeFieldImage(label_gal=True)
 # MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',

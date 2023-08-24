@@ -501,7 +501,7 @@ def CreateGrid_Emi(z_array, alpha_array, den_array, L_qso=46.54, region=None, tr
                 command_array = np.hstack((command_array, command))
     np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial + '/command.txt', command_array, fmt="%s")
 
-def CreateGrid_Emi_PP(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=None):
+def CreateGrid_Emi_PP(z_array, alpha_array, den_array, L_qso=46.54, region=None, trial=None, stop_cond=None):
     global text_array
     dis = np.around(distance[text_array == region][0], decimals=2)
     dep = dis - 1
@@ -537,6 +537,8 @@ def CreateGrid_Emi_PP(z_array, alpha_array, den_array, L_qso=46.54, region=None,
                                   'o  3 4958.91A',
                                   'Blnd 5007.00A',
                                   'end of lines'])
+                if stop_cond is not None:
+                    lines = np.hstack((lines, stop_cond))
 
                 np.savetxt('/Users/lzq/Dropbox/Data/CGM/cloudy/' + region + '_' + trial
                            + '/alpha_' + str(alpha_array[j]) + '_'
@@ -796,3 +798,8 @@ def CreateGrid_AGN(den_array, T_array, z_array, alpha_ox_array, alpha_uv_array, 
 # Extended
 den_array_S6_Emi_2 = np.linspace(4.8, 6.6, 10, dtype='f2')
 CreateGrid_Emi_PP(z_array, alpha_array, den_array_S6_Emi_2, region='S6', trial='t1_Emi_PP_2')
+
+# S6 Emissivity plane parallel with stopping condition
+den_array_S6_Emi_sc = np.linspace(-3, 6.6, 49, dtype='f2')
+CreateGrid_Emi_PP(z_array, alpha_array, den_array_S6_Emi_sc, region='S6', trial='t1_Emi_PP_sc',
+                  stop_cond='Stop total column density = 18')
