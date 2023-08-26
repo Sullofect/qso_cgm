@@ -183,6 +183,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         # kernel = Gaussian2DKernel(x_stddev=5.0, x_size=3, y_size=3)
         kernel = Kernel(kernel.array[np.newaxis, :, :])
         flux = convolve(flux, kernel)
+        # flux_err = np.sqrt(convolve(flux_err ** 2, kernel))  ## perhaps wrong?
     flux_smooth_ori = np.copy(flux)
 
     # Iterate over nebulae
@@ -215,13 +216,12 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         for i in np.flip(idx_s):
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
-            # flux_cut = np.where(conti_s == 1, flux_i, 0)
             mask_i = np.where(conti_s == 1, mask, 0)
             mask_i = np.where(S_N_i >= S_N_thr, mask_i, 0)
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_s = np.where(mask_i != 0, conti_s, 0)
             wave_grid_s = np.where(mask_i == 0, wave_grid_s, wave_vac[i])
-            if np.all(flux_cut.flatten() == 0):
+            if np.all(conti_s.flatten() == 0):
                 break
             else:
                 data_final += flux_cut
@@ -229,13 +229,12 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         for i in idx_b:
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
-            # flux_cut = np.where(conti_b == 1, flux_i, 0)
             mask_i = np.where(conti_b == 1, mask, 0)
             mask_i = np.where(S_N_i >= S_N_thr, mask_i, 0)
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_b = np.where(mask_i != 0, conti_b, 0)
             wave_grid_b = np.where(mask_i == 0, wave_grid_b, wave_vac[i])
-            if np.all(flux_cut.flatten() == 0):
+            if np.all(conti_b.flatten() == 0):
                 break
             else:
                 data_final += flux_cut
@@ -252,6 +251,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
                         ax[ax_i, ax_j].plot(wave_vac, flux_ori[:, i_j, j_j], '-k')
                         ax[ax_i, ax_j].plot(wave_vac, flux_smooth_ori[:, i_j, j_j], '-b')
                         ax[ax_i, ax_j].plot(wave_vac, flux_err_ori[:, i_j, j_j], '-C0')
+                        ax[ax_i, ax_j].plot(wave_vac, flux_err[:, i_j, j_j], '-C2')
                         ax[ax_i, ax_j].fill_between([wave_grid_s[i_j, j_j], wave_grid_b[i_j, j_j]], y1=np.zeros(2),
                                                     y2=np.ones(2) * np.nanmax(flux_ori[:, i_j, j_j]), color='C1',
                                                     alpha=0.2)
@@ -275,8 +275,8 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
 
 
 #
-MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.5, smooth=True, smooth_val=3, nums=10, npixels=10,
-               CheckSegmentation=False, AddBackground=True, CheckSpectra=[90, 90])
+MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.7, smooth=True, smooth_val=3, nums=10, npixels=10,
+               CheckSegmentation=True, AddBackground=True, CheckSpectra=[90, 90])
 
 # Plot the data
 fig = plt.figure(figsize=(8, 8), dpi=300)
