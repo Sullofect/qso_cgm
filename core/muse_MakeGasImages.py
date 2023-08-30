@@ -196,13 +196,16 @@ def MakeNarrowBands(gal=False, region=False, video=False, band='OII'):
         fig = plt.figure(figsize=(8, 8), dpi=300)
 
         # Split by velocity
-        dv_i, dv_f = -500 + 200 * i, -500 + 200 * (i + 1)
+        # dv_i, dv_f = -500 + 200 * i, -500 + 200 * (i + 1)
+        dv_i, dv_f = -200, 200
         wave_i = wave_center * (1 + z_qso) * (dv_i / 3e5 + 1)
         wave_f = wave_center * (1 + z_qso) * (dv_f / 3e5 + 1)
         wave_i_vac, wave_f_vac = pyasl.airtovac2(wave_i), pyasl.airtovac2(wave_f)
 
         # Slice the cube
         sub_cube = cube.select_lambda(wave_i, wave_f)
+        # print(wave_i, wave_f)
+        # print(sub_cube.wave.coord().min(), sub_cube.wave.coord().max())
         sub_cube = sub_cube.sum(axis=0) * 1.25 * 1e-20 / 0.2 / 0.2
         path_image_make_NB = band + '_' + str(dv_i) + '_' + str(dv_f)
         sub_cube.write(path_data + 'image_MakeMovie/' + path_image_make_NB + '.fits')

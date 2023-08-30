@@ -5,6 +5,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from PyAstronomy import pyasl
+from astropy.stats import sigma_clip
 from astropy.coordinates import SkyCoord
 # from astropy.wcs import WCS
 from astropy.convolution import convolve
@@ -165,7 +166,8 @@ def keep_longest_true(a):
 #
 
 def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixels=100, connectivity=8, smooth=True,
-                   smooth_val=3, nums=1, AddBackground=False, CheckSegmentation=False, CheckSpectra=None):
+                   smooth_val=3, nums=1, RescaleVariance=True, AddBackground=False, CheckSegmentation=False,
+                   CheckSpectra=None):
     # Cubes
     path_cube = path_data + 'cube_narrow/' + cubename
     cube = Cube(path_cube)
@@ -174,6 +176,21 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
     wave_vac = pyasl.airtovac2(cube.wave.coord())
     flux = cube.data * 1e-3
     flux_err = np.sqrt(cube.var) * 1e-3
+
+    if RescaleVariance:
+        flux_bkg = np.sum(flux, axis=0)
+        # mask_bkg = np.ones_like(flux_bkg)
+        select_bkg = np.ones_like(flux_bkg)
+
+        flux_mask = np.where(select_bkg, flux, np.nan)
+        flux_err_mask = np.where(select_bkg, flux_err, np.nan)
+
+        flux_std = np.nanstd(flux_mask, axis=(1, 2))
+        flux_err_mean = np.nanmean(flux_err_mask, axis=(1, 2))
+        value_rescale = flux_std / flux_err_mean
+        flux_err = flux_err * value_rescale[:, np.newaxis, np.newaxis]
+
+    # Copy object
     flux_ori = np.copy(flux)
     flux_err_ori = np.copy(flux_err)
 
@@ -212,7 +229,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         wave_grid_s = np.ones_like(S_N_max) * wave_vac[idx_max]
         wave_grid_b = np.ones_like(S_N_max) * wave_vac[idx_max]
         conti_s, conti_b = np.ones_like(S_N_max), np.ones_like(S_N_max)
-        idx_s, idx_b = np.arange(0, idx_max), np.arange(idx_max, size[0])
+        idx_s, idx_b = np.arange(0, idx_max), np.arange(idx_max + 1, size[0])
         for i in np.flip(idx_s):
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
@@ -248,6 +265,14 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
                 for ax_i in range(5):
                     for ax_j in range(5):
                         i_j, j_j = ax_i + CheckSpectra[0], ax_j + CheckSpectra[1]
+                        # if ax_i == 0:
+                        #     if ax_j == 0:
+                        #         flux_sum_check = np.where((wave_vac >= wave_grid_s[i_j, j_j])
+                        #                                   * (wave_vac <= wave_grid_b[i_j, j_j]),
+                        #                                   flux_ori[:, i_j, j_j], 0)
+                                # print(flux_sum_check)
+                                # print(np.sum(flux_sum_check))
+                                # print(data_final[i_j, j_j])
                         ax[ax_i, ax_j].plot(wave_vac, flux_ori[:, i_j, j_j], '-k')
                         ax[ax_i, ax_j].plot(wave_vac, flux_smooth_ori[:, i_j, j_j], '-b')
                         ax[ax_i, ax_j].plot(wave_vac, flux_err_ori[:, i_j, j_j], '-C0')
@@ -255,6 +280,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
                         ax[ax_i, ax_j].fill_between([wave_grid_s[i_j, j_j], wave_grid_b[i_j, j_j]], y1=np.zeros(2),
                                                     y2=np.ones(2) * np.nanmax(flux_ori[:, i_j, j_j]), color='C1',
                                                     alpha=0.2)
+                        # ax[ax_i, ax_j].set_ylim(top=0.01)
                 plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + cubename[5:-5] + '_CheckSpectra' + str(k) + '.png')
 
     if CheckSegmentation:
@@ -275,14 +301,64 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
 
 
 #
-MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.7, smooth=True, smooth_val=3, nums=10, npixels=10,
-               CheckSegmentation=True, AddBackground=True, CheckSpectra=[90, 90])
+MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.6, smooth=True, smooth_val=3, nums=10, npixels=10,
+               CheckSegmentation=True, AddBackground=True, CheckSpectra=[102, 106])
+MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=0.8, smooth=True, smooth_val=3, nums=10, npixels=10,
+               CheckSegmentation=True, AddBackground=True, CheckSpectra=[102, 106])
+#
+# # Plot the data
+# fig = plt.figure(figsize=(8, 8), dpi=300)
+# gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OIII_5008_line_offset_NBImage_MC.fits', figure=fig)
+# gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
+# # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
+# APLpyStyle(gc, type='NarrowBand')
+# plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/MakeNBImage_MC_OIII_test.png', bbox_inches='tight')
 
-# Plot the data
-fig = plt.figure(figsize=(8, 8), dpi=300)
-gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_line_offset_NBImage_MC.fits', figure=fig)
-# gc.show_colorscale(vmin=0, vmax=10, cmap=plt.get_cmap('Blues'))
-gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
-# gc.show_contour('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
-APLpyStyle(gc, type='NarrowBand')
-plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/MakeNBImage_MC_OII_test.png', bbox_inches='tight')
+
+def CompareWithBefore(band='OII', range=[-500, 500]):
+    path_before = '/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/' + band + '_' + str(range[0]) \
+                   + '_' + str(range[1]) + '_revised.fits'
+    if band == 'OIII':
+        band = band + '_5008'
+    path_MC = '/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + band + '_line_offset_NBImage_MC.fits'
+
+    fig, ax = plt.subplots(1, 3, figsize=(24, 8), dpi=300)
+    ax[0].axis('off')
+    ax[1].axis('off')
+    ax[2].axis('off')
+    gc = aplpy.FITSFigure(path_MC, figure=fig, subplot=(1, 3, 1))
+    gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
+    APLpyStyle(gc, type='NarrowBand')
+
+    gc = aplpy.FITSFigure(path_before, figure=fig, subplot=(1, 3, 2))
+    gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
+    APLpyStyle(gc, type='NarrowBand')
+
+    data_before, hdr = fits.getdata(path_before, 0, header=True)
+    data_MC, hdr = fits.getdata(path_MC, 1, header=True)
+    fits.writeto('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/MCMinusBefore.fits', data_MC - data_before, hdr, overwrite=True)
+
+    gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/MCMinusBefore.fits',  figure=fig, subplot=(1, 3, 3))
+    gc.show_colorscale(vmin=-2, vmax=2, cmap=plt.get_cmap('bwr'))
+    APLpyStyle(gc, type='NarrowBand')
+
+    plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/CompareWith_' + band + str(range[0])
+                + '_' + str(range[1]) + '.png', bbox_inches='tight')
+
+CompareWithBefore(band='OII', range=[-500, 500])
+CompareWithBefore(band='OIII', range=[-500, 500])
+
+# # Comparison
+# fig, ax = plt.subplots(1, 3, figsize=(8, 24))
+# gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_line_offset_NBImage_MC.fits', figure=ax[0])
+# gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
+# # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
+# APLpyStyle(gc, type='NarrowBand')
+#
+# #
+# gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_line_offset_NBImage_MC.fits', figure=ax[0])
+# gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
+# # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
+# APLpyStyle(gc, type='NarrowBand')
+# plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/MakeNBImage_MC_OII_comparison.png', bbox_inches='tight')
+
