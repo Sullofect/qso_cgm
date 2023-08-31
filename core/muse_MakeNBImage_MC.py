@@ -166,8 +166,8 @@ def keep_longest_true(a):
 #
 
 def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixels=100, connectivity=8, smooth=True,
-                   smooth_val=3, nums=1, RescaleVariance=True, AddBackground=False, CheckSegmentation=False,
-                   CheckSpectra=None):
+                   smooth_val=3, max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True, AddBackground=False,
+                   CheckSegmentation=False, CheckSpectra=None):
     # Cubes
     path_cube = path_data + 'cube_narrow/' + cubename
     cube = Cube(path_cube)
@@ -178,16 +178,16 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
     flux_err = np.sqrt(cube.var) * 1e-3
 
     if RescaleVariance:
-        flux_bkg = np.sum(flux, axis=0)
-        # mask_bkg = np.ones_like(flux_bkg)
-        select_bkg = np.ones_like(flux_bkg)
-
-        flux_mask = np.where(select_bkg, flux, np.nan)
-        flux_err_mask = np.where(select_bkg, flux_err, np.nan)
+        flux_wl = np.nanmax(flux, axis=0)
+        select_bkg = ~sigma_clip(flux_wl, sigma_lower=4, sigma_upper=5, cenfunc='median', masked=True).mask
+        flux_mask = np.where(select_bkg[np.newaxis, :, :], flux, np.nan)
+        flux_err_mask = np.where(select_bkg[np.newaxis, :, :], flux_err, np.nan)
+        bkg_seg = np.where(select_bkg[np.newaxis, :, :], np.ones_like(flux_err[0, :, :]), np.nan)
 
         flux_std = np.nanstd(flux_mask, axis=(1, 2))
         flux_err_mean = np.nanmean(flux_err_mask, axis=(1, 2))
         value_rescale = flux_std / flux_err_mean
+        print(np.mean(value_rescale), np.std(value_rescale))
         flux_err = flux_err * value_rescale[:, np.newaxis, np.newaxis]
 
     # Copy object
@@ -204,7 +204,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
     flux_smooth_ori = np.copy(flux)
 
     # Iterate over nebulae
-    for k in range(nums):
+    for k in range(max_num_nebulae):
         area_array = np.zeros(size[0]) * np.nan
         for i in range(size[0]):
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
@@ -214,22 +214,27 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
                 area_array[i] = np.nanmax(seg_i.areas)
             except AttributeError:
                 pass
-
-        idx_max = np.nanargmax(area_array)
+        try:
+            idx_max = np.nanargmax(area_array)
+        except ValueError:
+            print('No enough number of nebulae are detected')
+            break
         S_N_max = flux[idx_max, :, :] / flux_err[idx_max, :, :]
         seg_max = detect_sources(S_N_max, S_N_thr, npixels=npixels, connectivity=connectivity)
         label_max = seg_max.labels[np.nanargmax(seg_max.areas)]
-        data_mask = np.where(seg_max.data == label_max, flux[idx_max, :, :], 0)
         mask = np.where(seg_max.data == label_max, np.ones_like(flux[idx_max, :, :]), 0)
+
+        # Initialize
         if k == 0:
-            data_final = np.copy(data_mask)
+            data_final = np.zeros_like(mask)
+            nebulae_seg = np.full_like(mask, np.nan)
             idx = idx_max
 
         # Over two direction
         wave_grid_s = np.ones_like(S_N_max) * wave_vac[idx_max]
         wave_grid_b = np.ones_like(S_N_max) * wave_vac[idx_max]
         conti_s, conti_b = np.ones_like(S_N_max), np.ones_like(S_N_max)
-        idx_s, idx_b = np.arange(0, idx_max), np.arange(idx_max + 1, size[0])
+        idx_s, idx_b = np.arange(0, idx_max), np.arange(idx_max, size[0])
         for i in np.flip(idx_s):
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
@@ -258,21 +263,14 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
 
         # Mask out current nebulae
         flux = np.where(seg_max.data[np.newaxis, :, :] != label_max, flux[:, :, :], 0)
+        nebulae_seg = np.where(seg_max.data[np.newaxis, :, :] != label_max, nebulae_seg, k + 1)
 
-        if k == 0:
+        if k == 1:
             if CheckSpectra is not None:
                 fig, ax = plt.subplots(5, 5, figsize=(20, 20))
                 for ax_i in range(5):
                     for ax_j in range(5):
                         i_j, j_j = ax_i + CheckSpectra[0], ax_j + CheckSpectra[1]
-                        # if ax_i == 0:
-                        #     if ax_j == 0:
-                        #         flux_sum_check = np.where((wave_vac >= wave_grid_s[i_j, j_j])
-                        #                                   * (wave_vac <= wave_grid_b[i_j, j_j]),
-                        #                                   flux_ori[:, i_j, j_j], 0)
-                                # print(flux_sum_check)
-                                # print(np.sum(flux_sum_check))
-                                # print(data_final[i_j, j_j])
                         ax[ax_i, ax_j].plot(wave_vac, flux_ori[:, i_j, j_j], '-k')
                         ax[ax_i, ax_j].plot(wave_vac, flux_smooth_ori[:, i_j, j_j], '-b')
                         ax[ax_i, ax_j].plot(wave_vac, flux_err_ori[:, i_j, j_j], '-C0')
@@ -284,8 +282,11 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
                 plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + cubename[5:-5] + '_CheckSpectra' + str(k) + '.png')
 
     if CheckSegmentation:
-        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-        ax.imshow(np.where(flux[0, :, :] == 0, flux[0, :, :], np.nan), origin='lower')
+        fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
+        # ax.imshow(np.where(flux[0, :, :] == 0, flux[0, :, :], np.nan), origin='lower')
+        ax.imshow(nebulae_seg[0, :, :], origin='lower', cmap=plt.get_cmap('tab20c'))
+        ax.imshow(bkg_seg[0, :, :], origin='lower', cmap=plt.get_cmap('binary_r'))
+        # plt.show()
         plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + cubename[5:-5] + '_CheckSegmentation.png')
 
     if AddBackground:
@@ -293,7 +294,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
             flux_bkg = flux_smooth_ori[idx, :, :]
         else:
             flux_bkg = flux_ori[idx, :, :]
-        data_final = np.where(data_final != 0, data_final, 3 * flux_bkg)
+        data_final = np.where(data_final != 0, data_final, num_bkg_slice * flux_bkg)
 
     # Save data
     ima = Image(data=data_final * 1.25 / 0.2 / 0.2, wcs=wcs)
@@ -301,10 +302,10 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
 
 
 #
-MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.6, smooth=True, smooth_val=3, nums=10, npixels=10,
-               CheckSegmentation=True, AddBackground=True, CheckSpectra=[102, 106])
-MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=0.8, smooth=True, smooth_val=3, nums=10, npixels=10,
-               CheckSegmentation=True, AddBackground=True, CheckSpectra=[102, 106])
+MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.7, smooth=True, smooth_val=3, max_num_nebulae=10, npixels=10,
+               CheckSegmentation=True, AddBackground=False, CheckSpectra=[102, 106])
+MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=0.7, smooth=True, smooth_val=3, max_num_nebulae=10, npixels=10,
+               CheckSegmentation=True, AddBackground=False, CheckSpectra=[102, 106])
 #
 # # Plot the data
 # fig = plt.figure(figsize=(8, 8), dpi=300)
