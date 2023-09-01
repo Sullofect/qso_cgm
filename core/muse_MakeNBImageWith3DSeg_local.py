@@ -157,8 +157,8 @@ def keep_longest_true(a):
 #
 #
 
-def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixels=100, connectivity=8, smooth=True,
-                   smooth_val=3, max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True, AddBackground=False,
+def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixels=100, connectivity=8, smooth_val=3,
+                   max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True, AddBackground=False,
                    CheckSegmentation=False, CheckSpectra=None):
     # Cubes
     path_cube = path_data + 'cube_narrow/' + cubename
@@ -187,7 +187,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
     flux_err_ori = np.copy(flux_err)
 
     # Smoothing
-    if smooth:
+    if smooth_val is not None:
         kernel = Box2DKernel(smooth_val)
         # kernel = Gaussian2DKernel(x_stddev=5.0, x_size=3, y_size=3)
         kernel = Kernel(kernel.array[np.newaxis, :, :])
@@ -282,7 +282,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + cubename[5:-5] + '_CheckSegmentation.png')
 
     if AddBackground:
-        if smooth:
+        if smooth_val is not None:
             flux_bkg = flux_smooth_ori[idx, :, :]
         else:
             flux_bkg = flux_ori[idx, :, :]
@@ -294,9 +294,9 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
 
 
 #
-MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.7, smooth=True, smooth_val=3, max_num_nebulae=10, npixels=10,
+MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.7, smooth_val=3, max_num_nebulae=10, npixels=10,
                CheckSegmentation=True, AddBackground=False, CheckSpectra=[102, 106])
-MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=0.7, smooth=True, smooth_val=3, max_num_nebulae=10, npixels=10,
+MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=0.7, smooth_val=3, max_num_nebulae=10, npixels=10,
                CheckSegmentation=True, AddBackground=False, CheckSpectra=[102, 106])
 #
 # # Plot the data
@@ -354,4 +354,3 @@ CompareWithBefore(band='OIII', range=[-500, 500])
 # # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
 # APLpyStyle(gc, type='NarrowBand')
 # plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/MakeNBImage_MC_OII_comparison.png', bbox_inches='tight')
-
