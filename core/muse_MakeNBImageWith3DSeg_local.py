@@ -163,11 +163,12 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
     # Cubes
     path_cube = path_data + 'cube_narrow/' + cubename
     cube = Cube(path_cube)
-    wcs = WCS(fits.open(path_data + 'image_MakeMovie/OIII_-300_-100_contour_revised.fits')[0].header)
+    header = fits.getheader(path_cube, ext=1)
     size = np.shape(cube.data)
     wave_vac = pyasl.airtovac2(cube.wave.coord())
     flux = cube.data * 1e-3
     flux_err = np.sqrt(cube.var) * 1e-3
+    seg_3D = np.zeros(size)
 
     if RescaleVariance:
         flux_wl = np.nanmax(flux, axis=0)
@@ -179,7 +180,8 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         flux_var = np.nanvar(flux_mask, axis=(1, 2))
         flux_var_mean = np.nanmean(flux_err_mask ** 2, axis=(1, 2))
         value_rescale = flux_var / flux_var_mean
-        print(np.mean(value_rescale), np.std(value_rescale))
+        print('Variance rescaling factor has mean value of {} and std of {}'.format(np.mean(value_rescale),
+                                                                                    np.std(value_rescale)))
         flux_err = flux_err * np.sqrt(value_rescale)[:, np.newaxis, np.newaxis]
 
     # Copy object
@@ -235,6 +237,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_s = np.where(mask_i != 0, conti_s, 0)
             wave_grid_s = np.where(mask_i == 0, wave_grid_s, wave_vac[i])
+            seg_3D[i, :, :] = np.where(mask_i == 0, seg_3D[i, :, :], 1)
             if np.all(conti_s.flatten() == 0):
                 break
             else:
@@ -248,6 +251,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_b = np.where(mask_i != 0, conti_b, 0)
             wave_grid_b = np.where(mask_i == 0, wave_grid_b, wave_vac[i])
+            seg_3D[i, :, :] = np.where(mask_i == 0, seg_3D[i, :, :], 1)
             if np.all(conti_b.flatten() == 0):
                 break
             else:
@@ -257,7 +261,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         flux = np.where(seg_max.data[np.newaxis, :, :] != label_max, flux[:, :, :], 0)
         nebulae_seg = np.where(seg_max.data[np.newaxis, :, :] != label_max, nebulae_seg, k + 1)
 
-        if k == 1:
+        if k == 0:
             if CheckSpectra is not None:
                 fig, ax = plt.subplots(5, 5, figsize=(20, 20))
                 for ax_i in range(5):
@@ -289,15 +293,43 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         data_final = np.where(data_final != 0, data_final, num_bkg_slice * flux_bkg)
 
     # Save data
-    ima = Image(data=data_final * 1.25 / 0.2 / 0.2, wcs=wcs)
-    ima.write('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + cubename[5:-5] + '_NBImage_MC.fits')
+    filename_SB = '/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + cubename[5:-5] + '_SB.fits'
+    filename_3Dseg = '/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + cubename[5:-5] + '_3DSeg.fits'
+    fits.writeto(filename_3Dseg, seg_3D, overwrite=True)
+    fits.setval(filename_3Dseg, 'CTYPE1', value=header['CTYPE1'])
+    fits.setval(filename_3Dseg, 'CTYPE2', value=header['CTYPE2'])
+    fits.setval(filename_3Dseg, 'EQUINOX', value=header['EQUINOX'])
+    fits.setval(filename_3Dseg, 'CD1_1', value=header['CD1_1'])
+    fits.setval(filename_3Dseg, 'CD2_1', value=header['CD2_1'])
+    fits.setval(filename_3Dseg, 'CD1_2', value=header['CD1_2'])
+    fits.setval(filename_3Dseg, 'CD2_2', value=header['CD2_2'])
+    fits.setval(filename_3Dseg, 'CRPIX1', value=header['CRPIX1'])
+    fits.setval(filename_3Dseg, 'CRPIX2', value=header['CRPIX2'])
+    fits.setval(filename_3Dseg, 'CRVAL1', value=header['CRVAL1'])
+    fits.setval(filename_3Dseg, 'CRVAL2', value=header['CRVAL2'])
+    fits.setval(filename_3Dseg, 'LONPOLE', value=header['LONPOLE'])
+    fits.setval(filename_3Dseg, 'LATPOLE', value=header['LATPOLE'])
 
+    fits.writeto(filename_SB, data_final * 1.25 / 0.2 / 0.2, overwrite=True)
+    fits.setval(filename_SB, 'CTYPE1', value=header['CTYPE1'])
+    fits.setval(filename_SB, 'CTYPE2', value=header['CTYPE2'])
+    fits.setval(filename_SB, 'EQUINOX', value=header['EQUINOX'])
+    fits.setval(filename_SB, 'CD1_1', value=header['CD1_1'])
+    fits.setval(filename_SB, 'CD2_1', value=header['CD2_1'])
+    fits.setval(filename_SB, 'CD1_2', value=header['CD1_2'])
+    fits.setval(filename_SB, 'CD2_2', value=header['CD2_2'])
+    fits.setval(filename_SB, 'CRPIX1', value=header['CRPIX1'])
+    fits.setval(filename_SB, 'CRPIX2', value=header['CRPIX2'])
+    fits.setval(filename_SB, 'CRVAL1', value=header['CRVAL1'])
+    fits.setval(filename_SB, 'CRVAL2', value=header['CRVAL2'])
+    fits.setval(filename_SB, 'LONPOLE', value=header['LONPOLE'])
+    fits.setval(filename_SB, 'LATPOLE', value=header['LATPOLE'])
 
 #
 MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.7, smooth_val=3, max_num_nebulae=10, npixels=10,
-               CheckSegmentation=True, AddBackground=False, CheckSpectra=[102, 106])
+               CheckSegmentation=True, AddBackground=True, CheckSpectra=[102, 106])
 MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=0.7, smooth_val=3, max_num_nebulae=10, npixels=10,
-               CheckSegmentation=True, AddBackground=False, CheckSpectra=[102, 106])
+               CheckSegmentation=True, AddBackground=True, CheckSpectra=[50, 50])
 #
 # # Plot the data
 # fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -313,7 +345,7 @@ def CompareWithBefore(band='OII', range=[-500, 500]):
                    + '_' + str(range[1]) + '_revised.fits'
     if band == 'OIII':
         band = band + '_5008'
-    path_MC = '/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + band + '_line_offset_NBImage_MC.fits'
+    path_MC = '/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + band + '_line_offset_SB.fits'
 
     fig, ax = plt.subplots(1, 3, figsize=(24, 8), dpi=300)
     ax[0].axis('off')
@@ -328,7 +360,7 @@ def CompareWithBefore(band='OII', range=[-500, 500]):
     APLpyStyle(gc, type='NarrowBand')
 
     data_before, hdr = fits.getdata(path_before, 0, header=True)
-    data_MC, hdr = fits.getdata(path_MC, 1, header=True)
+    data_MC, hdr = fits.getdata(path_MC, 0, header=True)
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/MCMinusBefore.fits', data_MC - data_before, hdr, overwrite=True)
 
     gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/MCMinusBefore.fits',  figure=fig, subplot=(1, 3, 3))
