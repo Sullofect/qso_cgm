@@ -1,23 +1,15 @@
 import aplpy
 import numpy as np
-from astropy.io import fits
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from astropy.io import fits
 from PyAstronomy import pyasl
 from astropy.stats import sigma_clip
-from astropy.coordinates import SkyCoord
-# from astropy.wcs import WCS
-from astropy.convolution import convolve
 from mpdaf.obj import WCS, Image, Cube, WaveCoord, iter_spe, iter_ima
 from muse_MakeGasImages import APLpyStyle
-from astropy import units as u
 from astropy.convolution import convolve
 from astropy.convolution import Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel
-from astropy.visualization import SqrtStretch
-from astropy.visualization.mpl_normalize import ImageNormalize
-from photutils.centroids import (centroid_1dg, centroid_2dg, centroid_com, centroid_quadratic)
-from photutils.background import Background2D, MedianBackground
 from photutils.segmentation import detect_sources
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -179,16 +171,16 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
 
     if RescaleVariance:
         flux_wl = np.nanmax(flux, axis=0)
-        select_bkg = ~sigma_clip(flux_wl, sigma_lower=4, sigma_upper=5, cenfunc='median', masked=True).mask
+        select_bkg = ~sigma_clip(flux_wl, sigma_lower=3, sigma_upper=3, cenfunc='median', masked=True).mask
         flux_mask = np.where(select_bkg[np.newaxis, :, :], flux, np.nan)
         flux_err_mask = np.where(select_bkg[np.newaxis, :, :], flux_err, np.nan)
         bkg_seg = np.where(select_bkg[np.newaxis, :, :], np.ones_like(flux_err[0, :, :]), np.nan)
 
-        flux_std = np.nanstd(flux_mask, axis=(1, 2))
-        flux_err_mean = np.nanmean(flux_err_mask, axis=(1, 2))
-        value_rescale = flux_std / flux_err_mean
+        flux_var = np.nanvar(flux_mask, axis=(1, 2))
+        flux_var_mean = np.nanmean(flux_err_mask ** 2, axis=(1, 2))
+        value_rescale = flux_var / flux_var_mean
         print(np.mean(value_rescale), np.std(value_rescale))
-        flux_err = flux_err * value_rescale[:, np.newaxis, np.newaxis]
+        flux_err = flux_err * np.sqrt(value_rescale)[:, np.newaxis, np.newaxis]
 
     # Copy object
     flux_ori = np.copy(flux)
