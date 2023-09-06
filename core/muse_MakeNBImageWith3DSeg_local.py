@@ -158,8 +158,8 @@ def keep_longest_true(a):
 #
 #
 
-def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixels=100, connectivity=8, smooth_val=3,
-                   max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True, AddBackground=False,
+def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixels=100, connectivity=8, smooth='2D',
+                   smooth_val=3, max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True, AddBackground=False,
                    CheckSegmentation=False, CheckSpectra=None):
     # Cubes
     path_cube = path_data + 'cube_narrow/' + cubename
@@ -196,17 +196,18 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         # kernel = Box2DKernel(smooth_val)
         # kernel = Kernel(kernel.array[np.newaxis, :, :])
         # flux = convolve(flux, kernel)
-        kernel = Box1DKernel(10)
-        kernel_1 = Kernel(kernel.array[:, np.newaxis, np.newaxis])
-        kernel_2 = Kernel(kernel.array[:, np.newaxis, np.newaxis] ** 2)
-        flux = convolve(flux, kernel_1)
-        flux_err = np.sqrt(convolve(flux_err ** 2, kernel_2))
-
-        kernel = Box2DKernel(smooth_val)
+        kernel = Box2DKernel(smooth_val[1])
         kernel_1 = Kernel(kernel.array[np.newaxis, :, :])
         kernel_2 = Kernel(kernel.array[np.newaxis, :, :] ** 2)
         flux = convolve(flux, kernel_1)
-        flux_err = np.sqrt(convolve(flux_err ** 2, kernel_2))  ## perhaps wrong?
+        flux_err = np.sqrt(convolve(flux_err ** 2, kernel_2))
+
+        if len(smooth_val) == 3:
+            kernel = Box1DKernel(smooth_val[0])
+            kernel_1 = Kernel(kernel.array[:, np.newaxis, np.newaxis])
+            kernel_2 = Kernel(kernel.array[:, np.newaxis, np.newaxis] ** 2)
+            flux = convolve(flux, kernel_1)
+            flux_err = np.sqrt(convolve(flux_err ** 2, kernel_2))
     flux_smooth_ori = np.copy(flux)
 
     # Iterate over nebulae
