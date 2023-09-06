@@ -1,4 +1,5 @@
 import aplpy
+import time
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -9,7 +10,7 @@ from astropy.stats import sigma_clip
 from mpdaf.obj import WCS, Image, Cube, WaveCoord, iter_spe, iter_ima
 from muse_MakeGasImages import APLpyStyle
 from astropy.convolution import convolve
-from astropy.convolution import Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel
+from astropy.convolution import Kernel, Gaussian1DKernel, Gaussian2DKernel, Box1DKernel, Box2DKernel
 from photutils.segmentation import detect_sources
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -190,11 +191,22 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
 
     # Smoothing
     if smooth_val is not None:
-        kernel = Box2DKernel(smooth_val)
         # kernel = Gaussian2DKernel(x_stddev=5.0, x_size=3, y_size=3)
-        kernel = Kernel(kernel.array[np.newaxis, :, :])
-        flux = convolve(flux, kernel)
-        # flux_err = np.sqrt(convolve(flux_err ** 2, kernel))  ## perhaps wrong?
+        # kernel_array, _ = np.meshgrid((_, ))
+        # kernel = Box2DKernel(smooth_val)
+        # kernel = Kernel(kernel.array[np.newaxis, :, :])
+        # flux = convolve(flux, kernel)
+        kernel = Box1DKernel(10)
+        kernel_1 = Kernel(kernel.array[:, np.newaxis, np.newaxis])
+        kernel_2 = Kernel(kernel.array[:, np.newaxis, np.newaxis] ** 2)
+        flux = convolve(flux, kernel_1)
+        flux_err = np.sqrt(convolve(flux_err ** 2, kernel_2))
+
+        kernel = Box2DKernel(smooth_val)
+        kernel_1 = Kernel(kernel.array[np.newaxis, :, :])
+        kernel_2 = Kernel(kernel.array[np.newaxis, :, :] ** 2)
+        flux = convolve(flux, kernel_1)
+        flux_err = np.sqrt(convolve(flux_err ** 2, kernel_2))  ## perhaps wrong?
     flux_smooth_ori = np.copy(flux)
 
     # Iterate over nebulae
@@ -224,7 +236,25 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
             nebulae_seg = np.full_like(mask, np.nan)
             idx = idx_max
 
-        # Over two direction
+        # # Over two direction vectorize
+        # idx_s, idx_b = np.arange(0, idx_max), np.arange(idx_max, size[0])
+        # S_N_s = flux[np.flip(idx_s), :, :] / flux_err[np.flip(idx_s), :, :]
+        # mask_s = np.where(seg_max.data[np.newaxis, :, :] == label_max, np.ones_like(S_N_s), 0)
+        # mask_s = np.where(S_N_s >= S_N_thr, mask_s, 0)
+        # flux_cut_s = np.where(mask_s != 0, flux[np.flip(idx_s), :, :], np.nan)
+        # flux_cut_s = np.nanmax(np.cumsum(flux_cut_s, axis=0), axis=0)
+        # flux_cut_s = np.where(~np.isnan(flux_cut_s), flux_cut_s, 0)
+        #
+        # S_N_b = flux[idx_b, :, :] / flux_err[idx_b, :, :]
+        # mask_b = np.where(seg_max.data[np.newaxis, :, :] == label_max, np.ones_like(S_N_b), 0)
+        # mask_b = np.where(S_N_b >= S_N_thr, mask_b, 0)
+        # flux_cut_b = np.where(mask_b != 0, flux[idx_b, :, :], np.nan)
+        # flux_cut_b = np.nanmax(np.cumsum(flux_cut_b, axis=0), axis=0)
+        # flux_cut_b = np.where(~np.isnan(flux_cut_b), flux_cut_b, 0)
+        # data_final += flux_cut_s + flux_cut_b
+
+
+
         wave_grid_s = np.ones_like(S_N_max) * wave_vac[idx_max]
         wave_grid_b = np.ones_like(S_N_max) * wave_vac[idx_max]
         conti_s, conti_b = np.ones_like(S_N_max), np.ones_like(S_N_max)
@@ -326,10 +356,13 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
     fits.setval(filename_SB, 'LATPOLE', value=header['LATPOLE'])
 
 #
+start = time.time()
 MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.7, smooth_val=3, max_num_nebulae=10, npixels=10,
                CheckSegmentation=True, AddBackground=True, CheckSpectra=[102, 106])
 MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=0.7, smooth_val=3, max_num_nebulae=10, npixels=10,
                CheckSegmentation=True, AddBackground=True, CheckSpectra=[50, 50])
+end = time.time()
+print(end - start)
 #
 # # Plot the data
 # fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -364,7 +397,7 @@ def CompareWithBefore(band='OII', range=[-500, 500]):
     fits.writeto('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/MCMinusBefore.fits', data_MC - data_before, hdr, overwrite=True)
 
     gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/MCMinusBefore.fits',  figure=fig, subplot=(1, 3, 3))
-    gc.show_colorscale(vmin=-2, vmax=2, cmap=plt.get_cmap('bwr'))
+    gc.show_colorscale(vmin=-0.5, vmax=0.5, cmap=plt.get_cmap('bwr'))
     APLpyStyle(gc, type='NarrowBand')
 
     plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/CompareWith_' + band + str(range[0])
