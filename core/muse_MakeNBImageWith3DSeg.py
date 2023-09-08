@@ -11,7 +11,7 @@ from PyAstronomy import pyasl
 from astropy.stats import sigma_clip
 from mpdaf.obj import WCS, Image, Cube
 from astropy.convolution import convolve
-from astropy.convolution import Kernel, Gaussian2DKernel, Box2DKernel
+from astropy.convolution import Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel, Box1DKernel
 from photutils.segmentation import detect_sources
 warnings.filterwarnings("ignore")
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
@@ -25,9 +25,16 @@ mpl.rcParams['ytick.major.size'] = 10
 # Set up the parser
 parser = argparse.ArgumentParser(description='Make Narrow band Surface brightness map with 3D segmentation')
 parser.add_argument('-m', metavar='cubename', help='MUSE cube name (without .fits)', required=True, type=str)
-parser.add_argument('-t', metavar='S_N_thr', help='S/N threshold', required=True, default=1.0, type=float)
-parser.add_argument('-s', metavar='smooth_val', help='width of the 2D Box smoothing filter kernel', required=True, type=float)
-parser.add_argument('-npixels', metavar='npixels', help='The minimum number of connected pixels', default=100, type=int)
+parser.add_argument('-t', metavar='S_N_thr', help='S/N threshold', required=True, type=float)
+parser.add_argument('-s', metavar='std_2D', help='width/2 or sigma of the 2D smoothing filter kernel',
+                    required=False, type=float, default=None)
+parser.add_argument('-k', metavar='kernel_2D', help='2D smoothing kernel ("box" or "gauss")',
+                    required=False, type=str, default=None)
+parser.add_argument('-s_spe', metavar='std_spectra', help='width/2 or sigma of the 1D smoothing filter kernel',
+                    required=False, type=float, default=None)
+parser.add_argument('-k_spe', metavar='kernel_1D', help='1D smoothing kernel ("box" or "gauss")',
+                    required=False, type=str, default=None)
+parser.add_argument('-npixels', metavar='npixels', help='The minimum number of connected pixels', default=10, type=int)
 parser.add_argument('-connectivity', metavar='connectivity', help='The type of pixel connectivity used in determining '
                                                                   'how pixels are grouped into a detected source',
                     default=8, type=float)
@@ -36,15 +43,15 @@ parser.add_argument('-ns', metavar='num_bkg_slice', help='Number of integration 
                     default=3, type=int)
 parser.add_argument('-rv', metavar='RescaleVariance', help='Whether rescale variance', default=True, type=bool)
 parser.add_argument('-ab', metavar='AddBackground', help='Whether add background', default=True, type=bool)
-parser.add_argument('-csm', metavar='CheckSegmentation', help='Whether add background', default=False, type=bool)
+parser.add_argument('-csm', metavar='CheckSegmentationMap', help='Whether check segmentation map', default=False, type=bool)
 parser.add_argument('-cs', metavar='CheckSpectra',  help='The pixel position of checked spectra', default=None, type=list)
 parser.add_argument('-pi', metavar='PlotNBImage',  help='Whether plot the SB map', default=True, type=bool)
 args = parser.parse_args() # parse the arguments
 
 
-def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset', S_N_thr=1, smooth_val=3, npixels=100, connectivity=8,
-                   max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True, AddBackground=False,
-                   CheckSegmentation=False, CheckSpectra=None, PlotNBImage=True):
+def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, smooth_1D=None, kernel_1D=None,
+                   npixels=10, connectivity=8, max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True,
+                   AddBackground=True, CheckSegmentation=False, CheckSpectra=None, PlotNBImage=True):
     # Cubes
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
@@ -77,12 +84,25 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset', S_N_thr=1, smooth_val=
     flux_err_ori = np.copy(flux_err)
 
     # Smoothing
-    if smooth_val is not None:
-        kernel = Box2DKernel(smooth_val)
-        # kernel = Gaussian2DKernel(x_stddev=5.0, x_size=3, y_size=3)
-        kernel = Kernel(kernel.array[np.newaxis, :, :])
-        flux = convolve(flux, kernel)
-        # flux_err = np.sqrt(convolve(flux_err ** 2, kernel))  ## perhaps wrong?
+    if smooth_2D is not None:
+        if kernel_2D == 'gauss':
+            kernel = Gaussian2DKernel(x_stddev=smooth_2D, y_stddev=smooth_2D)
+        elif kernel_2D == 'box':
+            kernel = Box2DKernel(smooth_2D * 2)
+        else:
+            raise AttributeError('kernel name is invalid; must be "gauss" or "box"')
+        kernel_1 = Kernel(kernel.array[np.newaxis, :, :])
+        flux = convolve(flux, kernel_1)
+
+    if smooth_1D is not None:
+        if kernel_1D == 'gauss':
+            kernel = Gaussian1DKernel(smooth_1D)
+        elif kernel_1D == 'box':
+            kernel = Box1DKernel(smooth_1D * 2)
+        else:
+            raise AttributeError('kernel name is invalid; must be "gauss" or "box"')
+        kernel_1 = Kernel(kernel.array[:, np.newaxis, np.newaxis])
+        flux = convolve(flux, kernel_1)
     flux_smooth_ori = np.copy(flux)
 
     # Iterate over nebulae
@@ -174,7 +194,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset', S_N_thr=1, smooth_val=
         plt.savefig(figurename)
 
     if AddBackground:
-        if smooth_val is not None:
+        if smooth_2D is not None or smooth_1D is not None:
             flux_bkg = flux_smooth_ori[idx, :, :]
         else:
             flux_bkg = flux_ori[idx, :, :]
@@ -212,9 +232,11 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset', S_N_thr=1, smooth_val=
     fits.setval(filename_SB, 'LATPOLE', value=header['LATPOLE'])
 
     if PlotNBImage:
+        ra_center, dec_center = header['CRVAL1'], header['CRVAL2']
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(filename_SB, figure=fig)
         gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Reds'), stretch='arcsinh')
+        gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
         gc.set_system_latex(True)
 
         # Colorbar
@@ -238,6 +260,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset', S_N_thr=1, smooth_val=
         plt.savefig(figurename, bbox_inches='tight')
 
 
-MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_val=args.s, npixels=args.npixels,
-               connectivity=args.connectivity, max_num_nebulae=args.n, num_bkg_slice=args.ns, RescaleVariance=args.rv,
-               AddBackground=args.ab, CheckSegmentation=args.csm, CheckSpectra=args.cs, PlotNBImage=args.pi)
+MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_2D=args.s, kernel_2D=args.k, smooth_1D=args.s_spe,
+               kernel_1D=args.k_spe, npixels=args.npixels, connectivity=args.connectivity, max_num_nebulae=args.n,
+               num_bkg_slice=args.ns, RescaleVariance=args.rv, AddBackground=args.ab, CheckSegmentation=args.csm,
+               CheckSpectra=args.cs, PlotNBImage=args.pi)

@@ -137,7 +137,7 @@ def keep_longest_true(a):
 
     # Save data
     # ima = Image(data=flux_data, wcs=wcs)
-    # ima.write('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + band + '_test.fits')
+    # ima.write('/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/' + band + '_test.fits')
 
 # Vectorize everything
 
@@ -158,9 +158,9 @@ def keep_longest_true(a):
 #
 #
 
-def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixels=100, connectivity=8, smooth='2D',
-                   smooth_val=3, max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True, AddBackground=False,
-                   CheckSegmentation=False, CheckSpectra=None):
+def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixels=100, connectivity=8, smooth_2D=3,
+                   kernel_2D='box', smooth_1D=None, kernel_1D='box', max_num_nebulae=10, num_bkg_slice=3,
+                   RescaleVariance=True, AddBackground=False, CheckSegmentation=False, CheckSpectra=None):
     # Cubes
     path_cube = path_data + 'cube_narrow/' + cubename
     cube = Cube(path_cube)
@@ -190,24 +190,31 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
     flux_err_ori = np.copy(flux_err)
 
     # Smoothing
-    if smooth_val is not None:
-        # kernel = Gaussian2DKernel(x_stddev=5.0, x_size=3, y_size=3)
-        # kernel_array, _ = np.meshgrid((_, ))
-        # kernel = Box2DKernel(smooth_val)
-        # kernel = Kernel(kernel.array[np.newaxis, :, :])
-        # flux = convolve(flux, kernel)
-        kernel = Box2DKernel(smooth_val[1])
+    if smooth_2D is not None:
+        if kernel_2D == 'gauss':
+            kernel = Gaussian2DKernel(x_stddev=smooth_2D, y_stddev=smooth_2D)
+        elif kernel_2D == 'box':
+            kernel = Box2DKernel(smooth_2D * 2)
+        else:
+            raise AttributeError('kernel name is invalid; must be "gauss" or "box"')
         kernel_1 = Kernel(kernel.array[np.newaxis, :, :])
-        kernel_2 = Kernel(kernel.array[np.newaxis, :, :] ** 2)
+        # kernel_2 = Kernel(kernel.array[np.newaxis, :, :] ** 2)
         flux = convolve(flux, kernel_1)
-        flux_err = np.sqrt(convolve(flux_err ** 2, kernel_2))
+        # flux_err = np.sqrt(convolve(flux_err ** 2, kernel.array[np.newaxis, :, :] ** 2,
+        #                             normalize_kernel=False))
 
-        if len(smooth_val) == 3:
-            kernel = Box1DKernel(smooth_val[0])
-            kernel_1 = Kernel(kernel.array[:, np.newaxis, np.newaxis])
-            kernel_2 = Kernel(kernel.array[:, np.newaxis, np.newaxis] ** 2)
-            flux = convolve(flux, kernel_1)
-            flux_err = np.sqrt(convolve(flux_err ** 2, kernel_2))
+    if smooth_1D is not None:
+        if kernel_1D == 'gauss':
+            kernel = Gaussian1DKernel(smooth_1D)
+        elif kernel_1D == 'box':
+            kernel = Box1DKernel(smooth_1D * 2)
+        else:
+            raise AttributeError('kernel name is invalid; must be "gauss" or "box"')
+        kernel_1 = Kernel(kernel.array[:, np.newaxis, np.newaxis])
+        # kernel_2 = Kernel(kernel.array[:, np.newaxis, np.newaxis] ** 2)
+        flux = convolve(flux, kernel_1)
+        # flux_err = np.sqrt(convolve(flux_err ** 2, kernel.array[np.newaxis, :, :] ** 2,
+        #                             normalize_kernel=False))
     flux_smooth_ori = np.copy(flux)
 
     # Iterate over nebulae
@@ -254,8 +261,7 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         # flux_cut_b = np.where(~np.isnan(flux_cut_b), flux_cut_b, 0)
         # data_final += flux_cut_s + flux_cut_b
 
-
-
+        # Over two direction
         wave_grid_s = np.ones_like(S_N_max) * wave_vac[idx_max]
         wave_grid_b = np.ones_like(S_N_max) * wave_vac[idx_max]
         conti_s, conti_b = np.ones_like(S_N_max), np.ones_like(S_N_max)
@@ -317,15 +323,15 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
         plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + cubename[5:-5] + '_CheckSegmentation.png')
 
     if AddBackground:
-        if smooth_val is not None:
+        if smooth_2D is not None or smooth_1D is not None:
             flux_bkg = flux_smooth_ori[idx, :, :]
         else:
             flux_bkg = flux_ori[idx, :, :]
         data_final = np.where(data_final != 0, data_final, num_bkg_slice * flux_bkg)
 
     # Save data
-    filename_SB = '/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + cubename[5:-5] + '_SB.fits'
-    filename_3Dseg = '/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + cubename[5:-5] + '_3DSeg.fits'
+    filename_SB = '/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/' + cubename[5:-5] + '_SB.fits'
+    filename_3Dseg = '/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/' + cubename[5:-5] + '_3DSeg.fits'
     fits.writeto(filename_3Dseg, seg_3D, overwrite=True)
     fits.setval(filename_3Dseg, 'CTYPE1', value=header['CTYPE1'])
     fits.setval(filename_3Dseg, 'CTYPE2', value=header['CTYPE2'])
@@ -358,34 +364,36 @@ def MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=1, npixel
 
 #
 start = time.time()
-MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.7, smooth_val=3, max_num_nebulae=10, npixels=10,
-               CheckSegmentation=True, AddBackground=True, CheckSpectra=[102, 106])
-MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=0.7, smooth_val=3, max_num_nebulae=10, npixels=10,
-               CheckSegmentation=True, AddBackground=True, CheckSpectra=[50, 50])
+MakeNBImage_MC(cubename='CUBE_OII_line_offset.fits', S_N_thr=0.7, smooth_2D=None, kernel_2D='box', smooth_1D=None,
+               kernel_1D=None,
+               max_num_nebulae=10, npixels=10, CheckSegmentation=True, AddBackground=True, CheckSpectra=[102, 106])
+MakeNBImage_MC(cubename='CUBE_OIII_5008_line_offset.fits', S_N_thr=0.7, smooth_2D=None, kernel_2D='box', smooth_1D=None,
+               kernel_1D=None, max_num_nebulae=10, npixels=10, CheckSegmentation=True,
+               AddBackground=True, CheckSpectra=[50, 50])
 end = time.time()
 print(end - start)
 #
 # # Plot the data
 # fig = plt.figure(figsize=(8, 8), dpi=300)
-# gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OIII_5008_line_offset_NBImage_MC.fits', figure=fig)
+# gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/OIII_5008_line_offset_NBImage_MC.fits', figure=fig)
 # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
-# # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
+# # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
 # APLpyStyle(gc, type='NarrowBand')
 # plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/MakeNBImage_MC_OIII_test.png', bbox_inches='tight')
 
 
 def CompareWithBefore(band='OII', range=[-500, 500]):
     path_before = '/Users/lzq/Dropbox/Data/CGM/image_MakeMovie/' + band + '_' + str(range[0]) \
-                   + '_' + str(range[1]) + '_revised.fits'
+                   + '_' + str(range[1]) + '_contour_revised.fits'
     if band == 'OIII':
         band = band + '_5008'
-    path_MC = '/Users/lzq/Dropbox/Data/CGM/NBImage_MC/' + band + '_line_offset_SB.fits'
+    path_3DSeg = '/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/' + band + '_line_offset_SB.fits'
 
     fig, ax = plt.subplots(1, 3, figsize=(24, 8), dpi=300)
     ax[0].axis('off')
     ax[1].axis('off')
     ax[2].axis('off')
-    gc = aplpy.FITSFigure(path_MC, figure=fig, subplot=(1, 3, 1))
+    gc = aplpy.FITSFigure(path_3DSeg, figure=fig, subplot=(1, 3, 1))
     gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
     APLpyStyle(gc, type='NarrowBand')
 
@@ -394,10 +402,11 @@ def CompareWithBefore(band='OII', range=[-500, 500]):
     APLpyStyle(gc, type='NarrowBand')
 
     data_before, hdr = fits.getdata(path_before, 0, header=True)
-    data_MC, hdr = fits.getdata(path_MC, 0, header=True)
-    fits.writeto('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/MCMinusBefore.fits', data_MC - data_before, hdr, overwrite=True)
+    data_MC, hdr = fits.getdata(path_3DSeg, 0, header=True)
+    filename_compare = '/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/' + band + '_3DSegMinusBefore.fits'
+    fits.writeto(filename_compare, data_MC - data_before, hdr, overwrite=True)
 
-    gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/MCMinusBefore.fits',  figure=fig, subplot=(1, 3, 3))
+    gc = aplpy.FITSFigure(filename_compare, figure=fig, subplot=(1, 3, 3))
     gc.show_colorscale(vmin=-0.5, vmax=0.5, cmap=plt.get_cmap('bwr'))
     APLpyStyle(gc, type='NarrowBand')
 
@@ -409,14 +418,14 @@ CompareWithBefore(band='OIII', range=[-500, 500])
 
 # # Comparison
 # fig, ax = plt.subplots(1, 3, figsize=(8, 24))
-# gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_line_offset_NBImage_MC.fits', figure=ax[0])
+# gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/OII_line_offset_NBImage_MC.fits', figure=ax[0])
 # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
-# # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
+# # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
 # APLpyStyle(gc, type='NarrowBand')
 #
 # #
-# gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_line_offset_NBImage_MC.fits', figure=ax[0])
+# gc = aplpy.FITSFigure('/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/OII_line_offset_NBImage_MC.fits', figure=ax[0])
 # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Blues'), stretch='arcsinh')
-# # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/NBImage_MC/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
+# # gc.show_contour('/Users/lzq/Dropbox/Data/CGM/SB_3DSeg/OII_test.fits', levels=[0.3, 2], colors='k', linewidths=0.8)
 # APLpyStyle(gc, type='NarrowBand')
 # plt.savefig('/Users/lzq/Dropbox/Data/CGM_plots/MakeNBImage_MC_OII_comparison.png', bbox_inches='tight')
