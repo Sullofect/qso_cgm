@@ -50,7 +50,7 @@ def LoadFieldGals(cubename=None, z_qso=None):
     ql_qua = ql_gal[select_qua]
     ra_qua, dec_qua = ra_gal[select_qua], dec_gal[select_qua]
 
-    bins_ggp = np.arange(-4000, 4200, 200)
+    bins_ggp = np.arange(-2000, 2200, 200)
     select_v = np.where((v_qua > bins_ggp[0]) * (v_qua < bins_ggp[-1]))
     row_ggp = row_qua[select_v]
     ID_ggp = ID_qua[select_v]
@@ -163,4 +163,16 @@ def MakeFieldImage(cubename=None):
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + cubename + '.png', bbox_inches='tight')
 
 
-MakeFieldImage(cubename='HE0153-4520')
+# MakeFieldImage(cubename='Q0107-0235')
+# MakeFieldImage(cubename='PB6291')
+# MakeFieldImage(cubename='HE0153-4520')
+# MakeFieldImage(cubename='3C57')
+MakeFieldImage(cubename='TEX0206-048')
+MakeFieldImage(cubename='HE0226-4110')
+MakeFieldImage(cubename='PKS0232-04')
+MakeFieldImage(cubename='HE0435-5304')
+MakeFieldImage(cubename='HE0439-5254')
+MakeFieldImage(cubename='PKS0552-640')
+MakeFieldImage(cubename='Q1354+048')
+MakeFieldImage(cubename='LBQS1435-0134')
+MakeFieldImage(cubename='PG1522+101')
