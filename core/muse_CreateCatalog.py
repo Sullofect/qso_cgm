@@ -17,12 +17,11 @@ def MakeCatalog(qso=None, z_qso=None, ra_qso=None, dec_qso=None):
     path = '/Users/lzq/Dropbox/Data/MaskDesign/DES+LS+GAIA_{}.fits'.format(qso)
     data = fits.getdata(path, 1, ignore_missing_end=True)
 
-
     # Calculate object theta
     ra_DES, dec_DES = data['ra_1'], data['dec_1']
     ra_LS, dec_LS = data['ra_2'], data['dec_2']
     ra_Gaia, dec_Gaia = data['ra_3'], data['dec_3']
-    ra_object,
+    ra_object, dec_object = np.where()
 
     c_qso = SkyCoord(ra_qso * u.deg, dec_qso * u.deg, frame='fk5')
     c_object = SkyCoord(ra_object * u.deg, dec_object * u.deg, frame='fk5')
@@ -58,24 +57,25 @@ def MakeCatalog(qso=None, z_qso=None, ra_qso=None, dec_qso=None):
         mag_r_01Lstar[i] = muse_kc.abs2app(m_abs=-19.0, z=i_val, model='Scd', filter_e='SDSS_r', filter_o='DECam_r')
         mag_z_01Lstar[i] = muse_kc.abs2app(m_abs=-19.0, z=i_val, model='Scd', filter_e='SDSS_z', filter_o='DECam_z')
 
-    # Give priority
-    for i, i_val in enumerate(zArray):
-        index = where(objects.isStar eq 0l and objects.theta lt redshifts[i].theta_500kpc $ AND objects.mag_r lt redshifts[i].mag_r_01Lstar
-        AND objects.mag_r lt galdepth_r $ AND objects.mag_r gt 16.0)
-        objects[index].candidate_01Lstar_r = 1l
-
-        index = where(objects.isStar eq 0l and objects.theta lt redshifts[i].theta_500kpc $ AND objects.mag_z lt redshifts[i].mag_z_01Lstar
-        AND objects.mag_z lt galdepth_z $ AND objects.mag_z gt 16.0)
-        objects[index].candidate_01Lstar_r = 1l
-
-    index = where(objects.candidate_01Lstar_r eq 1l or objects.candidate_01Lstar_z eq 1l)
-    objects[index].candidate_01Lstar = 1l
-
-
     # Calculate the imaging depth
     galdepth_g = 22.5 - np.log10(1 / np.sqrt(data['galdepth_g']))
     galdepth_r = 22.5 - np.log10(1 / np.sqrt(data['galdepth_r']))
     galdepth_z = 22.5 - np.log10(1 / np.sqrt(data['galdepth_z']))
+
+    # Give priority
+    candidate_01Lstar_r = np.zeros_like
+    for i, i_val in enumerate(zArray):
+        index = np.where((isstar == 0) and (theta < theta_500kpc[i]) and (mag_r < mag_r_01Lstar[i])
+                         and (mag_r < galdepth_r) and (mag_r > 16.0))
+        objects[index].candidate_01Lstar_r = 1
+
+        index = np.where((isstar == 0) and (theta < theta_500kpc[i]) and (mag_z < mag_z_01Lstar[i])
+                         and (mag_z < galdepth_z) and (mag_z > 16.0))
+        objects[index].candidate_01Lstar_z = 1l
+
+    index = where(objects.candidate_01Lstar_r eq 1l or objects.candidate_01Lstar_z eq 1l)
+    objects[index].candidate_01Lstar = 1l
+
 
 
 
