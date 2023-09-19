@@ -13,6 +13,7 @@ from mpdaf.obj import WCS, Image, Cube
 from astropy.convolution import convolve
 from astropy.convolution import Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel, Box1DKernel
 from photutils.segmentation import detect_sources
+from photutils.background import Background2D, MedianBackground
 warnings.filterwarnings("ignore")
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -41,24 +42,34 @@ parser.add_argument('-connectivity', metavar='connectivity', help='The type of p
 parser.add_argument('-n', metavar='max_num_nebulae', help='Maximum allowed number of nebulae', default=10, type=int)
 parser.add_argument('-ns', metavar='num_bkg_slice', help='Number of integration of the background',
                     default=3, type=int)
-parser.add_argument('-rv', metavar='RescaleVariance', help='Whether rescale variance', default=True, type=bool)
-parser.add_argument('-ab', metavar='AddBackground', help='Whether add background', default=True, type=bool)
-parser.add_argument('-csm', metavar='CheckSegmentationMap', help='Whether check segmentation map', default=False, type=bool)
-parser.add_argument('-cs', metavar='CheckSpectra',  help='The pixel position of checked spectra', default=None, type=list)
-parser.add_argument('-pi', metavar='PlotNBImage',  help='Whether plot the SB map', default=True, type=bool)
-args = parser.parse_args() # parse the arguments
+parser.add_argument('-rv', metavar='RescaleVariance', help='Whether rescale variance', default='True', type=str)
+parser.add_argument('-ab', metavar='AddBackground', help='Whether add background', default='True', type=str)
+parser.add_argument('-csm', metavar='CheckSegmentationMap', help='Whether check segmentation map', default='False', type=str)
+parser.add_argument('-cs', metavar='CheckSpectra',  help='The pixel position of checked spectra', default=None,
+                    nargs='+', type=int)
+parser.add_argument('-pi', metavar='PlotNBImage',  help='Whether plot the SB map', default='True', type=str)
+parser.add_argument('-sl', metavar='SelectLambda',  help='initial wavelength interval of ', default=None, nargs='+',
+                    type=int)
+# parser.add_argument('-z_qso', metavar='z_qso',  help='use qso systematic redshift to remove sky line',
+#                     default=None, type=float)
+parser.add_argument('-slp', metavar='SkyLinePresent',  help='whether sky lines exist', default='False', type=str)
+toBool = {'True': True, 'False': False}
+args = parser.parse_args()  # parse the arguments
 
 
 def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, smooth_1D=None, kernel_1D=None,
                    npixels=10, connectivity=8, max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True,
-                   AddBackground=True, CheckSegmentation=False, CheckSpectra=None, PlotNBImage=True):
+                   AddBackground=None, CheckSegmentation=False, CheckSpectra=None, PlotNBImage=True, SelectLambda=None,
+                   SkyLinePresent=False):
     # Cubes
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
+    header = fits.getheader(path_cube, ext=1)
     filename_SB = cubename + '_SB.fits'
     filename_3Dseg = cubename + '_3DSeg.fits'
     cube = Cube(path_cube)
-    header = fits.getheader(path_cube, ext=1)
+    if SelectLambda is not None:
+        cube = cube.select_lambda(SelectLambda[0], SelectLambda[1])
     size = np.shape(cube.data)
     wave_vac = pyasl.airtovac2(cube.wave.coord())
     flux = cube.data * 1e-3
@@ -110,14 +121,55 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         area_array = np.zeros(size[0]) * np.nan
         for i in range(size[0]):
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
+            if SkyLinePresent:
+                bkg = np.median(flux_i)
+                flux_i -= bkg
             S_N_i = flux_i / flux_err_i
             seg_i = detect_sources(S_N_i, S_N_thr, npixels=npixels, connectivity=connectivity)
             try:
-                area_array[i] = np.nanmax(seg_i.areas)
+                if SkyLinePresent:
+                    label_i = seg_i.labels[np.nanargmax(seg_i.areas)]
+                    weight = np.where(seg_i.data == label_i, S_N_i, np.nan)
+                    area_array[i] = np.nanmax(seg_i.areas) * np.nanstd(weight ** 2)
+                else:
+                    area_array[i] = np.nanmax(seg_i.areas)
+                    # / np.sum(flux_err_i)
+                    # * np.std(flux_i2 ** 2)
+                    # / np.mean(sigma_clip((S_N_i) ** 2, sigma_lower=2,
+                    #                                     sigma_upper=2, cenfunc='median', masked=True))
+                    # * np.mean(flux_err_i)
+                    # / np.mean(sigma_clip((flux_i - bkg.background) ** 2, sigma_lower=2,
+                    #                                     sigma_upper=2, cenfunc='median', masked=True))
+                    # / np.mean(flux_i - bkg.background) ** 2
             except AttributeError:
                 pass
         try:
+            # if z_qso is not None:
+            #     sigma = 2
+                # weight = np.exp(-(wave_vac - (3727 * (1 + z_qso))) ** 2 / 2 / sigma ** 2) / np.sqrt(2 * np.pi * sigma ** 2)
+                # area_array *= weight / np.max(weight)
+
+                # weight = np.mean(flux - np.median(flux, axis=(1, 2))[:, np.newaxis, np.newaxis], axis=0)
+                # area_array
+
+            # np.exp(- (x - mu) ** 2 / 2 / sigma ** 2) / np.sqrt(2 * np.pi * sigma ** 2)
+
+            # Sky line detection
+            # area_array_sort = np.sort(-area_array)
+            # orderbyarea = np.argsort(-area_array)
+            # idx_array = np.arange(size[0])[orderbyarea]
+            # wave_vac_sort = wave_vac[orderbyarea]
+            # area_array_flip = np.where((area_array_sort > -0.1 * size[1] * size[2]), area_array_sort, np.nan)
+            # print(area_array_flip)
+            # # # area_array_flip = np.where((wave_vac_sort > 5578.5 + 2) | (wave_vac_sort < 5578.5 - 2), area_array_sort, np.nan)
+            # # area_array_flip = np.where((wave_vac_sort > 7964 + 3) | (wave_vac_sort < 7964 - 3), area_array_sort, np.nan)
+            # # area_array_flip = np.where((wave_vac_sort > 7964 + 3) | (wave_vac_sort < 7964 - 3), area_array_flip, np.nan)
+            # idx_max = idx_array[np.nanargmin(area_array_flip)]
+            # print(idx_max)
+            # print(wave_vac[idx_max])
+            #
             idx_max = np.nanargmax(area_array)
+
         except ValueError:
             print('No enough number of nebulae are detected')
             break
@@ -141,7 +193,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
             mask_i = np.where(conti_s == 1, mask, 0)
-            mask_i = np.where(S_N_i >= S_N_thr, mask_i, 0)
+            mask_i = np.where(S_N_i >= S_N_thr * 0.01, mask_i, 0)
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_s = np.where(mask_i != 0, conti_s, 0)
             wave_grid_s = np.where(mask_i == 0, wave_grid_s, wave_vac[i])
@@ -155,7 +207,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
             mask_i = np.where(conti_b == 1, mask, 0)
-            mask_i = np.where(S_N_i >= S_N_thr, mask_i, 0)
+            mask_i = np.where(S_N_i >= S_N_thr * 0.01, mask_i, 0)
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_b = np.where(mask_i != 0, conti_b, 0)
             wave_grid_b = np.where(mask_i == 0, wave_grid_b, wave_vac[i])
@@ -174,9 +226,11 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
                 fig, ax = plt.subplots(5, 5, figsize=(20, 20))
                 for ax_i in range(5):
                     for ax_j in range(5):
-                        i_j, j_j = ax_i + CheckSpectra[0], ax_j + CheckSpectra[1]
+                        i_j, j_j = ax_i + CheckSpectra[1], ax_j + CheckSpectra[0]
                         ax[ax_i, ax_j].plot(wave_vac, flux_ori[:, i_j, j_j], '-k')
                         ax[ax_i, ax_j].plot(wave_vac, flux_smooth_ori[:, i_j, j_j], '-b')
+                        # ax[ax_i, ax_j].plot(wave_vac, flux_smooth_ori[:, i_j, j_j]
+                        #                     - np.median(flux_smooth_ori, axis=(1, 2)), '-r')
                         ax[ax_i, ax_j].plot(wave_vac, flux_err_ori[:, i_j, j_j], '-C0')
                         ax[ax_i, ax_j].plot(wave_vac, flux_err[:, i_j, j_j], '-C2')
                         ax[ax_i, ax_j].fill_between([wave_grid_s[i_j, j_j], wave_grid_b[i_j, j_j]], y1=np.zeros(2),
@@ -235,8 +289,10 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         ra_center, dec_center = header['CRVAL1'], header['CRVAL2']
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(filename_SB, figure=fig)
-        gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('Reds'), stretch='arcsinh')
+        gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('gist_heat_r'), stretch='arcsinh')
+        # gc.show_colorscale(vmin=-0.005, vmax=5, cmap=plt.get_cmap('Reds'))
         gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
+        gc.show_contour(filename_SB, levels=[0.15], color='k', linewidths=0.8)
         gc.set_system_latex(True)
 
         # Colorbar
@@ -262,5 +318,9 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
 
 MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_2D=args.s, kernel_2D=args.k, smooth_1D=args.s_spe,
                kernel_1D=args.k_spe, npixels=args.npixels, connectivity=args.connectivity, max_num_nebulae=args.n,
-               num_bkg_slice=args.ns, RescaleVariance=args.rv, AddBackground=args.ab, CheckSegmentation=args.csm,
-               CheckSpectra=args.cs, PlotNBImage=args.pi)
+               num_bkg_slice=args.ns, RescaleVariance=toBool[args.rv], AddBackground=toBool[args.ab],
+               CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi],
+               SelectLambda=args.sl)
+
+
+# TEX0206 lambda [7925, 7962]
