@@ -49,19 +49,21 @@ parser.add_argument('-ns', metavar='num_bkg_slice', help='Number of integration 
                     default=3, type=int)
 parser.add_argument('-csm', metavar='CheckSegmentationMap', help='Whether check segmentation map, default is False',
                     default='False', type=str)
-parser.add_argument('-cs', metavar='CheckSpectra',  help='Plot 25 spectra around a certain spaxel position '
-                                                         'for example: "80 90" means extracting 25 spectra '
-                                                         'around x=80, y=90; default is None',
+parser.add_argument('-cs', metavar='CheckSpectra', help='Plot 25 spectra around a certain spaxel position '
+                                                        'for example: "80 90" means extracting 25 spectra '
+                                                        'around x=80, y=90; default is None',
                     default=None, nargs='+', type=int)
-parser.add_argument('-pi', metavar='PlotNBImage',  help='Whether plot the SB map, default is True', default='True',
+parser.add_argument('-pi', metavar='PlotNBImage', help='Whether plot the SB map, default is True', default='True',
                     type=str)
-parser.add_argument('-sl', metavar='SelectLambda',  help='Wavelength interval for subcube extraction '
-                                                         'for example: "3727 3929"; default is None',
+parser.add_argument('-sl', metavar='SelectLambda', help='Wavelength interval for subcube extraction '
+                                                        'for example: "3727 3929"; default is None',
                     default=None, nargs='+', type=int)
-# parser.add_argument('-z_qso', metavar='z_qso',  help='use qso systematic redshift to remove sky line',
+# parser.add_argument('-z_qso', metavar='z_qso', help='use qso systematic redshift to remove sky line',
 #                     default=None, type=float)
-parser.add_argument('-slp', metavar='SkyLinePresent',  help='Whether sky lines exist, default is False',
+parser.add_argument('-slp', metavar='SkyLinePresent', help='Whether sky lines exist, default is False',
                     default='False', type=str)
+parser.add_argument('-fs', metavar='factor_suppress', help='Whether to suppress S/N threshold for integration only '
+                                                           'by a factor, default is 1', default=1, type=float)
 toBool = {'True': True, 'False': False}
 args = parser.parse_args()  # parse the arguments
 
@@ -69,7 +71,7 @@ args = parser.parse_args()  # parse the arguments
 def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, smooth_1D=None, kernel_1D=None,
                    npixels=None, connectivity=None, max_num_nebulae=None, num_bkg_slice=None, RescaleVariance=None,
                    AddBackground=None, CheckSegmentation=None, CheckSpectra=None, PlotNBImage=None, SelectLambda=None,
-                   SkyLinePresent=None):
+                   SkyLinePresent=None, factor_suppress=None):
     # Cubes
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
@@ -198,11 +200,12 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         wave_grid_b = np.ones_like(S_N_max) * wave_vac[idx_max]
         conti_s, conti_b = np.ones_like(S_N_max), np.ones_like(S_N_max)
         idx_s, idx_b = np.arange(0, idx_max), np.arange(idx_max, size[0])
+        S_N_thr_low = S_N_thr / factor_suppress
         for i in np.flip(idx_s):
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
             mask_i = np.where(conti_s == 1, mask, 0)
-            mask_i = np.where(S_N_i >= S_N_thr * 0.01, mask_i, 0)
+            mask_i = np.where(S_N_i >= S_N_thr_low, mask_i, 0)
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_s = np.where(mask_i != 0, conti_s, 0)
             wave_grid_s = np.where(mask_i == 0, wave_grid_s, wave_vac[i])
@@ -216,7 +219,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
             mask_i = np.where(conti_b == 1, mask, 0)
-            mask_i = np.where(S_N_i >= S_N_thr * 0.01, mask_i, 0)
+            mask_i = np.where(S_N_i >= S_N_thr_low, mask_i, 0)
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_b = np.where(mask_i != 0, conti_b, 0)
             wave_grid_b = np.where(mask_i == 0, wave_grid_b, wave_vac[i])
@@ -329,7 +332,7 @@ MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_2D=args.s, kernel_2D=args
                kernel_1D=args.k_spe, npixels=args.npixels, connectivity=args.connectivity, max_num_nebulae=args.n,
                num_bkg_slice=args.ns, RescaleVariance=toBool[args.rv], AddBackground=toBool[args.ab],
                CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi],
-               SelectLambda=args.sl)
+               SelectLambda=args.sl, factor_suppress=args.fs)
 
 
 # TEX0206 lambda [7925, 7962]
