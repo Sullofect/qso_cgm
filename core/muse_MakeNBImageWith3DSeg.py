@@ -1,4 +1,3 @@
-import sys
 import aplpy
 import argparse
 import warnings
@@ -13,7 +12,6 @@ from mpdaf.obj import WCS, Image, Cube
 from astropy.convolution import convolve
 from astropy.convolution import Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel, Box1DKernel
 from photutils.segmentation import detect_sources
-from photutils.background import Background2D, MedianBackground
 warnings.filterwarnings("ignore")
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -25,43 +23,53 @@ mpl.rcParams['ytick.major.size'] = 10
 
 # Set up the parser
 parser = argparse.ArgumentParser(description='Make Narrow band Surface brightness map with 3D segmentation')
-parser.add_argument('-m', metavar='cubename', help='MUSE cube name (without .fits)', required=True, type=str)
-parser.add_argument('-t', metavar='S_N_thr', help='S/N threshold', required=True, type=float)
-parser.add_argument('-s', metavar='std_2D', help='width/2 or sigma of the 2D smoothing filter kernel',
+parser.add_argument('-m', metavar='cubename', help='MUSE cube name (without .fits), required', required=True, type=str)
+parser.add_argument('-t', metavar='S_N_thr', help='S/N threshold, required', required=True, type=float)
+parser.add_argument('-s', metavar='std_2D', help='width/2 or sigma of the 2D smoothing filter kernel, default is None',
                     required=False, type=float, default=None)
-parser.add_argument('-k', metavar='kernel_2D', help='2D smoothing kernel ("box" or "gauss")',
+parser.add_argument('-k', metavar='kernel_2D', help='2D smoothing kernel ("box" or "gauss"), default is None',
                     required=False, type=str, default=None)
-parser.add_argument('-s_spe', metavar='std_spectra', help='width/2 or sigma of the 1D smoothing filter kernel',
+parser.add_argument('-s_spe', metavar='std_spectra', help='width/2 or sigma of the 1D smoothing filter kernel, '
+                                                          'default is None',
                     required=False, type=float, default=None)
-parser.add_argument('-k_spe', metavar='kernel_1D', help='1D smoothing kernel ("box" or "gauss")',
+parser.add_argument('-k_spe', metavar='kernel_1D', help='1D smoothing kernel ("box" or "gauss"), default is None',
                     required=False, type=str, default=None)
-parser.add_argument('-npixels', metavar='npixels', help='The minimum number of connected pixels', default=10, type=int)
+parser.add_argument('-npixels', metavar='npixels', help='The minimum number of connected pixels '
+                                                        'for nebula determination, default is 10', default=10, type=int)
 parser.add_argument('-connectivity', metavar='connectivity', help='The type of pixel connectivity used in determining '
-                                                                  'how pixels are grouped into a detected source',
-                    default=8, type=float)
-parser.add_argument('-n', metavar='max_num_nebulae', help='Maximum allowed number of nebulae', default=10, type=int)
-parser.add_argument('-ns', metavar='num_bkg_slice', help='Number of integration of the background',
+                                                                  'how pixels are grouped into a detected source, '
+                                                                  'default is 8', default=8, type=float)
+parser.add_argument('-n', metavar='max_num_nebulae', help='Maximum allowed number of nebulae, default is 10',
+                    default=10, type=int)
+parser.add_argument('-rv', metavar='RescaleVariance', help='Whether rescale variance, default is True', default='True',
+                    type=str)
+parser.add_argument('-ab', metavar='AddBackground', help='Whether add background fluctuation, default is True',
+                    default='True', type=str)
+parser.add_argument('-ns', metavar='num_bkg_slice', help='Number of integration of the background, default is 3',
                     default=3, type=int)
-parser.add_argument('-rv', metavar='RescaleVariance', help='Whether rescale variance', default='True', type=str)
-parser.add_argument('-ab', metavar='AddBackground', help='Whether add background', default='True', type=str)
-parser.add_argument('-csm', metavar='CheckSegmentationMap', help='Whether check segmentation map', default='False', type=str)
-parser.add_argument('-cs', metavar='CheckSpectra',  help='The pixel position of checked spectra', default=None,
-                    nargs='+', type=int)
-parser.add_argument('-pi', metavar='PlotNBImage',  help='Whether plot the SB map', default='True', type=str)
-parser.add_argument('-sl', metavar='SelectLambda',  help='Wavelength interval of the subcube for example "3727 3929"',
-                    default=None, nargs='+',
-                    type=int)
+parser.add_argument('-csm', metavar='CheckSegmentationMap', help='Whether check segmentation map, default is False',
+                    default='False', type=str)
+parser.add_argument('-cs', metavar='CheckSpectra',  help='Plot 25 spectra around a certain spaxel position '
+                                                         'for example: "80 90" means extracting 25 spectra '
+                                                         'around x=80, y=90; default is None',
+                    default=None, nargs='+', type=int)
+parser.add_argument('-pi', metavar='PlotNBImage',  help='Whether plot the SB map, default is True', default='True',
+                    type=str)
+parser.add_argument('-sl', metavar='SelectLambda',  help='Wavelength interval for subcube extraction '
+                                                         'for example: "3727 3929"; default is None',
+                    default=None, nargs='+', type=int)
 # parser.add_argument('-z_qso', metavar='z_qso',  help='use qso systematic redshift to remove sky line',
 #                     default=None, type=float)
-parser.add_argument('-slp', metavar='SkyLinePresent',  help='whether sky lines exist', default='False', type=str)
+parser.add_argument('-slp', metavar='SkyLinePresent',  help='Whether sky lines exist, default is False',
+                    default='False', type=str)
 toBool = {'True': True, 'False': False}
 args = parser.parse_args()  # parse the arguments
 
 
 def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, smooth_1D=None, kernel_1D=None,
-                   npixels=10, connectivity=8, max_num_nebulae=10, num_bkg_slice=3, RescaleVariance=True,
-                   AddBackground=None, CheckSegmentation=False, CheckSpectra=None, PlotNBImage=True, SelectLambda=None,
-                   SkyLinePresent=False):
+                   npixels=None, connectivity=None, max_num_nebulae=None, num_bkg_slice=None, RescaleVariance=None,
+                   AddBackground=None, CheckSegmentation=None, CheckSpectra=None, PlotNBImage=None, SelectLambda=None,
+                   SkyLinePresent=None):
     # Cubes
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
