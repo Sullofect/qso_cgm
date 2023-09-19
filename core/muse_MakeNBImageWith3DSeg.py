@@ -48,7 +48,8 @@ parser.add_argument('-csm', metavar='CheckSegmentationMap', help='Whether check 
 parser.add_argument('-cs', metavar='CheckSpectra',  help='The pixel position of checked spectra', default=None,
                     nargs='+', type=int)
 parser.add_argument('-pi', metavar='PlotNBImage',  help='Whether plot the SB map', default='True', type=str)
-parser.add_argument('-sl', metavar='SelectLambda',  help='initial wavelength interval of ', default=None, nargs='+',
+parser.add_argument('-sl', metavar='SelectLambda',  help='Wavelength interval of the subcube for example "3727 3929"',
+                    default=None, nargs='+',
                     type=int)
 # parser.add_argument('-z_qso', metavar='z_qso',  help='use qso systematic redshift to remove sky line',
 #                     default=None, type=float)
