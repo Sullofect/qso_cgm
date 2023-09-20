@@ -332,7 +332,7 @@ MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_2D=args.s, kernel_2D=args
                kernel_1D=args.k_spe, npixels=args.npixels, connectivity=args.connectivity, max_num_nebulae=args.n,
                num_bkg_slice=args.ns, RescaleVariance=toBool[args.rv], AddBackground=toBool[args.ab],
                CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi],
-               SkyLinePresent=args.slp, SelectLambda=args.sl, factor_suppress=args.fs)
+               SkyLinePresent=toBool[args.slp], SelectLambda=args.sl, factor_suppress=args.fs)
 
 
 # TEX0206 lambda [7925, 7962]
