@@ -12,8 +12,6 @@ from astropy.table import Table
 from astropy import units as u
 from scipy.optimize import minimize
 from astropy.coordinates import SkyCoord
-path_savefig = '/Users/lzq/Dropbox/Data/CGM_plots/'
-path_savetab = '/Users/lzq/Dropbox/Data/CGM_tables/'
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
@@ -50,7 +48,7 @@ def LoadFieldGals(cubename=None, z_qso=None):
     ql_qua = ql_gal[select_qua]
     ra_qua, dec_qua = ra_gal[select_qua], dec_gal[select_qua]
 
-    bins_ggp = np.arange(-2000, 2200, 200)
+    bins_ggp = np.arange(-3000, 3200, 200)
     select_v = np.where((v_qua > bins_ggp[0]) * (v_qua < bins_ggp[-1]))
     row_ggp = row_qua[select_v]
     ID_ggp = ID_qua[select_v]
@@ -63,22 +61,23 @@ def LoadFieldGals(cubename=None, z_qso=None):
 
     #
     filename = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info.fits'.format(cubename)
-    if os.path.isfile(filename) is not True:
-        t = Table()
-        t['row'] = row_ggp
-        t['ID'] = ID_ggp
-        t['z'] = z_ggp
-        t['v'] = v_ggp
-        t['name'] = name_ggp
-        t['ql'] = ql_ggp
-        t['ra'] = ra_ggp
-        t['dec'] = dec_ggp
-        t.write(filename, format='fits', overwrite=True)
+    # if os.path.isfile(filename) is not True:
+    t = Table()
+    t['row'] = row_ggp
+    t['ID'] = ID_ggp
+    t['z'] = z_ggp
+    t['v'] = v_ggp
+    t['name'] = name_ggp
+    t['ql'] = ql_ggp
+    t['ra'] = ra_ggp
+    t['dec'] = dec_ggp
+    t.write(filename, format='fits', overwrite=True)
     return output
 
 
 #
 def MakeFieldImage(cubename=None):
+    path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}.png'.format(cubename)
 
     # Load info
     path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
@@ -160,7 +159,7 @@ def MakeFieldImage(cubename=None):
     gc.add_label(0.87, 0.97, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=15, relative=True)
     # gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
     # gc.add_label(0.47, 0.30, r"$\rm 30'' \times 30''$", size=15, relative=True)
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + cubename + '.png', bbox_inches='tight')
+    fig.savefig(path_savefig, bbox_inches='tight')
 
 
 # MakeFieldImage(cubename='Q0107-0235')

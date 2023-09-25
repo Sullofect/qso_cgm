@@ -58,12 +58,8 @@ parser.add_argument('-pi', metavar='PlotNBImage', help='Whether plot the SB map,
 parser.add_argument('-sl', metavar='SelectLambda', help='Wavelength interval for subcube extraction '
                                                         'for example: "3727 3929"; default is None',
                     default=None, nargs='+', type=int)
-# parser.add_argument('-z_qso', metavar='z_qso', help='use qso systematic redshift to remove sky line',
-#                     default=None, type=float)
 parser.add_argument('-slp', metavar='SkyLinePresent', help='Whether sky lines exist, default is False',
                     default='False', type=str)
-parser.add_argument('-fs', metavar='factor_suppress', help='Whether to suppress S/N threshold for integration only '
-                                                           'by a factor, default is 1', default=1, type=float)
 toBool = {'True': True, 'False': False}
 args = parser.parse_args()  # parse the arguments
 
@@ -71,7 +67,7 @@ args = parser.parse_args()  # parse the arguments
 def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, smooth_1D=None, kernel_1D=None,
                    npixels=None, connectivity=None, max_num_nebulae=None, num_bkg_slice=None, RescaleVariance=None,
                    AddBackground=None, CheckSegmentation=None, CheckSpectra=None, PlotNBImage=None, SelectLambda=None,
-                   SkyLinePresent=None, factor_suppress=None):
+                   SkyLinePresent=None):
     # Cubes
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
@@ -80,26 +76,13 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
     filename_3Dseg = cubename + '_3DSeg.fits'
     cube = Cube(path_cube)
     if SelectLambda is not None:
+        # cube = cube[:, 150:300, 150:300]
         cube = cube.select_lambda(SelectLambda[0], SelectLambda[1])
     size = np.shape(cube.data)
     wave_vac = pyasl.airtovac2(cube.wave.coord())
     flux = cube.data * 1e-3
     flux_err = np.sqrt(cube.var) * 1e-3
     seg_3D = np.zeros(size)
-
-    if RescaleVariance:
-        flux_wl = np.nanmax(flux, axis=0)
-        select_bkg = ~sigma_clip(flux_wl, sigma_lower=3, sigma_upper=3, cenfunc='median', masked=True).mask
-        flux_mask = np.where(select_bkg[np.newaxis, :, :], flux, np.nan)
-        flux_err_mask = np.where(select_bkg[np.newaxis, :, :], flux_err, np.nan)
-        bkg_seg = np.where(select_bkg[np.newaxis, :, :], np.ones_like(flux_err[0, :, :]), np.nan)
-
-        flux_var = np.nanvar(flux_mask, axis=(1, 2))
-        flux_var_mean = np.nanmean(flux_err_mask ** 2, axis=(1, 2))
-        value_rescale = flux_var / flux_var_mean
-        print('Variance rescaling factor has mean value of {} and std of {}'.format(np.mean(value_rescale),
-                                                                                    np.std(value_rescale)))
-        flux_err = flux_err * np.sqrt(value_rescale)[:, np.newaxis, np.newaxis]
 
     # Copy object
     flux_ori = np.copy(flux)
@@ -127,6 +110,20 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         flux = convolve(flux, kernel_1)
     flux_smooth_ori = np.copy(flux)
 
+    if RescaleVariance:
+        flux_wl = np.nanmax(flux, axis=0)
+        select_bkg = ~sigma_clip(flux_wl, sigma_lower=3, sigma_upper=3, cenfunc='median', masked=True).mask
+        flux_mask = np.where(select_bkg[np.newaxis, :, :], flux, np.nan)
+        flux_err_mask = np.where(select_bkg[np.newaxis, :, :], flux_err, np.nan)
+        bkg_seg = np.where(select_bkg[np.newaxis, :, :], np.ones_like(flux_err[0, :, :]), np.nan)
+
+        flux_var = np.nanvar(flux_mask, axis=(1, 2))
+        flux_var_mean = np.nanmean(flux_err_mask ** 2, axis=(1, 2))
+        value_rescale = flux_var / flux_var_mean
+        print('Variance rescaling factor has mean value of {} and std of {}'.format(np.mean(value_rescale),
+                                                                                    np.std(value_rescale)))
+        flux_err = flux_err * np.sqrt(value_rescale)[:, np.newaxis, np.newaxis]
+
     # Iterate over nebulae
     for k in range(max_num_nebulae):
         area_array = np.zeros(size[0]) * np.nan
@@ -144,41 +141,9 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
                     area_array[i] = np.nanmax(seg_i.areas) * np.nanstd(weight ** 2)
                 else:
                     area_array[i] = np.nanmax(seg_i.areas)
-                    # / np.sum(flux_err_i)
-                    # * np.std(flux_i2 ** 2)
-                    # / np.mean(sigma_clip((S_N_i) ** 2, sigma_lower=2,
-                    #                                     sigma_upper=2, cenfunc='median', masked=True))
-                    # * np.mean(flux_err_i)
-                    # / np.mean(sigma_clip((flux_i - bkg.background) ** 2, sigma_lower=2,
-                    #                                     sigma_upper=2, cenfunc='median', masked=True))
-                    # / np.mean(flux_i - bkg.background) ** 2
             except AttributeError:
                 pass
         try:
-            # if z_qso is not None:
-            #     sigma = 2
-                # weight = np.exp(-(wave_vac - (3727 * (1 + z_qso))) ** 2 / 2 / sigma ** 2) / np.sqrt(2 * np.pi * sigma ** 2)
-                # area_array *= weight / np.max(weight)
-
-                # weight = np.mean(flux - np.median(flux, axis=(1, 2))[:, np.newaxis, np.newaxis], axis=0)
-                # area_array
-
-            # np.exp(- (x - mu) ** 2 / 2 / sigma ** 2) / np.sqrt(2 * np.pi * sigma ** 2)
-
-            # Sky line detection
-            # area_array_sort = np.sort(-area_array)
-            # orderbyarea = np.argsort(-area_array)
-            # idx_array = np.arange(size[0])[orderbyarea]
-            # wave_vac_sort = wave_vac[orderbyarea]
-            # area_array_flip = np.where((area_array_sort > -0.1 * size[1] * size[2]), area_array_sort, np.nan)
-            # print(area_array_flip)
-            # # # area_array_flip = np.where((wave_vac_sort > 5578.5 + 2) | (wave_vac_sort < 5578.5 - 2), area_array_sort, np.nan)
-            # # area_array_flip = np.where((wave_vac_sort > 7964 + 3) | (wave_vac_sort < 7964 - 3), area_array_sort, np.nan)
-            # # area_array_flip = np.where((wave_vac_sort > 7964 + 3) | (wave_vac_sort < 7964 - 3), area_array_flip, np.nan)
-            # idx_max = idx_array[np.nanargmin(area_array_flip)]
-            # print(idx_max)
-            # print(wave_vac[idx_max])
-            #
             idx_max = np.nanargmax(area_array)
 
         except ValueError:
@@ -200,12 +165,11 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         wave_grid_b = np.ones_like(S_N_max) * wave_vac[idx_max]
         conti_s, conti_b = np.ones_like(S_N_max), np.ones_like(S_N_max)
         idx_s, idx_b = np.arange(0, idx_max), np.arange(idx_max, size[0])
-        S_N_thr_low = S_N_thr / factor_suppress
         for i in np.flip(idx_s):
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
             mask_i = np.where(conti_s == 1, mask, 0)
-            mask_i = np.where(S_N_i >= S_N_thr_low, mask_i, 0)
+            mask_i = np.where(S_N_i >= S_N_thr, mask_i, 0)
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_s = np.where(mask_i != 0, conti_s, 0)
             wave_grid_s = np.where(mask_i == 0, wave_grid_s, wave_vac[i])
@@ -219,7 +183,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
             S_N_i = flux_i / flux_err_i
             mask_i = np.where(conti_b == 1, mask, 0)
-            mask_i = np.where(S_N_i >= S_N_thr_low, mask_i, 0)
+            mask_i = np.where(S_N_i >= S_N_thr, mask_i, 0)
             flux_cut = np.where(mask_i != 0, flux_i, 0)
             conti_b = np.where(mask_i != 0, conti_b, 0)
             wave_grid_b = np.where(mask_i == 0, wave_grid_b, wave_vac[i])
@@ -239,7 +203,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
                 for ax_i in range(5):
                     for ax_j in range(5):
                         i_j, j_j = ax_i + CheckSpectra[1], ax_j + CheckSpectra[0]
-                        ax[ax_i, ax_j].plot(wave_vac, flux_ori[:, i_j, j_j], '-k')
+                        # ax[ax_i, ax_j].plot(wave_vac, flux_ori[:, i_j, j_j], '-k')
                         ax[ax_i, ax_j].plot(wave_vac, flux_smooth_ori[:, i_j, j_j], '-b')
                         # ax[ax_i, ax_j].plot(wave_vac, flux_smooth_ori[:, i_j, j_j]
                         #                     - np.median(flux_smooth_ori, axis=(1, 2)), '-r')
@@ -304,7 +268,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('gist_heat_r'), stretch='arcsinh')
         # gc.show_colorscale(vmin=-0.005, vmax=5, cmap=plt.get_cmap('Reds'))
         gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
-        gc.show_contour(filename_SB, levels=[0.15], color='k', linewidths=0.8)
+        # gc.show_contour(filename_SB, levels=[0.15], color='k', linewidths=0.8)
         gc.set_system_latex(True)
 
         # Colorbar
@@ -332,7 +296,7 @@ MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_2D=args.s, kernel_2D=args
                kernel_1D=args.k_spe, npixels=args.npixels, connectivity=args.connectivity, max_num_nebulae=args.n,
                num_bkg_slice=args.ns, RescaleVariance=toBool[args.rv], AddBackground=toBool[args.ab],
                CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi],
-               SkyLinePresent=toBool[args.slp], SelectLambda=args.sl, factor_suppress=args.fs)
+               SkyLinePresent=toBool[args.slp], SelectLambda=args.sl)
 
 
 # TEX0206 lambda [7925, 7962]
