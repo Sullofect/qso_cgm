@@ -40,7 +40,7 @@ parser.add_argument('-connectivity', metavar='connectivity', help='The type of p
                                                                   'how pixels are grouped into a detected source, '
                                                                   'default is 8', default=8, type=float)
 parser.add_argument('-n', metavar='max_num_nebulae', help='Maximum allowed number of nebulae, default is 10',
-                    default=10, type=int)
+                    default=20, type=int)
 parser.add_argument('-rv', metavar='RescaleVariance', help='Whether rescale variance, default is True', default='True',
                     type=str)
 parser.add_argument('-ab', metavar='AddBackground', help='Whether add background fluctuation, default is True',
@@ -58,16 +58,13 @@ parser.add_argument('-pi', metavar='PlotNBImage', help='Whether plot the SB map,
 parser.add_argument('-sl', metavar='SelectLambda', help='Wavelength interval for subcube extraction '
                                                         'for example: "3727 3929"; default is None',
                     default=None, nargs='+', type=int)
-parser.add_argument('-slp', metavar='SkyLinePresent', help='Whether sky lines exist, default is False',
-                    default='False', type=str)
 toBool = {'True': True, 'False': False}
 args = parser.parse_args()  # parse the arguments
 
 
 def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, smooth_1D=None, kernel_1D=None,
                    npixels=None, connectivity=None, max_num_nebulae=None, num_bkg_slice=None, RescaleVariance=None,
-                   AddBackground=None, CheckSegmentation=None, CheckSpectra=None, PlotNBImage=None, SelectLambda=None,
-                   SkyLinePresent=None):
+                   AddBackground=None, CheckSegmentation=None, CheckSpectra=None, PlotNBImage=None, SelectLambda=None):
     # Cubes
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
@@ -127,31 +124,37 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
     # Iterate over nebulae
     for k in range(max_num_nebulae):
         area_array = np.zeros(size[0]) * np.nan
+        label_array = np.copy(area_array)
         for i in range(size[0]):
             flux_i, flux_err_i = flux[i, :, :], flux_err[i, :, :]
-            if SkyLinePresent:
-                bkg = np.median(flux_i)
-                flux_i -= bkg
             S_N_i = flux_i / flux_err_i
             seg_i = detect_sources(S_N_i, S_N_thr, npixels=npixels, connectivity=connectivity)
             try:
-                if SkyLinePresent:
-                    label_i = seg_i.labels[np.nanargmax(seg_i.areas)]
-                    weight = np.where(seg_i.data == label_i, S_N_i, np.nan)
-                    area_array[i] = np.nanmax(seg_i.areas) * np.nanstd(weight ** 2)
-                else:
-                    area_array[i] = np.nanmax(seg_i.areas)
+                sort_area = np.flip(np.argsort(seg_i.areas))
+                area_sort = seg_i.areas[sort_area]
+                label_sort = seg_i.labels[sort_area]
+                mask_isnan = np.isnan(area_sort)
+                area_sort = area_sort[~mask_isnan]
+                label_sort = label_sort[~mask_isnan]
+                num = np.minimum(len(seg_i.areas), 5)
+                area_ii, label_ii = np.zeros(num), np.zeros(num)
+                for ii in range(num):
+                    weight = np.where(seg_i.data == label_sort[ii], S_N_i, np.nan)
+                    area_ii[ii] = np.nansum(weight) / area_sort[ii]
+                    label_ii[ii] = label_sort[ii]
+                area_array[i] = np.nanmax(area_ii)
+                label_array[i] = label_ii[np.nanargmax(area_ii)]
             except AttributeError:
                 pass
         try:
             idx_max = np.nanargmax(area_array)
-
+            label_max = label_array[idx_max]
         except ValueError:
             print('No enough number of nebulae are detected')
             break
+
         S_N_max = flux[idx_max, :, :] / flux_err[idx_max, :, :]
         seg_max = detect_sources(S_N_max, S_N_thr, npixels=npixels, connectivity=connectivity)
-        label_max = seg_max.labels[np.nanargmax(seg_max.areas)]
         mask = np.where(seg_max.data == label_max, np.ones_like(flux[idx_max, :, :]), 0)
 
         # Initialize
@@ -295,8 +298,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
 MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_2D=args.s, kernel_2D=args.k, smooth_1D=args.s_spe,
                kernel_1D=args.k_spe, npixels=args.npixels, connectivity=args.connectivity, max_num_nebulae=args.n,
                num_bkg_slice=args.ns, RescaleVariance=toBool[args.rv], AddBackground=toBool[args.ab],
-               CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi],
-               SkyLinePresent=toBool[args.slp], SelectLambda=args.sl)
+               CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi])
 
 
 # TEX0206 lambda [7925, 7962]
