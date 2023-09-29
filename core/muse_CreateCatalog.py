@@ -14,8 +14,8 @@ from astropy.cosmology import FlatLambdaCDM
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 
-def MakeCatalog(qso=None, z_qso=None, ra_qso=None, dec_qso=None, priority_cut=None):
-    path = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/DES+LS+GAIA_{}.fits'.format(qso)
+def MakeCatalog(qso=None, filename=None, z_qso=None, ra_qso=None, dec_qso=None, priority_cut=None):
+    path = '/Users/lzq/Dropbox/maskgen/{}/DES+LS+GAIA_{}.fits'.format(filename, qso)
     data = fits.getdata(path, 1, ignore_missing_end=True)
 
     # Give ID
@@ -34,7 +34,7 @@ def MakeCatalog(qso=None, z_qso=None, ra_qso=None, dec_qso=None, priority_cut=No
     c_qso = SkyCoord(ra_qso * u.deg, dec_qso * u.deg, frame='fk5')
     c_object = SkyCoord(ra_object * u.deg, dec_object * u.deg, frame='fk5')
     theta = c_qso.separation(c_object).arcsecond
-    print(c_object[ID == 10995351543620396])
+
     # Calculate the imaging depth
     galdepth_g = 22.5 - np.log10(1 / np.sqrt(np.nanmedian(data['galdepth_g'])))
     galdepth_r = 22.5 - np.log10(1 / np.sqrt(np.nanmedian(data['galdepth_r'])))
@@ -93,9 +93,6 @@ def MakeCatalog(qso=None, z_qso=None, ra_qso=None, dec_qso=None, priority_cut=No
         theta_500kpc[i] = 500 * cosmo.arcsec_per_kpc_proper(i_val).value  # pkpc
         mag_r_01Lstar[i] = muse_kc.abs2app(m_abs=-19.0, z=i_val, model='Scd', filter_e='SDSS_r', filter_o='DECam_r')
         mag_z_01Lstar[i] = muse_kc.abs2app(m_abs=-19.0, z=i_val, model='Scd', filter_e='SDSS_z', filter_o='DECam_z')
-    print(mag_r_01Lstar)
-    print(galdepth_r)
-    print(galdepth_z)
 
     # Give priority
     candidate_01Lstar_r = np.zeros_like(isstar)
@@ -112,11 +109,6 @@ def MakeCatalog(qso=None, z_qso=None, ra_qso=None, dec_qso=None, priority_cut=No
 
     index = np.where((candidate_01Lstar_r == 1) | (candidate_01Lstar_z == 1))
     candidate_01Lstar[index] = 1
-    print(candidate_01Lstar[ID == 10995351543620396])
-    print(mag_r[ID == 10995351543620396])
-    print(np.max(theta_500kpc))
-    print(theta[ID == 10995351543620396])
-    print(theta[ID == 10995351543620399])
 
     # Create galaxy catalog
     targets = np.arange(len(isstar))
@@ -153,13 +145,13 @@ def MakeCatalog(qso=None, z_qso=None, ra_qso=None, dec_qso=None, priority_cut=No
     ra_string = np.asarray(c_object.ra.to_string(unit=u.hour, sep=':', precision=2, pad=True))
     dec_string = np.asarray(c_object.dec.to_string(unit=u.degree, sep=':', precision=2, pad=True))
 
-    path_gal_dat = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_galaxies.dat'.format(qso)
-    path_gal_reg = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_galaxies.reg'.format(qso)
-    path_star_dat = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_stars.dat'.format(qso)
-    path_star_reg = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_stars.reg'.format(qso)
+    path_gal_dat = '/Users/lzq/Dropbox/maskgen/{}/{}_@.dat'.format(filename, filename)
+    path_gal_reg = '/Users/lzq/Dropbox/maskgen/{}/{}_@.reg'.format(filename, filename)
+    path_star_dat = '/Users/lzq/Dropbox/maskgen/{}/{}_*.dat'.format(filename, filename)
+    path_star_reg = '/Users/lzq/Dropbox/maskgen/{}/{}_*.reg'.format(filename, filename)
 
     # Save tiles
-    path_tile_info = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_tiles.dat'.format(qso)
+    path_tile_info = '/Users/lzq/Dropbox/maskgen/{}/{}_tiles.dat'.format(filename, filename)
     np.savetxt(path_tile_info, np.unique(data['brickname']), fmt="%s")
 
     # Select galaxies
@@ -167,11 +159,18 @@ def MakeCatalog(qso=None, z_qso=None, ra_qso=None, dec_qso=None, priority_cut=No
     gal_cat = np.array([ID_gal, coords_string[targets], np.round(priority, decimals=2)]).T
     np.savetxt(path_gal_dat, gal_cat, fmt="%s")
 
-    gal_reg = list(map(''.join, zip(np.full_like(targets, 'fk5; circle(', dtype='<U15'),
-                                    ra_string[targets], np.full_like(targets, ', ', dtype=str),
-                                    dec_string[targets], np.full_like(targets, ', ', dtype=str),
-                                    np.full_like(targets, '2") # text={', dtype='<U15'), ID_gal,
-                                    np.full_like(targets, '} color="red"', dtype='<U15'))))
+    gal_reg = np.array(['# Region file format: DS9 version 4.1',
+                        'global color=red dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 '
+                        'highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1',
+                        'fk5'])
+
+    gals_reg_2 = list(map(''.join, zip(np.full_like(targets, 'circle(', dtype='<U15'),
+                                       ra_string[targets], np.full_like(targets, ', ', dtype=str),
+                                       dec_string[targets], np.full_like(targets, ', ', dtype=str),
+                                       np.full_like(targets, '2") # text={', dtype='<U15'), ID_gal,
+                                       np.full_like(targets, '}', dtype='<U15'))))
+
+    gal_reg = np.hstack((gal_reg, gals_reg_2))
     np.savetxt(path_gal_reg, gal_reg, fmt="%s")
 
     # For debugging
@@ -190,46 +189,132 @@ def MakeCatalog(qso=None, z_qso=None, ra_qso=None, dec_qso=None, priority_cut=No
                            * (mag_g - mag_r > 0.0) * (mag_g - mag_r < 0.7))
     alignments = alignments[select_star]
 
-    # Region file
+    # * .dat file
     ID_star = list(map(''.join, zip(np.full_like(alignments, '*', dtype=str), np.asarray(ID[alignments], dtype=str))))
     star_cat = np.array([ID_star, coords_string[alignments], np.round(mag_r[alignments], decimals=2)]).T
     np.savetxt(path_star_dat, star_cat, fmt="%s")
-    star_reg = list(map(''.join, zip(np.full_like(alignments, 'fk5; circle(', dtype='<U15'),
-                                     ra_string[alignments], np.full_like(alignments, ', ', dtype=str),
-                                     dec_string[alignments], np.full_like(alignments, ', ', dtype=str),
-                                     np.full_like(alignments, '2") # text={', dtype='<U15'), ID_star,
-                                     np.full_like(alignments, '} color="green"', dtype='<U20'))))
+
+    # * .reg file
+    star_reg = np.array(['# Region file format: DS9 version 4.1',
+                         'global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 '
+                         'highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1',
+                         'fk5'])
+    star_reg_2 = list(map(''.join, zip(np.full_like(alignments, 'circle(', dtype='<U15'),
+                                       ra_string[alignments], np.full_like(alignments, ', ', dtype=str),
+                                       dec_string[alignments], np.full_like(alignments, ', ', dtype=str),
+                                       np.full_like(alignments, '5") # text={', dtype='<U15'), ID_star,
+                                       np.full_like(alignments, '}', dtype='<U20'))))
+    star_reg = np.hstack((star_reg, star_reg_2))
     np.savetxt(path_star_reg, star_reg, fmt="%s")
 
 
-def RefineCatalog(qso=None, priority_cut=None):
-    path_check = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_galaxies_aftercheck.reg'.format(qso)
-    regions_check = np.loadtxt(path_check, dtype=str, skiprows=3)
+# def RefineCatalog(filename=None, priority_cut=None):
+#     # Visually inspected catalog (.reg)
+#     path_ac = '/Users/lzq/Dropbox/maskgen/{}/{}_@_ac.reg'.format(filename, filename)
+#     regions_ac = np.loadtxt(path_ac, dtype=str, skiprows=3, comments='%')
+#
+#     # Full catalog
+#     path = '/Users/lzq/Dropbox/maskgen/{}/{}_@.reg'.format(filename, filename)
+#     regions = np.loadtxt(path, dtype=str, skiprows=3, comments='%')
+#
+#     idx = np.in1d(regions[:, 2], regions_ac[:, 2])
+#     print("find {} number of objects in the refinement".format(len(idx[idx == True])))
+#
+#     path_gal_dat = '/Users/lzq/Dropbox/maskgen/{}/{}_@.dat'.format(filename, filename)
+#     data_gal_dat = np.loadtxt(path_gal_dat, dtype=str)[idx]
+#
+#     if priority_cut is not None:
+#         priority = np.asarray(data_gal_dat[:, 3], dtype=float)
+#         select_priority = np.where((priority > priority_cut[0]) * (priority < priority_cut[1]))
+#         data_gal_dat = data_gal_dat[select_priority]
+#         path_gal_check_dat = '/Users/lzq/Dropbox/maskgen/{}/{}_@_ac_hp.dat'.format(filename, filename)
+#     else:
+#         path_gal_check_dat = '/Users/lzq/Dropbox/maskgen/{}/{}_@_ac.dat'.format(filename, filename)
+#
+#     # Remove object that are observed already
+#     np.savetxt(path_gal_check_dat, data_gal_dat, fmt="%s")
 
-    path_gal = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_galaxies_reformat.reg'.format(qso)
-    regions_gal = np.loadtxt(path_gal, dtype=str, skiprows=3)
 
-    idx = np.in1d(regions_gal, regions_check)
-    print("find {} number of objects in the refinment".format(len(idx[idx == True])))
+# Select Star
+def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_type=None, priority_cut=None, mode='keep_same'):
+    # Visually inspected catalog (.reg)
+    path_p = '/Users/lzq/Dropbox/maskgen/{}/{}.reg'.format(dir, filename_p)
+    if p_type == 'Sean':
+        regions_p = np.loadtxt(path_p, dtype=str, comments='%')
+        regions_p_ID = regions_p[:, 8]
+    else:
+        regions_p = np.loadtxt(path_p, dtype=str, skiprows=3, comments='%')
+        regions_p_ID = regions_p[:, 2]
+    print(regions_p)
 
-    path_gal_dat = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_galaxies.dat'.format(qso)
-    data_gal_dat = np.loadtxt(path_gal_dat, dtype=str)[idx]
+    # Full catalog
+    path_f = '/Users/lzq/Dropbox/maskgen/{}/{}.reg'.format(dir, filename_f)
+    path_f_dat = '/Users/lzq/Dropbox/maskgen/{}/{}.dat'.format(dir, filename_f)
+    if f_type == 'Sean':
+        regions_f = np.loadtxt(path_f, dtype=str, comments='%')
+        regions_f_ID = regions_f[:, 8]
+    else:
+        regions_f = np.loadtxt(path_f, dtype=str, skiprows=3, comments='%')
+        regions_f_ID = regions_f[:, 2]
+    print(len(regions_f))
+
+    idx = np.in1d(regions_f_ID, regions_p_ID)
+    if mode == 'keep_same':
+        idx = idx
+        print("find {} number of common objects".format(len(idx[idx == True])))
+    elif mode == 'find_diff':
+        idx = ~idx
+        filename_p += '_d'
+        path_p_d = '/Users/lzq/Dropbox/maskgen/{}/{}.reg'.format(dir, filename_p)
+        regions_p_d = regions_f[idx]
+        print("find {} number of different objects".format(len(idx[idx == True])))
+
+    data_p_dat = np.loadtxt(path_f_dat, dtype=str)[idx]
 
     if priority_cut is not None:
-        priority = np.asarray(data_gal_dat[:, 3], dtype=float)
+        priority = np.asarray(data_p_dat[:, 3], dtype=float)
         select_priority = np.where((priority > priority_cut[0]) * (priority < priority_cut[1]))
-        data_gal_dat = data_gal_dat[select_priority]
-        path_gal_check_dat = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_galaxies_aftercheck_hp.dat'.format(qso)
+        data_p_dat = data_p_dat[select_priority]
+        path_p_dat = '/Users/lzq/Dropbox/maskgen/{}/{}_hp.dat'.format(dir, filename_p)
+        regions_p_d = regions_p_d[select_priority]
     else:
-        path_gal_check_dat = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_galaxies_aftercheck.dat'.format(qso)
-
+        path_p_dat = '/Users/lzq/Dropbox/maskgen/{}/{}.dat'.format(dir, filename_p)
 
     # Remove object that are observed already
+    np.savetxt(path_p_dat, data_p_dat, fmt="%s")
+
+    if mode == 'find_diff':
+        if f_type != 'Sean':
+            rows3 = np.array(['# Region file format: DS9 version 4.1',
+                              'global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 '
+                              'highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1',
+                              'fk5'])
+            regions_p_d = list(map(' '.join, zip(regions_p_d[:, 0], regions_p_d[:, 1], regions_p_d[:, 2])))
+            regions_p_d = np.hstack((rows3, regions_p_d))
+        np.savetxt(path_p_d, regions_p_d, fmt="%s")
 
 
 
-    np.savetxt(path_gal_check_dat, data_gal_dat, fmt="%s")
 
+# MakeCatalog(qso='HE0238-1904', filename='HE0238', z_qso=0.6282, ra_qso=40.13577, dec_qso=-18.86427, priority_cut=None)
+# RefineCatalog(qso='HE0238-1904', filename='HE0238', priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0238', filename_f='HE0238_@', filename_p='HE0238_@_ac', priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0238', filename_f='HE0238_@', filename_p='HE0238_@_ac', priority_cut=None)
 
-# MakeCatalog(qso='HE0238-1904', z_qso=0.6282, ra_qso=40.13577, dec_qso=-18.86427, priority_cut=None)
-RefineCatalog(qso='HE0238-1904', priority_cut=[0, 40])
+#
+# ConvertReg2Dat(dir='HE0238', filename_f='HE0238_@_ac', filename_p='HE0238i1', mode='find_diff', p_type='Sean', priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0238', filename_f='HE0238_@_ac', filename_p='HE0238i1', mode='find_diff', p_type='Sean', priority_cut=None)
+
+# convert .reg to dat
+# ConvertReg2Dat(dir='HE0238', filename_f='HE0238_*', filename_p='HE0238i2_*', mode='keep_same', p_type=None, priority_cut=None)
+
+#
+# ConvertReg2Dat(dir='HE0238', filename_f='HE0238i1_d', filename_p='HE0238i2', mode='find_diff', f_type=None,
+#                p_type='Sean', priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0238', filename_f='HE0238i1_d', filename_p='HE0238i2', mode='find_diff', f_type=None,
+#                p_type='Sean', priority_cut=None)
+
+ConvertReg2Dat(dir='HE0238', filename_f='HE0238_*', filename_p='HE0238i3_*', mode='keep_same', p_type=None,
+               priority_cut=None)
+
+# ConvertReg2Dat(filename='HE0238i1_star')
