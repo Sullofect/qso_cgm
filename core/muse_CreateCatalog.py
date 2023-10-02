@@ -32,6 +32,7 @@ def MakeCatalog(qso=None, filename=None, z_qso=None, ra_qso=None, dec_qso=None, 
     ra_object, dec_object = np.where(~np.isnan(ra_object), ra_object, ra_DES), \
                             np.where(~np.isnan(dec_object), dec_object, dec_DES)
     c_qso = SkyCoord(ra_qso * u.deg, dec_qso * u.deg, frame='fk5')
+    print(c_qso)
     c_object = SkyCoord(ra_object * u.deg, dec_object * u.deg, frame='fk5')
     theta = c_qso.separation(c_object).arcsecond
 
@@ -276,7 +277,8 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
         select_priority = np.where((priority > priority_cut[0]) * (priority < priority_cut[1]))
         data_p_dat = data_p_dat[select_priority]
         path_p_dat = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}_hp.dat'.format(dir, filename_p)
-        regions_p_d = regions_p_d[select_priority]
+        if mode == 'find_diff':
+            regions_p_d = regions_p_d[select_priority]
     else:
         path_p_dat = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}.dat'.format(dir, filename_p)
 
@@ -316,5 +318,15 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
 # ConvertReg2Dat(dir='HE0238', filename_f='HE0238_*', filename_p='HE0238i3_*', mode='keep_same', p_type=None,
 #                priority_cut=None)
 
+
+# For HE0439
 # MakeCatalog(qso='HE0439-5254', filename='HE0439', z_qso=1.0530, ra_qso=70.05020, dec_qso=-52.80486, priority_cut=None)
-# ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@', priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@', filename_p='HE0439_@_ac', priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@', filename_p='HE0439_@_ac', priority_cut=None)
+# ConvertReg2Dat(dir='HE0439', filename_f='HE0439_*', filename_p='HE0439i1_*', mode='keep_same', p_type=None, priority_cut=None)
+
+# i2
+ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@_ac', filename_p='HE0439i1', mode='find_diff', p_type='Sean',
+               priority_cut=[0, 40])
+ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@_ac', filename_p='HE0439i1', mode='find_diff', p_type='Sean',
+               priority_cut=None)
