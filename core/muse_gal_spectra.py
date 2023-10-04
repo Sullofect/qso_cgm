@@ -90,10 +90,10 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
                             size=3)
     if len(row_array) == 1:
         fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=15, y=-0.1)
-        fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=15, x=0.06)
+        fig.supylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$', size=15, x=0.06)
     else:
         fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
-        fig.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size=20)
+        fig.supylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$', size=20)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/spectra_gal/' + figname + '.png', bbox_inches='tight')
 
 
@@ -101,12 +101,12 @@ def PlotGalSpectra(row_array=None, qls=False, figname='spectra_gal'):
 ra_final, dec_final, row_final, ID_final, z_final, name_final, ID_sep_final = ReturnGalLabel()
 
 #### for i in *.png ; do convert -quality 25 "$i" "${i%.*}.jpeg" ; done ####
-for i in row_final:
-    mask = row_final == i
-    PlotGalSpectra(row_array=[i], qls=False, figname="spectra_gal_" + str(ID_sep_final[mask][0]))
+# for i in row_final:
+#     mask = row_final == i
+#     PlotGalSpectra(row_array=[i], qls=False, figname="spectra_gal_" + str(ID_sep_final[mask][0]))
+#
+# for i in [5, 6, 7, 181, 182]:
+#     mask = row_final == i
+#     PlotGalSpectra(row_array=[i], qls=True, figname="spectra_gal_" + str(ID_sep_final[mask][0]))
 
-for i in [5, 6, 7, 181, 182]:
-    mask = row_final == i
-    PlotGalSpectra(row_array=[i], qls=True, figname="spectra_gal_" + str(ID_sep_final[mask][0]))
-
-# PlotGalSpectra(row_array=[64, 35, 1], qls=False, figname="spectra_gal_paper")
+PlotGalSpectra(row_array=[64, 35, 1], qls=False, figname="spectra_gal_paper")

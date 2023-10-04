@@ -326,7 +326,8 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
 # ConvertReg2Dat(dir='HE0439', filename_f='HE0439_*', filename_p='HE0439i1_*', mode='keep_same', p_type=None, priority_cut=None)
 
 # i2
-ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@_ac', filename_p='HE0439i1', mode='find_diff', p_type='Sean',
-               priority_cut=[0, 40])
-ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@_ac', filename_p='HE0439i1', mode='find_diff', p_type='Sean',
-               priority_cut=None)
+# ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@_ac', filename_p='HE0439i1', mode='find_diff', p_type='Sean',
+#                priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@_ac', filename_p='HE0439i1', mode='find_diff', p_type='Sean',
+#                priority_cut=None)
+ConvertReg2Dat(dir='HE0439', filename_f='HE0439_*', filename_p='HE0439i2_*', mode='keep_same', p_type=None, priority_cut=None)

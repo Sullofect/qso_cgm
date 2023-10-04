@@ -866,17 +866,17 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 
     if len(ra_array) == 1:
         fig_weak.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
-        fig_weak.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
+        fig_weak.supylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$',
                            size=20, x=0.03)
         fig_strong.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
-        fig_strong.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
+        fig_strong.supylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$',
                              size=20, x=0.03)
     else:
         fig_weak.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.05)
-        fig_weak.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
+        fig_weak.supylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$',
                            size=20,)
         fig_strong.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=0.05)
-        fig_strong.supylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
+        fig_strong.supylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$',
                              size=20)
     if save_figure:
         if deredden:
@@ -892,10 +892,10 @@ def PlotGasSpectra(region=None, figname='spectra_gas_1', deredden=True, save_tab
 # PlotGasSpectra(region=text_array, figname='spectra_gas/all',
 #                save_table=True, save_figure=True, deredden=True)
 
-# region_paper = ['S2', 'S4', 'S6', 'S8', 'S9', 'B2']
-# PlotGasSpectra(region=region_paper, figname='spectra_gas/spectra_gas_paper',
-#                save_table=False, save_figure=True, deredden=True)
+region_paper = ['S2', 'S4', 'S6', 'S8', 'S9', 'B2_new']
+PlotGasSpectra(region=region_paper, figname='spectra_gas/spectra_gas_paper',
+               save_table=False, save_figure=True, deredden=True)
 
-print(text_array_input)
-for i, text_i in enumerate(text_array_input[-2:]):
-    PlotGasSpectra(region=text_i, figname='spectra_gas/spectra_gas_' + str(text_i))
+# print(text_array_input)
+# for i, text_i in enumerate(text_array_input[-2:]):
+#     PlotGasSpectra(region=text_i, figname='spectra_gas/spectra_gas_' + str(text_i))
