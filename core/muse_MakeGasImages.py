@@ -349,6 +349,7 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
          da_fit_OIII4960, da_fit_OIII5008, db_fit_OII, db_fit_Hbeta, db_fit_OIII4960, db_fit_OIII5008] = fit_info_err
         print(flux_fit_Hbeta)
         log_OIII_OII_fit = np.log10(flux_fit_OIII5008 / flux_fit_OII)
+        log_OIII_Hbeta_fit = np.log10(flux_fit_OIII5008 / flux_fit_Hbeta)
     elif line == 'OII':
         [z_fit, sigma_fit, flux_fit, fit_success, r_fit, a_fit, b_fit] = fit_info
         [dz_fit, dsigma_fit, dflux_fit, dr_fit, da_fit, db_fit] = fit_info_err
@@ -377,13 +378,16 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
         v_fit = np.where(fit_success == 1, v_fit, np.nan)
         sigma_fit = np.where(fit_success == 1, sigma_fit, np.nan)
         log_OIII_OII_fit = np.where(fit_success == 1, log_OIII_OII_fit, np.nan)
+        log_OIII_Hbeta_fit = np.where(fit_success == 1, log_OIII_Hbeta_fit, np.nan)
 
         #
         fit_max = np.nanmax(flux_stack / dflux_stack, axis=0)
         log_OIII_OII_fit = np.where((fit_max > snr_thr), log_OIII_OII_fit, np.nan)
+        log_OIII_Hbeta_fit = np.where((fit_max > snr_thr), log_OIII_Hbeta_fit, np.nan)
         v_fit = np.where((fit_max > snr_thr), v_fit, np.nan)
         sigma_fit = np.where((fit_max > snr_thr), sigma_fit, np.nan)
         log_OIII_OII_fit = np.where((v_fit <= v_thr), log_OIII_OII_fit, np.nan)
+        log_OIII_Hbeta_fit = np.where((v_fit <= v_thr), log_OIII_Hbeta_fit, np.nan)
         sigma_fit = np.where((v_fit <= v_thr), sigma_fit, np.nan)
         v_fit = np.where((v_fit <= v_thr), v_fit, np.nan)
 
@@ -451,12 +455,24 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
         # Plot line ratio map
         ConvertFits(table=log_OIII_OII_fit, type='GasMap', mask=True, smooth=False, filename='image_' + line + '_fitline')
         fig = plt.figure(figsize=(8, 8), dpi=300)
-        path_sigma_v = path_data + 'image_plot/image_' + line + '_fitline_revised.fits'
-        gc = aplpy.FITSFigure(path_sigma_v, figure=fig, north=True)
+        path_lr = path_data + 'image_plot/image_' + line + '_fitline_revised.fits'
+        gc = aplpy.FITSFigure(path_lr, figure=fig, north=True)
         gc.show_colorscale(vmin=-1, vmax=2, cmap=sequential_s.Buda_20.mpl_colormap)
         APLpyStyle(gc, type='else')
         gc.add_label(0.08, 0.08, '(c)', color='k', size=40, relative=True)
         fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_logOIII_OII_map_' + method + '_' + method_spe
+                    + '.png', bbox_inches='tight')
+
+        # Plot line ratio map
+        ConvertFits(table=log_OIII_Hbeta_fit, type='GasMap', mask=True, smooth=False, filename='image_' + line + '_fitline')
+        fig = plt.figure(figsize=(8, 8), dpi=300)
+        path_lr = path_data + 'image_plot/image_' + line + '_fitline_revised.fits'
+        gc = aplpy.FITSFigure(path_lr, figure=fig, north=True)
+        gc.show_colorscale(vmin=-1, vmax=2, cmap=sequential_s.Buda_20.mpl_colormap)
+        APLpyStyle(gc, type='else')
+        gc.colorbar.set_axis_label_text(r'$\rm log([O \, III]/H\beta)$')
+        gc.add_label(0.08, 0.08, '(c)', color='k', size=40, relative=True)
+        fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_logOIII_Hbeta_map_' + method + '_' + method_spe
                     + '.png', bbox_inches='tight')
 
 
@@ -470,5 +486,5 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
 # MakeFieldImage(label_gal=True)
 # MakeGasMap(line='OOHbeta', method='aperture', method_spe='1.0_zapped',
 #            test=False, snr_thr=8, v_thr=np.inf, check=False)
-# MakeGasMap(line='OOHbeta', method='aperture_1.0', method_spe='zapped',
-#            test=False, snr_thr=8, v_thr=np.inf, check=False)
+MakeGasMap(line='OOHbeta', method='aperture_1.0', method_spe='zapped',
+           test=False, snr_thr=8, v_thr=np.inf, check=False)

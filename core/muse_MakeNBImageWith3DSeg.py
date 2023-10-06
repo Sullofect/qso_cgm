@@ -39,7 +39,7 @@ parser.add_argument('-npixels', metavar='npixels', help='The minimum number of c
 parser.add_argument('-connectivity', metavar='connectivity', help='The type of pixel connectivity used in determining '
                                                                   'how pixels are grouped into a detected source, '
                                                                   'default is 8', default=8, type=float)
-parser.add_argument('-n', metavar='max_num_nebulae', help='Maximum allowed number of nebulae, default is 10',
+parser.add_argument('-n', metavar='max_num_nebulae', help='Maximum allowed number of nebulae, default is 20',
                     default=20, type=int)
 parser.add_argument('-rv', metavar='RescaleVariance', help='Whether rescale variance, default is True', default='True',
                     type=str)
@@ -58,19 +58,23 @@ parser.add_argument('-pi', metavar='PlotNBImage', help='Whether plot the SB map,
 parser.add_argument('-sl', metavar='SelectLambda', help='Wavelength interval for subcube extraction '
                                                         'for example: "3727 3929"; default is None',
                     default=None, nargs='+', type=int)
+parser.add_argument('-ssf', metavar='SumSmoothedFlux', help='Whether sum smoothed or unsmoothed flux', default='True',
+                    type=str)
 toBool = {'True': True, 'False': False}
 args = parser.parse_args()  # parse the arguments
 
 
 def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, smooth_1D=None, kernel_1D=None,
                    npixels=None, connectivity=None, max_num_nebulae=None, num_bkg_slice=None, RescaleVariance=None,
-                   AddBackground=None, CheckSegmentation=None, CheckSpectra=None, PlotNBImage=None, SelectLambda=None):
+                   AddBackground=None, CheckSegmentation=None, CheckSpectra=None, PlotNBImage=None, SelectLambda=None,
+                   SumSmoothedFlux=None):
     # Cubes
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
     header = fits.getheader(path_cube, ext=1)
     filename_SB = cubename + '_SB.fits'
     filename_3Dseg = cubename + '_3DSeg.fits'
+    filename_3Dbkg = cubename + '_3Dbkg.fits'
     cube = Cube(path_cube)
     if SelectLambda is not None:
         # cube = cube[:, 150:300, 150:300]
@@ -112,7 +116,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         select_bkg = ~sigma_clip(flux_wl, sigma_lower=3, sigma_upper=3, cenfunc='median', masked=True).mask
         flux_mask = np.where(select_bkg[np.newaxis, :, :], flux, np.nan)
         flux_err_mask = np.where(select_bkg[np.newaxis, :, :], flux_err, np.nan)
-        bkg_seg = np.where(select_bkg[np.newaxis, :, :], np.ones_like(flux_err[0, :, :]), np.nan)
+        bkg_seg = np.where(select_bkg[np.newaxis, :, :], np.ones_like(flux_err[:, :, :]), np.nan)
 
         flux_var = np.nanvar(flux_mask, axis=(1, 2))
         flux_var_mean = np.nanmean(flux_err_mask ** 2, axis=(1, 2))
@@ -173,7 +177,10 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
             S_N_i = flux_i / flux_err_i
             mask_i = np.where(conti_s == 1, mask, 0)
             mask_i = np.where(S_N_i >= S_N_thr, mask_i, 0)
-            flux_cut = np.where(mask_i != 0, flux_i, 0)
+            if SumSmoothedFlux:
+                flux_cut = np.where(mask_i != 0, flux_i, 0)
+            else:
+                flux_cut = np.where(mask_i != 0, flux_ori[i, :, :], 0)
             conti_s = np.where(mask_i != 0, conti_s, 0)
             wave_grid_s = np.where(mask_i == 0, wave_grid_s, wave_vac[i])
             seg_3D[i, :, :] = np.where(mask_i == 0, seg_3D[i, :, :], 1)
@@ -187,7 +194,10 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
             S_N_i = flux_i / flux_err_i
             mask_i = np.where(conti_b == 1, mask, 0)
             mask_i = np.where(S_N_i >= S_N_thr, mask_i, 0)
-            flux_cut = np.where(mask_i != 0, flux_i, 0)
+            if SumSmoothedFlux:
+                flux_cut = np.where(mask_i != 0, flux_i, 0)
+            else:
+                flux_cut = np.where(mask_i != 0, flux_ori[i, :, :], 0)
             conti_b = np.where(mask_i != 0, conti_b, 0)
             wave_grid_b = np.where(mask_i == 0, wave_grid_b, wave_vac[i])
             seg_3D[i, :, :] = np.where(mask_i == 0, seg_3D[i, :, :], 1)
@@ -206,7 +216,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
                 for ax_i in range(5):
                     for ax_j in range(5):
                         i_j, j_j = ax_i + CheckSpectra[1], ax_j + CheckSpectra[0]
-                        # ax[ax_i, ax_j].plot(wave_vac, flux_ori[:, i_j, j_j], '-k')
+                        ax[ax_i, ax_j].plot(wave_vac, flux_ori[:, i_j, j_j], '-k')
                         ax[ax_i, ax_j].plot(wave_vac, flux_smooth_ori[:, i_j, j_j], '-b')
                         # ax[ax_i, ax_j].plot(wave_vac, flux_smooth_ori[:, i_j, j_j]
                         #                     - np.median(flux_smooth_ori, axis=(1, 2)), '-r')
@@ -221,14 +231,17 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
 
     if CheckSegmentation:
         fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
-        ax.imshow(nebulae_seg[0, :, :], origin='lower', cmap=plt.get_cmap('tab20c'))
-        ax.imshow(bkg_seg[0, :, :], origin='lower', cmap=plt.get_cmap('binary_r'))
+        ax.imshow(nebulae_seg[-1, :, :], origin='lower', cmap=plt.get_cmap('tab20c'))
+        ax.imshow(bkg_seg[-1, :, :], origin='lower', cmap=plt.get_cmap('binary_r'))
         figurename = cubename + '_CheckSegmentation.pdf'
         plt.savefig(figurename)
 
     if AddBackground:
         if smooth_2D is not None or smooth_1D is not None:
-            flux_bkg = flux_smooth_ori[idx, :, :]
+            if SumSmoothedFlux:
+                flux_bkg = flux_smooth_ori[idx, :, :]
+            else:
+                flux_bkg = flux_ori[idx, :, :]
         else:
             flux_bkg = flux_ori[idx, :, :]
         data_final = np.where(data_final != 0, data_final, num_bkg_slice * flux_bkg)
@@ -264,12 +277,27 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
     fits.setval(filename_SB, 'LONPOLE', value=header['LONPOLE'])
     fits.setval(filename_SB, 'LATPOLE', value=header['LATPOLE'])
 
+    fits.writeto(filename_3Dbkg, bkg_seg, overwrite=True)
+    fits.setval(filename_SB, 'CTYPE1', value=header['CTYPE1'])
+    fits.setval(filename_SB, 'CTYPE2', value=header['CTYPE2'])
+    fits.setval(filename_SB, 'EQUINOX', value=header['EQUINOX'])
+    fits.setval(filename_SB, 'CD1_1', value=header['CD1_1'])
+    fits.setval(filename_SB, 'CD2_1', value=header['CD2_1'])
+    fits.setval(filename_SB, 'CD1_2', value=header['CD1_2'])
+    fits.setval(filename_SB, 'CD2_2', value=header['CD2_2'])
+    fits.setval(filename_SB, 'CRPIX1', value=header['CRPIX1'])
+    fits.setval(filename_SB, 'CRPIX2', value=header['CRPIX2'])
+    fits.setval(filename_SB, 'CRVAL1', value=header['CRVAL1'])
+    fits.setval(filename_SB, 'CRVAL2', value=header['CRVAL2'])
+    fits.setval(filename_SB, 'LONPOLE', value=header['LONPOLE'])
+    fits.setval(filename_SB, 'LATPOLE', value=header['LATPOLE'])
+
     if PlotNBImage:
         ra_center, dec_center = header['CRVAL1'], header['CRVAL2']
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(filename_SB, figure=fig)
         gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('gist_heat_r'), stretch='arcsinh')
-        # gc.show_colorscale(vmin=-0.005, vmax=5, cmap=plt.get_cmap('Reds'))
+        # gc.show_colorscale(vmin=-0.005, vmax=5, cmap=plt.get_cmap('gist_heat_r'))
         gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
         # gc.show_contour(filename_SB, levels=[0.15], color='k', linewidths=0.8)
         gc.set_system_latex(True)
@@ -298,7 +326,8 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
 MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_2D=args.s, kernel_2D=args.k, smooth_1D=args.s_spe,
                kernel_1D=args.k_spe, npixels=args.npixels, connectivity=args.connectivity, max_num_nebulae=args.n,
                num_bkg_slice=args.ns, RescaleVariance=toBool[args.rv], AddBackground=toBool[args.ab],
-               CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi])
+               CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi],
+               SumSmoothedFlux=toBool[args.ssf], SelectLambda=args.sl)
 
 
 # TEX0206 lambda [7925, 7962]
