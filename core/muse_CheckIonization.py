@@ -1,5 +1,3 @@
-import os
-import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
@@ -49,18 +47,19 @@ def f_AGN(nu, alpha_ox, alpha_uv, alpha_x, T_BB):
     return total
 
 
-#* np.exp(- nu / nu_high) * np.exp(- nu_low / nu)
-path_S5_con = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cloudy', 'ComputeLogU', 'S5_distance.con')
-S5_con = np.loadtxt(path_S5_con, usecols=[0, 1, 2, 3, 4])
 
+for i, i_val in enumerate([-1, 0, 1]):
+    path_S5_con = '/Users/lzq/Dropbox/Data/CGM/cloudy/ComputeLogU/S5_distance_{}.con'.format(i_val)
+    S5_con = np.loadtxt(path_S5_con, usecols=[0, 1, 2, 3, 4])
 
-path_S5_emi = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'cloudy', 'ComputeLogU', 'S5_distance.emi')
-LineEmis = np.loadtxt(path_S5_emi)
-distance = LineEmis[:, 0]
-NeV = LineEmis[:, 1]
-OII = LineEmis[:, 2] + LineEmis[:, 3]
-Hbeta = LineEmis[:, 11]
-OIII = LineEmis[:, 12]
+    path_S5_hyd = '/Users/lzq/Dropbox/Data/CGM/cloudy/ComputeLogU/S5_distance_{}.hyd'.format(i_val)
+    S5_hyd = np.loadtxt(path_S5_hyd)
+
+    path_S5_emi = '/Users/lzq/Dropbox/Data/CGM/cloudy/ComputeLogU/S5_distance_{}.emi'.format(i_val)
+    LineEmis = np.loadtxt(path_S5_emi)
+    distance, NeV = LineEmis[:, 0], LineEmis[:, 1]
+    OII = LineEmis[:, 2] + LineEmis[:, 3]
+    Hbeta, OIII = LineEmis[:, 11], LineEmis[:, 12]
 # Sum_Hbeta = integrate.simpson(LineEmis[:, 1], LineEmis[:, 0])
 # Sum_OII = integrate.simpson(LineEmis[:, 4], LineEmis[:, 0])
 # Sum_OIII = integrate.simpson(LineEmis[:, 2], LineEmis[:, 0])
