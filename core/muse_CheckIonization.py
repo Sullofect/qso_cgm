@@ -12,10 +12,12 @@ rc('ytick.major', size=5)
 rc('xtick.minor', size=3, visible=True)
 rc('ytick.minor', size=3, visible=True)
 
-fig, ax = plt.subplots(2, 2, figsize=(8, 8), dpi=300, sharex=True)
+fig, ax = plt.subplots(4, 1, figsize=(4, 16), dpi=300, sharex=True)
+ax = ax.ravel()
 fig.subplots_adjust(hspace=0., wspace=0.25)
-for i, i_val in enumerate([-1, 0, 1.3]):
-    color = 'C' + str(i)
+for i, i_val in enumerate([1.3]):
+    # color = 'C' + str(i)
+    color='k'
     label = r'$\rm log(n_H)=$ ' + str(i_val)
     path_S5_con = '/Users/lzq/Dropbox/Data/CGM/cloudy/ComputeLogU/S5_distance_{}.con'.format(i_val)
     S5_con = np.loadtxt(path_S5_con, usecols=[0, 1, 2, 3, 4])
@@ -35,37 +37,37 @@ for i, i_val in enumerate([-1, 0, 1.3]):
     tau_912 = N_HI * 6.30e-18  # X.Prochaska 2017
     depth /= 3.086e+21  # change unit
 
-    ax[0, 0].plot(depth, OIII / OIII.max(), '-', lw=2, c=color)
-    ax[0, 0].plot(depth, OII / OII.max(), '--', lw=2, c=color)
-    ax[0, 0].plot(depth, Hbeta / Hbeta.max(), '-.', lw=2, c=color)
-    ax[0, 0].plot(depth, NeV / NeV.max(), ':', lw=2, c=color)
+    ax[0].plot(depth, OIII / OIII.max(), '-', lw=2, c=color)
+    ax[0].plot(depth, OII / OII.max(), '--', lw=2, c=color)
+    ax[0].plot(depth, Hbeta / Hbeta.max(), '-.', lw=2, c=color)
+    # ax[0].plot(depth, NeV / NeV.max(), ':', lw=2, c=color)
     # ax[0, 0].plot(depth, OIII / Hbeta, '-k', lw=2)
 
     if i == 0:
-        ax[0, 0].plot([], [], '-k', label='[O III]')
-        ax[0, 0].plot([], [], '--k', label='[O II]')
-        ax[0, 0].plot([], [], '-.k', label='Hbeta')
+        ax[0].plot([], [], '-k', label='[O III]')
+        ax[0].plot([], [], '--k', label='[O II]')
+        ax[0].plot([], [], '-.k', label='Hbeta')
         # ax[0, 0].plot([], [], ':k', label='NeV')
 
-    ax[0, 0].set_ylabel(r'Cumulative flux', size=15)
-    ax[0, 0].set_xlim(1, 500)
+    ax[0].set_ylabel(r'Cumulative flux', size=15)
+    ax[0].set_xlim(0.1, 10)
     # ax[0, 0].set_ylim(1, 100)
-    ax[0, 0].set_xscale('log')
+    ax[0].set_xscale('log')
     # ax[0, 0].set_yscale('log')
-    ax[0, 0].legend()
+    ax[0].legend()
 
-    ax[0, 1].plot(depth, T_e, '-', c=color, label=label)
-    ax[0, 1].set_ylabel(r'Electron  temperature [K]', size=15)
+    ax[1].plot(depth, T_e, '-', c=color, label=label)
+    ax[1].set_ylabel(r'Electron  temperature [K]', size=15)
 
-    ax[1, 0].plot(depth, tau_912, '-', c=color, label=label)
-    ax[1, 0].set_xlabel(r'Depth into the cloud [kpc]', size=15)
-    ax[1, 0].set_ylabel(r'Optical depth at 912 $\rm \AA (\tau_{912})$', size=15)
-    ax[1, 0].set_yscale('log')
-    ax[1, 0].legend()
+    ax[2].plot(depth, tau_912, '-', c=color, label=label)
+    ax[2].set_xlabel(r'Depth into the cloud [kpc]', size=15)
+    ax[2].set_ylabel(r'Optical depth at 912 $\rm \AA (\tau_{912})$', size=15)
+    ax[2].set_yscale('log')
+    # ax[2].legend()
 
-    ax[1, 1].plot(depth, HI_H, '-', c=color, label=label)
-    ax[1, 1].set_xlabel(r'Depth into the cloud [kpc]', size=15)
-    ax[1, 1].set_ylabel(r'Neutral fraction', size=15)
+    ax[3].plot(depth, HI_H, '-', c=color, label=label)
+    ax[3].set_xlabel(r'Depth into the cloud [kpc]', size=15)
+    ax[3].set_ylabel(r'Neutral fraction', size=15)
     # fig.tight_layout()
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/CheckLineratio.png', bbox_inches='tight')
 

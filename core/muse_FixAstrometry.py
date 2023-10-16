@@ -31,6 +31,7 @@ def FixAstrometry(cubename=None):
     data_qso = ascii.read(path_qso, format='fixed_width')
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
+    c_qso = SkyCoord(ra=ra_qso * u.degree, dec=dec_qso * u.degree, frame='icrs')
 
     #
     path_gal = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info.fits'.format(cubename)
@@ -62,20 +63,25 @@ def FixAstrometry(cubename=None):
     header = fits.getheader(path_hb, ext=1)
     w = WCS(header)
     c2 = w.pixel_to_world(x_cen, y_cen)
-
+    print()
     # Matching
     idx, d2d, d3d = c1.match_to_catalog_sky(c2)
-    print(idx)
     offset_ra, offset_dec = c1.ra - c2.ra[idx], c1.dec - c2.dec[idx]
     plt.figure()
     plt.plot(offset_ra, offset_dec, '.')
     plt.show()
 
 
+    path_hb_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_drc_offset_gaia.fits'.format(cubename)
+    fits.writeto(path_hb_gaia, data_hb, overwrite=True)
+    fits.setval(path_hb_gaia, 'CRVAL1', value=header['CRVAL1'] - np.median(offset_ra.value))
+    fits.setval(path_hb_gaia, 'CRVAL2', value=header['CRVAL2'] - np.median(offset_dec.value))
+
+
     # Figure
     fig = plt.figure(figsize=(8, 8), dpi=300)
-    gc1 = aplpy.FITSFigure(path_hb, figure=fig, north=True)
-    gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
+    gc1 = aplpy.FITSFigure(path_hb_gaia, figure=fig, north=True)
+    gc = aplpy.FITSFigure(path_hb_gaia, figure=fig, north=True)
     gc.set_xaxis_coord_type('scalar')
     gc.set_yaxis_coord_type('scalar')
     gc1.set_xaxis_coord_type('scalar')
