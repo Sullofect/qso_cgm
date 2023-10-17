@@ -58,7 +58,7 @@ parser.add_argument('-pi', metavar='PlotNBImage', help='Whether plot the SB map,
                     type=str)
 parser.add_argument('-sl', metavar='SelectLambda', help='Wavelength interval for subcube extraction '
                                                         'for example: "3727 3929"; default is None',
-                    default=None, nargs='+', type=int)
+                    default=None, nargs='+', type=float)
 parser.add_argument('-ssf', metavar='SumSmoothedFlux', help='Whether sum smoothed or unsmoothed flux', default='True',
                     type=str)
 toBool = {'True': True, 'False': False}
