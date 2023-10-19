@@ -285,7 +285,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('gist_heat_r'), stretch='arcsinh')
         gc.show_colorscale(vmin=-0.005, vmax=5, cmap=plt.get_cmap('gist_heat_r'))
         gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
-        # gc.show_contour(filename_SB, levels=[0.15], color='k', linewidths=0.8)
+        gc.show_contour(filename_SB, levels=[0.15], color='k', linewidths=0.8, smooth=1, kernel='gauss')
         gc.set_system_latex(True)
 
         # Colorbar

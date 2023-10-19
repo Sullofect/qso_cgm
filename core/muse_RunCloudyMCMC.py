@@ -321,7 +321,10 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     if norm == 'LHIS' or norm == 'lognormal':
         output_norm = output
     elif norm == 'Hbeta':
-        output_norm = output - output[10]
+        if region == 'S2' and trial == 't1':
+            output_norm = output
+        else:
+            output_norm = output - output[10]
     elif norm == 'OII':
         output_norm = output - output[3]  # in log
     elif norm == 'HeII':
@@ -348,8 +351,9 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
                                                      bounds_error=False, fill_value=None)
     f_OIII5008 = interpolate.RegularGridInterpolator(var_array, output_norm[9],
                                                      bounds_error=False, fill_value=None)
-    f_Hbeta = interpolate.RegularGridInterpolator(var_array, output_norm[10],
-                                                  bounds_error=False, fill_value=None)
+    if norm != 'Hbeta':
+        f_Hbeta = interpolate.RegularGridInterpolator(var_array, output_norm[10],
+                                                      bounds_error=False, fill_value=None)
     # Run MCMC
     nwalkers = 40
     if mode == 'power_law':
@@ -715,6 +719,8 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
     ax[4].minorticks_on()
     ax[4].set_yticks([0.25, 0.5, 0.75, 1.0])
     ax[4].set_xlim(1.5, np.log10(sample_max//10 * 10 + 10))
+    if region == 'S2' and trial == 't1':
+        ax[4].set_xticks([1.5, 1.75])
     ax[4].set_ylim(0, np.max(nums) + 0.2)
     ax[4].set_xlabel(r'$\mathrm{log(} n \mathrm{/cm^{-3})}$', size=20)
     ax[4].set_ylabel(r'$\mathrm{Peak \, Normalized \, Posterior}$', size=20)
@@ -861,18 +867,18 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 #               deredden=True, nums_chain=5000, nums_disc=2000, figname_extra='_lognormal_4')
 
 # S2
-# S2_bnds = np.array([[-2, 2.6],
-#                     [-1.8, 0],
-#                     [-1.5, 0.5]])
-# S2_param = np.array([['NeV3346', True],
-#                      ['OII', True],
-#                      ['NeIII3869', False],
-#                      ['Hdel', True],
-#                      ['Hgam', True],
-#                      ['OIII4364', True],
-#                      ['HeII4687', True],
-#                      ['OIII5008', True]], dtype=bool)
-# RunCloudyMCMC(region='S2', trial='t1', bnds=S2_bnds, line_param=S2_param, deredden=True)
+S2_bnds = np.array([[-2, 2.6],
+                    [-1.8, 0],
+                    [-1.5, 0.5]])
+S2_param = np.array([['NeV3346', True],
+                     ['OII', True],
+                     ['NeIII3869', False],
+                     ['Hdel', True],
+                     ['Hgam', True],
+                     ['OIII4364', True],
+                     ['HeII4687', True],
+                     ['OIII5008', True]], dtype=bool)
+RunCloudyMCMC(region='S2', trial='t1', bnds=S2_bnds, line_param=S2_param, deredden=True)
 
 
 # S2 low ionizaton
@@ -1010,20 +1016,20 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 # RunCloudyMCMC(region='S6', trial='t2', bnds=S6_bnds, line_param=S6_param, deredden=True)
 
 # S6 lognormal
-S6_bnds = np.array([[1, 6.6],
-                    [-1.8, 0],
-                    [-1.5, 0.5]])
-S6_param = np.array([['NeV3346', True],
-                     ['OII', True],
-                     ['NeIII3869', False],
-                     ['Hdel', True],
-                     ['Hgam', True],
-                     ['OIII4364', True],
-                     ['HeII4687', True],
-                     ['OIII5008', True]], dtype=bool)
-den_array_S6_Emi = np.linspace(-2, 6.6, 44, dtype='f2')
-RunCloudyMCMC(den_array=den_array_S6_Emi, region='S6', trial='t1_Emi_PP', norm='lognormal', bnds=S6_bnds,
-              line_param=S6_param, deredden=True, nums_chain=5000, nums_disc=1000, figname_extra='_lognormal')
+# S6_bnds = np.array([[1, 6.6],
+#                     [-1.8, 0],
+#                     [-1.5, 0.5]])
+# S6_param = np.array([['NeV3346', True],
+#                      ['OII', True],
+#                      ['NeIII3869', False],
+#                      ['Hdel', True],
+#                      ['Hgam', True],
+#                      ['OIII4364', True],
+#                      ['HeII4687', True],
+#                      ['OIII5008', True]], dtype=bool)
+# den_array_S6_Emi = np.linspace(-2, 6.6, 44, dtype='f2')
+# RunCloudyMCMC(den_array=den_array_S6_Emi, region='S6', trial='t1_Emi_PP', norm='lognormal', bnds=S6_bnds,
+#               line_param=S6_param, deredden=True, nums_chain=5000, nums_disc=1000, figname_extra='_lognormal')
 
 # S6 LHIS
 # S6_bnds = np.array([[-2, 3.4],
