@@ -1,8 +1,10 @@
 import aplpy
+import coord
 import numpy as np
 import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
+from astropy.table import Table
 from matplotlib import rc
 from astropy.io import ascii
 from regions import Regions
@@ -18,7 +20,6 @@ mpl.rcParams['xtick.direction'] = 'in'
 mpl.rcParams['ytick.direction'] = 'in'
 mpl.rcParams['xtick.major.size'] = 12
 mpl.rcParams['ytick.major.size'] = 12
-
 
 def FixAstrometry(cubename=None, useGAIA=False, thr=1.5, deblend=False, checkHST=False, checkMUSE=False):
     path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_offset_gaia.png'.format(cubename)
@@ -71,11 +72,16 @@ def FixAstrometry(cubename=None, useGAIA=False, thr=1.5, deblend=False, checkHST
         offset_ra, offset_dec = (c_qso.ra - c2.ra[idx_qso]).value, \
                                 (c_qso.dec - c2.dec[idx_qso]).value
 
+    # Save offsets
+    path_offset = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/astrometry/offsets.dat'
+    data_offset = ascii.read(path_offset, format='fixed_width')
+    data_offset['offset_ra_hst'][data_offset['name'] == cubename] = offset_ra
+    data_offset['offset_dec_hst'][data_offset['name'] == cubename] = offset_dec
+
     path_hb_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_drc_offset_gaia.fits'.format(cubename)
     hdul_hb[1].header['CRVAL1'] += np.median(offset_ra)
     hdul_hb[1].header['CRVAL2'] += np.median(offset_dec)
     hdul_hb.writeto(path_hb_gaia, overwrite=True)
-    # path_hb_offset =
 
     # Fix MUSE cube and whitelight image
     path_muse = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP.fits'.format(cubename)
@@ -86,7 +92,6 @@ def FixAstrometry(cubename=None, useGAIA=False, thr=1.5, deblend=False, checkHST
         data_muse = hdul_muse_white[0].data
     else:
         data_muse = hdul_muse_white[1].data
-    box_size = np.shape(data_muse)
 
     # Segmentation for MUSE
     bkg_estimator = MedianBackground()
@@ -109,9 +114,14 @@ def FixAstrometry(cubename=None, useGAIA=False, thr=1.5, deblend=False, checkHST
 
     idx_qso, d2d_qso, d3d_qso = c_qso.match_to_catalog_sky(c2_muse)
     offset_ra, offset_dec = (c_qso.ra - c2_muse.ra[idx_qso]).value, (c_qso.dec - c2_muse.dec[idx_qso]).value
+    # Save MUSE offset
+    data_offset['offset_ra_muse'][data_offset['name'] == cubename] = offset_ra
+    data_offset['offset_dec_muse'][data_offset['name'] == cubename] = offset_dec
+    ascii.write(data_offset, path_offset, overwrite=True, format='fixed_width')
 
-    path_muse_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}ESO-DEEP_ZAP_gaia.fits'.format(cubename)
-    path_muse_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}ESO-DEEP_ZAP_WHITE_gaia.fits'.format(cubename)
+
+    path_muse_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_gaia.fits'.format(cubename)
+    path_muse_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_gaia_WHITE.fits'.format(cubename)
     hdul_muse[0].header['RA'] += np.median(offset_ra)
     hdul_muse[0].header['DEC'] += np.median(offset_dec)
     hdul_muse[1].header['CRVAL1'] += np.median(offset_ra)
@@ -158,7 +168,7 @@ def FixAstrometry(cubename=None, useGAIA=False, thr=1.5, deblend=False, checkHST
 
         #
         gc.set_system_latex(True)
-        gc.show_colorscale(cmap='Greys', pmin=1.0, pmax=99.0)
+        gc.show_colorscale(cmap='Greys', pmin=2.0, pmax=98.0)
         # gc.add_colorbar()
         # gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
         # gc.colorbar.hide()
@@ -248,19 +258,72 @@ def FixAstrometry(cubename=None, useGAIA=False, thr=1.5, deblend=False, checkHST
         fig.savefig(path_savefig, bbox_inches='tight')
 
 
+def FixDat(cubename=None):
+    #
+    path_offset = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/astrometry/offsets.dat'
+    data_offset = ascii.read(path_offset, format='fixed_width')
+    data_offset = data_offset[data_offset['name'] == cubename]
+    offset_ra_muse, offset_dec_muse = data_offset['offset_ra_muse'], data_offset['offset_dec_muse']
 
-FixAstrometry(cubename='Q0107-0235', checkMUSE=True)
-FixAstrometry(cubename='PB6291', checkMUSE=True)
-FixAstrometry(cubename='HE0153-4520', checkMUSE=True)
-FixAstrometry(cubename='3C57', checkMUSE=True)
-FixAstrometry(cubename='TEX0206-048', checkMUSE=True)
-FixAstrometry(cubename='HE0226-4110', checkMUSE=True)
-FixAstrometry(cubename='PKS0232-04', thr=10, checkMUSE=True)
-FixAstrometry(cubename='HE0435-5304', checkMUSE=True)
-FixAstrometry(cubename='HE0439-5254', checkMUSE=True)
+    #
+    path_dat = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/dats/{}_ESO-DEEP_ZAP.dat'.format(cubename)
+    path_dat_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/dats/{}_ESO-DEEP_ZAP_gaia.dat'.format(cubename)
+    path_reg_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/dats/{}_ESO-DEEP_ZAP_gaia.reg'.format(cubename)
+    dat = ascii.read(path_dat, format='fixed_width')
+    dat['ra'] = np.round(dat['ra'] + offset_ra_muse, 6)
+    dat['dec'] = np.round(dat['dec'] + offset_dec_muse, 6)
+    dat['name'] = np.asarray(coord.coordstring(dat['ra'], dat['dec']))[2]
+    ascii.write(dat, path_dat_gaia, overwrite=True, format='fixed_width')
+
+    # Create regions files
+    reg_pre = np.array(['# Region file format: DS9 version 4.1',
+                        'global color=red dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 '
+                        'highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1',
+                        'fk5'])
+    array_like = np.asarray(dat['ra'])
+    reg_main = list(map(''.join, zip(np.full_like(array_like, 'circle(', dtype='<U15'),
+                                     np.asarray(dat['ra'], dtype=str), np.full_like(array_like, ', ', dtype=str),
+                                     np.asarray(dat['dec'], dtype=str), np.full_like(array_like, ', ', dtype=str),
+                                     np.asarray(dat['radius'], dtype=str), np.full_like(array_like, '") # text={', dtype='<U15'),
+                                     np.asarray(dat['id'], dtype=str), np.full_like(array_like, '}', dtype='<U30'))))
+    reg_post = np.hstack((reg_pre, reg_main))
+    np.savetxt(path_reg_gaia, reg_post, fmt="%s")
+
+def FixCurrentObj(cubename=None):
+    #
+    path_obj =
+
+#
+# FixAstrometry(cubename='Q0107-0235', checkMUSE=True)
+# FixAstrometry(cubename='PB6291', checkMUSE=True)
+# FixAstrometry(cubename='HE0153-4520', checkMUSE=True)
+# FixAstrometry(cubename='3C57', checkMUSE=True)
+# FixAstrometry(cubename='TEX0206-048', checkMUSE=True)
+# FixAstrometry(cubename='HE0226-4110', checkMUSE=True)
+# FixAstrometry(cubename='PKS0232-04', thr=10, checkMUSE=True)
+# FixAstrometry(cubename='HE0435-5304', checkMUSE=True)
+# FixAstrometry(cubename='HE0439-5254', checkMUSE=True)
 # FixAstrometry(cubename='PKS0552-640', checkMUSE=True)
 # FixAstrometry(cubename='Q1354+048', checkMUSE=True)
 # FixAstrometry(cubename='LBQS1435-0134', checkMUSE=True)
 # FixAstrometry(cubename='PG1522+101', deblend=True, checkMUSE=True)
 # FixAstrometry(cubename='HE1003+0149', checkMUSE=True)
 # FixAstrometry(cubename='PKS0405-123', checkMUSE=True)
+
+
+# Fix Dat
+FixDat(cubename='Q0107-0235')
+FixDat(cubename='PB6291')
+FixDat(cubename='HE0153-4520')
+FixDat(cubename='3C57')
+FixDat(cubename='TEX0206-048')
+FixDat(cubename='HE0226-4110')
+FixDat(cubename='PKS0232-04')
+FixDat(cubename='HE0435-5304')
+FixDat(cubename='HE0439-5254')
+FixDat(cubename='PKS0552-640')
+FixDat(cubename='Q1354+048')
+FixDat(cubename='LBQS1435-0134')
+FixDat(cubename='PG1522+101')
+FixDat(cubename='HE1003+0149')
+FixDat(cubename='PKS0405-123')
