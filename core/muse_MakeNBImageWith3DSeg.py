@@ -77,13 +77,13 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
     filename_3Dseg = cubename + '_3DSeg.fits'
     cube = Cube(path_cube)
     if SelectLambda is not None:
-        # cube = cube[:, 150:300, 150:300]
         cube = cube.select_lambda(SelectLambda[0], SelectLambda[1])
     size = np.shape(cube.data)
     wave_vac = pyasl.airtovac2(cube.wave.coord())
     flux = cube.data * 1e-3
     flux_err = np.sqrt(cube.var) * 1e-3
     seg_3D = np.zeros(size)
+    seg_label = np.zeros(size[1:])
 
     # Copy object
     flux_ori = np.copy(flux)
@@ -124,6 +124,11 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         print('Variance rescaling factor has mean value of {} and std of {}'.format(np.mean(value_rescale),
                                                                                     np.std(value_rescale)))
         flux_err = flux_err * np.sqrt(value_rescale)[:, np.newaxis, np.newaxis]
+    filename_smoothed = '{}_{}_{}_{}_{}.fits'.format(cubename, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+    cube_smoothed = cube.clone(data_init=np.empty, var_init=np.empty)
+    cube_smoothed.data = flux * 1e3
+    cube_smoothed.var = (flux_err * 1e3) ** 2
+    cube_smoothed.write(filename_smoothed)
 
     # Iterate over nebulae
     for k in range(max_num_nebulae):
@@ -160,6 +165,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         S_N_max = flux[idx_max, :, :] / flux_err[idx_max, :, :]
         seg_max = detect_sources(S_N_max, S_N_thr, npixels=npixels, connectivity=connectivity)
         mask = np.where(seg_max.data == label_max, np.ones_like(flux[idx_max, :, :]), 0)
+        seg_label = np.where(mask == 0, seg_label, k + 1)
 
         # Initialize
         if k == 0:
@@ -248,49 +254,40 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         data_final = np.where(data_final != 0, data_final, num_bkg_slice * flux_bkg)
 
     # Save data
-    fits.writeto(filename_3Dseg, seg_3D, overwrite=True)
-    fits.setval(filename_3Dseg, 'CTYPE1', value=header['CTYPE1'])
-    fits.setval(filename_3Dseg, 'CTYPE2', value=header['CTYPE2'])
-    fits.setval(filename_3Dseg, 'EQUINOX', value=header['EQUINOX'])
-    fits.setval(filename_3Dseg, 'CD1_1', value=header['CD1_1'])
-    fits.setval(filename_3Dseg, 'CD2_1', value=header['CD2_1'])
-    fits.setval(filename_3Dseg, 'CD1_2', value=header['CD1_2'])
-    fits.setval(filename_3Dseg, 'CD2_2', value=header['CD2_2'])
-    fits.setval(filename_3Dseg, 'CRPIX1', value=header['CRPIX1'])
-    fits.setval(filename_3Dseg, 'CRPIX2', value=header['CRPIX2'])
-    fits.setval(filename_3Dseg, 'CRVAL1', value=header['CRVAL1'])
-    fits.setval(filename_3Dseg, 'CRVAL2', value=header['CRVAL2'])
-    fits.setval(filename_3Dseg, 'LONPOLE', value=header['LONPOLE'])
-    fits.setval(filename_3Dseg, 'LATPOLE', value=header['LATPOLE'])
+    header['WCSAXES'] = 2
+    header.remove('NAXIS3')
+    header.remove('CTYPE3')
+    header.remove('CUNIT3')
+    header.remove('CRPIX3')
+    header.remove('CRVAL3')
+    header.remove('CRDER3')
+    header.remove('BUNIT')
+    header.remove('CD3_3')
+    header.remove('CD1_3')
+    header.remove('CD2_3')
+    header.remove('CD3_1')
+    header.remove('CD3_2')
+    hdul_seg_3D = fits.PrimaryHDU(seg_3D, header=header)
+    hdul_seg_label = fits.ImageHDU(seg_label, header=header)
+    hdul_seg = fits.HDUList([hdul_seg_3D, hdul_seg_label])
+    hdul_seg.writeto(filename_3Dseg, overwrite=True)
 
-    fits.writeto(filename_SB, data_final * 1.25 / 0.2 / 0.2, overwrite=True)
-    fits.setval(filename_SB, 'CTYPE1', value=header['CTYPE1'])
-    fits.setval(filename_SB, 'CTYPE2', value=header['CTYPE2'])
-    fits.setval(filename_SB, 'EQUINOX', value=header['EQUINOX'])
-    fits.setval(filename_SB, 'CD1_1', value=header['CD1_1'])
-    fits.setval(filename_SB, 'CD2_1', value=header['CD2_1'])
-    fits.setval(filename_SB, 'CD1_2', value=header['CD1_2'])
-    fits.setval(filename_SB, 'CD2_2', value=header['CD2_2'])
-    fits.setval(filename_SB, 'CRPIX1', value=header['CRPIX1'])
-    fits.setval(filename_SB, 'CRPIX2', value=header['CRPIX2'])
-    fits.setval(filename_SB, 'CRVAL1', value=header['CRVAL1'])
-    fits.setval(filename_SB, 'CRVAL2', value=header['CRVAL2'])
-    fits.setval(filename_SB, 'LONPOLE', value=header['LONPOLE'])
-    fits.setval(filename_SB, 'LATPOLE', value=header['LATPOLE'])
+    hdul_SB = fits.ImageHDU(data_final * 1.25 / 0.2 / 0.2, header=header)
+    hdul_SB.writeto(filename_SB, overwrite=True)
 
     if PlotNBImage:
         ra_center, dec_center = header['CRVAL1'], header['CRVAL2']
         fig = plt.figure(figsize=(8, 8), dpi=300)
-        gc = aplpy.FITSFigure(filename_SB, figure=fig)
+        gc = aplpy.FITSFigure(filename_SB, figure=fig, hdu=1)
         # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('gist_heat_r'), stretch='arcsinh')
         gc.show_colorscale(vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'), stretch='linear')
-        gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
-        gc.show_contour(filename_SB, levels=[0.15], color='k', linewidths=0.8, smooth=1, kernel='gauss')
+        gc.recenter(ra_center, dec_center, width=40 / 3600, height=40 / 3600)
+        gc.show_contour(filename_SB, levels=[0.15], color='k', linewidths=0.8, smooth=3, kernel='box')
         gc.set_system_latex(True)
 
         # Colorbar
         gc.add_colorbar()
-        gc.colorbar.set_ticks([1, 5, 10])
+        gc.colorbar.set_ticks([0, 1, 2, 3, 4, 5])
         gc.colorbar.set_location('bottom')
         gc.colorbar.set_pad(0.0)
         gc.colorbar.set_font(size=20)
