@@ -543,10 +543,10 @@ def APLpyStyle(gc, type=None, cubename=None, size=None, offset_gaia=False, ra_ce
 #                kernel_1D=None, CheckFit=True, CheckSpectra=[89, 113])
 # FitLines(cubename='TEX0206-048', zapped=True, line='OII', smooth_2D=1.5,
 #          kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
-PlotKinematics(cubename='TEX0206-048', zapped=True, line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
-               kernel_1D='gauss', CheckFit=True, S_N_thr=-np.inf, CheckSpectra=[81, 174],
-               SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
-                              26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552])
+# PlotKinematics(cubename='TEX0206-048', zapped=True, line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
+#                kernel_1D='gauss', CheckFit=True, S_N_thr=-np.inf, CheckSpectra=[81, 174],
+#                SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
+#                               26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552])
 
 # muse_MakeNBImageWith3DSeg.py -m PKS0232-04_ESO-DEEP_subtracted_OII -t 3.5 -s 1.5 -k gauss
 # -s_spe 1.5 -k_spe gauss -ssf False -n 10 -sl 9090 9140
