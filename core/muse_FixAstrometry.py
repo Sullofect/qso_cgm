@@ -9,6 +9,7 @@ import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from astropy.table import Table
 from matplotlib import rc
+from astropy import stats
 from astropy.io import ascii
 from regions import Regions
 from astropy import units as u
@@ -33,12 +34,14 @@ def FixCubeHeader(cubename=None):
     hdul_muse_white.writeto(path_muse_white, overwrite=True)
 
 
-def FixAstrometry(cubename=None, useGAIA=False, thr_hst=3, thr_muse=3, deblend_hst=False, deblend_muse=True,
+def FixAstrometry(cubename=None, thr_hst=3, thr_muse=3, deblend_hst=False, deblend_muse=True,
                   checkHST=False, checkMUSE=False, update_offset=True):
     path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_offset_gaia.png'.format(cubename)
     path_savefig_MUSE = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_WHITE_gaia.png'.format(cubename)
-    path_savefig_vect = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_vector.png'.format(cubename)
-    path_savefig_vect_rot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_vector_rot.png'.format(cubename)
+    path_savefig_vect_MUSE = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_vector.png'.format(cubename)
+    path_savefig_vect_hst = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_HST_vector_rot.png'.format(cubename)
+    path_savefig_check_MUSE = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_checkcoord.png'.format(cubename)
+    path_savefig_check_hst = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_HST_checkcoord.png'.format(cubename)
 
     # Load info
     path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
@@ -54,9 +57,9 @@ def FixAstrometry(cubename=None, useGAIA=False, thr_hst=3, thr_muse=3, deblend_h
     name_gal, ql_gal, ra_gal, dec_gal = data_gal['name'], data_gal['ql'], data_gal['ra'], data_gal['dec']
 
     # Load the image
-    path_hb = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_drc_offset.fits'.format(cubename)
-    hdul_hb = fits.open(path_hb)
-    data_hb = hdul_hb[1].data
+    path_hst = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_drc_offset.fits'.format(cubename)
+    hdul_hst = fits.open(path_hst)
+    data_hst = hdul_hst[1].data
 
     # Gaia
     path_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/astrometry/GAIA_{}.txt'.format(cubename)
@@ -64,132 +67,148 @@ def FixAstrometry(cubename=None, useGAIA=False, thr_hst=3, thr_muse=3, deblend_h
     ra_gaia, dec_gaia = np.asarray(data_gaia['ra']), np.asarray(data_gaia['dec'])
     c1 = SkyCoord(ra=ra_gaia * u.degree, dec=dec_gaia * u.degree, frame='icrs')
 
-    # Segmentation for HST
-    bkg_estimator = MedianBackground()
-    bkg = Background2D(data_hb, (200, 200), filter_size=(3, 3), bkg_estimator=bkg_estimator)
-    data_bkg = data_hb - bkg.background
-    threshold = thr_hst * bkg.background_rms
-    kernel = Gaussian2DKernel(1)
-    convolved_data = convolve(data_bkg, kernel)
-    segment_map = detect_sources(convolved_data, threshold, npixels=10)
-    if deblend_hst:
-        segment_map = deblend_sources(convolved_data, segment_map, npixels=10, nlevels=32, contrast=0.001)
-    cat_hb = SourceCatalog(convolved_data, segment_map)
-    x_cen, y_cen = cat_hb.xcentroid, cat_hb.ycentroid
-    w = WCS(hdul_hb[1].header)
-    c2_hst = w.pixel_to_world(x_cen, y_cen)
-
-    # Matching
-    if useGAIA:
-        idx, d2d, d3d = c1.match_to_catalog_sky(c2_hst)
-        offset_ra_hst, offset_dec_hst = c1.ra - c2_hst.ra[idx], c1.dec - c2_hst.dec[idx]
-    else:
-        idx_qso, d2d_qso, d3d_qso = c_qso.match_to_catalog_sky(c2_hst)
-        offset_ra_hst, offset_dec_hst = (c_qso.ra - c2_hst.ra[idx_qso]).value, (c_qso.dec - c2_hst.dec[idx_qso]).value
-
-    # Save offsets
-    path_offset = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/astrometry/offsets.dat'
-    data_offset = ascii.read(path_offset, format='fixed_width')
-    data_offset['offset_ra_hst'][data_offset['name'] == cubename] = offset_ra_hst
-    data_offset['offset_dec_hst'][data_offset['name'] == cubename] = offset_dec_hst
-
-    path_hb_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_drc_offset_gaia.fits'.format(cubename)
-    hdul_hb[1].header['CRVAL1'] += np.median(offset_ra_hst)
-    hdul_hb[1].header['CRVAL2'] += np.median(offset_dec_hst)
-    hdul_hb.writeto(path_hb_gaia, overwrite=True)
-
-    # Fix MUSE cube and whitelight image
-    path_muse = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP.fits'.format(cubename)
-    path_muse_white = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_WHITE.fits'.format(cubename)
-    hdul_muse = fits.open(path_muse)
-    hdul_muse_white = fits.open(path_muse_white)
-    if cubename == 'HE0153-4520' or cubename == '3C57':
-        data_muse = hdul_muse_white[0].data
-    else:
-        data_muse = hdul_muse_white[1].data
-
-    # Segmentation for MUSE
-    bkg_estimator = MedianBackground()
-    try:
-        bkg = Background2D(data_muse, 50, filter_size=(3, 3), bkg_estimator=bkg_estimator)
-    except ValueError:
-        bkg = Background2D(data_muse, 51, filter_size=(3, 3), bkg_estimator=bkg_estimator, exclude_percentile=12)
-    data_muse_bkg = data_muse - bkg.background
-    threshold = thr_muse * bkg.background_rms
-    kernel = Gaussian2DKernel(1.5)  # corresponding to a 0.7 FWHM
-    convolved_data_muse = convolve(data_muse_bkg, kernel)
-    segment_map = detect_sources(convolved_data_muse, threshold, npixels=10)
-    if deblend_muse:
-        segment_map = deblend_sources(convolved_data_muse, segment_map, npixels=10, nlevels=32, contrast=0.001)
-    cat_muse = SourceCatalog(convolved_data_muse, segment_map)
-    x_cen, y_cen = cat_muse.xcentroid, cat_muse.ycentroid
-    x_cen, y_cen = x_cen[~np.isnan(x_cen)], y_cen[~np.isnan(y_cen)]
-    w = WCS(hdul_muse[1].header, naxis=2)
-    c2_muse = w.pixel_to_world(x_cen, y_cen)
-
-    idx_qso, d2d_qso, d3d_qso = c_qso.match_to_catalog_sky(c2_muse)
-    offset_ra_muse, offset_dec_muse = (c_qso.ra - c2_muse.ra[idx_qso]).value, (c_qso.dec - c2_muse.dec[idx_qso]).value
-
-    # Save MUSE offset
-    data_offset['offset_ra_muse'][data_offset['name'] == cubename] = offset_ra_muse
-    data_offset['offset_dec_muse'][data_offset['name'] == cubename] = offset_dec_muse
-    if update_offset:
-        ascii.write(data_offset, path_offset, overwrite=True, format='fixed_width')
-
-
-    path_muse_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_gaia.fits'.format(cubename)
-    path_muse_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_gaia_WHITE.fits'.format(cubename)
-    hdul_muse[0].header['RA'] += np.median(offset_ra_muse)
-    hdul_muse[0].header['DEC'] += np.median(offset_dec_muse)
-    hdul_muse[1].header['CRVAL1'] += np.median(offset_ra_muse)
-    hdul_muse[1].header['CRVAL2'] += np.median(offset_dec_muse)
-    hdul_muse[2].header['CRVAL1'] += np.median(offset_ra_muse)
-    hdul_muse[2].header['CRVAL2'] += np.median(offset_dec_muse)
-    hdul_muse.writeto(path_muse_gaia, overwrite=True)
-
-    # Problem with HE0153-4520 whitelight image header
-    if cubename == 'HE0153-4520' or cubename == '3C57':
-        hdul_2 = fits.ImageHDU(hdul_muse_white[0].data)
-        hdul_2.header = hdul_muse[1].header
-        hdul_2.header.remove('CTYPE3')
-        hdul_2.header.remove('CUNIT3')
-        hdul_2.header.remove('CD3_3')
-        hdul_2.header.remove('CRPIX3')
-        hdul_2.header.remove('CRVAL3')
-        hdul_2.header.remove('CRDER3')
-        hdul_2.header.remove('CD1_3')
-        hdul_2.header.remove('CD2_3')
-        hdul_2.header.remove('CD3_1')
-        hdul_2.header.remove('CD3_2')
-        hdul_muse_white = fits.HDUList([hdul_muse[0], hdul_2, hdul_2])
-    else:
-        hdul_muse_white[0].header['RA'] += np.median(offset_ra_muse)
-        hdul_muse_white[0].header['DEC'] += np.median(offset_dec_muse)
-        hdul_muse_white[1].header['CRVAL1'] += np.median(offset_ra_muse)
-        hdul_muse_white[1].header['CRVAL2'] += np.median(offset_dec_muse)
-        hdul_muse_white[2].header['CRVAL1'] += np.median(offset_ra_muse)
-        hdul_muse_white[2].header['CRVAL2'] += np.median(offset_dec_muse)
-        hdul_muse_white[1].header.remove('CRDER3')
-        hdul_muse_white[2].header.remove('CRDER3')
-    hdul_muse_white.writeto(path_muse_white_gaia, overwrite=True)
-
     # LS
     path_ls = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/astrometry/LS_{}.txt'.format(cubename)
     data_ls = ascii.read(path_ls)
     ra_ls, dec_ls = np.asarray(data_ls['ra']), np.asarray(data_ls['dec'])
-    c_ls = SkyCoord(ra=ra_ls * u.degree, dec=dec_ls * u.degree, frame='icrs')
+    c_ls = SkyCoord(ra=ra_ls * u.degree, dec=dec_ls * u.degree, frame='icrs')   
+    
+    path_hst_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_drc_offset_gaia.fits'.format(cubename)
+    path_muse_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_gaia.fits'.format(cubename)
+    path_muse_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_gaia_WHITE.fits'.format(cubename)
+    
+    if os.path.exists(path_muse_white_gaia) is True and os.path.exists(path_hst_gaia) is True:
+        print('Files exist and skip corrections')
+
+    else:
+        # Segmentation for HST
+        bkg_estimator = MedianBackground()
+        bkg = Background2D(data_hst, (200, 200), filter_size=(3, 3), bkg_estimator=bkg_estimator)
+        data_bkg = data_hst - bkg.background
+        threshold = thr_hst * bkg.background_rms
+        kernel = Gaussian2DKernel(3)
+        convolved_data = convolve(data_bkg, kernel)
+        segment_map = detect_sources(convolved_data, threshold, npixels=10)
+        if deblend_hst:
+            segment_map = deblend_sources(convolved_data, segment_map, npixels=10, nlevels=32, contrast=0.001)
+        cat_hb = SourceCatalog(convolved_data, segment_map)
+        x_cen, y_cen = cat_hb.xcentroid, cat_hb.ycentroid
+        w = WCS(hdul_hst[1].header)
+        c2_hst = w.pixel_to_world(x_cen, y_cen)
+
+        # Matching
+        # First iteration
+        idx_qso, d2d_qso, d3d_qso = c_qso.match_to_catalog_sky(c2_hst)
+        offset_ra_hst_1, offset_dec_hst_1 = (c_qso.ra - c2_hst.ra[idx_qso]).value, (c_qso.dec - c2_hst.dec[idx_qso]).value
+
+        # Second interation
+        c2_hst = SkyCoord(ra=(c2_hst.ra.value + offset_ra_hst_1) * u.degree,
+                          dec=(c2_hst.dec.value + offset_dec_hst_1) * u.degree, frame='icrs')
+        idx_hst_ls, d2d_hst_ls, d3d_hst_ls = c2_hst.match_to_catalog_sky(c_ls)
+        sep_constraint = d2d_hst_ls < (0.2 * u.arcsec)
+        c2_hst_ls = c2_hst[sep_constraint]
+        c_ls_hst = c_ls[idx_hst_ls[sep_constraint]]
+        offset_ra_hst_2, offset_dec_hst_2 = (c_ls_hst.ra - c2_hst_ls.ra).value, (c_ls_hst.dec - c2_hst_ls.dec).value
+        offset_ra_hst_final = stats.sigma_clipped_stats(offset_ra_hst_2, sigma=3, maxiters=5)[0]  # mean
+        offset_dec_hst_final = stats.sigma_clipped_stats(offset_dec_hst_2, sigma=3, maxiters=5)[0]  # mean
+
+        # Save offsets
+        path_offset = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/astrometry/offsets.dat'
+        data_offset = ascii.read(path_offset, format='fixed_width')
+        data_offset['offset_ra_hst'][data_offset['name'] == cubename] = offset_ra_hst_1 + offset_ra_hst_final
+        data_offset['offset_dec_hst'][data_offset['name'] == cubename] = offset_dec_hst_1 + offset_dec_hst_final
+        print('2nd iteration is Ra:{} percent, Dec:{}'.format(np.round(offset_ra_hst_final/offset_ra_hst_1, 2),
+                                                              np.round(offset_dec_hst_final/offset_dec_hst_1, 2)))
+
+        #
+        hdul_hst[1].header['CRVAL1'] += offset_ra_hst_1 + offset_ra_hst_final
+        hdul_hst[1].header['CRVAL2'] += offset_dec_hst_1 + offset_dec_hst_final
+        hdul_hst.writeto(path_hst_gaia, overwrite=True)
+
+        # Fix MUSE cube and whitelight image
+        path_muse = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP.fits'.format(cubename)
+        path_muse_white = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_WHITE.fits'.format(cubename)
+        hdul_muse = fits.open(path_muse)
+        hdul_muse_white = fits.open(path_muse_white)
+        if cubename == 'HE0153-4520' or cubename == '3C57':
+            data_muse = hdul_muse_white[0].data
+        else:
+            data_muse = hdul_muse_white[1].data
+
+        # Segmentation for MUSE
+        bkg_estimator = MedianBackground()
+        try:
+            bkg = Background2D(data_muse, 50, filter_size=(3, 3), bkg_estimator=bkg_estimator)
+        except ValueError:
+            bkg = Background2D(data_muse, 51, filter_size=(3, 3), bkg_estimator=bkg_estimator, exclude_percentile=12)
+        data_muse_bkg = data_muse - bkg.background
+        threshold = thr_muse * bkg.background_rms
+        kernel = Gaussian2DKernel(1.5)  # corresponding to a 0.7 FWHM
+        convolved_data_muse = convolve(data_muse_bkg, kernel)
+        segment_map = detect_sources(convolved_data_muse, threshold, npixels=10)
+        if deblend_muse:
+            segment_map = deblend_sources(convolved_data_muse, segment_map, npixels=10, nlevels=32, contrast=0.001)
+        cat_muse = SourceCatalog(convolved_data_muse, segment_map)
+        x_cen, y_cen = cat_muse.xcentroid, cat_muse.ycentroid
+        x_cen, y_cen = x_cen[~np.isnan(x_cen)], y_cen[~np.isnan(y_cen)]
+        w = WCS(hdul_muse[1].header, naxis=2)
+        c2_muse = w.pixel_to_world(x_cen, y_cen)
+
+        idx_qso, d2d_qso, d3d_qso = c_qso.match_to_catalog_sky(c2_muse)
+        offset_ra_muse, offset_dec_muse = (c_qso.ra - c2_muse.ra[idx_qso]).value, (c_qso.dec - c2_muse.dec[idx_qso]).value
+
+        # Save MUSE offset
+        data_offset['offset_ra_muse'][data_offset['name'] == cubename] = offset_ra_muse
+        data_offset['offset_dec_muse'][data_offset['name'] == cubename] = offset_dec_muse
+        if update_offset:
+            ascii.write(data_offset, path_offset, overwrite=True, format='fixed_width')
+
+        #
+        hdul_muse[0].header['RA'] += np.median(offset_ra_muse)
+        hdul_muse[0].header['DEC'] += np.median(offset_dec_muse)
+        hdul_muse[1].header['CRVAL1'] += np.median(offset_ra_muse)
+        hdul_muse[1].header['CRVAL2'] += np.median(offset_dec_muse)
+        hdul_muse[2].header['CRVAL1'] += np.median(offset_ra_muse)
+        hdul_muse[2].header['CRVAL2'] += np.median(offset_dec_muse)
+        hdul_muse.writeto(path_muse_gaia, overwrite=True)
+
+        # Problem with HE0153-4520 whitelight image header
+        if cubename == 'HE0153-4520' or cubename == '3C57':
+            hdul_2 = fits.ImageHDU(hdul_muse_white[0].data)
+            hdul_2.header = hdul_muse[1].header
+            hdul_2.header.remove('CTYPE3')
+            hdul_2.header.remove('CUNIT3')
+            hdul_2.header.remove('CD3_3')
+            hdul_2.header.remove('CRPIX3')
+            hdul_2.header.remove('CRVAL3')
+            hdul_2.header.remove('CRDER3')
+            hdul_2.header.remove('CD1_3')
+            hdul_2.header.remove('CD2_3')
+            hdul_2.header.remove('CD3_1')
+            hdul_2.header.remove('CD3_2')
+            hdul_muse_white = fits.HDUList([hdul_muse[0], hdul_2, hdul_2])
+        else:
+            hdul_muse_white[0].header['RA'] += np.median(offset_ra_muse)
+            hdul_muse_white[0].header['DEC'] += np.median(offset_dec_muse)
+            hdul_muse_white[1].header['CRVAL1'] += np.median(offset_ra_muse)
+            hdul_muse_white[1].header['CRVAL2'] += np.median(offset_dec_muse)
+            hdul_muse_white[2].header['CRVAL1'] += np.median(offset_ra_muse)
+            hdul_muse_white[2].header['CRVAL2'] += np.median(offset_dec_muse)
+            hdul_muse_white[1].header.remove('CRDER3')
+            hdul_muse_white[2].header.remove('CRDER3')
+        hdul_muse_white.writeto(path_muse_white_gaia, overwrite=True)
 
     # correct muse coordinate
-    c2_muse_c = SkyCoord(ra=c2_muse.ra + (offset_ra_muse * u.degree),
-                         dec=c2_muse.dec + (offset_dec_muse * u.degree), frame='icrs')
-    idx_ls, d2d_ls, d3d_ls = c2_muse_c.match_to_catalog_sky(c_ls)
-    max_sep = 0.5 * u.arcsec
-    sep_constraint = d2d_ls < max_sep
-    c2_muse_m = c2_muse_c[sep_constraint]
-    c_ls_m = c_ls[idx_ls[sep_constraint]]
-    print(len(c_ls_m))
-    offset_ra_muse_gal, offset_dec_muse_gal = np.median(c_ls_m.ra.value - c2_muse_m.ra.value), \
-                                              np.median(c_ls_m.dec.value - c2_muse_m.dec.value)
+    # c2_muse_c = SkyCoord(ra=c2_muse.ra + (offset_ra_muse * u.degree),
+    #                      dec=c2_muse.dec + (offset_dec_muse * u.degree), frame='icrs')
+    # idx_ls, d2d_ls, d3d_ls = c2_muse_c.match_to_catalog_sky(c_ls)
+    # max_sep = 0.5 * u.arcsec
+    # sep_constraint = d2d_ls < max_sep
+    # c2_muse_m = c2_muse_c[sep_constraint]
+    # c_ls_m = c_ls[idx_ls[sep_constraint]]
+    # print(len(c_ls_m))
+    # offset_ra_muse_gal, offset_dec_muse_gal = np.median(c_ls_m.ra.value - c2_muse_m.ra.value), \
+    #                                           np.median(c_ls_m.dec.value - c2_muse_m.dec.value)
     # idx_ls, d2d_ls, d3d_ls = c2_hst.match_to_catalog_sky(c_ls)
     # max_sep = 0.5 * u.arcsec
     # sep_constraint = d2d_ls < max_sep
@@ -197,24 +216,13 @@ def FixAstrometry(cubename=None, useGAIA=False, thr_hst=3, thr_muse=3, deblend_h
     # c_ls_m = c_ls[idx_ls[sep_constraint]]
 
     if checkMUSE:
-        fig = plt.figure(figsize=(5, 5), dpi=300)
-        plt.quiver(c_ls_m.ra.value, c_ls_m.dec.value,
-                   c_ls_m.ra.value - c2_muse_m.ra.value,
-                   c_ls_m.dec.value - c2_muse_m.dec.value,
-                   angles='xy', scale_units='xy')
-        # plt.plot(c_ls_m.ra.value, c_ls_m.dec.value, '.k')
-        # plt.plot(c2_muse_m.ra.value, c2_muse_m.dec.value, '.r')
-        plt.plot(c_qso.ra.value, c_qso.dec.value, '.r', ms=10)
-        plt.plot(c2_muse_c.ra[idx_qso], c2_muse_c.dec[idx_qso], '.b', ms=10)
-        fig.savefig(path_savefig_vect, bbox_inches='tight')
+        hdul_muse_white = fits.open(path_muse_white_gaia)
+        data_muse_white = hdul_muse_white[1].data
 
         # Figure
-        path_muse_white_gaia_test = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/test/{}_ESO-DEEP_ZAP_gaia_WHITE_astro.fits'.format(cubename)
-        hdul_muse_white_gaia_test = fits.open(path_muse_white_gaia_test)
-        data_muse_test = hdul_muse_white_gaia_test[1].data
         bkg_estimator = MedianBackground()
-        bkg = Background2D(data_muse_test, 51, filter_size=(3, 3), bkg_estimator=bkg_estimator, exclude_percentile=12)
-        data_muse_bkg_test = data_muse_test - bkg.background
+        bkg = Background2D(data_muse_white, 51, filter_size=(3, 3), bkg_estimator=bkg_estimator, exclude_percentile=12)
+        data_muse_bkg_test = data_muse_white - bkg.background
         threshold = thr_muse * bkg.background_rms
         kernel = Gaussian2DKernel(1.5)  # corresponding to a 0.7 FWHM
         convolved_data_muse_test = convolve(data_muse_bkg_test, kernel)
@@ -224,26 +232,38 @@ def FixAstrometry(cubename=None, useGAIA=False, thr_hst=3, thr_muse=3, deblend_h
         cat_muse = SourceCatalog(convolved_data_muse_test, segment_map)
         x_cen, y_cen = cat_muse.xcentroid, cat_muse.ycentroid
         x_cen, y_cen = x_cen[~np.isnan(x_cen)], y_cen[~np.isnan(y_cen)]
-        w = WCS(hdul_muse_white_gaia_test[1].header, naxis=2)
+        w = WCS(hdul_muse_white[1].header, naxis=2)
         c2_muse = w.pixel_to_world(x_cen, y_cen)
 
-        #
-        idx_ls, d2d_ls, d3d_ls = c2_muse.match_to_catalog_sky(c_ls)
-        max_sep = 0.5 * u.arcsec
-        sep_constraint = d2d_ls < max_sep
-        c2_muse_m = c2_muse[sep_constraint]
-        c_ls_m = c_ls[idx_ls[sep_constraint]]
+        idx_muse_ls, d2d_muse_ls, d3d_muse_ls = c2_muse.match_to_catalog_sky(c_ls)
+        sep_constraint = d2d_muse_ls < (0.5 * u.arcsec)
+        c2_muse_ls = c2_muse[sep_constraint]
+        c_ls_muse = c_ls[idx_muse_ls[sep_constraint]]
+
+        f, ax = plt.subplots(2, 2, figsize=(8, 5), dpi=300)
+        f.subplots_adjust(hspace=0.3)
+        f.subplots_adjust(wspace=0.3)
+        ax[0, 0].plot(c2_muse_ls.ra.value, 3600 * (c2_muse_ls.ra.value - c_ls_muse.ra.value), '.')
+        ax[0, 1].plot(c2_muse_ls.ra.value, 3600 * (c2_muse_ls.dec.value - c_ls_muse.dec.value), '.')
+        ax[1, 0].plot(c2_muse_ls.dec.value, 3600 * (c2_muse_ls.ra.value - c_ls_muse.ra.value), '.')
+        ax[1, 1].plot(c2_muse_ls.dec.value, 3600 * (c2_muse_ls.dec.value - c_ls_muse.dec.value), '.')
+        ax[0, 0].set_xlabel('Ra (deg)')
+        ax[0, 0].set_ylabel(r'$\delta Ra (arcsec)$')
+        ax[0, 1].set_xlabel('Ra (deg)')
+        ax[0, 1].set_ylabel(r'$\delta Dec (arcsec)$')
+        ax[1, 0].set_xlabel('Dec (deg)')
+        ax[1, 0].set_ylabel(r'$\delta Ra (arcsec)$')
+        ax[1, 1].set_xlabel('Dec (deg)')
+        ax[1, 1].set_ylabel(r'$\delta Dec (arcsec)$')
+        f.savefig(path_savefig_check_MUSE, bbox_inches='tight')
 
         fig = plt.figure(figsize=(5, 5), dpi=300)
-        plt.quiver(c_ls_m.ra.value, c_ls_m.dec.value,
-                   c_ls_m.ra.value - c2_muse_m.ra.value,
-                   c_ls_m.dec.value - c2_muse_m.dec.value,
+        plt.quiver(c2_muse_ls.ra.value, c2_muse_ls.dec.value, c2_muse_ls.ra.value - c_ls_muse.ra.value,
+                   c2_muse_ls.dec.value - c_ls_muse.dec.value,
                    angles='xy', scale_units='xy')
-        # plt.plot(c_ls_m.ra.value, c_ls_m.dec.value, '.k')
-        # plt.plot(c2_muse_m.ra.value, c2_muse_m.dec.value, '.r')
         plt.plot(c_qso.ra.value, c_qso.dec.value, '.r', ms=10)
-        # plt.plot(c2_muse_c.ra[idx_qso], c2_muse_c.dec[idx_qso], '.b', ms=10)
-        fig.savefig(path_savefig_vect_rot, bbox_inches='tight')
+        fig.savefig(path_savefig_vect_MUSE, bbox_inches='tight')
+
 
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(path_muse_white_gaia, figure=fig, hdu=1, north=True)
@@ -251,9 +271,6 @@ def FixAstrometry(cubename=None, useGAIA=False, thr_hst=3, thr_muse=3, deblend_h
         #
         gc.set_system_latex(True)
         gc.show_colorscale(cmap='Greys', pmin=2.0, pmax=98.0)
-        # gc.add_colorbar()
-        # gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
-        # gc.colorbar.hide()
 
         # Hide ticks
         gc.ticks.set_length(30)
@@ -271,10 +288,8 @@ def FixAstrometry(cubename=None, useGAIA=False, thr_hst=3, thr_muse=3, deblend_h
                         edgecolors='white', linewidths=0.8, s=120)
         gc.show_markers(c2_muse.ra.value, c2_muse.dec.value,
                         facecolors='none', marker='o', c='none', edgecolors='white', linewidths=0.8, s=100)
-        # gc.show_markers(c2_muse.ra.value + np.median(offset_ra_muse), c2_muse.dec.value + np.median(offset_dec_muse),
-        #                 facecolors='none', marker='o', c='none', edgecolors='white', linewidths=0.8, s=100)
-        gc.show_markers(ra_gal + np.median(offset_ra_muse), dec_gal + np.median(offset_dec_muse),
-                        facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
+        # gc.show_markers(ra_gal + np.median(offset_ra_muse), dec_gal + np.median(offset_dec_muse),
+        #                 facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
 
         # Labels
         gc.add_label(0.87, 0.97, r'$\mathrm{MUSE}$', color='k', size=15, relative=True)
@@ -282,9 +297,55 @@ def FixAstrometry(cubename=None, useGAIA=False, thr_hst=3, thr_muse=3, deblend_h
 
     # Figure
     if checkHST:
-        path_hb_gaia_test = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/test/{}_drc_offset_astro.fits'.format(cubename)
+        hdul_hst_gaia = fits.open(path_hst_gaia)
+        data_hst_gaia = hdul_hst_gaia[1].data
+
+        # Segmentation for HST
+        bkg_estimator = MedianBackground()
+        bkg = Background2D(data_hst_gaia, (200, 200), filter_size=(3, 3), bkg_estimator=bkg_estimator)
+        data_bkg = data_hst_gaia - bkg.background
+        threshold = thr_hst * bkg.background_rms
+        kernel = Gaussian2DKernel(3)
+        convolved_data = convolve(data_bkg, kernel)
+        segment_map = detect_sources(convolved_data, threshold, npixels=10)
+        if deblend_hst:
+            segment_map = deblend_sources(convolved_data, segment_map, npixels=10, nlevels=32, contrast=0.001)
+        cat_hb = SourceCatalog(convolved_data, segment_map)
+        x_cen, y_cen = cat_hb.xcentroid, cat_hb.ycentroid
+        w = WCS(hdul_hst_gaia[1].header)
+        c2_hst = w.pixel_to_world(x_cen, y_cen)
+
+        idx_hst_ls, d2d_hst_ls, d3d_hst_ls = c2_hst.match_to_catalog_sky(c_ls)
+        sep_constraint = d2d_hst_ls < (0.2 * u.arcsec)
+        c2_hst_ls = c2_hst[sep_constraint]
+        c_ls_hst = c_ls[idx_hst_ls[sep_constraint]]
+
+        f, ax = plt.subplots(2, 2, figsize=(8, 5), dpi=300)
+        f.subplots_adjust(hspace=0.3)
+        f.subplots_adjust(wspace=0.3)
+        ax[0, 0].plot(c2_hst_ls.ra.value, 3600 * (c2_hst_ls.ra.value - c_ls_hst.ra.value), '.')
+        ax[0, 1].plot(c2_hst_ls.ra.value, 3600 * (c2_hst_ls.dec.value - c_ls_hst.dec.value), '.')
+        ax[1, 0].plot(c2_hst_ls.dec.value, 3600 * (c2_hst_ls.ra.value - c_ls_hst.ra.value), '.')
+        ax[1, 1].plot(c2_hst_ls.dec.value, 3600 * (c2_hst_ls.dec.value - c_ls_hst.dec.value), '.')
+        ax[0, 0].set_xlabel('Ra (deg)')
+        ax[0, 0].set_ylabel(r'$\delta Ra (arcsec)$')
+        ax[0, 1].set_xlabel('Ra (deg)')
+        ax[0, 1].set_ylabel(r'$\delta Dec (arcsec)$')
+        ax[1, 0].set_xlabel('Dec (deg)')
+        ax[1, 0].set_ylabel(r'$\delta Ra (arcsec)$')
+        ax[1, 1].set_xlabel('Dec (deg)')
+        ax[1, 1].set_ylabel(r'$\delta Dec (arcsec)$')
+        f.savefig(path_savefig_check_hst, bbox_inches='tight')
+
+        fig = plt.figure(figsize=(5, 5), dpi=300)
+        plt.quiver(c2_hst_ls.ra.value, c2_hst_ls.dec.value, c2_hst_ls.ra.value - c_ls_hst.ra.value,
+                   c2_hst_ls.dec.value - c_ls_hst.dec.value,
+                   angles='xy', scale_units='xy')
+        plt.plot(c_qso.ra.value, c_qso.dec.value, '.r', ms=10)
+        fig.savefig(path_savefig_vect_hst, bbox_inches='tight')
+
         fig = plt.figure(figsize=(8, 8), dpi=300)
-        gc = aplpy.FITSFigure(path_hb_gaia_test, figure=fig, north=True)
+        gc = aplpy.FITSFigure(path_hst_gaia, figure=fig, north=True)
         gc.set_xaxis_coord_type('scalar')
         gc.set_yaxis_coord_type('scalar')
 
@@ -309,11 +370,13 @@ def FixAstrometry(cubename=None, useGAIA=False, thr_hst=3, thr_muse=3, deblend_h
                         edgecolors='red', linewidths=0.8, s=140)
         gc.show_markers(ra_ls, dec_ls, facecolors='none', marker='o', c='none',
                         edgecolors='blue', linewidths=0.8, s=130)
-        gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='o', c='none',
-                        edgecolors='white', linewidths=0.8, s=120)
-        gc.show_markers(ra_gal + np.median(offset_ra_hst), dec_gal + np.median(offset_dec_hst),
-                        facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
-        gc.show_markers(c2_hst.ra.value + np.median(offset_ra_hst), c2_hst.dec.value + np.median(offset_dec_hst),
+        # gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='o', c='none',
+        #                 edgecolors='orange', linewidths=0.8, s=120)
+        # gc.show_markers(ra_gal + np.median(offset_ra_hst), dec_gal + np.median(offset_dec_hst),
+        #                 facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
+        # gc.show_markers(c2_hst.ra.value + np.median(offset_ra_hst), c2_hst.dec.value + np.median(offset_dec_hst),
+        #                 facecolors='none', marker='o', c='none', edgecolors='white', linewidths=0.8, s=100)
+        gc.show_markers(c2_hst.ra.value, c2_hst.dec.value,
                         facecolors='none', marker='o', c='none', edgecolors='white', linewidths=0.8, s=100)
 
         # Labels
@@ -415,82 +478,26 @@ def FixCube(cubename=None):
     hdul_muse.writeto(path_muse_white_gaia_test2, overwrite=True)
 
 
-def FixWithAstrometry(cubename=None, FixHST=True, CheckHST=False, CheckMUSE=False, thr_hst=3, thr_muse=3,
+def FixWithAstrometry(cubename=None, FixHST=False, FixMUSE=True, CheckHST=False, CheckMUSE=False, thr_hst=3, thr_muse=3,
                       deblend_hst=False, deblend_muse=True):
     path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_offset_gaia.png'.format(cubename)
     path_savefig_MUSE = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_WHITE_gaia.png'.format(cubename)
-    path_savefig_vect = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_vector.png'.format(cubename)
-    path_savefig_vect_rot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_vector_rot.png'.format(cubename)
+    path_savefig_vect_MUSE = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_vector.png'.format(cubename)
+    path_savefig_vect_hst = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_HST_vector_rot.png'.format(cubename)
+    path_savefig_check_MUSE = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_MUSE_checkcoord.png'.format(cubename)
+    path_savefig_check_hst = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_HST_checkcoord.png'.format(cubename)
 
     path_muse = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_gaia.fits'.format(cubename)
     path_muse_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia.fits'.format(cubename)
     path_muse_white = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_gaia_WHITE.fits'.format(cubename)
     path_muse_white_astro = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_gaia_WHITE_astro.fits'.format(cubename)
     path_muse_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia_WHITE.fits'.format(cubename)
-
+    path_muse_white_gaia_astro = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia_WHITE_astro.fits'.format(cubename)
     #
     path_hst = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_drc_offset_gaia.fits'.format(cubename)
     path_hst_astro = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_drc_offset_gaia_astro.fits'.format(cubename)
     path_hst_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_drc_offset_gaia.fits'.format(cubename)
     path_ls = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/astrometry/LS_{}.txt'.format(cubename)
-
-    # Convert MUSE white light image and HST image
-    os.system('astrometry {} -c {} -hdul_idx 1 --sigma_threshold_for_source_detection 20'.format(path_muse_white,
-                                                                                                 path_ls))
-    os.rename(path_muse_white_astro, path_muse_white_gaia)
-
-    if FixHST:
-        os.system('astrometry {} -c {} -hdul_idx 1 '
-                  '--sigma_threshold_for_source_detection 30 -high_res True'.format(path_hst, path_ls))
-    os.rename(path_hst_astro, path_hst_gaia)
-
-    # Copy White light image header and fix MUSE header
-    hdul_muse_white = fits.open(path_muse_white_gaia)
-    hdul_muse_white[1].header.append('CD1_1')
-    hdul_muse_white[1].header.append('CD1_2')
-    hdul_muse_white[1].header.append('CD2_1')
-    hdul_muse_white[1].header.append('CD2_2')
-    hdul_muse_white[1].header['CD1_1'] = hdul_muse_white[1].header['PC1_1'] * hdul_muse_white[1].header['CDELT1']
-    hdul_muse_white[1].header['CD2_1'] = hdul_muse_white[1].header['PC2_1'] * hdul_muse_white[1].header['CDELT2']
-    hdul_muse_white[1].header['CD1_2'] = hdul_muse_white[1].header['PC1_2'] * hdul_muse_white[1].header['CDELT1']
-    hdul_muse_white[1].header['CD2_2'] = hdul_muse_white[1].header['PC2_2'] * hdul_muse_white[1].header['CDELT2']
-    hdul_muse_white[1].header.remove('PC1_1')
-    hdul_muse_white[1].header.remove('PC1_2')
-    hdul_muse_white[1].header.remove('PC2_1')
-    hdul_muse_white[1].header.remove('PC2_2')
-    hdul_muse_white[1].header.remove('CDELT1')
-    hdul_muse_white[1].header.remove('CDELT2')
-    hdul_muse_white.writeto(path_muse_white_gaia, overwrite=True)
-    hdul_muse_white = fits.open(path_muse_white_gaia)
-    hdr_muse_white = hdul_muse_white[1].header
-    hdul_muse = fits.open(path_muse)
-    hdul_muse[1].header['CD1_1'] = hdr_muse_white['CD1_1']
-    hdul_muse[1].header['CD2_1'] = hdr_muse_white['CD2_1']
-    hdul_muse[1].header['CD1_2'] = hdr_muse_white['CD1_2']
-    hdul_muse[1].header['CD2_2'] = hdr_muse_white['CD2_2']
-    hdul_muse[1].header['CRVAL1'] = hdr_muse_white['CRVAL1']
-    hdul_muse[1].header['CRVAL2'] = hdr_muse_white['CRVAL2']
-    hdul_muse[1].header['CRPIX1'] = hdr_muse_white['CRPIX1']
-    hdul_muse[1].header['CRPIX2'] = hdr_muse_white['CRPIX2']
-    hdul_muse.writeto(path_muse_gaia, overwrite=True)
-
-    # Fix HST header
-    hdul_hst_gaia = fits.open(path_hst_gaia)
-    hdul_hst_gaia[1].header.append('CD1_1')
-    hdul_hst_gaia[1].header.append('CD1_2')
-    hdul_hst_gaia[1].header.append('CD2_1')
-    hdul_hst_gaia[1].header.append('CD2_2')
-    hdul_hst_gaia[1].header['CD1_1'] = hdul_hst_gaia[1].header['PC1_1'] * hdul_hst_gaia[1].header['CDELT1']
-    hdul_hst_gaia[1].header['CD2_1'] = hdul_hst_gaia[1].header['PC2_1'] * hdul_hst_gaia[1].header['CDELT2']
-    hdul_hst_gaia[1].header['CD1_2'] = hdul_hst_gaia[1].header['PC1_2'] * hdul_hst_gaia[1].header['CDELT1']
-    hdul_hst_gaia[1].header['CD2_2'] = hdul_hst_gaia[1].header['PC2_2'] * hdul_hst_gaia[1].header['CDELT2']
-    hdul_hst_gaia[1].header.remove('PC1_1')
-    hdul_hst_gaia[1].header.remove('PC1_2')
-    hdul_hst_gaia[1].header.remove('PC2_1')
-    hdul_hst_gaia[1].header.remove('PC2_2')
-    hdul_hst_gaia[1].header.remove('CDELT1')
-    hdul_hst_gaia[1].header.remove('CDELT2')
-    hdul_hst_gaia.writeto(path_hst_gaia, overwrite=True)
 
     # Load info
     path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
@@ -505,24 +512,160 @@ def FixWithAstrometry(cubename=None, FixHST=True, CheckHST=False, CheckMUSE=Fals
     ra_gaia, dec_gaia = np.asarray(data_gaia['ra']), np.asarray(data_gaia['dec'])
     c_gaia = SkyCoord(ra=ra_gaia * u.degree, dec=dec_gaia * u.degree, frame='icrs')
 
-    path_ls = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/astrometry/LS_{}.txt'.format(cubename)
     data_ls = ascii.read(path_ls)
     ra_ls, dec_ls = np.asarray(data_ls['ra']), np.asarray(data_ls['dec'])
     c_ls = SkyCoord(ra=ra_ls * u.degree, dec=dec_ls * u.degree, frame='icrs')
 
+    if os.path.exists(path_muse_white_gaia) is True and os.path.exists(path_hst_gaia) is True:
+        print('Files exist and skip corrections')
+
+    else:
+        print('Fixing starts')
+        if FixMUSE:
+            # Convert MUSE white light image and HST image
+            os.system('astrometry {} -c {} -hdul_idx 1 --sigma_threshold_for_source_detection {}'.
+                      format(path_muse_white, path_ls, thr_muse))
+            os.rename(path_muse_white_astro, path_muse_white_gaia)
+
+            # Second iteration
+            # os.system('astrometry {} -c {} -hdul_idx 1 --sigma_threshold_for_source_detection {}'.
+            #           format(path_muse_white_gaia, path_ls, thr_muse / 5))
+            # os.rename(path_muse_white_gaia_astro, path_muse_white_gaia)
+
+            # Copy White light image header and fix MUSE header
+            hdul_muse_white = fits.open(path_muse_white_gaia)
+            try:
+                print(hdul_muse_white[1].header['PC2_1'])
+            except KeyError:
+                print('no rotation copying PC1_1 to PC2_2')
+                hdul_muse_white[1].header.append('PC2_1', 'PC1_2', 'PC2_2')
+                hdul_muse_white[1].header['PC2_1'] = 0
+                hdul_muse_white[1].header['PC1_2'] = 0
+                hdul_muse_white[1].header['PC2_2'] = -1 * hdul_muse_white[1].header['PC1_1']
+            hdul_muse_white[1].header.append('CD1_1')
+            hdul_muse_white[1].header.append('CD1_2')
+            hdul_muse_white[1].header.append('CD2_1')
+            hdul_muse_white[1].header.append('CD2_2')
+            hdul_muse_white[1].header['CD1_1'] = hdul_muse_white[1].header['PC1_1'] * hdul_muse_white[1].header['CDELT1']
+            hdul_muse_white[1].header['CD2_1'] = hdul_muse_white[1].header['PC2_1'] * hdul_muse_white[1].header['CDELT2']
+            hdul_muse_white[1].header['CD1_2'] = hdul_muse_white[1].header['PC1_2'] * hdul_muse_white[1].header['CDELT1']
+            hdul_muse_white[1].header['CD2_2'] = hdul_muse_white[1].header['PC2_2'] * hdul_muse_white[1].header['CDELT2']
+            hdul_muse_white[1].header.remove('PC1_1')
+            hdul_muse_white[1].header.remove('PC1_2')
+            hdul_muse_white[1].header.remove('PC2_1')
+            hdul_muse_white[1].header.remove('PC2_2')
+            hdul_muse_white[1].header.remove('CDELT1')
+            hdul_muse_white[1].header.remove('CDELT2')
+            hdul_muse_white[2].header['CD1_1'] = hdul_muse_white[1].header['CD1_1']
+            hdul_muse_white[2].header['CD2_1'] = hdul_muse_white[1].header['CD2_1']
+            hdul_muse_white[2].header['CD1_2'] = hdul_muse_white[1].header['CD1_2']
+            hdul_muse_white[2].header['CD2_2'] = hdul_muse_white[1].header['CD2_2']
+            hdul_muse_white[2].header['CRVAL1'] = hdul_muse_white[1].header['CRVAL1']
+            hdul_muse_white[2].header['CRVAL2'] = hdul_muse_white[1].header['CRVAL2']
+            hdul_muse_white[2].header['CRPIX1'] = hdul_muse_white[1].header['CRPIX1']
+            hdul_muse_white[2].header['CRPIX2'] = hdul_muse_white[1].header['CRPIX2']
+            hdul_muse_white.writeto(path_muse_white_gaia, overwrite=True)
+            hdul_muse_white = fits.open(path_muse_white_gaia)
+            hdr_muse_white = hdul_muse_white[1].header
+            hdul_muse = fits.open(path_muse)
+            hdul_muse[1].header['CD1_1'] = hdr_muse_white['CD1_1']
+            hdul_muse[1].header['CD2_1'] = hdr_muse_white['CD2_1']
+            hdul_muse[1].header['CD1_2'] = hdr_muse_white['CD1_2']
+            hdul_muse[1].header['CD2_2'] = hdr_muse_white['CD2_2']
+            hdul_muse[1].header['CRVAL1'] = hdr_muse_white['CRVAL1']
+            hdul_muse[1].header['CRVAL2'] = hdr_muse_white['CRVAL2']
+            hdul_muse[1].header['CRPIX1'] = hdr_muse_white['CRPIX1']
+            hdul_muse[1].header['CRPIX2'] = hdr_muse_white['CRPIX2']
+            hdul_muse[2].header['CD1_1'] = hdr_muse_white['CD1_1']
+            hdul_muse[2].header['CD2_1'] = hdr_muse_white['CD2_1']
+            hdul_muse[2].header['CD1_2'] = hdr_muse_white['CD1_2']
+            hdul_muse[2].header['CD2_2'] = hdr_muse_white['CD2_2']
+            hdul_muse[2].header['CRVAL1'] = hdr_muse_white['CRVAL1']
+            hdul_muse[2].header['CRVAL2'] = hdr_muse_white['CRVAL2']
+            hdul_muse[2].header['CRPIX1'] = hdr_muse_white['CRPIX1']
+            hdul_muse[2].header['CRPIX2'] = hdr_muse_white['CRPIX2']
+            hdul_muse.writeto(path_muse_gaia, overwrite=True)
+
+            # Second iteration
+            # Segmentation for MUSE
+            data_muse_white = hdul_muse_white[1].data
+            bkg_estimator = MedianBackground()
+            try:
+                bkg = Background2D(data_muse_white, 50, filter_size=(3, 3), bkg_estimator=bkg_estimator)
+            except ValueError:
+                bkg = Background2D(data_muse_white, 51, filter_size=(3, 3), bkg_estimator=bkg_estimator,
+                                   exclude_percentile=12)
+            data_muse_bkg = data_muse_white - bkg.background
+            threshold = thr_muse * bkg.background_rms
+            kernel = Gaussian2DKernel(1.5)  # corresponding to a 0.7 FWHM
+            convolved_data_muse = convolve(data_muse_bkg, kernel)
+            segment_map = detect_sources(convolved_data_muse, threshold, npixels=10)
+            if deblend_muse:
+                segment_map = deblend_sources(convolved_data_muse, segment_map, npixels=10, nlevels=32, contrast=0.001)
+            cat_muse = SourceCatalog(convolved_data_muse, segment_map)
+            x_cen, y_cen = cat_muse.xcentroid, cat_muse.ycentroid
+            x_cen, y_cen = x_cen[~np.isnan(x_cen)], y_cen[~np.isnan(y_cen)]
+            w = WCS(hdul_muse[1].header, naxis=2)
+            c2_muse = w.pixel_to_world(x_cen, y_cen)
+
+            idx_muse_ls, d2d_muse_ls, d3d_muse_ls = c2_muse.match_to_catalog_sky(c_ls)
+            sep_constraint = d2d_muse_ls < (0.2 * u.arcsec)
+            c2_muse_ls = c2_muse[sep_constraint]
+            c_ls_muse = c_ls[idx_muse_ls[sep_constraint]]
+            offset_ra_muse_2, offset_dec_muse_2 = (c_ls_muse.ra - c2_muse_ls.ra).value, (c_ls_muse.dec - c2_muse_ls.dec).value
+            offset_ra_muse_final = stats.sigma_clipped_stats(offset_ra_muse_2, sigma=3, maxiters=5)[0]  # mean
+            offset_dec_muse_final = stats.sigma_clipped_stats(offset_dec_muse_2, sigma=3, maxiters=5)[0]  # mean
+
+            # Second iteration
+            print('2nd iteration correction Ra: {}, Dec: {}'.format(offset_ra_muse_final, offset_dec_muse_final))
+            hdul_muse = fits.open(path_muse_gaia)
+            hdul_muse[0].header['RA'] += offset_ra_muse_final
+            hdul_muse[0].header['DEC'] += offset_dec_muse_final
+            hdul_muse[1].header['CRVAL1'] += offset_ra_muse_final
+            hdul_muse[1].header['CRVAL2'] += offset_dec_muse_final
+            hdul_muse[2].header['CRVAL1'] += offset_ra_muse_final
+            hdul_muse[2].header['CRVAL2'] += offset_dec_muse_final
+            hdul_muse.writeto(path_muse_gaia, overwrite=True)
+            hdul_muse_white[0].header['RA'] += offset_ra_muse_final
+            hdul_muse_white[0].header['DEC'] += offset_dec_muse_final
+            hdul_muse_white[1].header['CRVAL1'] += offset_ra_muse_final
+            hdul_muse_white[1].header['CRVAL2'] += offset_dec_muse_final
+            hdul_muse_white[2].header['CRVAL1'] += offset_ra_muse_final
+            hdul_muse_white[2].header['CRVAL2'] += offset_dec_muse_final
+            hdul_muse_white.writeto(path_muse_white_gaia, overwrite=True)
+
+        else:
+            shutil.copyfile(path_muse, path_muse_gaia)
+            shutil.copyfile(path_muse_white, path_muse_white_gaia)
+
+        if FixHST:
+            os.system('astrometry {} -c {} -hdul_idx 1 '
+                      '--sigma_threshold_for_source_detection {} -fine 0 -high_res True'.format(path_hst, path_ls, thr_hst))
+            os.rename(path_hst_astro, path_hst_gaia)
+
+            # Fix HST header
+            hdul_hst_gaia = fits.open(path_hst_gaia)
+            hdul_hst_gaia[1].header.append('CD1_1')
+            hdul_hst_gaia[1].header.append('CD1_2')
+            hdul_hst_gaia[1].header.append('CD2_1')
+            hdul_hst_gaia[1].header.append('CD2_2')
+            hdul_hst_gaia[1].header['CD1_1'] = hdul_hst_gaia[1].header['PC1_1'] * hdul_hst_gaia[1].header['CDELT1']
+            hdul_hst_gaia[1].header['CD2_1'] = hdul_hst_gaia[1].header['PC2_1'] * hdul_hst_gaia[1].header['CDELT2']
+            hdul_hst_gaia[1].header['CD1_2'] = hdul_hst_gaia[1].header['PC1_2'] * hdul_hst_gaia[1].header['CDELT1']
+            hdul_hst_gaia[1].header['CD2_2'] = hdul_hst_gaia[1].header['PC2_2'] * hdul_hst_gaia[1].header['CDELT2']
+            hdul_hst_gaia[1].header.remove('PC1_1')
+            hdul_hst_gaia[1].header.remove('PC1_2')
+            hdul_hst_gaia[1].header.remove('PC2_1')
+            hdul_hst_gaia[1].header.remove('PC2_2')
+            hdul_hst_gaia[1].header.remove('CDELT1')
+            hdul_hst_gaia[1].header.remove('CDELT2')
+            hdul_hst_gaia.writeto(path_hst_gaia, overwrite=True)
+        else:
+            shutil.copyfile(path_hst, path_hst_gaia)
 
     if CheckMUSE:
+        hdul_muse_white = fits.open(path_muse_white_gaia)
         data_muse_white = hdul_muse_white[1].data
-        # fig = plt.figure(figsize=(5, 5), dpi=300)
-        # plt.quiver(c_ls_m.ra.value, c_ls_m.dec.value,
-        #            c_ls_m.ra.value - c2_muse_m.ra.value,
-        #            c_ls_m.dec.value - c2_muse_m.dec.value,
-        #            angles='xy', scale_units='xy')
-        # # plt.plot(c_ls_m.ra.value, c_ls_m.dec.value, '.k')
-        # # plt.plot(c2_muse_m.ra.value, c2_muse_m.dec.value, '.r')
-        # plt.plot(c_qso.ra.value, c_qso.dec.value, '.r', ms=10)
-        # plt.plot(c2_muse_c.ra[idx_qso], c2_muse_c.dec[idx_qso], '.b', ms=10)
-        # fig.savefig(path_savefig_vect, bbox_inches='tight')
 
         # Figure
         bkg_estimator = MedianBackground()
@@ -540,24 +683,36 @@ def FixWithAstrometry(cubename=None, FixHST=True, CheckHST=False, CheckMUSE=Fals
         w = WCS(hdul_muse_white[1].header, naxis=2)
         c2_muse = w.pixel_to_world(x_cen, y_cen)
 
+        idx_muse_ls, d2d_muse_ls, d3d_muse_ls = c2_muse.match_to_catalog_sky(c_ls)
+        sep_constraint = d2d_muse_ls < (0.5 * u.arcsec)
+        c2_muse_ls = c2_muse[sep_constraint]
+        c_ls_muse = c_ls[idx_muse_ls[sep_constraint]]
+
+        f, ax = plt.subplots(2, 2, figsize=(8, 5), dpi=300)
+        f.subplots_adjust(hspace=0.3)
+        f.subplots_adjust(wspace=0.3)
+        ax[0, 0].plot(c2_muse_ls.ra.value, 3600 * (c2_muse_ls.ra.value - c_ls_muse.ra.value), '.')
+        ax[0, 1].plot(c2_muse_ls.ra.value, 3600 * (c2_muse_ls.dec.value - c_ls_muse.dec.value), '.')
+        ax[1, 0].plot(c2_muse_ls.dec.value, 3600 * (c2_muse_ls.ra.value - c_ls_muse.ra.value), '.')
+        ax[1, 1].plot(c2_muse_ls.dec.value, 3600 * (c2_muse_ls.dec.value - c_ls_muse.dec.value), '.')
+        ax[0, 0].set_xlabel('Ra (deg)')
+        ax[0, 0].set_ylabel(r'$\delta Ra (arcsec)$')
+        ax[0, 1].set_xlabel('Ra (deg)')
+        ax[0, 1].set_ylabel(r'$\delta Dec (arcsec)$')
+        ax[1, 0].set_xlabel('Dec (deg)')
+        ax[1, 0].set_ylabel(r'$\delta Ra (arcsec)$')
+        ax[1, 1].set_xlabel('Dec (deg)')
+        ax[1, 1].set_ylabel(r'$\delta Dec (arcsec)$')
+        f.savefig(path_savefig_check_MUSE, bbox_inches='tight')
+
+        fig = plt.figure(figsize=(5, 5), dpi=300)
+        plt.quiver(c2_muse_ls.ra.value, c2_muse_ls.dec.value, c2_muse_ls.ra.value - c_ls_muse.ra.value,
+                   c2_muse_ls.dec.value - c_ls_muse.dec.value,
+                   angles='xy', scale_units='xy')
+        plt.plot(c_qso.ra.value, c_qso.dec.value, '.r', ms=10)
+        fig.savefig(path_savefig_vect_MUSE, bbox_inches='tight')
+
         #
-        # idx_ls, d2d_ls, d3d_ls = c2_muse.match_to_catalog_sky(c_ls)
-        # max_sep = 0.5 * u.arcsec
-        # sep_constraint = d2d_ls < max_sep
-        # c2_muse_m = c2_muse[sep_constraint]
-        # c_ls_m = c_ls[idx_ls[sep_constraint]]
-
-        # fig = plt.figure(figsize=(5, 5), dpi=300)
-        # plt.quiver(c_ls_m.ra.value, c_ls_m.dec.value,
-        #            c_ls_m.ra.value - c2_muse_m.ra.value,
-        #            c_ls_m.dec.value - c2_muse_m.dec.value,
-        #            angles='xy', scale_units='xy')
-        # # plt.plot(c_ls_m.ra.value, c_ls_m.dec.value, '.k')
-        # # plt.plot(c2_muse_m.ra.value, c2_muse_m.dec.value, '.r')
-        # plt.plot(c_qso.ra.value, c_qso.dec.value, '.r', ms=10)
-        # # plt.plot(c2_muse_c.ra[idx_qso], c2_muse_c.dec[idx_qso], '.b', ms=10)
-        # fig.savefig(path_savefig_vect_rot, bbox_inches='tight')
-
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(path_muse_white_gaia, figure=fig, hdu=1, north=True)
 
@@ -578,7 +733,7 @@ def FixWithAstrometry(cubename=None, FixHST=True, CheckHST=False, CheckMUSE=Fals
         gc.show_markers(ra_gaia, dec_gaia, facecolors='none', marker='o', c='none',
                         edgecolors='red', linewidths=0.8, s=140)
         gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='o', c='none',
-                        edgecolors='white', linewidths=0.8, s=120)
+                        edgecolors='orange', linewidths=0.8, s=120)
         gc.show_markers(c2_muse.ra.value, c2_muse.dec.value,
                         facecolors='none', marker='o', c='none', edgecolors='white', linewidths=0.8, s=100)
 
@@ -596,7 +751,7 @@ def FixWithAstrometry(cubename=None, FixHST=True, CheckHST=False, CheckMUSE=Fals
         bkg = Background2D(data_hst_gaia, (200, 200), filter_size=(3, 3), bkg_estimator=bkg_estimator)
         data_bkg = data_hst_gaia - bkg.background
         threshold = thr_hst * bkg.background_rms
-        kernel = Gaussian2DKernel(1)
+        kernel = Gaussian2DKernel(3)
         convolved_data = convolve(data_bkg, kernel)
         segment_map = detect_sources(convolved_data, threshold, npixels=10)
         if deblend_hst:
@@ -607,29 +762,33 @@ def FixWithAstrometry(cubename=None, FixHST=True, CheckHST=False, CheckMUSE=Fals
         c2_hst = w.pixel_to_world(x_cen, y_cen)
 
         idx_hst_ls, d2d_hst_ls, d3d_hst_ls = c2_hst.match_to_catalog_sky(c_ls)
-        sep_constraint = d2d_hst_ls < (0.5 * u.arcsec)
+        sep_constraint = d2d_hst_ls < (0.2 * u.arcsec)
         c2_hst_ls = c2_hst[sep_constraint]
         c_ls_hst = c_ls[idx_hst_ls[sep_constraint]]
 
         f, ax = plt.subplots(2, 2, figsize=(8, 5), dpi=300)
         f.subplots_adjust(hspace=0.3)
         f.subplots_adjust(wspace=0.3)
-        ax[0, 0].plot(c2_hst_ls.ra.value, 3600 * (ra_pho[idx_total[sep_lim_total]] - ra_total[sep_lim_total]), '.')
-        ax[0, 1].plot(c2_hst_ls.ra.value, 3600 * (dec_pho[idx_total[sep_lim_total]] - dec_total[sep_lim_total]), '.')
-        ax[1, 0].plot(c2_hst_ls.dec.value,
-                         3600 * (ra_pho[idx_total[sep_lim_total]] - ra_total[sep_lim_total]), '.')
-        ax[1, 1].plot(c2_hst_ls.dec.value,
-                         3600 * (dec_pho[idx_total[sep_lim_total]] - dec_total[sep_lim_total]), '.')
-        ax[0, 0].set_xlabel('ra')
-        ax[0, 0].set_ylabel(r'$\delta ra$')
-        ax[0, 1].set_xlabel('ra')
-        ax[0, 1].set_ylabel(r'$\delta dec$')
-        ax[1, 0].set_xlabel('dec')
-        ax[1, 0].set_ylabel(r'$\delta ra$')
-        ax[1, 1].set_xlabel('dec')
-        ax[1, 1].set_ylabel(r'$\delta dec$')
-        plt.savefig(path_savefig + 'coor_compare', bbox_inches='tight')
+        ax[0, 0].plot(c2_hst_ls.ra.value, 3600 * (c2_hst_ls.ra.value - c_ls_hst.ra.value), '.')
+        ax[0, 1].plot(c2_hst_ls.ra.value, 3600 * (c2_hst_ls.dec.value - c_ls_hst.dec.value), '.')
+        ax[1, 0].plot(c2_hst_ls.dec.value, 3600 * (c2_hst_ls.ra.value - c_ls_hst.ra.value), '.')
+        ax[1, 1].plot(c2_hst_ls.dec.value, 3600 * (c2_hst_ls.dec.value - c_ls_hst.dec.value), '.')
+        ax[0, 0].set_xlabel('Ra (deg)')
+        ax[0, 0].set_ylabel(r'$\delta Ra (arcsec)$')
+        ax[0, 1].set_xlabel('Ra (deg)')
+        ax[0, 1].set_ylabel(r'$\delta Dec (arcsec)$')
+        ax[1, 0].set_xlabel('Dec (deg)')
+        ax[1, 0].set_ylabel(r'$\delta Ra (arcsec)$')
+        ax[1, 1].set_xlabel('Dec (deg)')
+        ax[1, 1].set_ylabel(r'$\delta Dec (arcsec)$')
+        f.savefig(path_savefig_check_hst, bbox_inches='tight')
 
+        fig = plt.figure(figsize=(5, 5), dpi=300)
+        plt.quiver(c2_hst_ls.ra.value, c2_hst_ls.dec.value, c2_hst_ls.ra.value - c_ls_hst.ra.value,
+                   c2_hst_ls.dec.value - c_ls_hst.dec.value,
+                   angles='xy', scale_units='xy')
+        plt.plot(c_qso.ra.value, c_qso.dec.value, '.r', ms=10)
+        fig.savefig(path_savefig_vect_hst, bbox_inches='tight')
 
         # Field Image
         fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -661,7 +820,7 @@ def FixWithAstrometry(cubename=None, FixHST=True, CheckHST=False, CheckMUSE=Fals
         gc.show_markers(ra_ls, dec_ls, facecolors='none', marker='o', c='none',
                         edgecolors='blue', linewidths=0.8, s=130)
         gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='o', c='none',
-                        edgecolors='white', linewidths=0.8, s=120)
+                        edgecolors='orange', linewidths=0.8, s=120)
 
         # Labels
         gc.add_label(0.87, 0.97, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=15, relative=True)
@@ -679,7 +838,10 @@ def FixDatWithAstrometry(cubename=None):
     path_dat = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/dats/{}_ESO-DEEP_ZAP.dat'.format(cubename)
     path_dat_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia.dat'.format(cubename)
     path_reg_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia.reg'.format(cubename)
-    hdr = fits.open(path_muse_white)[1].header
+    try:
+        hdr = fits.open(path_muse_white)[1].header
+    except IndexError:
+        hdr = fits.open(path_muse_white)[0].header
     hdr_gaia = fits.open(path_muse_white_gaia)[1].header
 
     #
@@ -763,21 +925,21 @@ def CopyCurrentObjWithAstrometry(cubename=None):
 # FixCube(cubename='PKS0552-640')
 # FixCube(cubename='HE0439-5254')
 
-# FixAstrometry(cubename='Q0107-0235', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='PB6291', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='HE0153-4520', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='3C57', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='TEX0206-048', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='HE0226-4110', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='PKS0232-04', thr_hst=10, checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='HE0435-5304', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='HE0439-5254', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='PKS0552-640', checkMUSE=True, checkHST=True, update_offset=False)
-# FixAstrometry(cubename='Q1354+048', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='LBQS1435-0134', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='PG1522+101', deblend_hst=True, checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='HE1003+0149', checkMUSE=True, checkHST=False)
-# FixAstrometry(cubename='PKS0405-123', checkMUSE=True, checkHST=False)
+# FixAstrometry(cubename='Q0107-0235', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='PB6291', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='HE0153-4520', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='3C57', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='TEX0206-048', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='HE0226-4110', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='PKS0232-04', thr_hst=10, checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='HE0435-5304', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='HE0439-5254', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='PKS0552-640', checkMUSE=True, checkHST=True, update_offset=False) # HST good
+# FixAstrometry(cubename='Q1354+048', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='LBQS1435-0134', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='PG1522+101', deblend_hst=True, checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='HE1003+0149', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='PKS0405-123', checkMUSE=True, checkHST=True) # HST good
 
 
 # Fix Dat
@@ -801,7 +963,56 @@ def CopyCurrentObjWithAstrometry(cubename=None):
 # CopyCurrentObj(cubename='Q0107-0235')
 
 
-# FixWithAstrometry(cubename='PKS0552-640', FixHST=True, CheckHST=True, CheckMUSE=True, thr_hst=3, thr_muse=3,
-#                   deblend_hst=False, deblend_muse=True)
-# FixDatWithAstrometry(cubename='PKS0552-640')
-CopyCurrentObjWithAstrometry(cubename='PKS0552-640')
+# Fix with Astrometry
+# FixWithAstrometry(cubename='Q0107-0235', FixHST=False, thr_muse=2, CheckHST=True, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='PB6291', FixHST=False, FixMUSE=False, thr_muse=2, CheckHST=True, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='HE0153-4520', FixHST=False, thr_muse=25, CheckHST=True, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='3C57', FixHST=False, thr_muse=2, CheckHST=False, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='TEX0206-048', FixHST=False, thr_muse=10, CheckHST=True, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True) # Done!
+# FixWithAstrometry(cubename='HE0226-4110', FixHST=False, thr_muse=3, CheckHST=True, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True) # Done!
+# FixWithAstrometry(cubename='PKS0232-04', FixHST=False, thr_muse=3, CheckHST=True, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='HE0435-5304', FixHST=False, thr_muse=20, CheckHST=False, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='HE0439-5254', FixHST=False, thr_muse=10, CheckHST=False, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='PKS0552-640', FixHST=False, thr_muse=3, CheckHST=True, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='Q1354+048', FixHST=False, thr_muse=1.5, CheckHST=False, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='LBQS1435-0134', FixHST=False, thr_muse=20, CheckHST=False, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='PG1522+101', FixHST=False, thr_muse=5, CheckHST=False, CheckMUSE=True,
+#                   deblend_hst=True, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='HE1003+0149', FixHST=False, thr_muse=7, CheckHST=False, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='PKS0405-123', FixHST=False, thr_muse=25, CheckHST=False, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
+
+
+# Fix Dat
+FixDatWithAstrometry(cubename='Q0107-0235')
+FixDatWithAstrometry(cubename='PB6291')
+FixDatWithAstrometry(cubename='HE0153-4520')
+FixDatWithAstrometry(cubename='3C57')
+FixDatWithAstrometry(cubename='TEX0206-048')
+FixDatWithAstrometry(cubename='HE0226-4110')
+FixDatWithAstrometry(cubename='PKS0232-04')
+FixDatWithAstrometry(cubename='HE0435-5304')
+FixDatWithAstrometry(cubename='HE0439-5254')
+FixDatWithAstrometry(cubename='PKS0552-640')
+FixDatWithAstrometry(cubename='Q1354+048')
+FixDatWithAstrometry(cubename='LBQS1435-0134')
+FixDatWithAstrometry(cubename='PG1522+101')
+FixDatWithAstrometry(cubename='HE1003+0149')
+FixDatWithAstrometry(cubename='PKS0405-123')
+
+# Copy Current Obj
+# CopyCurrentObjWithAstrometry(cubename='Q0107-0235')
+# CopyCurrentObjWithAstrometry(cubename='PKS0552-640')
