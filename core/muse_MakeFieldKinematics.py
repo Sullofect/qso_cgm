@@ -296,7 +296,7 @@ def FitLines(cubename=None, line='OII', ResolveOII=False, zapped=False, smooth_2
         parameters.add_many(('z', redshift_guess, True, redshift_guess - 0.05, redshift_guess + 0.05, None),
                             ('sigma_kms', sigma_kms_guess, True, 0.0, 2000.0, None),
                             ('flux_OII', flux_guess, True, 0, None, None),
-                            ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.3, 2, None),
+                            ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.3, 1.6, None),
                             ('a', 0.0, False, None, None, None),
                             ('b', 0.0, False, None, None, None))
 
@@ -325,7 +325,7 @@ def FitLines(cubename=None, line='OII', ResolveOII=False, zapped=False, smooth_2
                             ('sigma_kms', sigma_kms_guess, True, 0.0, 2000.0, None),
                             ('flux_OII', flux_guess, True, 0, None, None),
                             ('flux_OIII5008', flux_guess, True, 0, None, None),
-                            ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.3, 2, None),
+                            ('r_OII3729_3727', r_OII3729_3727_guess, True, 0.3, 1.6, None),
                             ('a_OII', 0.0, False, None, None, None),
                             ('b_OII', 0.0, False, None, None, None),
                             ('a_OIII5008', 0.0, False, None, None, None),
@@ -368,7 +368,7 @@ def FitLines(cubename=None, line='OII', ResolveOII=False, zapped=False, smooth_2
                     r_fit[i, j], dr_fit[i, j] = r, dr
                     a_OII_fit[i, j], da_OII_fit[i, j], b_OII_fit[i, j], db_OII_fit[i, j] = a_OII, da_OII, b_OII, db_OII
                     a_OIII_fit[i, j], da_OIII_fit[i, j] = a_OIII, da_OIII
-                    b_OIII_fit[i, j], db_OIII_fit[i, j] =  b_OIII, db_OIII
+                    b_OIII_fit[i, j], db_OIII_fit[i, j] = b_OIII, db_OIII
                 else:
                     flux_f_OII, dflux_f_OII = result.best_values['flux_OII'], result.params['flux_OII'].stderr
                     r, a, b = result.best_values['r_OII3729_3727'], result.best_values['a'], result.best_values['b']
@@ -501,7 +501,7 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
 
     hdul = fits.open(path_fit)
     # hdul[2].header['WCSAXES'] = 2
-    ra_center, dec_center = hdul[2].header['CRVAL1'], hdul[2].header['CRVAL2']
+    ra_center, dec_center = hdul[0].header['RA'], hdul[0].header['DEC']
     fs = hdul[1].data
     size = int(min(np.shape(fs)) * 0.2)
     v, z, dz = hdul[2].data, hdul[3].data, hdul[4].data
@@ -510,16 +510,6 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
     # Load cube and 3D seg
     if line == 'OII+OIII':
         line_OII, line_OIII = 'OII', 'OIII'
-        path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
-            format(cubename, str_zap, line_OII)
-        path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                                 '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, smooth_2D,
-                                                        kernel_2D, smooth_1D, kernel_1D)
-        path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
-            format(cubename, str_zap, line_OIII)
-        path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                                  '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, smooth_2D,
-                                                         kernel_2D, smooth_1D, kernel_1D)
         path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg.fits'.\
             format(cubename, str_zap, line_OII)
         path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg.fits'.\
@@ -543,13 +533,9 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
         r, dr = hdul[11].data, hdul[12].data
         a, b = hdul[13].data, hdul[14].data
         S_N = flux_OIII_fit / dflux_OIII_fit
+        print(dflux_OIII_fit)
 
     else:
-        path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
-            format(cubename, str_zap, line)
-        path_cube_smoothed = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
-                             '{}_{}.fits'.format(line, cubename, str_zap, line, smooth_2D,
-                                                 kernel_2D, smooth_1D, kernel_1D)
         path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg.fits'.\
             format(cubename, str_zap, line)
         path_SB = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB.fits'.\
@@ -560,10 +546,10 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
         # 3D seg
         seg_3D = fits.open(path_3Dseg)[0].data
         seg_label = fits.open(path_3Dseg)[1].data
-        flux_OII, dflux_OII = hdul[7].data, hdul[8].data
+        flux_OII_fit, dflux_OII_fit = hdul[7].data, hdul[8].data
         r, dr = hdul[9].data, hdul[10].data
         a, b = hdul[11].data, hdul[13].data
-        S_N = flux_OII / dflux_OII
+        S_N = flux_OII_fit / dflux_OII_fit
 
         #
         if SelectNebulae is not None:
@@ -574,9 +560,9 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
             sigma = np.where(mask_select == 1, sigma, np.nan)
 
 
-    # v = np.where(fs == 1, v, np.nan)
+    v = np.where(fs == 1, v, np.nan)
     # v = np.where(S_N > S_N_thr, v, np.nan)
-    # sigma = np.where(fs == 1, sigma, np.nan)
+    sigma = np.where(fs == 1, sigma, np.nan)
     # sigma = np.where(S_N > S_N_thr, sigma, np.nan)
     hdul_v = fits.ImageHDU(v, header=hdul[2].header)
     hdul_v.writeto(path_v, overwrite=True)
@@ -584,22 +570,18 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
     hdul_sigma.writeto(path_sigma, overwrite=True)
 
     if CheckFit:
+        # Load qso information
+        path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
+        data_qso = ascii.read(path_qso, format='fixed_width')
+        data_qso = data_qso[data_qso['name'] == cubename]
+        ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
+
         if line == 'OII+OIII':
-            # Load qso information
-            path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
-            data_qso = ascii.read(path_qso, format='fixed_width')
-            data_qso = data_qso[data_qso['name'] == cubename]
-            ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
-
-
+            #
             line_OII, line_OIII = 'OII', 'OIII'
-            path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
-                format(cubename, str_zap, line_OII)
             path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                      '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, smooth_2D,
                                                             kernel_2D, smooth_1D, kernel_1D)
-            path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
-                format(cubename, str_zap, line_OIII)
             path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                       '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, smooth_2D,
                                                              kernel_2D, smooth_1D, kernel_1D)
@@ -607,9 +589,6 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
                 format(cubename, str_zap, line_OII)
             path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg.fits'. \
                 format(cubename, str_zap, line_OIII)
-            path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
-            path_cube = path_cube_OII
 
             # Load data and smoothing
             cube_OII, cube_OIII = Cube(path_cube_smoothed_OII), Cube(path_cube_smoothed_OIII)
@@ -624,8 +603,8 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
             # Extend over
             start_OII = (seg_3D_OII != 0).argmax(axis=0)
             end_OII = start_OII + mask_seg_OII
-            start_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), start_OII, start_OII - 3)
-            end_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), end_OII, end_OII + 3)
+            start_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), start_OII, start_OII - 10)
+            end_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), end_OII, end_OII + 10)
             idx_OII = np.zeros_like(seg_3D_OII)
             idx_OII[:] = np.arange(np.shape(seg_3D_OII)[0])[:, np.newaxis, np.newaxis]
             seg_3D_OII = np.where((idx_OII >= end_OII[np.newaxis, :, :]) | (idx_OII < start_OII[np.newaxis, :, :]),
@@ -634,8 +613,9 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
             # [O III]
             start_OIII = (seg_3D_OIII != 0).argmax(axis=0)
             end_OIII = start_OIII + mask_seg_OIII
-            start_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), start_OIII, start_OIII - 3)
-            end_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), end_OIII, end_OIII + 3)
+            print(start_OIII[75, 81], end_OIII[75, 81])
+            start_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), start_OIII, start_OIII - 20)
+            end_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), end_OIII, end_OIII + 20)
             idx_OIII = np.zeros_like(seg_3D_OIII)
             idx_OIII[:] = np.arange(np.shape(seg_3D_OIII)[0])[:, np.newaxis, np.newaxis]
             seg_3D_OIII = np.where((idx_OIII >= end_OIII[np.newaxis, :, :]) | (idx_OIII < start_OIII[np.newaxis, :, :]),
@@ -643,6 +623,7 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
             flux_OII, flux_err_OII = flux_OII * seg_3D_OII, flux_err_OII * seg_3D_OII
             flux_OIII, flux_err_OIII = flux_OIII * seg_3D_OIII, flux_err_OIII * seg_3D_OIII
 
+            #
             fig_1, ax_1 = plt.subplots(5, 5, figsize=(20, 20), sharex=True)
             fig_2, ax_2 = plt.subplots(5, 5, figsize=(20, 20), sharex=True)
             for ax_i in range(5):
@@ -680,6 +661,29 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
             fig_2.savefig(figname_OIII, bbox_inches='tight')
 
         else:
+            path_cube_smoothed = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
+                                 '{}_{}.fits'.format(cubename, str_zap, line, smooth_2D,
+                                                     kernel_2D, smooth_1D, kernel_1D)
+            path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg.fits'. \
+                format(cubename, str_zap, line)
+
+            # Load data and smoothing
+            cube = Cube(path_cube_smoothed)
+            wave_vac = pyasl.airtovac2(cube.wave.coord())
+            flux, flux_err = cube.data * 1e-3, np.sqrt(cube.var) * 1e-3
+            seg_3D = fits.open(path_3Dseg)[0].data
+            mask_seg = np.sum(seg_3D, axis=0)
+            flux_seg = flux * seg_3D
+            start = (seg_3D != 0).argmax(axis=0)
+            end = start + mask_seg
+            start = np.where((mask_seg > 20) | (mask_seg < 1), start, start - 10)
+            end = np.where((mask_seg > 20) | (mask_seg < 1), end, end + 10)
+            idx = np.zeros_like(seg_3D)
+            idx[:] = np.arange(np.shape(seg_3D)[0])[:, np.newaxis, np.newaxis]
+            seg_3D = np.where((idx >= end[np.newaxis, :, :]) | (idx < start[np.newaxis, :, :]), seg_3D, 1)
+            flux *= seg_3D
+            flux_err *= seg_3D
+
             fig, ax = plt.subplots(5, 5, figsize=(20, 20), sharex=True)
             for ax_i in range(5):
                 for ax_j in range(5):
@@ -689,13 +693,13 @@ def PlotKinematics(cubename='3C57', zapped=False, line='OII', smooth_2D=1.5, ker
                     ax[ax_i, ax_j].plot(wave_vac, flux_seg[:, i_j, j_j], '-b')
                     ax[ax_i, ax_j].plot(wave_vac, flux_err[:, i_j, j_j], '-C0')
                     ax[ax_i, ax_j].plot(wave_vac, model_OII(wave_vac, z[i_j, j_j], sigma[i_j, j_j],
-                                                            flux_OII[i_j, j_j], r[i_j, j_j],
-                                                            a[i_j, j_j], b[i_j, j_j]), '-r')
+                                                            flux_OII_fit[i_j, j_j], r[i_j, j_j],
+                                                            0, 0), '-r')
                     # ax[ax_i, ax_j].set_ylim(top=0.01)
                     ax[ax_i, ax_j].axvline(x=3727.092 * (1 + z_qso))
                     ax[ax_i, ax_j].axvline(x=3729.875 * (1 + z_qso))
                     ax[ax_i, ax_j].set_title('x={}, y={}'.format(j_j_idx, i_j_idx)
-                                             + '\n' + 'v=' + str(np.round(v_fit[i_j, j_j], 2)), y=0.9, x=0.2)
+                                             + '\n' + 'v=' + str(np.round(v[i_j, j_j], 2)), y=0.9, x=0.2)
             figurename = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_checkspectra.png'.format(cubename, line)
             plt.savefig(figurename, bbox_inches='tight')
 
@@ -857,17 +861,26 @@ def APLpyStyle(gc, type=None, cubename=None, size=None, offset_gaia=False, ra_ce
 #                kernel_1D='gauss', CheckFit=True, CheckSpectra=[70, 80], v_min=-300, v_max=300,
 #                sigma_max=200, contour_level=0.3, offset_gaia=True)
 # FitLines(cubename='HE0238-1904', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
-FitLines(cubename='HE0238-1904', line='OII+OIII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss',
-         CheckFit=True, CheckSpectra=[74, 48])
-PlotKinematics(cubename='HE0238-1904', line='OII+OIII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, S_N_thr=5,
-               kernel_1D='gauss', CheckFit=True, CheckSpectra=[111, 56], v_min=-300, v_max=300,
-               sigma_max=200, contour_level=0.3, offset_gaia=True)
+# FitLines(cubename='HE0238-1904', line='OII+OIII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss',
+#          CheckFit=True, CheckSpectra=[74, 48])
+# PlotKinematics(cubename='HE0238-1904', line='OII+OIII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, S_N_thr=-np.inf,
+#                kernel_1D='gauss', CheckFit=True, CheckSpectra=[111, 56], v_min=-300, v_max=300,
+#                sigma_max=200, contour_level=0.3, offset_gaia=True)
 
+
+# muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
+# -s_spe 1.5 -k_spe gauss -ssf False -n 3
+# muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss
+# -s_spe 1.5 -k_spe gauss -ssf False -sl 8350 8390 -n 2
 # FitLines(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None, kernel_1D=None)
 # FitLines(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
 # PlotKinematics(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
 #                kernel_1D='gauss', CheckFit=True, CheckSpectra=[70, 80], v_min=-300, v_max=300,
 #                sigma_max=300, contour_level=0.25)
+# FitLines(cubename='3C57', line='OII+OIII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
+PlotKinematics(cubename='3C57', line='OII+OIII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
+               kernel_1D='gauss', CheckFit=True, CheckSpectra=[23, 99], v_min=-300, v_max=300,
+               sigma_max=300, contour_level=0.25)
 
 # muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
 # -s_spe 1.5 -k_spe gauss -ssf False -sl 6250 6290
