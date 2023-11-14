@@ -73,7 +73,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
     header = fits.getheader(path_cube, ext=1)
-    filename_SB = cubename + '_SB.fits'
+    filename_SB = cubename + '_SB_3DSeg.fits'
     filename_3Dseg = cubename + '_3DSeg.fits'
     cube = Cube(path_cube)
     if SelectLambda is not None:
