@@ -295,3 +295,11 @@ M_BH = 9.4
 print((M_BH - 8.95) / 1.40 + 11)  # Different IMF
 print((M_BH - 9 - np.log10(0.49)) / 1.16 + 11)
 print((M_BH - 9 - 0.3 - np.log10(0.49)) / 1.16 + 11)  # 0.3 dex error on M_BH
+
+
+# Dynamical mass 3C57
+G = 6.67e-8
+R_3C57, v_3C57 = 5 / 7 * 50 * 3.086e21, 250 * 1e5
+M_3C57 = R_3C57 * v_3C57 ** 2 / G / 2e33
+print(np.format_float_scientific(M_3C57))
+
