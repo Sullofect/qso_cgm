@@ -953,7 +953,9 @@ def APLpyStyle(gc, type=None, cubename=None, size=None, offset_gaia=False, ra_ce
 
 
 # muse_MakeNBImageWith3DSeg.py -m HE0435-5304_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
-# -s_spe 1.5 -k_spe gauss -ssf False -n 2
+# -s_spe 1.5 -k_spe gauss -ssf False -n 2 -l 0.2
+# muse_MakeNBImageWith3DSeg.py -m HE0435-5304_ESO-DEEP_subtracted_OIII -t 2.0 -s 1.5 -k gauss
+# -s_spe 1.5 -k_spe gauss -ssf False -n 2 -l 0.2
 # FitLines(cubename='HE0435-5304', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
 # PlotKinematics(cubename='HE0435-5304', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, S_N_thr=7,
 #                kernel_1D='gauss', CheckFit=True, CheckSpectra=[70, 80], v_min=-100, v_max=100,

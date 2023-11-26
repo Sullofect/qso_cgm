@@ -28,6 +28,8 @@ parser.add_argument('-m', metavar='cubename', help='MUSE cube name (without .fit
 parser.add_argument('-t', metavar='S_N_thr', help='S/N threshold, required', required=True, type=float)
 parser.add_argument('-s', metavar='std_2D', help='width/2 or sigma of the 2D smoothing filter kernel, default is None',
                     required=False, type=float, default=None)
+parser.add_argument('-l', metavar='level', help='level of contour, default is 0.2',
+                    type=float, default=0.2)
 parser.add_argument('-k', metavar='kernel_2D', help='2D smoothing kernel ("box" or "gauss"), default is None',
                     required=False, type=str, default=None)
 parser.add_argument('-s_spe', metavar='std_spectra', help='width/2 or sigma of the 1D smoothing filter kernel, '
@@ -68,7 +70,7 @@ args = parser.parse_args()  # parse the arguments
 def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, smooth_1D=None, kernel_1D=None,
                    npixels=None, connectivity=None, max_num_nebulae=None, num_bkg_slice=None, RescaleVariance=None,
                    AddBackground=None, CheckSegmentation=None, CheckSpectra=None, PlotNBImage=None, SelectLambda=None,
-                   SumSmoothedFlux=None):
+                   SumSmoothedFlux=None, level=None):
     # Cubes
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
@@ -278,11 +280,11 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
     if PlotNBImage:
         ra_center, dec_center = header['CRVAL1'], header['CRVAL2']
         fig = plt.figure(figsize=(8, 8), dpi=300)
-        gc = aplpy.FITSFigure(filename_SB, figure=fig, hdu=1)
+        gc = aplpy.FITSFigure(filename_SB, figure=fig, hdu=1, north=True)
         # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('gist_heat_r'), stretch='arcsinh')
         gc.show_colorscale(vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'), stretch='linear')
-        gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
-        gc.show_contour(filename_SB, levels=[0.3], color='k', linewidths=0.8, smooth=1, kernel='gauss')
+        # gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
+        gc.show_contour(filename_SB, levels=[level], color='k', linewidths=2, smooth=5, kernel='box')
         gc.set_system_latex(True)
 
         # Colorbar
@@ -302,15 +304,47 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         gc.tick_labels.hide()
         gc.axis_labels.hide()
         gc.ticks.set_length(30)
-        figurename = cubename + '_SB.pdf'
+        figurename = cubename + '_SB_3DSeg.pdf'
         plt.savefig(figurename, bbox_inches='tight')
+
+        # Plot Original
+        fig = plt.figure(figsize=(8, 8), dpi=300)
+        hdul_SB_ori = fits.open(cubename + '_SB.fits')
+        hdul_SB_ori[1].header.remove('CRDER3')
+        hdul_SB_ori[1].data /= 1e-17
+        hdul_SB_ori.writeto(cubename + '_SB_ori.fits', overwrite=True)
+        gc = aplpy.FITSFigure(cubename + '_SB_ori.fits', figure=fig, hdu=1, north=True)
+        # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('gist_heat_r'), stretch='arcsinh')
+        gc.show_colorscale(vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'), stretch='linear')
+        # gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
+        gc.show_contour(filename_SB, levels=[level], color='k', linewidths=2, smooth=5, kernel='box')
+        gc.set_system_latex(True)
+
+        # Colorbar
+        gc.add_colorbar()
+        gc.colorbar.set_ticks([0, 1, 2, 3, 4, 5])
+        gc.colorbar.set_location('bottom')
+        gc.colorbar.set_pad(0.0)
+        gc.colorbar.set_font(size=20)
+        gc.colorbar.set_axis_label_font(size=20)
+        gc.colorbar.set_location('bottom')
+        gc.colorbar.set_font(size=20)
+        gc.colorbar.set_axis_label_text(r'$\mathrm{Surface \; Brightness \; [10^{-17} \; erg \; cm^{-2} \; '
+                                        r's^{-1} \; arcsec^{-2}]}$')
+
+        # Hide
+        gc.ticks.hide()
+        gc.tick_labels.hide()
+        gc.axis_labels.hide()
+        gc.ticks.set_length(30)
+        plt.savefig(cubename + '_SB.pdf', bbox_inches='tight')
 
 
 MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_2D=args.s, kernel_2D=args.k, smooth_1D=args.s_spe,
                kernel_1D=args.k_spe, npixels=args.npixels, connectivity=args.connectivity, max_num_nebulae=args.n,
                num_bkg_slice=args.ns, RescaleVariance=toBool[args.rv], AddBackground=toBool[args.ab],
                CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi],
-               SumSmoothedFlux=toBool[args.ssf], SelectLambda=args.sl)
+               SumSmoothedFlux=toBool[args.ssf], SelectLambda=args.sl, level=args.l)
 
 
 # TEX0206 lambda [7925, 7962]
