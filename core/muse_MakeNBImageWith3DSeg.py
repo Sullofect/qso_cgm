@@ -262,7 +262,10 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
     header.remove('CUNIT3')
     header.remove('CRPIX3')
     header.remove('CRVAL3')
-    header.remove('CRDER3')
+    try:
+        header.remove('CRDER3')
+    except KeyError:
+        pass
     header.remove('BUNIT')
     header.remove('CD3_3')
     header.remove('CD1_3')
@@ -284,7 +287,7 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('gist_heat_r'), stretch='arcsinh')
         gc.show_colorscale(vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'), stretch='linear')
         # gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
-        gc.show_contour(filename_SB, levels=[level], color='k', linewidths=2, smooth=5, kernel='box')
+        gc.show_contour(filename_SB, hdu=1, levels=[level], color='k', linewidths=2, smooth=5, kernel='box')
         gc.set_system_latex(True)
 
         # Colorbar
@@ -310,14 +313,17 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         # Plot Original
         fig = plt.figure(figsize=(8, 8), dpi=300)
         hdul_SB_ori = fits.open(cubename + '_SB.fits')
-        hdul_SB_ori[1].header.remove('CRDER3')
+        try:
+            hdul_SB_ori[1].header.remove('CRDER3')
+        except KeyError:
+            pass
         hdul_SB_ori[1].data /= 1e-17
         hdul_SB_ori.writeto(cubename + '_SB_ori.fits', overwrite=True)
         gc = aplpy.FITSFigure(cubename + '_SB_ori.fits', figure=fig, hdu=1, north=True)
         # gc.show_colorscale(vmin=0, vmid=0.2, vmax=15, cmap=plt.get_cmap('gist_heat_r'), stretch='arcsinh')
         gc.show_colorscale(vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'), stretch='linear')
         # gc.recenter(ra_center, dec_center, width=30 / 3600, height=30 / 3600)
-        gc.show_contour(filename_SB, levels=[level], color='k', linewidths=2, smooth=5, kernel='box')
+        gc.show_contour(cubename + '_SB_ori.fits', hdu=1, levels=[level], color='k', linewidths=2, smooth=5, kernel='box')
         gc.set_system_latex(True)
 
         # Colorbar
@@ -345,6 +351,3 @@ MakeNBImage_MC(cubename=args.m, S_N_thr=args.t, smooth_2D=args.s, kernel_2D=args
                num_bkg_slice=args.ns, RescaleVariance=toBool[args.rv], AddBackground=toBool[args.ab],
                CheckSegmentation=toBool[args.csm], CheckSpectra=args.cs, PlotNBImage=toBool[args.pi],
                SumSmoothedFlux=toBool[args.ssf], SelectLambda=args.sl, level=args.l)
-
-
-# TEX0206 lambda [7925, 7962]
