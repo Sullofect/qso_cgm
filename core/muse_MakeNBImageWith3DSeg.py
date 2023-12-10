@@ -75,8 +75,10 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
     cubename = '{}'.format(cubename)
     path_cube = cubename + '.fits'
     header = fits.getheader(path_cube, ext=1)
-    filename_SB = cubename + '_SB_3DSeg.fits'
-    filename_3Dseg = cubename + '_3DSeg.fits'
+    filename_SB = cubename + '_SB_3DSeg_{}_{}_{}_{}.fits'.format(smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+    filename_3Dseg = cubename + '_3DSeg_{}_{}_{}_{}.fits'.format(smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+    filename_smoothed = '{}_{}_{}_{}_{}.fits'.format(cubename, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+    figurename = cubename + '_SB_3DSeg_{}_{}_{}_{}.pdf'.format(smooth_2D, kernel_2D, smooth_1D, kernel_1D)
     cube = Cube(path_cube)
     if SelectLambda is not None:
         cube = cube.select_lambda(SelectLambda[0], SelectLambda[1])
@@ -126,7 +128,6 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         print('Variance rescaling factor has mean value of {} and std of {}'.format(np.mean(value_rescale),
                                                                                     np.std(value_rescale)))
         flux_err = flux_err * np.sqrt(value_rescale)[:, np.newaxis, np.newaxis]
-    filename_smoothed = '{}_{}_{}_{}_{}.fits'.format(cubename, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
     cube_smoothed = cube.clone(data_init=np.empty, var_init=np.empty)
     cube_smoothed.data = flux * 1e3
     cube_smoothed.var = (flux_err * 1e3) ** 2
@@ -241,7 +242,6 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
         ax.imshow(nebulae_seg[0, :, :], origin='lower', cmap=plt.get_cmap('tab20c'))
         ax.imshow(bkg_seg[0, :, :], origin='lower', cmap=plt.get_cmap('binary_r'))
-        print(np.shape(bkg_seg))
         figurename = cubename + '_CheckSegmentation.pdf'
         plt.savefig(figurename)
 
@@ -307,7 +307,6 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         gc.tick_labels.hide()
         gc.axis_labels.hide()
         gc.ticks.set_length(30)
-        figurename = cubename + '_SB_3DSeg.pdf'
         plt.savefig(figurename, bbox_inches='tight')
 
         # Plot Original

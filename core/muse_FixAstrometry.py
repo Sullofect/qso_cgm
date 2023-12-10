@@ -918,6 +918,62 @@ def CopyCurrentObjWithAstrometry(cubename=None):
         os.rename(os.path.join(path_obj_gaia, spec1D_i), os.path.join(path_obj_gaia, spec1D_f))
         os.rename(os.path.join(path_obj_gaia, spec2D_i), os.path.join(path_obj_gaia, spec2D_f))
 
+
+def UpdateHE0238(cubename='HE0238-1904'):
+    path_obj = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_spec1D'.format(cubename)
+    path_obj_ori = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_spec1D/ESO_DEEP_offset_zapped_spec1D'.\
+        format(cubename)
+
+    #
+    path_obj_obj = os.path.join(path_obj, '{}_ESO-DEEP_ZAP_objects.fits'.format(cubename))
+    path_obj_bkp = os.path.join(path_obj, '{}_ESO-DEEP_ZAP_objects_bkp.fits'.format(cubename))
+    path_obj_obj_ori = os.path.join(path_obj_ori, 'ESO_DEEP_offset_zapped_objects.fits')
+    path_obj_bkp_ori = os.path.join(path_obj_ori, 'ESO_DEEP_offset_zapped_objects_bkp.fits')
+
+    # Open files
+    hdul_obj_obj = fits.open(path_obj_obj)
+    hdul_obj_bkp = fits.open(path_obj_bkp)
+    hdul_obj_obj_ori = fits.open(path_obj_obj_ori)
+    hdul_obj_bkp_ori = fits.open(path_obj_bkp_ori)
+    match_obj = np.in1d(hdul_obj_obj[1].data['name'], hdul_obj_obj_ori[1].data['name'])
+    match_bkp = np.in1d(hdul_obj_bkp[1].data['name'], hdul_obj_bkp_ori[1].data['name'])
+    match_obj_r = np.in1d(hdul_obj_obj_ori[1].data['name'], hdul_obj_obj[1].data['name'])
+    match_bkp_r = np.in1d(hdul_obj_bkp_ori[1].data['name'], hdul_obj_bkp[1].data['name'])
+    print(len(match_obj[match_obj == True]))
+    print(match_obj, hdul_obj_obj[1].data['name'], hdul_obj_obj_ori[1].data['name'])
+    raise ValueError('testing')
+
+    # Update each redshift measurement
+    for i, i_val in enumerate(hdul_obj_obj[1].data[match_obj]):
+        hdul_obj_obj[1].data['radius'][match_obj] = hdul_obj_obj_ori[1].data['radius'][match_obj_r]
+        hdul_obj_obj[1].data['class'][match_obj] = hdul_obj_obj_ori[1].data['class'][match_obj_r]
+        hdul_obj_obj[1].data['quality'][match_obj] = hdul_obj_obj_ori[1].data['quality'][match_obj_r]
+        hdul_obj_obj[1].data['redshift'][match_obj] = hdul_obj_obj_ori[1].data['redshift'][match_obj_r]
+        hdul_obj_obj[1].data['comment'][match_obj] = hdul_obj_obj_ori[1].data['comment'][match_obj_r]
+        hdul_obj_bkp[1].data['radius'][match_bkp] = hdul_obj_bkp_ori[1].data['radius'][match_bkp_r]
+        hdul_obj_bkp[1].data['class'][match_bkp] = hdul_obj_bkp_ori[1].data['class'][match_bkp_r]
+        hdul_obj_bkp[1].data['quality'][match_bkp] = hdul_obj_bkp_ori[1].data['quality'][match_bkp_r]
+        hdul_obj_bkp[1].data['redshift'][match_bkp] = hdul_obj_bkp_ori[1].data['redshift'][match_bkp_r]
+        hdul_obj_bkp[1].data['comment'][match_bkp] = hdul_obj_bkp_ori[1].data['comment'][match_bkp_r]
+
+        dat_ori_i, dat_i = hdul_obj_obj_ori[1].data[match_obj_r][i], hdul_obj_obj[1].data[match_obj][i]
+        redshift_i = '{}_{}_{}_redshift.fits'.format(dat_ori_i['row'], dat_ori_i['id'], dat_ori_i['name'])
+        spec1D_i = '{}_{}_{}_spec1D.fits'.format(dat_ori_i['row'], dat_ori_i['id'], dat_ori_i['name'])
+        spec2D_i = '{}_{}_{}_spec2D.fits'.format(dat_ori_i['row'], dat_ori_i['id'], dat_ori_i['name'])
+        redshift_f = '{}_{}_{}_redshift.fits'.format(dat_i['row'], dat_i['id'], dat_i['name'])
+        spec1D_f = '{}_{}_{}_spec1D.fits'.format(dat_i['row'], dat_i['id'], dat_i['name'])
+        spec2D_f = '{}_{}_{}_spec2D.fits'.format(dat_i['row'], dat_i['id'], dat_i['name'])
+        os.rename(os.path.join(path_obj_ori, redshift_i), os.path.join(path_obj_ori, redshift_f))
+        os.rename(os.path.join(path_obj_ori, spec1D_i), os.path.join(path_obj_ori, spec1D_f))
+        os.rename(os.path.join(path_obj_ori, spec2D_i), os.path.join(path_obj_ori, spec2D_f))
+
+    hdul_obj_obj.writeto(path_obj_obj, overwrite=True)
+    hdul_obj_bkp.writeto(path_obj_bkp, overwrite=True)
+
+# Update HE0238-1904 unlikely to use again!!!!
+UpdateHE0238()
+
+
 #
 # FixCubeHeader(cubename='PKS0552-640')
 
@@ -940,6 +996,7 @@ def CopyCurrentObjWithAstrometry(cubename=None):
 # FixAstrometry(cubename='PG1522+101', deblend_hst=True, checkMUSE=True, checkHST=True) # HST good
 # FixAstrometry(cubename='HE1003+0149', checkMUSE=True, checkHST=True) # HST good
 # FixAstrometry(cubename='PKS0405-123', checkMUSE=True, checkHST=True) # HST good
+# FixAstrometry(cubename='HE0238-1904', checkMUSE=True, checkHST=True) # needs to be fixed
 
 
 # Fix Dat
@@ -1015,4 +1072,17 @@ def CopyCurrentObjWithAstrometry(cubename=None):
 
 # Copy Current Obj
 # CopyCurrentObjWithAstrometry(cubename='Q0107-0235')
+# CopyCurrentObjWithAstrometry(cubename='PB6291')
+# CopyCurrentObjWithAstrometry(cubename='HE0153-4520')
+# CopyCurrentObjWithAstrometry(cubename='3C57')
+# CopyCurrentObjWithAstrometry(cubename='TEX0206-048')
+# CopyCurrentObjWithAstrometry(cubename='HE0226-4110')
+# CopyCurrentObjWithAstrometry(cubename='PKS0232-04')
+# CopyCurrentObjWithAstrometry(cubename='HE0435-5304')
+# CopyCurrentObjWithAstrometry(cubename='HE0439-5254')
 # CopyCurrentObjWithAstrometry(cubename='PKS0552-640')
+# CopyCurrentObjWithAstrometry(cubename='Q1354+048')
+# CopyCurrentObjWithAstrometry(cubename='LBQS1435-0134')
+# CopyCurrentObjWithAstrometry(cubename='PG1522+101')
+# CopyCurrentObjWithAstrometry(cubename='HE1003+0149')
+# CopyCurrentObjWithAstrometry(cubename='PKS0405-123')

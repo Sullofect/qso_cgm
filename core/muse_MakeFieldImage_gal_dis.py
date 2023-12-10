@@ -110,8 +110,8 @@ rv = np.linspace(-2000, 2000, 1000)
 plt.figure(figsize=(8, 5), dpi=300)
 # plt.vlines(0, 0, 15, linestyles='--', color='k', label=r"$\mathrm{QSO's \; redshift}$")
 plt.hist(v_gal_qso, bins=bins_final, color='k', histtype='step', label=r'$v_{\rm all}$')
-plt.hist(v_above, bins=bins_final, facecolor='orange', histtype='stepfilled', alpha=0.5, label=r'$v_{\rm orange}$')
-plt.hist(v_below, bins=bins_final, facecolor='purple', histtype='stepfilled', alpha=0.5, label=r'$v_{\rm purple}$')
+# plt.hist(v_above, bins=bins_final, facecolor='orange', histtype='stepfilled', alpha=0.5, label=r'$v_{\rm orange}$')
+# plt.hist(v_below, bins=bins_final, facecolor='purple', histtype='stepfilled', alpha=0.5, label=r'$v_{\rm purple}$')
 plt.plot(rv, result.x[4] * normalization_all * norm.pdf(rv, result.x[0], result.x[1]), '--', c='b', lw=1, alpha=1,
          label=r'$P_{1} = \,$' + str("{0:.2f}".format(result.x[4])) +
                '\n' + r'$\mu_{1} = \, $' + str("{0:.0f}".format(result.x[0]))
@@ -149,8 +149,8 @@ regions_label = Regions.read(path_label, format='ds9')
 
 # Plot
 fig = plt.figure(figsize=(8, 8), dpi=300)
-gc1 = aplpy.FITSFigure(path_hb, figure=fig, north=True)
-gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
+gc1 = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
+gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
 gc.set_xaxis_coord_type('scalar')
 gc.set_yaxis_coord_type('scalar')
 gc1.set_xaxis_coord_type('scalar')
@@ -165,8 +165,8 @@ N1 = [np.array([[40.1288438, 40.1428230, 40.1324189, 40.1228938],
                 [-18.8577309, -18.8709429, -18.8766207, -18.8610104]])]
 N2 = [np.array([[40.1289217, 40.1429009, 40.1489166, 40.1394084],
                 [-18.8576894, -18.8709014, -18.8676171, -18.8519788]])]
-gc.show_polygons(N1, color='purple', linestyle='-', lw=2, alpha=0.5, zorder=1)
-gc.show_polygons(N2, color='orange', linestyle='-', lw=2, alpha=0.5, zorder=1)
+# gc.show_polygons(N1, color='purple', linestyle='-', lw=2, alpha=0.5, zorder=1)
+# gc.show_polygons(N2, color='orange', linestyle='-', lw=2, alpha=0.5, zorder=1)
 
 #
 gc.recenter(40.1359, -18.8643, width=90/3600, height=90/3600)
@@ -238,4 +238,4 @@ gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
 gc.add_label(0.87, 0.97, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=15, relative=True)
 gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
 gc.add_label(0.47, 0.30, r"$\rm 30'' \times 30''$", size=15, relative=True)
-fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis_2.png', bbox_inches='tight')
+fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis.png', bbox_inches='tight')

@@ -21,9 +21,9 @@ mpl.rcParams['ytick.major.size'] = 12
 
 
 # Preliminary
-def LoadFieldGals(cubename=None, z_qso=None):
-    path = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes' \
-           '/{}_ESO-DEEP_ZAP_spec1D/{}_ESO-DEEP_ZAP_objects.fits'.format(cubename, cubename)
+def LoadFieldGals(cubename=None, z_qso=None, ):
+    path = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia' \
+           '/{}_ESO-DEEP_ZAP_gaia_spec1D/{}_ESO-DEEP_ZAP_gaia_objects.fits'.format(cubename, cubename)
     data = fits.getdata(path, 1, ignore_missing_end=True)
 
     # Basic information in catalog
@@ -60,7 +60,7 @@ def LoadFieldGals(cubename=None, z_qso=None):
     output = np.array([bins_ggp, row_ggp, ID_ggp, z_ggp, v_ggp, name_ggp, ql_ggp, ra_ggp, dec_ggp], dtype=object)
 
     #
-    filename = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info.fits'.format(cubename)
+    filename = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
     # if os.path.isfile(filename) is not True:
     t = Table()
     t['row'] = row_ggp
@@ -77,7 +77,8 @@ def LoadFieldGals(cubename=None, z_qso=None):
 
 #
 def MakeFieldImage(cubename=None):
-    path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}.png'.format(cubename)
+    path_savefig_mini = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mini_gaia.png'.format(cubename)
+    path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_gaia.png'.format(cubename)
 
     # Load info
     path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
@@ -91,14 +92,45 @@ def MakeFieldImage(cubename=None):
                                                                                                z_qso=z_qso)
     print(ra_gal)
     # Load the image
-    path_hb = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_drc_offset.fits'.format(cubename)
+    path_hb = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_drc_offset_gaia.fits'.format(cubename)
     # data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
 
 
     # Figure
     fig = plt.figure(figsize=(8, 8), dpi=300)
-    gc1 = aplpy.FITSFigure(path_hb, figure=fig, north=True)
-    gc = aplpy.FITSFigure(path_hb, figure=fig, north=True)
+    gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
+    gc.set_xaxis_coord_type('scalar')
+    gc.set_yaxis_coord_type('scalar')
+
+
+    #
+    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
+
+    #
+    gc.set_system_latex(True)
+    gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+    gc.add_colorbar()
+    gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
+    gc.colorbar.hide()
+
+    # Hide ticks
+    gc.ticks.set_length(30)
+    gc.ticks.hide()
+    gc.tick_labels.hide()
+    gc.axis_labels.hide()
+
+    # Markers
+    gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
+                    edgecolors='k', linewidths=0.5, s=800)
+    gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
+
+    # Labels
+    fig.savefig(path_savefig_mini, bbox_inches='tight')
+
+    # Figure
+    fig = plt.figure(figsize=(8, 8), dpi=300)
+    gc1 = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
+    gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
     gc.set_xaxis_coord_type('scalar')
     gc.set_yaxis_coord_type('scalar')
     gc1.set_xaxis_coord_type('scalar')
@@ -167,7 +199,7 @@ def MakeFieldImage(cubename=None):
 # MakeFieldImage(cubename='HE0153-4520')
 # MakeFieldImage(cubename='3C57')
 # MakeFieldImage(cubename='TEX0206-048')
-# MakeFieldImage(cubename='HE0226-4110')
+MakeFieldImage(cubename='HE0226-4110')
 # MakeFieldImage(cubename='PKS0232-04')
 # MakeFieldImage(cubename='HE0435-5304')
 # MakeFieldImage(cubename='HE0439-5254')
@@ -177,3 +209,4 @@ def MakeFieldImage(cubename=None):
 # MakeFieldImage(cubename='PG1522+101')
 # MakeFieldImage(cubename='HE1003+0149')
 # MakeFieldImage(cubename='PKS0405-123')
+# MakeFieldImage(cubename='HE0238-1904')
