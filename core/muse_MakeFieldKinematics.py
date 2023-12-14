@@ -30,6 +30,7 @@ path_SB = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB'
 c_kms = 2.998e5
 wave_OII3727_vac = 3727.092
 wave_OII3729_vac = 3729.875
+wave_OII3728_vac = (wave_OII3727_vac + wave_OII3729_vac) / 2
 wave_Hbeta_vac = 4862.721
 wave_OIII5008_vac = 5008.239
 
@@ -83,24 +84,45 @@ def model_OII_OIII(wave_vac, **params):
         m_OII = np.zeros_like(wave_OII_vac)
         m_OIII5008 = np.zeros_like(wave_OIII_vac)
 
-    for i in range(params['OII']):
-        z = params['z_{}'.format(i + 1)]
-        sigma_kms = params['sigma_kms_{}'.format(i + 1)]
-        flux_OII = params['flux_OII_{}'.format(i + 1)]
+    if params['OII'] == 2:
+        z_1, sigma_kms_1, flux_OII_1 = params['z_1'], params['sigma_kms_1'], params['flux_OII_1']
+        z_2, sigma_kms_2, flux_OII_2 = params['z_2'], params['sigma_kms_2'], params['flux_OII_2']
         if params['ResolveOII']:
-            r_OII3729_3727 = params['r_OII3729_3727_{}'.format(i + 1)]
-            m_OII_i = model_OII(wave_OII_vac, z, sigma_kms, flux_OII, r_OII3729_3727)
+            r_OII3729_3727_1 = params['r_OII3729_3727_1']
+            r_OII3729_3727_2 = params['r_OII3729_3727_2']
+            m_OII_1 = model_OII(wave_OII_vac, z_1, sigma_kms_1, flux_OII_1, r_OII3729_3727_1)
+            m_OII_2 = model_OII(wave_OII_vac, z_2, sigma_kms_2, flux_OII_2, r_OII3729_3727_2)
         else:
-            m_OII_i = Gaussian(wave_OII_vac, z, sigma_kms, flux_OII, params['OII_center'])
-        m_OII += m_OII_i
+            m_OII_1 = Gaussian(wave_OII_vac, z_1, sigma_kms_1, flux_OII_1, params['OII_center'])
+            m_OII_2 = Gaussian(wave_OII_vac, z_2, sigma_kms_2, flux_OII_2, params['OII_center'])
+        m_OII = m_OII_1 + m_OII_2
+
+    else:
+        for i in range(params['OII']):
+            z = params['z_{}'.format(i + 1)]
+            sigma_kms = params['sigma_kms_{}'.format(i + 1)]
+            flux_OII = params['flux_OII_{}'.format(i + 1)]
+            if params['ResolveOII']:
+                r_OII3729_3727 = params['r_OII3729_3727_{}'.format(i + 1)]
+                m_OII_i = model_OII(wave_OII_vac, z, sigma_kms, flux_OII, r_OII3729_3727)
+            else:
+                m_OII_i = Gaussian(wave_OII_vac, z, sigma_kms, flux_OII, params['OII_center'])
+            m_OII += m_OII_i
 
     #
-    for i in range(params['OIII']):
-        z = params['z_{}'.format(i + 1)]
-        sigma_kms = params['sigma_kms_{}'.format(i + 1)]
-        flux_OIII5008 = params['flux_OIII5008_{}'.format(i + 1)]
-        m_OIII5008_i = Gaussian(wave_OIII_vac, z, sigma_kms, flux_OIII5008, wave_OIII5008_vac)
-        m_OIII5008 += m_OIII5008_i
+    if params['OII'] == 2:
+        z_1, sigma_kms_1, flux_OIII5008_1 = params['z_1'], params['sigma_kms_1'], params['flux_OIII5008_1']
+        z_2, sigma_kms_2, flux_OIII5008_2 = params['z_2'], params['sigma_kms_2'], params['flux_OIII5008_2']
+        m_OIII5008_1 = Gaussian(wave_OIII_vac, z_1, sigma_kms_1, flux_OIII5008_1, wave_OIII5008_vac)
+        m_OIII5008_2 = Gaussian(wave_OIII_vac, z_2, sigma_kms_2, flux_OIII5008_2, wave_OIII5008_vac)
+        m_OIII5008 = m_OIII5008_1 + m_OIII5008_2
+    else:
+        for i in range(params['OIII']):
+            z = params['z_{}'.format(i + 1)]
+            sigma_kms = params['sigma_kms_{}'.format(i + 1)]
+            flux_OIII5008 = params['flux_OIII5008_{}'.format(i + 1)]
+            m_OIII5008_i = Gaussian(wave_OIII_vac, z, sigma_kms, flux_OIII5008, wave_OIII5008_vac)
+            m_OIII5008 += m_OIII5008_i
 
     if params['OIII'] == 0:
         return m_OII + params['a'] * wave_vac + params['b']
@@ -111,8 +133,8 @@ def model_OII_OIII(wave_vac, **params):
                           m_OIII5008 + params['a_OIII5008'] * wave_OIII_vac + params['b_OIII5008']))
 
 
-def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-             kernel_1D=None, CheckGuess=None, width_OII=10, width_OIII=10, UseSmoothedCubes=True, UseDetectionSeg=None):
+def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gauss', None, None),
+             CheckGuess=None, width_OII=10, width_OIII=10, UseSmoothedCubes=True, UseDetectionSeg=None):
     # Define line
     if fit_param['OII'] >= 1 and fit_param['OIII'] == 0:
         line = 'OII'
@@ -121,16 +143,16 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
     else:
         line = 'OII+OIII'
 
+    if zapped:
+        str_zap = '_zapped'
+    else:
+        str_zap = ''
+
     # Load qso information
     path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
-
-    if zapped:
-        str_zap = '_zapped'
-    else:
-        str_zap = ''
 
     # Load cubes and calculate initial conditions
     if line == 'OII+OIII':
@@ -138,28 +160,23 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
         path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
             format(cubename, str_zap, line_OII)
         path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                                 '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, smooth_2D,
-                                                        kernel_2D, smooth_1D, kernel_1D)
+                                 '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDataSeg)
         path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
             format(cubename, str_zap, line_OIII)
         path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                                  '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, smooth_2D,
-                                                         kernel_2D, smooth_1D, kernel_1D)
+                                  '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDataSeg)
         if UseDetectionSeg is not None:
             path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line_OII, UseDetectionSeg[0], UseDetectionSeg[1],
-                       UseDetectionSeg[2], UseDetectionSeg[3])
+                format(cubename, str_zap, line_OII, *UseDetectionSeg)
             path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line_OIII, UseDetectionSeg[0], UseDetectionSeg[1],
-                       UseDetectionSeg[2], UseDetectionSeg[3])
+                format(cubename, str_zap, line_OIII, *UseDetectionSeg)
         else:
             path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line_OII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+                format(cubename, str_zap, line_OII, *UseDataSeg)
             path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line_OIII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+                format(cubename, str_zap, line_OIII, *UseDataSeg)
         path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
-            format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']),
-                   smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+            format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
         path_cube = path_cube_OII
 
         # Load data and smoothing
@@ -170,29 +187,30 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
         wave_OII_vac, wave_OIII_vac = pyasl.airtovac2(cube_OII.wave.coord()), pyasl.airtovac2(cube_OIII.wave.coord())
         flux_OII, flux_err_OII = cube_OII.data * 1e-3, np.sqrt(cube_OII.var) * 1e-3
         flux_OIII, flux_err_OIII = cube_OIII.data * 1e-3, np.sqrt(cube_OIII.var) * 1e-3
-        seg_3D_OII, seg_3D_OIII = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
-        mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII, axis=0), np.sum(seg_3D_OIII, axis=0)
-        flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII, flux_OIII * seg_3D_OIII
+        seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
+        seg_3D_ori = np.vstack((seg_3D_OII_ori, seg_3D_OIII_ori))
+        mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
+        flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
 
         # Extend over
-        start_OII = (seg_3D_OII != 0).argmax(axis=0)
+        start_OII = (seg_3D_OII_ori != 0).argmax(axis=0)
         end_OII = start_OII + mask_seg_OII
         start_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), start_OII, start_OII - width_OII)
         end_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), end_OII, end_OII + width_OII)
-        idx_OII = np.zeros_like(seg_3D_OII)
-        idx_OII[:] = np.arange(np.shape(seg_3D_OII)[0])[:, np.newaxis, np.newaxis]
+        idx_OII = np.zeros_like(seg_3D_OII_ori)
+        idx_OII[:] = np.arange(np.shape(seg_3D_OII_ori)[0])[:, np.newaxis, np.newaxis]
         seg_3D_OII = np.where((idx_OII >= end_OII[np.newaxis, :, :]) | (idx_OII < start_OII[np.newaxis, :, :]),
-                              seg_3D_OII, 1)
+                              seg_3D_OII_ori, 1)
 
         # [O III]
-        start_OIII = (seg_3D_OIII != 0).argmax(axis=0)
+        start_OIII = (seg_3D_OIII_ori != 0).argmax(axis=0)
         end_OIII = start_OIII + mask_seg_OIII
         start_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), start_OIII, start_OIII - width_OIII)
         end_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), end_OIII, end_OIII + width_OIII)
-        idx_OIII = np.zeros_like(seg_3D_OIII)
-        idx_OIII[:] = np.arange(np.shape(seg_3D_OIII)[0])[:, np.newaxis, np.newaxis]
+        idx_OIII = np.zeros_like(seg_3D_OIII_ori)
+        idx_OIII[:] = np.arange(np.shape(seg_3D_OIII_ori)[0])[:, np.newaxis, np.newaxis]
         seg_3D_OIII = np.where((idx_OIII >= end_OIII[np.newaxis, :, :]) | (idx_OIII < start_OIII[np.newaxis, :, :]),
-                               seg_3D_OIII, 1)
+                               seg_3D_OIII_ori, 1)
         flux_OII, flux_err_OII = flux_OII * seg_3D_OII, flux_err_OII * seg_3D_OII
         flux_OIII, flux_err_OIII = flux_OIII * seg_3D_OIII, flux_err_OIII * seg_3D_OIII
 
@@ -215,8 +233,8 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
             np.take_along_axis(wave_array, np.argmin(np.abs(flux_cumsum - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
         wave_90 = \
             np.take_along_axis(wave_array, np.argmin(np.abs(flux_cumsum - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
-        z_guess_array_OII = (wave_50 - 3728) / 3728
-        sigma_kms_guess_array_OII = c_kms * (wave_90 - wave_10) / (3728 * (1 + z_guess_array_OII))
+        z_guess_array_OII = (wave_50 - wave_OII3728_vac) / wave_OII3728_vac
+        sigma_kms_guess_array_OII = c_kms * (wave_90 - wave_10) / (wave_OII3728_vac * (1 + z_guess_array_OII))
         sigma_kms_guess_array_OII /= 2.563  # W_80 = 2.563sigma
 
         # Moments for OIII
@@ -231,8 +249,8 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
             np.take_along_axis(wave_array, np.argmin(np.abs(flux_cumsum - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
         wave_90 = \
             np.take_along_axis(wave_array, np.argmin(np.abs(flux_cumsum - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
-        z_guess_array_OIII = (wave_50 - 5008.239) / 5008.239
-        sigma_kms_guess_array_OIII = c_kms * (wave_90 - wave_10) / (5008.239 * (1 + z_guess_array_OIII))
+        z_guess_array_OIII = (wave_50 - wave_OIII5008_vac) / wave_OIII5008_vac
+        sigma_kms_guess_array_OIII = c_kms * (wave_90 - wave_10) / (wave_OIII5008_vac * (1 + z_guess_array_OIII))
         sigma_kms_guess_array_OIII /= 2.563  # W_80 = 2.563sigma
 
         # Use [O III] if possible
@@ -247,8 +265,6 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
                                          (sigma_kms_guess_array > sigma_mean - 1 * sigma_std),
                                          sigma_kms_guess_array, sigma_mean)
         flux_guess_array_OII, flux_guess_array_OIII = np.max(flux_OII, axis=0), np.max(flux_OIII, axis=0)
-        print(sigma_std)
-        # print(mask_seg_OII[CheckSpectra[1], CheckSpectra[0]], mask_seg_OIII[CheckSpectra[1], CheckSpectra[0]])
         print(z_guess_array[CheckGuess[1], CheckGuess[0]])
         print(sigma_kms_guess_array[CheckGuess[1], CheckGuess[0]])
         print(flux_guess_array_OII[CheckGuess[1], CheckGuess[0]],
@@ -261,17 +277,15 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
         path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
             format(cubename, str_zap, line)
         path_cube_smoothed = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
-                             '{}_{}.fits'.format(cubename, str_zap, line, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+                             '{}_{}.fits'.format(cubename, str_zap, line, *UseDataSeg)
         if UseDetectionSeg is not None:
             path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
-                format(cubename, str_zap, line, UseDetectionSeg[0], UseDetectionSeg[1],
-                       UseDetectionSeg[2], UseDetectionSeg[3])
+                format(cubename, str_zap, line, *UseDetectionSeg)
         else:
             path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
-                format(cubename, str_zap, line, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+                format(cubename, str_zap, line, *UseDataSeg)
         path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
-            format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']),
-                   smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+            format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
 
         # Load data and smoothing
         if UseSmoothedCubes:
@@ -280,16 +294,16 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
             cube = Cube(path_cube)
         wave_vac = pyasl.airtovac2(cube.wave.coord())
         flux, flux_err = cube.data * 1e-3, np.sqrt(cube.var) * 1e-3
-        seg_3D = fits.open(path_3Dseg)[0].data
-        mask_seg = np.sum(seg_3D, axis=0)
-        flux_seg = flux * seg_3D
-        start = (seg_3D != 0).argmax(axis=0)
+        seg_3D_ori = fits.open(path_3Dseg)[0].data
+        mask_seg = np.sum(seg_3D_ori, axis=0)
+        flux_seg = flux * seg_3D_ori
+        start = (seg_3D_ori != 0).argmax(axis=0)
         end = start + mask_seg
         start = np.where((mask_seg > 20) | (mask_seg < 1), start, start - width)
         end = np.where((mask_seg > 20) | (mask_seg < 1), end, end + width)
-        idx = np.zeros_like(seg_3D)
-        idx[:] = np.arange(np.shape(seg_3D)[0])[:, np.newaxis, np.newaxis]
-        seg_3D = np.where((idx >= end[np.newaxis, :, :]) | (idx < start[np.newaxis, :, :]), seg_3D, 1)
+        idx = np.zeros_like(seg_3D_ori)
+        idx[:] = np.arange(np.shape(seg_3D_ori)[0])[:, np.newaxis, np.newaxis]
+        seg_3D = np.where((idx >= end[np.newaxis, :, :]) | (idx < start[np.newaxis, :, :]), seg_3D_ori, 1)
         flux *= seg_3D
         flux_err *= seg_3D
         flux_err = np.where(flux_err != 0, flux_err, np.inf)
@@ -306,8 +320,8 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
         np.take_along_axis(wave_array, np.argmin(np.abs(flux_cumsum - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
         wave_90 = \
         np.take_along_axis(wave_array, np.argmin(np.abs(flux_cumsum - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
-        z_guess_array = (wave_50 - 3728) / 3728
-        sigma_kms_guess_array = c_kms * (wave_90 - wave_10) / (3728 * (1 + z_guess_array))
+        z_guess_array = (wave_50 - wave_OII3728_vac) / wave_OII3728_vac
+        sigma_kms_guess_array = c_kms * (wave_90 - wave_10) / (wave_OII3728_vac * (1 + z_guess_array))
         sigma_kms_guess_array /= 2.563  # W_80 = 2.563sigma
         z_mean, z_median, z_std = stats.sigma_clipped_stats(z_guess_array[mask_seg != 0], sigma=3, maxiters=5)
         sigma_mean, sigma_median, sigma_std = stats.sigma_clipped_stats(sigma_kms_guess_array[mask_seg != 0],
@@ -325,6 +339,7 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
     model = model_OII_OIII
     parameters.add('OII', value=fit_param['OII'], vary=False, min=None, max=None, expr=None, brute_step=None)
     parameters.add('OIII', value=fit_param['OIII'], vary=False, min=None, max=None, expr=None, brute_step=None)
+    parameters.add('z_qso', value=z_qso, vary=False, min=None, max=None, expr=None, brute_step=None)
     parameters.add('ResolveOII', value=fit_param['ResolveOII'], vary=False, min=None, max=None,
                    expr=None, brute_step=None)
     parameters.add('OII_center', value=fit_param['OII_center'], vary=False, min=None, max=None,
@@ -332,8 +347,10 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
 
     #
     size = np.shape(flux)[1:]
-    size_3D = (np.max([fit_param['OII'], fit_param['OIII']]), size[0], size[1])
-    fit_success = np.zeros(size)
+    max_OII, max_OIII = np.max([fit_param['OII'], fit_param['OII_2nd']]), np.max([fit_param['OIII'], fit_param['OIII_2nd']])
+    size_3D = (np.max([max_OII, max_OIII]), size[0], size[1])
+    fit_success, chisqr, redchi = np.zeros(size), np.zeros(size), np.zeros(size)
+    chisqr_2, redchi_2 = np.zeros(size), np.zeros(size)
     v_fit, z_fit, dz_fit = np.zeros(size_3D), np.zeros(size_3D), np.zeros(size_3D)
     sigma_fit, dsigma_fit = np.zeros(size_3D), np.zeros(size_3D)
 
@@ -379,35 +396,34 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
         parameters.add('b_OIII5008', value=0, vary=False, min=None, max=None, expr=None, brute_step=None)
 
         # Model
-        for i in range(fit_param['OII']):
+        for i in range(max_OII):
             parameters.add_many(('z_{}'.format(i + 1), redshift_guess, True, redshift_guess - 0.05,
                                  redshift_guess + 0.05, None),
                                 ('sigma_kms_{}'.format(i + 1), sigma_kms_guess, True, 50, 2000.0, None),
-                                ('flux_OII_{}'.format(i + 1), flux_guess, True, 0, None, None))
+                                ('flux_OII_{}'.format(i + 1), flux_guess, True, 0.0, None, None))
             if fit_param['ResolveOII']:
                 parameters.add('r_OII3729_3727_{}'.format(i + 1),
                                value=r_OII3729_3727_guess, vary=True, min=0.3, max=fit_param['r_max'])
+        for i in range(max_OIII):
+            parameters.add_many(('flux_OIII5008_{}'.format(i + 1), flux_guess, True, 0.0, None, None))
 
-        for i in range(fit_param['OIII']):
-            parameters.add_many(('flux_OIII5008_{}'.format(i + 1), flux_guess, True, 0, None, None))
-
+    # 1st iteration
     # Fitting start
     for i in range(size[0]):  # i = p (y), j = q (x)
         for j in range(size[1]):
             if mask_seg[i, j] != 0:
                 # Give initial condition
+                flux_ij, flux_err_ij = flux[:, i, j], flux_err[:, i, j]
                 if line == 'OII':
                     for k in range(fit_param['OII']):
                         parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
                         parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
                         parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array[i, j]
-                        flux_ij, flux_err_ij = flux[:, i, j], flux_err[:, i, j]
                 elif line == 'OIII':
                     for k in range(fit_param['OIII']):
                         parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
                         parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
                         parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array[i, j]
-                        flux_ij, flux_err_ij = flux[:, i, j], flux_err[:, i, j]
                 elif line == 'OII+OIII':
                     for k in range(fit_param['OII']):
                         parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
@@ -426,13 +442,16 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
                     # flux_ij = np.hstack((flux_OII_ij[mask_OII], flux_OIII_ij[mask_OIII]))
                     # flux_err_ij = np.hstack((flux_err_OII_ij[mask_OII], flux_err_OIII_ij[mask_OIII]))
 
-                    flux_ij, flux_err_ij = flux[:, i, j], flux_err[:, i, j]
-
 
                 #
                 spec_model = lmfit.Model(model, missing='drop')
                 result = spec_model.fit(flux_ij, wave_vac=wave_vac, params=parameters, weights=1 / flux_err_ij)
                 fit_success[i, j] = result.success
+                seg_3D_i = seg_3D_ori[:, i, j]
+                residual = result.residual * seg_3D_i
+                chisqr[i, j], redchi[i, j] = result.chisqr, result.redchi
+                # chisqr[i, j] = np.sum(residual ** 2)
+                # redchi[i, j] = chisqr[i, j] / (mask_seg_OII[i, j] + mask_seg_OIII[i, j] - result.nvarys)
 
                 if line == 'OII':
                     a, b = result.best_values['a'], result.best_values['b']
@@ -485,7 +504,6 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
                                     result.params['r_OII3729_3727_{}'.format(k + 1)].stderr
                             r_fit[k, i, j], dr_fit[k, i, j] = r_k, dr_k
 
-
                     for k in range(fit_param['OIII']):
                         # z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
                         # sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
@@ -498,9 +516,113 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
 
     # 2nd interation  if 2nd Gaussians help
     # Calculate Chi^2
-    
+    if fit_param['OII_2nd'] != 0 or fit_param['OIII_2nd'] != 0:
+        redchi_mean, redchi_median, redchi_std = stats.sigma_clipped_stats(redchi[redchi != 0], sigma=3, maxiters=5)
+        refit_seg = np.where((redchi > 1.5), redchi, 0)
+        print(len(redchi[redchi != 0]))
+        print(len(refit_seg[refit_seg != 0]))
+        print(redchi_mean, redchi_std)
+        # plt.figure()
+        # plt.hist(redchi[redchi != 0].flatten(), bins=100, range=[-10, 100])
+        # plt.show()
+        # raise ValueError('testing')
+        # Fitting start
+        parameters['OII'].value = fit_param['OII_2nd']
+        parameters['OIII'].value = fit_param['OIII_2nd']
+        for i in range(size[0]):
+            for j in range(size[1]):
+                if refit_seg[i, j] != 0:
+                    # Give initial condition
+                    flux_ij, flux_err_ij = flux[:, i, j], flux_err[:, i, j]
+                    if line == 'OII':
+                        for k in range(fit_param['OII_2nd']):
+                            parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
+                            parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j] / 2
+                            parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array[i, j]
+                    elif line == 'OIII':
+                        for k in range(fit_param['OIII_2nd']):
+                            parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
+                            parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j] / 2
+                            parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array[i, j]
+                    elif line == 'OII+OIII':
+                        for k in range(fit_param['OII_2nd']):
+                            parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
+                            parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j] / 2
+                            # parameters['sigma_kms_{}'.format(k + 1)].max = 0.6 * sigma_fit[0, i, j]
+                            parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array_OII[i, j]
+                        # parameters['z_1'].max = z_fit[0, i, j]
+                        # parameters['z_2'].min = z_fit[0, i, j]
+                        for k in range(fit_param['OIII_2nd']):
+                            parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array_OIII[i, j]
 
+                    #
+                    spec_model = lmfit.Model(model, missing='drop')
+                    result = spec_model.fit(flux_ij, wave_vac=wave_vac, params=parameters, weights=1 / flux_err_ij)
+                    fit_success[i, j] = result.success
+                    # residual = result.residual
+                    chisqr_2[i, j], redchi_2[i, j] = result.chisqr, result.redchi
 
+                    if line == 'OII':
+                        a, b = result.best_values['a'], result.best_values['b']
+                        da, db = result.params['a'].stderr, result.params['b'].stderr
+                        a_fit[i, j], b_fit[i, j] = a, b
+                        da_fit[i, j], db_fit[i, j] = da, db
+
+                        for k in range(fit_param['OII_2nd']):
+                            z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
+                            sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
+                                                result.params['sigma_kms_{}'.format(k + 1)].stderr
+                            flux_f_OII_k, dflux_f_OII_k = result.best_values['flux_OII_{}'.format(k + 1)], \
+                                                          result.params['flux_OII_{}'.format(k + 1)].stderr
+                            v_fit[k, i, j], z_fit[k, i, j], dz_fit[k, i, j] = c_kms * (z_k - z_qso) / (1 + z_qso), z_k, dz_k
+                            sigma_fit[k, i, j], dsigma_fit[k, i, j] = sigma_k, dsigma_k
+                            flux_fit[k, i, j], dflux_fit[k, i, j] = flux_f_OII_k, dflux_f_OII_k
+
+                            if fit_param['ResolveOII']:
+                                r_k, dr_k = result.best_values['r_OII3729_3727_{}'.format(k + 1)], \
+                                        result.params['r_OII3729_3727_{}'.format(k + 1)].stderr
+                                r_fit[k, i, j], dr_fit[k, i, j] = r_k, dr_k
+                    elif line == 'OIII':
+                        flux_f_OIII, dflux_f_OIII = result.best_values['flux_OIII5008'], result.params['flux_OIII5008'].stderr
+                        a, b = result.best_values['a'], result.best_values['b']
+                        da, db = result.params['a'].stderr, result.params['b'].stderr
+                        flux_fit[i, j], dflux_fit[i, j] = flux_f_OIII, dflux_f_OIII
+                        a_fit[i, j], b_fit[i, j] = a, b
+                        da_fit[i, j], db_fit[i, j] = da, db
+                    elif line == 'OII+OIII':
+                        a_OII, b_OII = result.best_values['a_OII'], result.best_values['b_OII']
+                        da_OII, db_OII = result.params['a_OII'].stderr, result.params['b_OII'].stderr
+                        a_OIII, b_OIII = result.best_values['a_OIII5008'], result.best_values['b_OIII5008']
+                        da_OIII, db_OIII = result.params['a_OIII5008'].stderr, result.params['b_OIII5008'].stderr
+                        a_OII_fit[i, j], da_OII_fit[i, j], b_OII_fit[i, j], db_OII_fit[i, j] = a_OII, da_OII, b_OII, db_OII
+                        a_OIII_fit[i, j], da_OIII_fit[i, j] = a_OIII, da_OIII
+                        b_OIII_fit[i, j], db_OIII_fit[i, j] = b_OIII, db_OIII
+
+                        for k in range(fit_param['OII_2nd']):
+                            z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
+                            sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
+                                                result.params['sigma_kms_{}'.format(k + 1)].stderr
+                            flux_f_OII_k, dflux_f_OII_k = result.best_values['flux_OII_{}'.format(k + 1)], \
+                                                          result.params['flux_OII_{}'.format(k + 1)].stderr
+                            v_fit[k, i, j], z_fit[k, i, j], dz_fit[k, i, j] = c_kms * (z_k - z_qso) / (1 + z_qso), z_k, dz_k
+                            sigma_fit[k, i, j], dsigma_fit[k, i, j] = sigma_k, dsigma_k
+                            flux_OII_fit[k, i, j], dflux_OII_fit[k, i, j] = flux_f_OII_k, dflux_f_OII_k
+
+                            if fit_param['ResolveOII']:
+                                r_k, dr_k = result.best_values['r_OII3729_3727_{}'.format(k + 1)], \
+                                        result.params['r_OII3729_3727_{}'.format(k + 1)].stderr
+                                r_fit[k, i, j], dr_fit[k, i, j] = r_k, dr_k
+
+                        for k in range(fit_param['OIII_2nd']):
+                            # z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
+                            # sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
+                            #                     result.params['sigma_kms_{}'.format(k + 1)].stderr
+                            flux_f_OIII_k, dflux_f_OIII_k = result.best_values['flux_OIII5008_{}'.format(k + 1)], \
+                                                          result.params['flux_OIII5008_{}'.format(k + 1)].stderr
+                            flux_OIII_fit[k, i, j], dflux_OIII_fit[k, i, j] = flux_f_OIII_k, dflux_f_OIII_k
+                else:
+                    pass
+    #
     header = fits.open(path_cube)[1].header
     header['WCSAXES'] = 2
     header.remove('CTYPE3')
@@ -520,6 +642,8 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
     hdul_fs, hdul_v = fits.ImageHDU(fit_success, header=header), fits.ImageHDU(v_fit, header=header)
     hdul_z, hdul_dz = fits.ImageHDU(z_fit, header=header), fits.ImageHDU(dz_fit, header=header)
     hdul_sigma, hdul_dsigma = fits.ImageHDU(sigma_fit, header=header), fits.ImageHDU(dsigma_fit, header=header)
+    hdul_chisqr, hudl_redchi = fits.ImageHDU(chisqr, header=header), fits.ImageHDU(redchi, header=header)
+    hdul_chisqr_2, hudl_redchi_2 = fits.ImageHDU(chisqr_2, header=header), fits.ImageHDU(redchi_2, header=header)
 
     #
     if line == 'OII+OIII':
@@ -533,22 +657,26 @@ def FitLines(cubename=None, fit_param=None, zapped=False, smooth_2D=1.5, kernel_
         hdul_a_OIII, hdul_da_OIII = fits.ImageHDU(a_OIII_fit, header=header), fits.ImageHDU(da_OIII_fit, header=header)
         hdul_b_OIII, hdul_db_OIII = fits.ImageHDU(b_OIII_fit, header=header), fits.ImageHDU(db_OIII_fit, header=header)
         hdul = fits.HDUList([hdul_pri, hdul_fs, hdul_v, hdul_z, hdul_dz, hdul_sigma, hdul_dsigma, hdul_flux_OII,
-                             hdul_dflux_OII, hdul_flux_OIII, hdul_dflux_OIII, hdul_r, hdul_dr,
-                             hdul_a_OII, hdul_da_OII, hdul_b_OII, hdul_db_OII,
-                             hdul_a_OIII, hdul_da_OIII, hdul_b_OIII, hdul_db_OIII])
+                             hdul_dflux_OII, hdul_flux_OIII, hdul_dflux_OIII, hdul_r, hdul_dr, hdul_a_OII,
+                             hdul_da_OII, hdul_b_OII, hdul_db_OII, hdul_a_OIII, hdul_da_OIII, hdul_b_OIII,
+                             hdul_db_OIII, hdul_chisqr, hudl_redchi, hdul_chisqr_2, hudl_redchi_2])
 
     else:
         hdul_flux, hdul_dflux = fits.ImageHDU(flux_fit, header=header), fits.ImageHDU(dflux_fit, header=header)
         hdul_r, hdul_dr = fits.ImageHDU(r_fit, header=header), fits.ImageHDU(dr_fit, header=header)
         hdul_a, hdul_da = fits.ImageHDU(a_fit, header=header), fits.ImageHDU(da_fit, header=header)
         hdul_b, hdul_db = fits.ImageHDU(b_fit, header=header), fits.ImageHDU(db_fit, header=header)
+        hdul_chisqr, hudl_redchi = fits.ImageHDU(chisqr, header=header), fits.ImageHDU(redchi, header=header)
+        hdul_chisqr_2, hudl_redchi_2 = fits.ImageHDU(chisqr_2, header=header), fits.ImageHDU(redchi_2, header=header)
         hdul = fits.HDUList([hdul_pri, hdul_fs, hdul_v, hdul_z, hdul_dz, hdul_sigma, hdul_dsigma, hdul_flux,
-                             hdul_dflux, hdul_r, hdul_dr, hdul_a, hdul_da, hdul_b, hdul_db])
+                             hdul_dflux, hdul_r, hdul_dr, hdul_a, hdul_da, hdul_b, hdul_db, hdul_chisqr,
+                             hudl_redchi, hdul_chisqr_2, hudl_redchi_2])
     hdul.writeto(path_fit, overwrite=True)
 
-def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-                   kernel_1D=None, CheckSpectra=[50, 50], S_N_thr=5, v_min=-600, v_max=600,
-                   sigma_max=400, contour_level=0.15, offset_gaia=False, SelectNebulae=None, width_OII=10,
+
+def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5, 'gauss', None, None),
+                   CheckSpectra=[50, 50], S_N_thr=5, v_min=-600, v_max=600, sigma_max=400, contour_level=0.15,
+                   offset_gaia=False, SelectNebulae=None, width_OII=10,
                    width_OIII=10, UseSmoothedCubes=True, FixAstrometry=False, UseDetectionSeg=None):
     # Define line
     if fit_param['OII'] >= 1 and fit_param['OIII'] == 0:
@@ -579,60 +707,73 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
     else:
         str_zap = ''
 
-    path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'. \
-        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']),
-               smooth_2D, kernel_2D, smooth_1D, kernel_1D)
-    path_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.fits'. \
-        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']),
-               smooth_2D, kernel_2D, smooth_1D, kernel_1D)
-    figurename_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.png'. \
-        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']),
-               smooth_2D, kernel_2D, smooth_1D, kernel_1D)
-    path_sigma = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.fits'. \
-        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']),
-               smooth_2D, kernel_2D, smooth_1D, kernel_1D)
-    figurename_sigma = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.png'. \
-        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']),
-               smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+    path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
+        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
+    path_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.fits'.\
+        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
+    figurename_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.png'.\
+        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
+    path_sigma = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.fits'.\
+        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
+    figurename_sigma = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.png'.\
+        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
     figurename = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_{}_{}_{}_{}_{}_checkspectra.png'.\
-        format(cubename, line, fit_param['ResolveOII'], int(fit_param['OII_center']), smooth_2D, kernel_2D,
-               smooth_1D, kernel_1D)
+        format(cubename, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
 
     hdul = fits.open(path_fit)
     # hdul[2].header['WCSAXES'] = 2
     ra_center, dec_center = hdul[0].header['RA'], hdul[0].header['DEC']
     fs = hdul[1].data
     size = int(min(np.shape(fs)) * 0.2)
-    v, z, dz = hdul[2].data[0], hdul[3].data[0], hdul[4].data[0]
-    sigma, dsigma = hdul[5].data[0], hdul[6].data[0]
+    v, z, dz = hdul[2].data, hdul[3].data, hdul[4].data[0]
+    sigma, dsigma = hdul[5].data, hdul[6].data[0]
+
+    #
+    sigma_0, sigma_1 = hdul[5].data[0], hdul[5].data[1]
+    v_0, v_1 = hdul[2].data[0], hdul[2].data[1]
+    z_0, z_1 = hdul[3].data[0], hdul[3].data[1]
+    v_all, z_all = hdul[2].data, hdul[3].data
+    sigma_0_2nd = np.where(v_1 != 0, sigma_0, 0)
+    v_0_2nd = np.where(v_1 != 0, v_0, 0)
+    v_1_2nd = np.where(sigma_1 > sigma_0_2nd, v_1, v_0_2nd)
+    v_0_2nd = np.where(sigma_0_2nd <= sigma_1, v_0_2nd, v_1)
+    v_0_2nd = np.where(v_0_2nd != 0, v_0_2nd, v_0)
+    v_0_2nd = np.where(v_0_2nd != 0, v_0_2nd, np.nan)
+    v_1_2nd = np.where(v_1_2nd != 0, v_1_2nd, np.nan)
+    print(np.shape(v_0_2nd))
+    # v_2nd = np.dstack((v_0_2nd, v_1_2nd))
+    v[0, :, :] = v_0_2nd
+    v[1, :, :] = v_1_2nd
 
     # Load cube and 3D seg
     if line == 'OII+OIII':
         line_OII, line_OIII = 'OII', 'OIII'
         if UseDetectionSeg is not None:
             path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line_OII, UseDetectionSeg[0], UseDetectionSeg[1],
-                       UseDetectionSeg[2], UseDetectionSeg[3])
+                format(cubename, str_zap, line_OII, *UseDetectionSeg)
             path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line_OIII, UseDetectionSeg[0], UseDetectionSeg[1],
-                       UseDetectionSeg[2], UseDetectionSeg[3])
+                format(cubename, str_zap, line_OIII, *UseDetectionSeg)
+            path_SB_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+                format(cubename, str_zap, line_OII, *UseDetectionSeg)
+            path_SB_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+                format(cubename, str_zap, line_OIII, *UseDetectionSeg)
         else:
             path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line_OII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+                format(cubename, str_zap, line_OII, *UseDataSeg)
             path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line_OIII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
-        path_SB_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
-            format(cubename, str_zap, line_OII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+                format(cubename, str_zap, line_OIII, *UseDataSeg)
+            path_SB_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+                format(cubename, str_zap, line_OII, *UseDataSeg)
+            path_SB_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+                format(cubename, str_zap, line_OIII, *UseDataSeg)
         path_SB_OII_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
-            format(cubename, str_zap, line_OII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+            format(cubename, str_zap, line_OII, *UseDataSeg)
         figurename_SB_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_SB_{}_{}_{}_{}_{}.png'.\
-            format(cubename, str_zap, line_OII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
-        path_SB_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
-            format(cubename, str_zap, line_OIII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+            format(cubename, str_zap, line_OII, *UseDataSeg)
         path_SB_OIII_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
-            format(cubename, str_zap, line_OIII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+            format(cubename, str_zap, line_OIII, *UseDataSeg)
         figurename_SB_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_SB_{}_{}_{}_{}_{}.png'.\
-            format(cubename, str_zap, line_OIII, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+            format(cubename, str_zap, line_OIII, *UseDataSeg)
 
 
         # 3D seg
@@ -641,9 +782,9 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
         seg_3D_OIII = fits.open(path_3Dseg_OIII)[0].data
         seg_label_OIII = fits.open(path_3Dseg_OIII)[1].data
         seg_label = seg_label_OII + seg_label_OIII
-        flux_OII_fit, dflux_OII_fit = hdul[7].data[0], hdul[8].data[0]
-        flux_OIII_fit, dflux_OIII_fit = hdul[9].data[0], hdul[10].data[0]
-        r, dr = hdul[11].data[0], hdul[12].data[0]
+        flux_OII_fit, dflux_OII_fit = hdul[7].data, hdul[8].data
+        flux_OIII_fit, dflux_OIII_fit = hdul[9].data, hdul[10].data
+        r, dr = hdul[11].data, hdul[12].data
         a, b = hdul[13].data, hdul[14].data
         S_N = flux_OIII_fit / dflux_OIII_fit
         print(np.nanmean(dflux_OIII_fit))
@@ -651,20 +792,18 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
     else:
         if UseDetectionSeg is not None:
             path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
-                format(cubename, str_zap, line, UseDetectionSeg[0], UseDetectionSeg[1], UseDetectionSeg[2],
-                       UseDetectionSeg[3])
+                format(cubename, str_zap, line, *UseDetectionSeg)
             path_SB = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line, UseDetectionSeg[0], UseDetectionSeg[1], UseDetectionSeg[2],
-                       UseDetectionSeg[3])
+                format(cubename, str_zap, line, *UseDetectionSeg)
         else:
             path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
-                format(cubename, str_zap, line, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+                format(cubename, str_zap, line, *UseDataSeg)
             path_SB = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
-                format(cubename, str_zap, line, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+                format(cubename, str_zap, line, *UseDataSeg)
         path_SB_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
-            format(cubename, str_zap, line, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+            format(cubename, str_zap, line, *UseDataSeg)
         figurename_SB = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_SB_{}_{}_{}_{}_{}.png'.\
-            format(cubename, str_zap, line, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
+            format(cubename, str_zap, line, *UseDataSeg)
 
         # 3D seg
         seg_3D = fits.open(path_3Dseg)[0].data
@@ -683,9 +822,9 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
             sigma = np.where(mask_select == 1, sigma, np.nan)
 
     # Masking
-    v = np.where(fs * seg_label != 0, v, np.nan)
+    # v = np.where(fs * seg_label != 0, v, np.nan)
     # v = np.where(S_N > S_N_thr, v, np.nan)
-    sigma = np.where(fs * seg_label != 0, sigma, np.nan)
+    # sigma = np.where(fs * seg_label != 0, sigma, np.nan)
     # sigma = np.where(S_N > S_N_thr, sigma, np.nan)
     hdr = hdul[2].header
 
@@ -733,8 +872,11 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
         hdr['CRPIX2'] = hdr_sub_gaia['CRPIX2']
 
     #
-    hdul_v = fits.ImageHDU(v, header=hdr)
+    hdul_v = fits.ImageHDU(v[0], header=hdr)
     hdul_v.writeto(path_v, overwrite=True)
+    # hdul_v_2nd = fits.ImageHDU(v[1], header=hdr)
+    # hdul_v_2nd.writeto(path_v_2nd, overwrite=True)
+
     hdul_sigma = fits.ImageHDU(sigma, header=hdr)
     hdul_sigma.writeto(path_sigma, overwrite=True)
 
@@ -777,6 +919,10 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
     # LOS velocity
     fig = plt.figure(figsize=(8, 8), dpi=300)
     gc = aplpy.FITSFigure(path_v, figure=fig, north=True, hdu=1)
+    if fit_param['OII_2nd'] > 1 or fit_param['OIII_2nd'] > 1:
+        axins = gc.ax.inset_axes([0.0, 0.0, 0.33, 0.33], xticklabels=[], yticklabels=[], xlim=(50, 100), ylim=(50, 100),
+                                 yticks=[], xticks=[])
+        axins.imshow(v_1_2nd, origin='lower', cmap='coolwarm', vmin=v_min, vmax=v_max)
     gc.show_colorscale(vmin=v_min, vmax=v_max, cmap='coolwarm')
     APLpyStyle(gc, type='GasMap', cubename=cubename, size=size,
                offset_gaia=offset_gaia, ra_center=ra_center, dec_center=dec_center, ra_qso=ra_qso, dec_qso=dec_qso)
@@ -788,12 +934,16 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
     fig.savefig(figurename_v, bbox_inches='tight')
 
     # Sigma map
-    fig = plt.figure(figsize=(8, 8), dpi=300)
-    gc = aplpy.FITSFigure(path_sigma, figure=fig, north=True, hdu=1)
-    gc.show_colorscale(vmin=0, vmax=sigma_max, cmap=Dense_20_r.mpl_colormap)
-    APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, size=size,
-               offset_gaia=offset_gaia, ra_center=ra_center, dec_center=dec_center, ra_qso=ra_qso, dec_qso=dec_qso)
-    fig.savefig(figurename_sigma, bbox_inches='tight')
+    # fig = plt.figure(figsize=(8, 8), dpi=300)
+    # gc = aplpy.FITSFigure(path_sigma, figure=fig, north=True, hdu=1)
+    # if fit_param['OII_2nd'] > 1 or fit_param['OIII_2nd'] > 1:
+    #     axins = gc.ax.inset_axes([0.0, 0.0, 0.33, 0.33], xticklabels=[], yticklabels=[], xlim=(50, 100), ylim=(50, 100),
+    #                              yticks=[], xticks=[])
+    #     axins.imshow(v_1_2nd, origin='lower', cmap='coolwarm', vmin=v_min, vmax=v_max)
+    # gc.show_colorscale(vmin=0, vmax=sigma_max, cmap=Dense_20_r.mpl_colormap)
+    # APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, size=size,
+    #            offset_gaia=offset_gaia, ra_center=ra_center, dec_center=dec_center, ra_qso=ra_qso, dec_qso=dec_qso)
+    # fig.savefig(figurename_sigma, bbox_inches='tight')
 
     if CheckSpectra is not None:
         if line == 'OII+OIII':
@@ -802,13 +952,11 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
             path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line_OII)
             path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                                     '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, smooth_2D,
-                                                            kernel_2D, smooth_1D, kernel_1D)
+                                     '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDataSeg)
             path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line_OIII)
             path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                                      '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, smooth_2D,
-                                                             kernel_2D, smooth_1D, kernel_1D)
+                                      '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDataSeg)
 
             # Load data and smoothing
             if UseSmoothedCubes:
@@ -819,29 +967,29 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
                 cube_OIII.wave.coord())
             flux_OII, flux_err_OII = cube_OII.data * 1e-3, np.sqrt(cube_OII.var) * 1e-3
             flux_OIII, flux_err_OIII = cube_OIII.data * 1e-3, np.sqrt(cube_OIII.var) * 1e-3
-            seg_3D_OII, seg_3D_OIII = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
-            mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII, axis=0), np.sum(seg_3D_OIII, axis=0)
-            flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII, flux_OIII * seg_3D_OIII
+            seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
+            mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
+            flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
 
             # Extend over
-            start_OII = (seg_3D_OII != 0).argmax(axis=0)
+            start_OII = (seg_3D_OII_ori != 0).argmax(axis=0)
             end_OII = start_OII + mask_seg_OII
             start_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), start_OII, start_OII - width_OII)
             end_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), end_OII, end_OII + width_OII)
-            idx_OII = np.zeros_like(seg_3D_OII)
-            idx_OII[:] = np.arange(np.shape(seg_3D_OII)[0])[:, np.newaxis, np.newaxis]
+            idx_OII = np.zeros_like(seg_3D_OII_ori)
+            idx_OII[:] = np.arange(np.shape(seg_3D_OII_ori)[0])[:, np.newaxis, np.newaxis]
             seg_3D_OII = np.where((idx_OII >= end_OII[np.newaxis, :, :]) | (idx_OII < start_OII[np.newaxis, :, :]),
-                                  seg_3D_OII, 1)
+                                  seg_3D_OII_ori, 1)
 
             # [O III]
-            start_OIII = (seg_3D_OIII != 0).argmax(axis=0)
+            start_OIII = (seg_3D_OIII_ori != 0).argmax(axis=0)
             end_OIII = start_OIII + mask_seg_OIII
             start_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), start_OIII, start_OIII - width_OIII)
             end_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), end_OIII, end_OIII + width_OIII)
-            idx_OIII = np.zeros_like(seg_3D_OIII)
-            idx_OIII[:] = np.arange(np.shape(seg_3D_OIII)[0])[:, np.newaxis, np.newaxis]
+            idx_OIII = np.zeros_like(seg_3D_OIII_ori)
+            idx_OIII[:] = np.arange(np.shape(seg_3D_OIII_ori)[0])[:, np.newaxis, np.newaxis]
             seg_3D_OIII = np.where((idx_OIII >= end_OIII[np.newaxis, :, :]) | (idx_OIII < start_OIII[np.newaxis, :, :]),
-                                   seg_3D_OIII, 1)
+                                   seg_3D_OIII_ori, 1)
             flux_OII, flux_err_OII = flux_OII * seg_3D_OII, flux_err_OII * seg_3D_OII
             flux_OIII, flux_err_OIII = flux_OIII * seg_3D_OIII, flux_err_OIII * seg_3D_OIII
 
@@ -854,43 +1002,65 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
                     i_j_idx, j_j_idx = i_j + 1, j_j + 1
                     ax_1[ax_i, ax_j].plot(wave_OII_vac, flux_OII[:, i_j, j_j], '-k')
                     ax_1[ax_i, ax_j].plot(wave_OII_vac, flux_err_OII[:, i_j, j_j], '-C0')
-                    for i in range(fit_param['OII']):
+                    if fit_param['OII_2nd'] > 1:
                         if fit_param['ResolveOII']:
-                            ax_1[ax_i, ax_j].plot(wave_OII_vac, model_OII(wave_OII_vac, z[i_j, j_j], sigma[i_j, j_j],
-                                                                          flux_OII_fit[i_j, j_j], r[i_j, j_j]), '-r')
-                            ax_1[ax_i, ax_j].plot(wave_OII_vac, model_OII(wave_OII_vac, z[i_j, j_j], sigma[i_j, j_j],
-                                                                          flux_OII_fit[i_j, j_j], r[i_j, j_j],
+                            ax_1[ax_i, ax_j].plot(wave_OII_vac,
+                                                  model_OII(wave_OII_vac, z[0, i_j, j_j], sigma[0, i_j, j_j],
+                                                            flux_OII_fit[0, i_j, j_j], r[0, i_j, j_j]) +
+                                                  model_OII(wave_OII_vac, z[1, i_j, j_j], sigma[1, i_j, j_j],
+                                                            flux_OII_fit[1, i_j, j_j], r[1, i_j, j_j]), '-r')
+                        else:
+                            ax_1[ax_i, ax_j].plot(wave_OII_vac,
+                                                  Gaussian(wave_OII_vac, z[0, i_j, j_j], sigma[0, i_j, j_j],
+                                                           flux_OII_fit[0, i_j, j_j],
+                                                           (wave_OII3727_vac + wave_OII3729_vac) / 2) +
+                                                  Gaussian(wave_OII_vac, z[0, i_j, j_j], sigma[0, i_j, j_j],
+                                                           flux_OII_fit[0, i_j, j_j],
+                                                           (wave_OII3727_vac + wave_OII3729_vac) / 2), '-r')
+                    for k in range(fit_param['OII_2nd']):
+                        if fit_param['ResolveOII']:
+                            ax_1[ax_i, ax_j].plot(wave_OII_vac, model_OII(wave_OII_vac, z[k, i_j, j_j], sigma[k, i_j, j_j],
+                                                                          flux_OII_fit[k, i_j, j_j], r[k, i_j, j_j]), '-r')
+                            ax_1[ax_i, ax_j].plot(wave_OII_vac, model_OII(wave_OII_vac, z[k, i_j, j_j], sigma[k, i_j, j_j],
+                                                                          flux_OII_fit[k, i_j, j_j], r[k, i_j, j_j],
                                                                           plot=True)[0], '--r')
-                            ax_1[ax_i, ax_j].plot(wave_OII_vac, model_OII(wave_OII_vac, z[i_j, j_j], sigma[i_j, j_j],
-                                                                          flux_OII_fit[i_j, j_j], r[i_j, j_j],
+                            ax_1[ax_i, ax_j].plot(wave_OII_vac, model_OII(wave_OII_vac, z[k, i_j, j_j], sigma[k, i_j, j_j],
+                                                                          flux_OII_fit[k, i_j, j_j], r[k, i_j, j_j],
                                                                           plot=True)[1], '--r')
                         else:
-                            ax_1[ax_i, ax_j].plot(wave_OII_vac, Gaussian(wave_OII_vac, z[i_j, j_j], sigma[i_j, j_j],
-                                                                         flux_OII_fit[i_j, j_j],
-                                                                         (wave_OII3727_vac + wave_OII3729_vac) / 2), '-r')
+                            ax_1[ax_i, ax_j].plot(wave_OII_vac, Gaussian(wave_OII_vac, z[k, i_j, j_j], sigma[k, i_j, j_j],
+                                                                         flux_OII_fit[k, i_j, j_j],
+                                                                         fit_param['OII_center']), '--r')
                     ax_1[ax_i, ax_j].set_xlim(wave_OII_vac.min(), wave_OII_vac.max())
-                    ax_1[ax_i, ax_j].axvline(x=wave_OII3727_vac * (1 + z[i_j, j_j]), color='r')
-                    ax_1[ax_i, ax_j].axvline(x=wave_OII3729_vac * (1 + z[i_j, j_j]), color='r')
+                    # ax_1[ax_i, ax_j].axvline(x=wave_OII3727_vac * (1 + z[i_j, j_j]), color='r')
+                    # ax_1[ax_i, ax_j].axvline(x=wave_OII3729_vac * (1 + z[i_j, j_j]), color='r')
                     ax_1[ax_i, ax_j].axvline(x=wave_OII3727_vac * (1 + z_qso), color='C0')
                     ax_1[ax_i, ax_j].axvline(x=wave_OII3729_vac * (1 + z_qso), color='C0')
                     ax_1[ax_i, ax_j].set_title('x={}, y={}'.format(j_j_idx, i_j_idx)
-                                               + '\n' + 'v=' + str(np.round(v[i_j, j_j], 2))
-                                               + '\n' + 'sigma=' + str(np.round(sigma[i_j, j_j], 2))
-                                               + '\n' + 'r=' + str(np.round(r[i_j, j_j], 2)), y=0.9, x=0.2)
+                                               + '\n' + 'v=' + str(np.round(v[0, i_j, j_j], 2))
+                                               + '\n' + 'sigma=' + str(np.round(sigma[0, i_j, j_j], 2))
+                                               + '\n' + 'r=' + str(np.round(r[0, i_j, j_j], 2)), y=0.9, x=0.2)
 
                     # OIII
                     ax_2[ax_i, ax_j].plot(wave_OIII_vac, flux_OIII[:, i_j, j_j], '-k')
                     # ax_2[ax_i, ax_j].plot(wave_OIII_vac, flux_seg[:, i_j, j_j], '-b')
                     ax_2[ax_i, ax_j].plot(wave_OIII_vac, flux_err_OIII[:, i_j, j_j], '-C0')
-                    ax_2[ax_i, ax_j].plot(wave_OIII_vac, Gaussian(wave_OIII_vac, z[i_j, j_j],
-                                                                  sigma[i_j, j_j], flux_OIII_fit[i_j, j_j],
-                                                                  wave_OIII5008_vac), '-r')
+                    for k in range(fit_param['OIII_2nd']):
+                        ax_2[ax_i, ax_j].plot(wave_OIII_vac, Gaussian(wave_OIII_vac, z[k, i_j, j_j],
+                                                                      sigma[k, i_j, j_j], flux_OIII_fit[k, i_j, j_j],
+                                                                      wave_OIII5008_vac), '--r')
+                    if fit_param['OIII_2nd'] > 1:
+                        ax_2[ax_i, ax_j].plot(wave_OIII_vac,
+                                              Gaussian(wave_OIII_vac, z[0, i_j, j_j], sigma[0, i_j, j_j],
+                                                       flux_OIII_fit[0, i_j, j_j], wave_OIII5008_vac) +
+                                              Gaussian(wave_OIII_vac, z[1, i_j, j_j], sigma[1, i_j, j_j],
+                                                       flux_OIII_fit[1, i_j, j_j], wave_OIII5008_vac), '-r')
                     ax_2[ax_i, ax_j].set_xlim(wave_OIII_vac.min(), wave_OIII_vac.max())
-                    ax_2[ax_i, ax_j].axvline(x=wave_OIII5008_vac * (1 + z[i_j, j_j]), color='r')
+                    # ax_2[ax_i, ax_j].axvline(x=wave_OIII5008_vac * (1 + z[i_j, j_j]), color='r')
                     ax_2[ax_i, ax_j].axvline(x=wave_OIII5008_vac * (1 + z_qso), color='C0')
                     ax_2[ax_i, ax_j].set_title('x={}, y={}'.format(j_j_idx, i_j_idx)
-                                             + '\n' + 'v=' + str(np.round(v[i_j, j_j], 2)) +
-                                               '\n' + 'sigma=' + str(np.round(sigma[i_j, j_j], 2)), y=0.9, x=0.2)
+                                             + '\n' + 'v=' + str(np.round(v[0, i_j, j_j], 2)) +
+                                               '\n' + 'sigma=' + str(np.round(sigma[0, i_j, j_j], 2)), y=0.9, x=0.2)
             figname_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_checkspectra.png'.format(cubename,
                                                                                                            line, line_OII)
             figname_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_checkspectra.png'.format(cubename,
@@ -902,10 +1072,9 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, smooth_2D=1.5, k
             path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line)
             path_cube_smoothed = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
-                                 '{}_{}.fits'.format(cubename, str_zap, line, smooth_2D,
-                                                     kernel_2D, smooth_1D, kernel_1D)
+                                 '{}_{}.fits'.format(cubename, str_zap, line, *UseDataSeg)
             path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                format(cubename, str_zap, line, smooth_2D, kernel_2D, smooth_1D, kernel_1D)  # Be careful with it!!!!
+                format(cubename, str_zap, line, *UseDataSeg)
 
             # Load data and smoothing
             if UseSmoothedCubes:
@@ -1097,14 +1266,14 @@ def APLpyStyle(gc, type=None, cubename=None, size=None, offset_gaia=False, ra_ce
 #                kernel_1D=None, CheckSpectra=[10, 10], v_min=-350, v_max=350, width_OII=10, S_N_thr=1,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
 #                offset_gaia=True, FixAstrometry=True)
-fit_param = {"OII": 2, 'ResolveOII': True, 'r_max': 1.6,
-             'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 2}
+# fit_param = {"OII": 1, "OII_2nd": 2, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 2}
 # FitLines(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None, kernel_1D=None,
 #          CheckGuess=[10, 10], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-               kernel_1D=None, CheckSpectra=[77, 71], v_min=-350, v_max=350, width_OII=10, S_N_thr=1,
-               sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-               offset_gaia=True, FixAstrometry=True)
+# PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
+#                kernel_1D=None, CheckSpectra=[77, 71], v_min=-350, v_max=350, width_OII=10, S_N_thr=1,
+#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+#                offset_gaia=True, FixAstrometry=True)
 
 # PKS0405-12
 # muse_MakeNBImageWith3DSeg.py -m PKS0405-12_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
@@ -1184,6 +1353,15 @@ PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kerne
 # -s_spe 1.5 -k_spe gauss -ssf False -n 3
 # muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss
 # -s_spe 1.5 -k_spe gauss -ssf False -sl 8350 8390 -n 2
+# os.chdir(path_SB)
+# os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss '
+#           '-s_spe 1.5 -k_spe gauss -ssf False -n 3 -sl 6205 6270')
+# os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
+#           '-ssf False -n 3 -sl 6205 6270')
+# os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss '
+#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8350 8390 -n 2')
+# os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss '
+#           '-ssf False -sl 8350 8390 -n 2')
 # FitLines(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None, kernel_1D=None)
 # FitLines(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
 # PlotKinematics(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
@@ -1199,10 +1377,18 @@ PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kerne
 # PlotKinematics(cubename='3C57', line='OII+OIII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None, kernel_1D=None,
 #                CheckSpectra=[95, 64], v_min=-300, v_max=300,
 #                sigma_max=300, contour_level=0.25, width_OII=10, width_OIII=2, FixAstrometry=True, offset_gaia=True)
-# FitLines(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss', ResolveOII=False, CheckSpectra=[70, 80])
+# FitLines(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss',
+#          ResolveOII=False, CheckSpectra=[70, 80])
 # PlotKinematics(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
 #                kernel_1D='gauss', CheckSpectra=[70, 80], v_min=-300, v_max=300,
 #                sigma_max=300, contour_level=0.25)
+# fit_param = {"OII": 1, "OII_2nd": 2, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 2}
+# FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+#          CheckGuess=[10, 10], width_OII=10, width_OIII=10)
+# PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 81], v_min=-350, v_max=350, width_OII=10, S_N_thr=1,
+#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+#                offset_gaia=True, FixAstrometry=True)
 
 # PKS0552-640
 # muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
@@ -1239,13 +1425,12 @@ PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kerne
 # PlotKinematics(cubename='PKS0552-640', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-500, v_max=500, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1}
-# FitLines(cubename='PKS0552-640', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
-#          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='PKS0552-640', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-500, v_max=500, width_OII=10,
-#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
+fit_param = {"OII": 1, "OII_2nd": 2, 'ResolveOII': True, 'r_max': 1.6,
+             'OII_center': wave_OII3728_vac, "OIII": 0, "OIII_2nd": 0}
+FitLines(cubename='PKS0552-640', fit_param=fit_param, CheckGuess=[58, 73], width_OII=10,
+         UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
+PlotKinematics(cubename='PKS0552-640', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+               sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 
 # J0110-1648
