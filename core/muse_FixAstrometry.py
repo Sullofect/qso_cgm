@@ -970,8 +970,22 @@ def UpdateHE0238(cubename='HE0238-1904'):
     hdul_obj_obj.writeto(path_obj_obj, overwrite=True)
     hdul_obj_bkp.writeto(path_obj_bkp, overwrite=True)
 
+
+def CopyHeader(f1=None, f2=None):
+    path_f1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/' + f1
+    path_f2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/' + f2
+
+    hdul_f1 = fits.open(path_f1)
+    hdul_f2 = fits.open(path_f2)
+
+    hdul_f2[0].header = hdul_f1[0].header
+    hdul_f2.writeto(path_f2, overwrite=True)
+
+
+
+
 # Update HE0238-1904 unlikely to use again!!!!
-UpdateHE0238()
+# UpdateHE0238()
 
 
 #
