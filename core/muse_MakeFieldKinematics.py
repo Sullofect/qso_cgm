@@ -1260,7 +1260,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
 
 
              # OIII
-            coord = [(65, 81), (75, 85), (80, 75)]
+            coord = [(65, 81), (69, 81), (80, 75)]
             v_OIII = c_kms * (wave_OIII_vac - wave_OIII5008_vac * (1 + z_qso)) / ((1 + z_qso) * wave_OIII5008_vac)
             wave_OIII_vac_exp = expand_wave([wave_OIII_vac], stack=True)
             v_OIII_exp = c_kms * (wave_OIII_vac_exp - wave_OIII5008_vac * (1 + z_qso)) / ((1 + z_qso) * wave_OIII5008_vac)
@@ -1712,7 +1712,7 @@ fit_param = {"OII": 1, "OII_2nd": 2, 'ResolveOII': True, 'r_max': 1.6,
              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 2}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
 #          width_OII=10, width_OIII=10)
-PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[80, 75], v_min=-350, v_max=350, width_OII=10,
+PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[70, 80], v_min=-350, v_max=350, width_OII=10,
                S_N_thr=1, sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
                FixAstrometry=True, CheckSpectraSeg=False)
 

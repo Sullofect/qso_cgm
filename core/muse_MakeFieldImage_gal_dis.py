@@ -175,12 +175,12 @@ gc.show_rectangles(40.1344150, -18.8656933, width=30 / 3600, height=30 / 3600, c
 gc.show_rectangles(40.1359, -18.8643, width=65/3600, height=65/3600, angle=60, color='k', linestyle='--')
 
 # Label galaxies
-for i in range(len(row_final)):
-    x = regions_label[i].center.ra.degree
-    y = regions_label[i].center.dec.degree
-    text = 'G' + str(ID_sep_final[i])
-    gc.add_label(x, y, text, size=10)
-gc.show_arrows(40.1370596, -18.8662000, 40.1368331 - 40.1370596, -18.8658486 + 18.8662000, color='k')
+# for i in range(len(row_final)):
+#     x = regions_label[i].center.ra.degree
+#     y = regions_label[i].center.dec.degree
+#     text = 'G' + str(ID_sep_final[i])
+#     gc.add_label(x, y, text, size=10)
+# gc.show_arrows(40.1370596, -18.8662000, 40.1368331 - 40.1370596, -18.8658486 + 18.8662000, color='k')
 
 #
 gc.set_system_latex(True)
@@ -217,17 +217,26 @@ gc1.axis_labels.hide()
 norm = mpl.colors.Normalize(vmin=-1000, vmax=1000)
 
 # Markers
-gc.show_markers(ra_center_all, dec_center_all, marker=(6, 2, 0), c='white', s=30)
-gc.show_markers(ra_center_red, dec_center_red, marker=(6, 2, 0), facecolor='r', s=30)
-gc.show_markers(ra_center_blue, dec_center_blue, marker=(6, 2, 0), facecolor='b', s=30)
+# gc.show_markers(ra_center_all, dec_center_all, marker=(6, 2, 0), c='white', s=30)
+# gc.show_markers(ra_center_red, dec_center_red, marker=(6, 2, 0), facecolor='r', s=30)
+# gc.show_markers(ra_center_blue, dec_center_blue, marker=(6, 2, 0), facecolor='b', s=30)
 gc.show_markers(40.13564948691202, -18.864301804042814, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                 linewidths=0.5, s=400)
-gc.add_label(40.13564948691202 - 0.0015, -18.864301804042814, 'QSO', size=10)
-gc.show_markers(ra_hst, dec_hst, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
-                linewidths=1.2, s=80)
-gc.show_markers(ra_hst, dec_hst, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
+# gc.add_label(40.13564948691202 - 0.0015, -18.864301804042814, 'QSO', size=10)
+# gc.show_markers(ra_hst, dec_hst, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
+#                 linewidths=1.2, s=80)
+# gc.show_markers(ra_hst, dec_hst, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
 # line = np.array([[40.1289217, 40.1429009], [-18.8576894, -18.8709014]])
 # gc.show_lines([line], color='k', alpha=0.3, linestyle='--')
+
+# Contours
+path_data = '/Users/lzq/Dropbox/Data/CGM/'
+path_OII_SB = path_data + 'image_MakeMovie/OII_-100_100_contour_revised.fits'
+path_OIII_SB = path_data + 'image_MakeMovie/OIII_-100_100_contour_revised.fits'
+gc.show_contour(path_OII_SB, levels=[0.08, 0.3], layer='OII', kernel='gauss', colors='blue',
+                linewidths=0.8, smooth=3)
+gc.show_contour(path_OIII_SB, levels=[0.08, 0.3], layer='OIII', kernel='gauss', colors='red',
+                linewidths=0.8, smooth=3)
 
 # Labels
 xw, yw = 40.1231559, -18.8580071
@@ -236,6 +245,6 @@ gc.show_arrows(xw, yw, 0, -0.0001 * yw, color='k')
 gc.add_label(0.985, 0.85, r'N', size=15, relative=True)
 gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
 gc.add_label(0.87, 0.97, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=15, relative=True)
-gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
+# gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
 gc.add_label(0.47, 0.30, r"$\rm 30'' \times 30''$", size=15, relative=True)
 fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/Field_Image_gal_dis.png', bbox_inches='tight')
