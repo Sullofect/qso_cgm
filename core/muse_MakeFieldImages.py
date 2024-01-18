@@ -79,7 +79,8 @@ def LoadFieldGals(cubename=None, z_qso=None, ):
 def MakeFieldImage(cubename=None):
     path_savefig_mini = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mini_gaia.png'.format(cubename)
     path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_gaia.png'.format(cubename)
-    path_reg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia.reg'.format(cubename)
+    path_dat = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia.dat'.format(cubename)
+    path_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_OII_SB_3DSeg_1.5_gauss_1.5_gauss.fits'.format(cubename)
 
     # Load info
     path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
@@ -87,6 +88,10 @@ def MakeFieldImage(cubename=None):
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
     print(z_qso)
+
+    # Load the all galaxy catalog
+    gal_all_dat = ascii.read(path_dat, format='fixed_width')
+    ra_gal_all, dec_gal_all = gal_all_dat['ra'], gal_all_dat['dec']
 
     #
     bins_gal, row_gal, ID_gal, z_gal, v_gal, name_gal, ql_gal, ra_gal, dec_gal = LoadFieldGals(cubename=cubename,
@@ -153,9 +158,10 @@ def MakeFieldImage(cubename=None):
     gc1.colorbar.set_axis_label_font(size=12)
     gc1.colorbar.set_axis_label_pad(-40)
     gc1.colorbar.set_location('bottom')
-    gc1.colorbar.hide()
-    gc.show_colorscale(cmap='Greys', vmin=0, vmax=0.005, stretch='linear', smooth=3, kernel='gauss')
-    # gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+    # gc1.colorbar.hide()
+    # gc.show_colorscale(cmap='Greys', vmin=0, vmax=0.005, stretch='linear', smooth=3, kernel='gauss')
+    gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+    # gc.show_colorscale(cmap='Greys')
 
     gc.add_colorbar()
     gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
@@ -181,11 +187,13 @@ def MakeFieldImage(cubename=None):
     # Markers
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
                     edgecolors='k', linewidths=0.5, s=400)
-    gc.add_label(ra_qso - 0.0015, dec_qso, 'QSO', size=10)
-    gc.show_regions(path_reg, show_label=False, layer='reg')
-    # gc.show_markers(ra_gal, dec_gal, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
-    #                 linewidths=1.2, s=80)
-    # gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
+    # gc.add_label(ra_qso - 0.0015, dec_qso, 'QSO', size=10)
+    gc.show_markers(ra_gal, dec_gal, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
+                    linewidths=1.2, s=80)
+    gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
+    # gc.show_markers(ra_gal_all, dec_gal_all, facecolor='none', marker='o', c='none', edgecolors='red',
+    #                 linewidths=0.8, s=120)
+    gc.show_contour(path_OII, hdu=1, levels=[0.1], color='black', linewidths=1, smooth=5, kernel='box')
 
     # Labels
     # xw, yw = 40.1231559, -18.8580071
