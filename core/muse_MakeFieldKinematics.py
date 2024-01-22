@@ -716,7 +716,7 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
 def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5, 'gauss', None, None),
                    CheckSpectra=[50, 50], S_N_thr=5, v_min=-600, v_max=600, sigma_max=400, contour_level=0.15,
                    SelectNebulae=None, width_OII=10, width_OIII=10, UseSmoothedCubes=True,
-                   FixAstrometry=False, UseDetectionSeg=None, CheckSpectraSeg=True):
+                   FixAstrometry=False, UseDetectionSeg=None, CheckSpectraSeg=True, CheckSpectra_2=False):
     # Define line
     if fit_param['OII'] >= 1 and fit_param['OIII'] == 0:
         line = 'OII'
@@ -1208,7 +1208,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                     ax[ax_i, ax_j].set_title('x={}, y={}'.format(j_j_idx, i_j_idx)
                     + '\n' + 'v=' + str(np.round(v[i_j, j_j], 2)), y=0.9, x=0.2)
             plt.savefig(figurename, bbox_inches='tight')
-    if CheckSpectra is not None:
+    if CheckSpectra_2 is not None:
         if line == 'OII+OIII':
             #
             line_OII, line_OIII = 'OII', 'OIII'
@@ -1260,7 +1260,8 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
 
 
              # OIII
-            coord = [(65, 81), (69, 81), (80, 75)]
+            # coord = [(65, 81), (69, 81), (80, 75)]
+            coord = [(65, 81), (75, 88), (80, 75)]
             v_OIII = c_kms * (wave_OIII_vac - wave_OIII5008_vac * (1 + z_qso)) / ((1 + z_qso) * wave_OIII5008_vac)
             wave_OIII_vac_exp = expand_wave([wave_OIII_vac], stack=True)
             v_OIII_exp = c_kms * (wave_OIII_vac_exp - wave_OIII5008_vac * (1 + z_qso)) / ((1 + z_qso) * wave_OIII5008_vac)
@@ -1443,8 +1444,13 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                 parameters.add_many(('z_2', z_guess[iax][1], True, z_qso - 0.002, z_qso + 0.002, None),
                                     ('sigma_kms_2', 100, True, 50, 200.0, None),
                                     ('flux_OIII5008_2', 0.02, True, 0.0, None, None))
+                parameters.add_many(('z_3', z_guess[iax][1], False, z_qso - 0.002, z_qso + 0.002, None),
+                                    ('sigma_kms_3', 100, False, 50, 200.0, None),
+                                    ('flux_OIII5008_3', 0.02, False, 0.0, None, None))
                 parameters.add('a', value=0, vary=False, min=None, max=None, expr=None, brute_step=None)
                 parameters.add('b', value=-0.2, vary=True, min=-1, max=1, expr=None, brute_step=None)
+                # parameters.add('bound', vary=True, min=-0.002, max=0, expr=None, brute_step=None)
+                # parameters['z_1'].expr = 'z_2 + bound'
 
                 spec_model = lmfit.Model(model, missing='drop')
                 result = spec_model.fit(flux_OIII_iax, wave_vac=wave_OIII_vac, params=parameters,
@@ -1453,13 +1459,16 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                                        result.best_values['flux_OIII5008_1'], wave_OIII5008_vac)
                 component_2 = Gaussian(wave_OIII_vac, result.best_values['z_2'], result.best_values['sigma_kms_2'],
                                        result.best_values['flux_OIII5008_2'], wave_OIII5008_vac)
+                component_3 = Gaussian(wave_OIII_vac, result.best_values['z_3'], result.best_values['sigma_kms_3'],
+                                       result.best_values['flux_OIII5008_3'], wave_OIII5008_vac)
 
                 #
                 ax_iax.plot(wave_OIII_vac, flux_OIII_iax - result.best_values['b'], '-k')
                 ax_iax.plot(wave_OIII_vac, flux_err_OIII_iax * 10, '-C0')
-                # ax_iax.plot(wave_OIII_vac, component_1 + component_2, '-r')
-                # ax_iax.plot(wave_OIII_vac, component_1, '-', color='blue')
-                # ax_iax.plot(wave_OIII_vac, component_2, '-', color='purple')
+                ax_iax.plot(wave_OIII_vac, component_1 + component_2 + component_3, '-r')
+                ax_iax.plot(wave_OIII_vac, component_1, '-', color='blue')
+                ax_iax.plot(wave_OIII_vac, component_2, '-', color='purple')
+                ax_iax.plot(wave_OIII_vac, component_3, '-', color='orange')
                 ax_iax.set_xlim(wave_OIII_vac.min(), wave_OIII_vac.max())
                 ax_iax.set_title(r'$\mathrm{[O\,III]}$', x=0.2, y=0.85, size=20)
                 ax_iax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
@@ -1712,9 +1721,9 @@ fit_param = {"OII": 1, "OII_2nd": 2, 'ResolveOII': True, 'r_max': 1.6,
              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 2}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
 #          width_OII=10, width_OIII=10)
-PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[70, 80], v_min=-350, v_max=350, width_OII=10,
+PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=None, v_min=-350, v_max=350, width_OII=10,
                S_N_thr=1, sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-               FixAstrometry=True, CheckSpectraSeg=False)
+               FixAstrometry=True, CheckSpectraSeg=True, CheckSpectra_2=False)
 
 # PKS0552-640
 # muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
