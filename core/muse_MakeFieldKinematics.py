@@ -418,8 +418,8 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
 
         # Model
         for i in range(max_OII):
-            parameters.add_many(('z_{}'.format(i + 1), redshift_guess, True, redshift_guess - 0.01,
-                                 redshift_guess + 0.01, None),
+            parameters.add_many(('z_{}'.format(i + 1), redshift_guess, True, redshift_guess - 0.002,
+                                 redshift_guess + 0.002, None),
                                 ('sigma_kms_{}'.format(i + 1), sigma_kms_guess, True, 50, 2000.0, None),
                                 ('flux_OII_{}'.format(i + 1), flux_guess, True, 0.0, None, None))
             if fit_param['ResolveOII']:
@@ -555,6 +555,7 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
         # plt.hist(redchi[redchi != 0].flatten(), bins=100, range=[-10, 100])
         # plt.show()
         # raise ValueError('testing')
+
         # Fitting start
         # write
         path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
@@ -564,6 +565,8 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
         sigma_guess_fit, dsigma_guess_fit = hdul[5].data, hdul[6].data
         z_guess_fit = np.random.rand(*np.shape(z_guess_fit)[1:]) * 0.001 + z_guess_fit
         sigma_guess_fit = np.random.rand(*np.shape(sigma_guess_fit)[1:]) * 10 + sigma_guess_fit
+        z_guess_fit = np.vstack((z_guess_fit, z_guess_fit[1:, :, :]))
+        sigma_guess_fit = np.vstack((sigma_guess_fit, sigma_guess_fit[1:, :, :]))
         parameters['OII'].value = fit_param['OII_2nd']
         parameters['OIII'].value = fit_param['OIII_2nd']
         # parameters.add('bound', vary=True, min=-0.003, max=0, expr=None, brute_step=None)
@@ -661,6 +664,13 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
                             flux_OIII_fit[k, i, j], dflux_OIII_fit[k, i, j] = flux_f_OIII_k, dflux_f_OIII_k
                 else:
                     pass
+
+
+
+
+
+
+
     #
     header = fits.open(path_cube)[1].header
     header['WCSAXES'] = 2
@@ -730,6 +740,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
     data_qso = ascii.read(path_qso, format='fixed_width')
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
+    print(z_qso)
 
     # Galaxies infomation
     path_gal = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info.fits'.format(cubename)
@@ -859,8 +870,10 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                 mask_select = np.where(seg_label != i, mask_select, 1)
             v = np.where(mask_select == 1, v, np.nan)
             sigma = np.where(mask_select == 1, sigma, np.nan)
+        v_plot = np.copy(v)
+        sigma_plot = np.copy(sigma)
 
-    print(np.std(a_OIII), np.nanmax(b_OIII))
+    # print(np.std(a_OIII), np.nanmax(b_OIII))
     # Masking
     v_plot = np.where((fs * seg_label)[np.newaxis, :] != 0, v_plot, np.nan)
     # v = np.where(S_N > S_N_thr, v, np.nan)
@@ -920,6 +933,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
     hdul_sigma = fits.ImageHDU(sigma_plot[0], header=hdr)
     hdul_sigma.writeto(path_sigma, overwrite=True)
 
+
     # SB map
     # Be careful with north=True sometimes it accidentally smoothes the data
     if line == 'OII+OIII':
@@ -928,20 +942,26 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         hdul_SB_OIII_kin = fits.ImageHDU(fits.open(path_SB_OIII)[1].data, header=hdr)
         hdul_SB_OIII_kin.writeto(path_SB_OIII_kin, overwrite=True)
 
+        if cubename == 'HE0238-1904':
+            ra_qso, dec_qso = 40.13564948691202, -18.864301804042814
+            path_SB_OII_kin = '/Users/lzq/Dropbox/Data/CGM/cube_narrow/cube_OII_line_offset_SB_3DSeg_1.5_gauss_1.5_gauss.fits'
+
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(path_SB_OII_kin, figure=fig, hdu=1)
+        if cubename == 'HE0238-1904':
+            gc.recenter(40.1344150, -18.8656933, width=30 / 3600, height=30 / 3600)
         gc.show_colorscale(vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'), stretch='linear')
-        gc.show_contour(path_SB_OII_kin, levels=[contour_level], color='k', linewidths=0.8,
-                        smooth=3, kernel='box', hdu=1)
-        APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+        gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='black', linewidths=2,
+                        smooth=5, kernel='box', hdu=1)
+        APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
         fig.savefig(figurename_SB_OII, bbox_inches='tight')
 
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(path_SB_OIII_kin, figure=fig, hdu=1)
         gc.show_colorscale(vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'), stretch='linear')
-        gc.show_contour(path_SB_OIII_kin, levels=[contour_level], color='k', linewidths=0.8,
-                        smooth=3, kernel='box', hdu=1)
-        APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+        gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='black', linewidths=2,
+                        smooth=5, kernel='box', hdu=1)
+        APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
         fig.savefig(figurename_SB_OIII, bbox_inches='tight')
     else:
         hdul_SB_kin = fits.ImageHDU(fits.open(path_SB)[1].data, header=hdr)
@@ -951,9 +971,12 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         # plt.show()
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(path_SB_kin, figure=fig, hdu=1)
+        if cubename == 'TEX0206-048':
+            ra_qso, dec_qso = 32.3784012, -4.6405697
+            cubename_cor = 'TXS0206-048'
         gc.show_colorscale(vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'), stretch='linear')
-        gc.show_contour(path_SB_kin, levels=[contour_level], color='k', linewidths=2, smooth=5, kernel='box')
-        APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+        gc.show_contour(path_SB_kin, levels=[contour_level], colors='black', linewidths=2, smooth=5, kernel='box', hdu=1)
+        APLpyStyle(gc, type='NarrowBand', cubename=cubename_cor, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
         fig.savefig(figurename_SB, bbox_inches='tight')
 
     # LOS velocity
@@ -1409,7 +1432,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
             # flux_err_OIII = np.where(flux_err_OIII != 0, flux_err_OIII, np.inf)
 
             # Segmentation by redshift
-            plt.close('all')
+            # plt.close('all')
             # plt.figure()
             # plt.hist(v_plot[1].flatten(), bins=100)
             # # plt.imshow(mask, origin='lower')
@@ -1419,42 +1442,49 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
             mask = np.zeros_like(z[1])
             v_thr = [200, 0, -200]
             v_mask = np.copy(v_plot[1])
-            z_guess = [(0.6725, 0.6734), (0.6722, 0.6735), (0.669, 0.671)]
+            z_guess = np.array([(8382, 8375), (8377, 8366), (8373, 8367)]) / wave_OIII5008_vac - 1
+            # z_guess = [(0.6725, 0.6734), (0.6722, 0.6735), (0.669, 0.671)]
+            coord = [(65, 81), (75, 88), (80, 76)]
             for iax in range(3):
                 # Need improvement
-                seg_z = detect_sources(v_mask, v_thr[iax], npixels=30, connectivity=4)
-                seg_z_label = seg_z.labels[0]
-                mask = np.where(seg_z.data != seg_z_label, mask, iax + 1)
-                v_mask = np.where(v_mask <= v_thr[iax], v_mask, np.nan)
+                # seg_z = detect_sources(v_mask, v_thr[iax], npixels=30, connectivity=4)
+                # seg_z_label = seg_z.labels[0]
+                # mask = np.where(seg_z.data != seg_z_label, mask, iax + 1)
+                # v_mask = np.where(v_mask <= v_thr[iax], v_mask, np.nan)
+                #
+                # #
+                # flux_OIII_iax = np.nansum(np.where(mask[np.newaxis, :, :] == iax + 1, flux_OIII, 0), axis=(1, 2))
+                # flux_err_OIII_iax = np.sqrt(np.nansum(np.where(mask[np.newaxis, :, :] == iax + 1, flux_err_OIII ** 2, 0)
+                #                                       , axis=(1, 2)))
 
                 #
-                fig_iax, ax_iax = plt.subplots(1, 1, figsize=(5, 5), sharex=True, dpi=300)
-                flux_OIII_iax = np.nansum(np.where(mask[np.newaxis, :, :] == iax + 1, flux_OIII, 0), axis=(1, 2))
-                flux_err_OIII_iax = np.sqrt(np.nansum(np.where(mask[np.newaxis, :, :] == iax + 1, flux_err_OIII ** 2, 0)
-                                                      , axis=(1, 2)))
+                i_j, j_j = coord[iax][1], coord[iax][0]
+                flux_OIII_iax = flux_OIII[:, i_j, j_j]
+                flux_err_OIII_iax = flux_err_OIII[:, i_j, j_j]
 
+                fig_iax, ax_iax = plt.subplots(1, 1, figsize=(5, 5), sharex=True, dpi=300)
                 # fitting
                 parameters = lmfit.Parameters()
                 model = model_OII_OIII
                 parameters.add('OII', value=0, vary=False, min=None, max=None, expr=None, brute_step=None)
-                parameters.add('OIII', value=2, vary=False, min=None, max=None, expr=None, brute_step=None)
-                parameters.add_many(('z_1', z_guess[iax][0], True, z_qso - 0.002, z_qso + 0.002, None),
-                                    ('sigma_kms_1', 50, True, 50, 200.0, None),
+                parameters.add('OIII', value=3, vary=False, min=None, max=None, expr=None, brute_step=None)
+                parameters.add_many(('z_1', z_guess[iax][0], True, z_guess[iax][0] - 0.0003, z_guess[iax][0] + 0.0003, None),
+                                    ('sigma_kms_1', 50, True, 50, 500.0, None),
                                     ('flux_OIII5008_1', 0.05, True, 0.0, None, None))
-                parameters.add_many(('z_2', z_guess[iax][1], True, z_qso - 0.002, z_qso + 0.002, None),
-                                    ('sigma_kms_2', 100, True, 50, 200.0, None),
+                parameters.add_many(('z_2', z_guess[iax][1], True, z_guess[iax][1] - 0.0003, z_guess[iax][1] + 0.0003, None),
+                                    ('sigma_kms_2', 100, True, 50, 500.0, None),
                                     ('flux_OIII5008_2', 0.02, True, 0.0, None, None))
-                parameters.add_many(('z_3', z_guess[iax][1], False, z_qso - 0.002, z_qso + 0.002, None),
-                                    ('sigma_kms_3', 100, False, 50, 200.0, None),
-                                    ('flux_OIII5008_3', 0.02, False, 0.0, None, None))
+                parameters.add_many(('z_3', z_guess[iax][1], True, z_qso - 0.002, z_qso + 0.002, None),
+                                    ('sigma_kms_3', 100, True, 50, 1000.0, None),
+                                    ('flux_OIII5008_3', 0.02, True, 0.0, None, None))
                 parameters.add('a', value=0, vary=False, min=None, max=None, expr=None, brute_step=None)
-                parameters.add('b', value=-0.2, vary=True, min=-1, max=1, expr=None, brute_step=None)
+                parameters.add('b', value=-0.2, vary=True, min=-2, max=2, expr=None, brute_step=None)
                 # parameters.add('bound', vary=True, min=-0.002, max=0, expr=None, brute_step=None)
                 # parameters['z_1'].expr = 'z_2 + bound'
 
                 spec_model = lmfit.Model(model, missing='drop')
                 result = spec_model.fit(flux_OIII_iax, wave_vac=wave_OIII_vac, params=parameters,
-                                        weights=1 / flux_err_OIII_iax)
+                                        weights=1 / ( 2 * flux_err_OIII_iax))
                 component_1 = Gaussian(wave_OIII_vac, result.best_values['z_1'], result.best_values['sigma_kms_1'],
                                        result.best_values['flux_OIII5008_1'], wave_OIII5008_vac)
                 component_2 = Gaussian(wave_OIII_vac, result.best_values['z_2'], result.best_values['sigma_kms_2'],
@@ -1463,14 +1493,16 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                                        result.best_values['flux_OIII5008_3'], wave_OIII5008_vac)
 
                 #
-                ax_iax.plot(wave_OIII_vac, flux_OIII_iax - result.best_values['b'], '-k')
-                ax_iax.plot(wave_OIII_vac, flux_err_OIII_iax * 10, '-C0')
+                ax_iax.plot(wave_OIII_vac, flux_OIII_iax - result.best_values['b'], '-k', drawstyle='steps-mid')
+                ax_iax.plot(wave_OIII_vac, flux_err_OIII_iax, '-C0', drawstyle='steps-mid')
                 ax_iax.plot(wave_OIII_vac, component_1 + component_2 + component_3, '-r')
                 ax_iax.plot(wave_OIII_vac, component_1, '-', color='blue')
                 ax_iax.plot(wave_OIII_vac, component_2, '-', color='purple')
                 ax_iax.plot(wave_OIII_vac, component_3, '-', color='orange')
                 ax_iax.set_xlim(wave_OIII_vac.min(), wave_OIII_vac.max())
-                ax_iax.set_title(r'$\mathrm{[O\,III]}$', x=0.2, y=0.85, size=20)
+                ax_iax.set_title(r'$\mathrm{[O\,III]}$'
+                                 + '\n' + 'z_1={}'.format(result.best_values['z_1'])
+                                 + '\n' + 'z_2={}'.format(result.best_values['z_2']), x=0.2, y=0.85, size=20)
                 ax_iax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
                 ax_iax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
                                   size=20, x=0.03)
@@ -1479,7 +1511,9 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                 fig_iax.savefig(figname_OIII_iax, bbox_inches='tight')
 
 
-def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None):
+def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None):
+    # only for TXS0206
+    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=600, zorder=100)
     gc.set_system_latex(True)
@@ -1496,9 +1530,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None):
         gc.colorbar.set_font(size=20)
         gc.colorbar.set_axis_label_text(r'$\mathrm{Surface \; Brightness \; [10^{-17} \; erg \; cm^{-2} \; '
                                         r's^{-1} \; arcsec^{-2}]}$')
-        # gc.colorbar.set_axis_label_text('')
-        # gc.colorbar.hide()
-        gc.add_label(0.25, 0.90, cubename, size=30, relative=True)
+        gc.add_scalebar(length=7 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_label(r"$6'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_font_size(35)
+        gc.add_label(0.98, 0.94, cubename, size=35, relative=True, horizontalalignment='right')
+        gc.add_label(0.98, 0.87, r'$z={}$'.format(z_qso), size=35, relative=True, horizontalalignment='right')
     elif type == 'FieldImage':
         gc.colorbar.hide()
     elif type == 'GasMap':
@@ -1667,13 +1704,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None):
 #           '-s_spe 1.5 -k_spe gauss -ssf False')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss '
 #           '-ssf False')
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1}
+fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
+             'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='HE0238-1904', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='HE0238-1904', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
-#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
+# PlotKinematics(cubename='HE0238-1904', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+#                sigma_max=300, contour_level=0.1, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 # fit_param = {"OII": 1, 'ResolveOII': False, 'r_max': 1.6,
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1}
 # FitLines(cubename='HE0238-1904', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
@@ -1717,13 +1753,13 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None):
 # PlotKinematics(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
 #                kernel_1D='gauss', CheckSpectra=[70, 80], v_min=-300, v_max=300,
 #                sigma_max=300, contour_level=0.25)
-fit_param = {"OII": 1, "OII_2nd": 2, 'ResolveOII': True, 'r_max': 1.6,
-             'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 2}
+fit_param = {"OII": 1, "OII_2nd": 3, 'ResolveOII': True, 'r_max': 1.6,
+             'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 3}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
 #          width_OII=10, width_OIII=10)
-PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=None, v_min=-350, v_max=350, width_OII=10,
-               S_N_thr=1, sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-               FixAstrometry=True, CheckSpectraSeg=True, CheckSpectra_2=False)
+# PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=None, v_min=-350, v_max=350, width_OII=10,
+#                S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+#                FixAstrometry=True, CheckSpectraSeg=True, CheckSpectra_2=None)
 
 # PKS0552-640
 # muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
@@ -2181,10 +2217,12 @@ PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=None, v_min=-3
 #                kernel_1D=None, CheckFit=True, CheckSpectra=[89, 113])
 # FitLines(cubename='TEX0206-048', zapped=True, line='OII', smooth_2D=1.5,
 #          kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
-# PlotKinematics(cubename='TEX0206-048', zapped=True, line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
-#                kernel_1D='gauss', CheckFit=True, S_N_thr=-np.inf, CheckSpectra=[81, 174],
-#                SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
-#                               26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552])
+fit_param = {"OII": 1, 'OII_2nd':0, 'ResolveOII': False, 'r_max': 1.6,
+             'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd':0}
+PlotKinematics(cubename='TEX0206-048', zapped=True, fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+               S_N_thr=-np.inf, CheckSpectra=[81, 174], UseDataSeg=(1.5, 'gauss', 1.5, 'gauss'), contour_level=0.17,
+               SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
+                              26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552], FixAstrometry=False)
 
 # Q1354+048
 # muse_MakeNBImageWith3DSeg.py -m Q1354+048_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss

@@ -121,11 +121,11 @@ def APLpyStyle(gc, type=None):
 
     # Scale bar
     # gc.add_scalebar(length=3 * u.arcsecond)
-    gc.add_scalebar(length=15 * u.arcsecond)
-    gc.scalebar.set_corner('top left')
-    gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+    # gc.add_scalebar(length=15 * u.arcsecond)
+    # gc.scalebar.set_corner('top left')
+    # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
     # gc.scalebar.set_label(r"$3'' \approx 20 \mathrm{\; pkpc}$")
-    gc.scalebar.set_font_size(20)
+    # gc.scalebar.set_font_size(20)
 
     # Hide
     gc.ticks.hide()
@@ -137,13 +137,13 @@ def APLpyStyle(gc, type=None):
     # xw, yw = gc.pixel2world(195, 140)  # original figure
     # xw, yw = gc.pixel2world(196, 105)
     xw, yw = 40.1302360960119, -18.863967747328896
-    gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
-    gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
+    # gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
+    # gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
     # xw, yw = 40.1333130960119, -18.864847747328896
     # gc.show_arrows(xw, yw, -0.000020 * yw, 0, color='k')
     # gc.show_arrows(xw, yw, 0, -0.000020 * yw, color='k')
-    gc.add_label(0.9778, 0.81, r'N', size=20, relative=True)
-    gc.add_label(0.88, 0.70, r'E', size=20, relative=True)
+    # gc.add_label(0.9778, 0.81, r'N', size=20, relative=True)
+    # gc.add_label(0.88, 0.70, r'E', size=20, relative=True)
 
 
 # Load galxies infomation
@@ -430,13 +430,13 @@ def MakeGasMap(line='OIII', method='pixel', method_spe=None, check=False, test=T
     #     gc.add_label(x, y, text_j, size=20)
 
     # Label
-    if line == 'OIII':
-        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=20, relative=True)
-    elif line == 'OII':
-        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=20, relative=True)
-    elif line == 'OOHbeta':
-        gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{lines}} - v_{\mathrm{qso}}$', size=20, relative=True)
-    gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
+    # if line == 'OIII':
+    #     gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, III]}} - v_{\mathrm{qso}}$', size=20, relative=True)
+    # elif line == 'OII':
+    #     gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{[O \, II]}} - v_{\mathrm{qso}}$', size=20, relative=True)
+    # elif line == 'OOHbeta':
+    #     gc.add_label(0.80, 0.97, r'$\Delta v = v_{\mathrm{lines}} - v_{\mathrm{qso}}$', size=20, relative=True)
+    # gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
     fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/' + line + '_dv_map_' + method + '_' + method_spe + '.png',
                 bbox_inches='tight')
 
