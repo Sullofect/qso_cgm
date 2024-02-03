@@ -65,22 +65,22 @@ for i in ['3C57']:
     v_NeVIII_array = (wave_NeVIII_array - wave_NeVIII) / wave_NeVIII * 3e5
     flux_NeVIII_array = flux[mask_NeVIII]
 
-    plt.figure(figsize=(5, 5), dpi=300)
+    plt.figure(figsize=(5, 2.5), dpi=300)
     plt.plot(v_OVI_array, flux_OVI_array, 'k-', lw=0.5, drawstyle='steps-mid')
     plt.axvline(0, ls='--', color='grey', lw=1)
     plt.axhline(1, ls='--', color='grey', lw=1)
-    plt.xlim(-800, 800)
+    plt.xlim(-800, 0)
     plt.xlabel(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$', size=20)
     plt.ylabel(r'$\mathrm{Normalized \; Flux}$', size=20)
     plt.title(r'$\rm O \, VI$', size=20, x=0.8, y=0.1)
     plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_{}_FUV.pdf'.format(cubename, 'OVI'), bbox_inches='tight')
 
     # Spectrum
-    plt.figure(figsize=(5, 5), dpi=300)
+    plt.figure(figsize=(5, 2.5), dpi=300)
     plt.plot(v_NeVIII_array, flux_NeVIII_array, 'k-', lw=0.5, drawstyle='steps-mid')
     plt.axvline(0, ls='--', color='grey', lw=1)
     plt.axhline(1, ls='--', color='grey', lw=1)
-    plt.xlim(-800, 800)
+    plt.xlim(-800, 0)
     plt.xlabel(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$', size=20)
     plt.ylabel(r'$\mathrm{Normalized \; Flux}$', size=20)
     plt.title(r'$\rm Ne \, VIII$', size=20, x=0.8, y=0.1)
@@ -116,7 +116,7 @@ for i in ['HE0238-1904']:
     v_NeVIII_array = (wave_NeVIII_array - wave_NeVIII) / wave_NeVIII * 3e5
     flux_NeVIII_array = flux[mask_NeVIII]
 
-    plt.figure(figsize=(5, 5), dpi=300)
+    plt.figure(figsize=(5, 2.5), dpi=300)
     plt.plot(v_OVI_array, flux_OVI_array, 'k-', lw=0.5, drawstyle='steps-mid')
     plt.axvline(0, ls='--', color='grey', lw=1)
     plt.axhline(1, ls='--', color='grey', lw=1)
@@ -127,7 +127,7 @@ for i in ['HE0238-1904']:
     plt.title(r'$\rm O \, VI$', size=20, x=0.8, y=0.1)
     plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_{}_FUV.pdf'.format(cubename, 'OVI'), bbox_inches='tight')
 
-    plt.figure(figsize=(5, 5), dpi=300)
+    plt.figure(figsize=(5, 2.5), dpi=300)
     plt.plot(v_NeVIII_array, flux_NeVIII_array, 'k-', lw=0.5, drawstyle='steps-mid')
     plt.axvline(0, ls='--', color='grey', lw=1)
     plt.axhline(1, ls='--', color='grey', lw=1)
@@ -162,13 +162,14 @@ for i in ['TEX0206-048']:
     v_NeVIII_array = (wave_NeVIII_array - wave_NeVIII) / wave_NeVIII * 3e5
     flux_NeVIII_array = flux[mask_NeVIII]
 
-    plt.figure(figsize=(5, 5), dpi=300)
+    plt.figure(figsize=(5, 2.5), dpi=300)
     plt.plot(v_NeVIII_array, flux_NeVIII_array, 'k-', lw=1, drawstyle='steps-mid')
     plt.axvline(0, ls='--', color='grey', lw=1)
     plt.axhline(1, ls='--', color='grey', lw=1)
+    plt.xlim(-850, 250)
     plt.xlabel(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$', size=20)
     plt.ylabel(r'$\mathrm{Normalized \; Flux}$', size=20)
-    plt.title(r'$\rm Ne \, VIII$', size=20, x=0.8, y=0.1)
+    plt.title(r'$\rm Ne \, VIII$', size=20, x=0.15, y=0.1)
     plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_FUV.pdf'.format(cubename), bbox_inches='tight')
 
 

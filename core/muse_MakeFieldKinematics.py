@@ -983,10 +983,10 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
     fig = plt.figure(figsize=(8, 8), dpi=300)
     # plt.imshow(fits.open(path_v)[1].data, vmin=v_min, vmax=v_max, cmap=plt.get_cmap('coolwarm'), origin='lower')
     gc = aplpy.FITSFigure(path_v, figure=fig, hdu=1)
-    if fit_param['OII_2nd'] > 1 or fit_param['OIII_2nd'] > 1:
-        axins = gc.ax.inset_axes([0.0, 0.0, 0.33, 0.33], xticklabels=[], yticklabels=[], xlim=(50, 100), ylim=(50, 100),
-                                 yticks=[], xticks=[])
-        axins.imshow(v_plot[1], origin='lower', cmap='coolwarm', vmin=v_min, vmax=v_max)
+    # if fit_param['OII_2nd'] > 1 or fit_param['OIII_2nd'] > 1:
+    #     axins = gc.ax.inset_axes([0.0, 0.0, 0.33, 0.33], xticklabels=[], yticklabels=[], xlim=(50, 100), ylim=(50, 100),
+    #                              yticks=[], xticks=[])
+    #     axins.imshow(v_plot[1], origin='lower', cmap='coolwarm', vmin=v_min, vmax=v_max)
     gc.show_colorscale(vmin=v_min, vmax=v_max, cmap='coolwarm')
     APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
     gc.show_markers(ra_gal, dec_gal, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
@@ -1308,10 +1308,13 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                 ax_i.set_xlim(v_OIII.min(), v_OIII.max())
                 ax_i.axvline(x=0, color='grey', linestyle='--', zorder=-100)
                 # ax_i.minorticks_on()
-                ax_i.set_title(r'$\mathrm{[O\,III]}$', x=0.2, y=0.85, size=20)
-                ax_i.set_xlabel(r'$\mathrm{Velocity \; [km \, s^{-1}]}$', size=20, y=-0.12)
-                ax_i.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
-                                size=20, x=0.03)
+                ax_i.set_title(r'$\mathrm{[O\,III]}$', x=0.2, y=0.85, size=40)
+                ax_i.set_xlabel(r'$\mathrm{Velocity \; [km \, s^{-1}]}$', size=40)
+                ax_i.set_ylabel(r'$\mathrm{Flux}$', size=40)
+                ax_i.set_xticks([-500, 0, 500])
+                ax_i.tick_params(axis='both', which='major', labelsize=40)
+                # ax_i.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
+                #                 size=20, x=0.03)
                 figname_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_thesis_{}.png'.\
                     format(cubename, line, line_OIII, i_ax)
                 fig_i.savefig(figname_OIII, bbox_inches='tight')
@@ -1757,9 +1760,9 @@ fit_param = {"OII": 1, "OII_2nd": 3, 'ResolveOII': True, 'r_max': 1.6,
              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 3}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
 #          width_OII=10, width_OIII=10)
-# PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=None, v_min=-350, v_max=350, width_OII=10,
-#                S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-#                FixAstrometry=True, CheckSpectraSeg=True, CheckSpectra_2=None)
+PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=None, v_min=-350, v_max=350, width_OII=10,
+               S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+               FixAstrometry=True, CheckSpectraSeg=True, CheckSpectra_2=True)
 
 # PKS0552-640
 # muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
@@ -2219,10 +2222,10 @@ fit_param = {"OII": 1, "OII_2nd": 3, 'ResolveOII': True, 'r_max': 1.6,
 #          kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
 fit_param = {"OII": 1, 'OII_2nd':0, 'ResolveOII': False, 'r_max': 1.6,
              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd':0}
-PlotKinematics(cubename='TEX0206-048', zapped=True, fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-               S_N_thr=-np.inf, CheckSpectra=[81, 174], UseDataSeg=(1.5, 'gauss', 1.5, 'gauss'), contour_level=0.17,
-               SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
-                              26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552], FixAstrometry=False)
+# PlotKinematics(cubename='TEX0206-048', zapped=True, fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+#                S_N_thr=-np.inf, CheckSpectra=[81, 174], UseDataSeg=(1.5, 'gauss', 1.5, 'gauss'), contour_level=0.17,
+#                SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
+#                               26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552], FixAstrometry=False)
 
 # Q1354+048
 # muse_MakeNBImageWith3DSeg.py -m Q1354+048_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
