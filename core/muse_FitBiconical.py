@@ -76,10 +76,13 @@ plt.plot(c2[0], c2[1], '*', markersize=15)
 
 
 fig, ax = plt.subplots(2, 1, figsize=(5, 10))
+fig.tight_layout()
 ax[0].plot(v[0, :, :].flatten()[mask], dis[mask], 'k.')
 ax[1].plot(v[1, :, :].flatten()[mask], dis[mask], 'k.')
+# ax[2].plot(v[0, :, :].flatten(), dis, 'k.')
 ax[0].set_ylim(3, 0)
 ax[1].set_ylim(3, 0)
+# ax[2].set_ylim(5, 0)
 ax[0].set_xlabel('Velocity (km/s)')
 ax[0].set_ylabel('Distance (pixel)')
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile.png', bbox_inches='tight')
