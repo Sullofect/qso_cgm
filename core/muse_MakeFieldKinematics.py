@@ -150,7 +150,7 @@ def expand_wave(wave, stack=True, times=3):
 
 
 def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gauss', None, None),
-             CheckGuess=None, width_OII=10, width_OIII=10, UseSmoothedCubes=True, UseDetectionSeg=None):
+             CheckGuess=None, width_OII=10, width_OIII=10, UseSmoothedCubes=True, UseDetectionSeg=None, FitSeq=False):
     # Define line
     if fit_param['OII'] >= 1 and fit_param['OIII'] == 0:
         line = 'OII'
@@ -369,9 +369,11 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
     #
     size = np.shape(flux)[1:]
     max_OII, max_OIII = np.max([fit_param['OII'], fit_param['OII_2nd']]), np.max([fit_param['OIII'], fit_param['OIII_2nd']])
-    size_3D = (np.max([max_OII, max_OIII]), size[0], size[1])
+    max_line = np.max([max_OII, max_OIII])
+    size_3D = (max_line, size[0], size[1])
     fit_success, chisqr, redchi = np.zeros(size), np.zeros(size), np.zeros(size)
     chisqr_2, redchi_2 = np.zeros(size), np.zeros(size)
+    fit_success_3D, chisqr_3D, redchi_3D = np.zeros(size_3D), np.zeros(size_3D), np.zeros(size_3D)
     v_fit, z_fit, dz_fit = np.zeros(size_3D), np.zeros(size_3D), np.zeros(size_3D)
     sigma_fit, dsigma_fit = np.zeros(size_3D), np.zeros(size_3D)
 
@@ -428,134 +430,247 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
         for i in range(max_OIII):
             parameters.add_many(('flux_OIII5008_{}'.format(i + 1), flux_guess, True, 0.0, None, None))
 
-    # 1st iteration
-    # Fitting start
-    for i in range(size[0]):  # i = p (y), j = q (x)
-        for j in range(size[1]):
-            if mask_seg[i, j] != 0:
-                # Give initial condition
-                flux_ij, flux_err_ij = flux[:, i, j], flux_err[:, i, j]
-                # flux_ij = np.where(flux_err_ij != 0, flux_ij, np.nan)
-                # flux_err_ij = np.where(flux_err_ij != 0, flux_err_ij, np.nan)
-                # print(np.shape(flux_ij))
-                # flux_ij = flux_ij[np.isnan(flux_ij)]
-                # flux_err_ij = flux_err_ij[np.isnan(flux_err_ij)]
 
-                if line == 'OII':
-                    for k in range(fit_param['OII']):
-                        parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
-                        parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
-                        parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array[i, j]
-                elif line == 'OIII':
-                    for k in range(fit_param['OIII']):
-                        parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
-                        parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
-                        parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array[i, j]
-                elif line == 'OII+OIII':
-                    for k in range(fit_param['OII']):
-                        parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
-                        parameters['z_{}'.format(k + 1)].max = z_guess_array[i, j] + 0.003
-                        parameters['z_{}'.format(k + 1)].min = z_guess_array[i, j] - 0.003
-                        parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
-                        parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array_OII[i, j]
+    if FitSeq is True:
+        # 1st iteration
+        # Fitting start
+        for i in range(size[0]):  # i = p (y), j = q (x)
+            for j in range(size[1]):
+                if mask_seg[i, j] != 0:
+                    # Give initial condition
+                    flux_ij, flux_err_ij = flux[:, i, j], flux_err[:, i, j]
+                    # flux_ij = np.where(flux_err_ij != 0, flux_ij, np.nan)
+                    # flux_err_ij = np.where(flux_err_ij != 0, flux_err_ij, np.nan)
+                    # print(np.shape(flux_ij))
+                    # flux_ij = flux_ij[np.isnan(flux_ij)]
+                    # flux_err_ij = flux_err_ij[np.isnan(flux_err_ij)]
 
-                    for k in range(fit_param['OIII']):
-                        # parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
-                        # parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
-                        parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array_OIII[i, j]
+                    if line == 'OII':
+                        for k in range(fit_param['OII']):
+                            parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
+                            parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
+                            parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array[i, j]
+                    elif line == 'OIII':
+                        for k in range(fit_param['OIII']):
+                            parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
+                            parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
+                            parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array[i, j]
+                    elif line == 'OII+OIII':
+                        for k in range(fit_param['OII']):
+                            parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
+                            parameters['z_{}'.format(k + 1)].max = z_guess_array[i, j] + 0.003
+                            parameters['z_{}'.format(k + 1)].min = z_guess_array[i, j] - 0.003
+                            parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
+                            parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array_OII[i, j]
 
-                    # flux_OII_ij, flux_err_OII_ij = flux_OII[:, i, j], flux_err_OII[:, i, j]
-                    # flux_OIII_ij, flux_err_OIII_ij = flux_OIII[:, i, j], flux_err_OIII[:, i, j]
-                    # mask_OII, mask_OIII = flux_OII_ij != 0, flux_OIII_ij != 0
-                    # wave_vac = np.array([wave_OII_vac[mask_OII], wave_OIII_vac[mask_OIII]])
-                    # flux_ij = np.hstack((flux_OII_ij[mask_OII], flux_OIII_ij[mask_OIII]))
-                    # flux_err_ij = np.hstack((flux_err_OII_ij[mask_OII], flux_err_OIII_ij[mask_OIII]))
+                        for k in range(fit_param['OIII']):
+                            # parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
+                            # parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j]
+                            parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array_OIII[i, j]
+
+                        # flux_OII_ij, flux_err_OII_ij = flux_OII[:, i, j], flux_err_OII[:, i, j]
+                        # flux_OIII_ij, flux_err_OIII_ij = flux_OIII[:, i, j], flux_err_OIII[:, i, j]
+                        # mask_OII, mask_OIII = flux_OII_ij != 0, flux_OIII_ij != 0
+                        # wave_vac = np.array([wave_OII_vac[mask_OII], wave_OIII_vac[mask_OIII]])
+                        # flux_ij = np.hstack((flux_OII_ij[mask_OII], flux_OIII_ij[mask_OIII]))
+                        # flux_err_ij = np.hstack((flux_err_OII_ij[mask_OII], flux_err_OIII_ij[mask_OIII]))
 
 
-                #
-                spec_model = lmfit.Model(model, missing='drop')
-                result = spec_model.fit(flux_ij, wave_vac=wave_vac, params=parameters, weights=1 / flux_err_ij)
-                fit_success[i, j] = result.success
-                seg_3D_i = seg_3D_ori[:, i, j]
-                residual = result.residual * seg_3D_i
-                chisqr[i, j], redchi[i, j] = result.chisqr, result.redchi
-                # chisqr[i, j] = np.sum(residual ** 2)
-                # redchi[i, j] = chisqr[i, j] / (mask_seg_OII[i, j] + mask_seg_OIII[i, j] - result.nvarys)
+                    #
+                    spec_model = lmfit.Model(model, missing='drop')
+                    result = spec_model.fit(flux_ij, wave_vac=wave_vac, params=parameters, weights=1 / flux_err_ij)
+                    fit_success[i, j] = result.success
+                    seg_3D_i = seg_3D_ori[:, i, j]
+                    residual = result.residual * seg_3D_i
+                    chisqr[i, j], redchi[i, j] = result.chisqr, result.redchi
+                    # chisqr[i, j] = np.sum(residual ** 2)
+                    # redchi[i, j] = chisqr[i, j] / (mask_seg_OII[i, j] + mask_seg_OIII[i, j] - result.nvarys)
 
-                if line == 'OII':
-                    a, b = result.best_values['a'], result.best_values['b']
-                    da, db = result.params['a'].stderr, result.params['b'].stderr
-                    a_fit[i, j], b_fit[i, j] = a, b
-                    da_fit[i, j], db_fit[i, j] = da, db
+                    if line == 'OII':
+                        a, b = result.best_values['a'], result.best_values['b']
+                        da, db = result.params['a'].stderr, result.params['b'].stderr
+                        a_fit[i, j], b_fit[i, j] = a, b
+                        da_fit[i, j], db_fit[i, j] = da, db
 
-                    for k in range(fit_param['OII']):
-                        z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
-                        sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
-                                            result.params['sigma_kms_{}'.format(k + 1)].stderr
-                        flux_f_OII_k, dflux_f_OII_k = result.best_values['flux_OII_{}'.format(k + 1)], \
-                                                      result.params['flux_OII_{}'.format(k + 1)].stderr
-                        v_fit[k, i, j], z_fit[k, i, j], dz_fit[k, i, j] = c_kms * (z_k - z_qso) / (1 + z_qso), z_k, dz_k
-                        sigma_fit[k, i, j], dsigma_fit[k, i, j] = sigma_k, dsigma_k
-                        flux_fit[k, i, j], dflux_fit[k, i, j] = flux_f_OII_k, dflux_f_OII_k
+                        for k in range(fit_param['OII']):
+                            z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
+                            sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
+                                                result.params['sigma_kms_{}'.format(k + 1)].stderr
+                            flux_f_OII_k, dflux_f_OII_k = result.best_values['flux_OII_{}'.format(k + 1)], \
+                                                          result.params['flux_OII_{}'.format(k + 1)].stderr
+                            v_fit[k, i, j], z_fit[k, i, j], dz_fit[k, i, j] = c_kms * (z_k - z_qso) / (1 + z_qso), z_k, dz_k
+                            sigma_fit[k, i, j], dsigma_fit[k, i, j] = sigma_k, dsigma_k
+                            flux_fit[k, i, j], dflux_fit[k, i, j] = flux_f_OII_k, dflux_f_OII_k
 
-                        if fit_param['ResolveOII']:
-                            r_k, dr_k = result.best_values['r_OII3729_3727_{}'.format(k + 1)], \
-                                    result.params['r_OII3729_3727_{}'.format(k + 1)].stderr
-                            r_fit[k, i, j], dr_fit[k, i, j] = r_k, dr_k
-                elif line == 'OIII':
-                    flux_f_OIII, dflux_f_OIII = result.best_values['flux_OIII5008'], result.params['flux_OIII5008'].stderr
-                    a, b = result.best_values['a'], result.best_values['b']
-                    da, db = result.params['a'].stderr, result.params['b'].stderr
-                    flux_fit[i, j], dflux_fit[i, j] = flux_f_OIII, dflux_f_OIII
-                    a_fit[i, j], b_fit[i, j] = a, b
-                    da_fit[i, j], db_fit[i, j] = da, db
-                elif line == 'OII+OIII':
-                    a_OII, b_OII = result.best_values['a_OII'], result.best_values['b_OII']
-                    da_OII, db_OII = result.params['a_OII'].stderr, result.params['b_OII'].stderr
-                    a_OIII, b_OIII = result.best_values['a_OIII5008'], result.best_values['b_OIII5008']
-                    da_OIII, db_OIII = result.params['a_OIII5008'].stderr, result.params['b_OIII5008'].stderr
-                    a_OII_fit[i, j], da_OII_fit[i, j], b_OII_fit[i, j], db_OII_fit[i, j] = a_OII, da_OII, b_OII, db_OII
-                    a_OIII_fit[i, j], da_OIII_fit[i, j] = a_OIII, da_OIII
-                    b_OIII_fit[i, j], db_OIII_fit[i, j] = b_OIII, db_OIII
+                            if fit_param['ResolveOII']:
+                                r_k, dr_k = result.best_values['r_OII3729_3727_{}'.format(k + 1)], \
+                                        result.params['r_OII3729_3727_{}'.format(k + 1)].stderr
+                                r_fit[k, i, j], dr_fit[k, i, j] = r_k, dr_k
+                    elif line == 'OIII':
+                        flux_f_OIII, dflux_f_OIII = result.best_values['flux_OIII5008'], result.params['flux_OIII5008'].stderr
+                        a, b = result.best_values['a'], result.best_values['b']
+                        da, db = result.params['a'].stderr, result.params['b'].stderr
+                        flux_fit[i, j], dflux_fit[i, j] = flux_f_OIII, dflux_f_OIII
+                        a_fit[i, j], b_fit[i, j] = a, b
+                        da_fit[i, j], db_fit[i, j] = da, db
+                    elif line == 'OII+OIII':
+                        a_OII, b_OII = result.best_values['a_OII'], result.best_values['b_OII']
+                        da_OII, db_OII = result.params['a_OII'].stderr, result.params['b_OII'].stderr
+                        a_OIII, b_OIII = result.best_values['a_OIII5008'], result.best_values['b_OIII5008']
+                        da_OIII, db_OIII = result.params['a_OIII5008'].stderr, result.params['b_OIII5008'].stderr
+                        a_OII_fit[i, j], da_OII_fit[i, j], b_OII_fit[i, j], db_OII_fit[i, j] = a_OII, da_OII, b_OII, db_OII
+                        a_OIII_fit[i, j], da_OIII_fit[i, j] = a_OIII, da_OIII
+                        b_OIII_fit[i, j], db_OIII_fit[i, j] = b_OIII, db_OIII
 
-                    for k in range(fit_param['OII']):
-                        z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
-                        sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
-                                            result.params['sigma_kms_{}'.format(k + 1)].stderr
-                        flux_f_OII_k, dflux_f_OII_k = result.best_values['flux_OII_{}'.format(k + 1)], \
-                                                      result.params['flux_OII_{}'.format(k + 1)].stderr
-                        v_fit[k, i, j], z_fit[k, i, j], dz_fit[k, i, j] = c_kms * (z_k - z_qso) / (1 + z_qso), z_k, dz_k
-                        sigma_fit[k, i, j], dsigma_fit[k, i, j] = sigma_k, dsigma_k
-                        flux_OII_fit[k, i, j], dflux_OII_fit[k, i, j] = flux_f_OII_k, dflux_f_OII_k
+                        for k in range(fit_param['OII']):
+                            z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
+                            sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
+                                                result.params['sigma_kms_{}'.format(k + 1)].stderr
+                            flux_f_OII_k, dflux_f_OII_k = result.best_values['flux_OII_{}'.format(k + 1)], \
+                                                          result.params['flux_OII_{}'.format(k + 1)].stderr
+                            v_fit[k, i, j], z_fit[k, i, j], dz_fit[k, i, j] = c_kms * (z_k - z_qso) / (1 + z_qso), z_k, dz_k
+                            sigma_fit[k, i, j], dsigma_fit[k, i, j] = sigma_k, dsigma_k
+                            flux_OII_fit[k, i, j], dflux_OII_fit[k, i, j] = flux_f_OII_k, dflux_f_OII_k
 
-                        if fit_param['ResolveOII']:
-                            r_k, dr_k = result.best_values['r_OII3729_3727_{}'.format(k + 1)], \
-                                    result.params['r_OII3729_3727_{}'.format(k + 1)].stderr
-                            r_fit[k, i, j], dr_fit[k, i, j] = r_k, dr_k
+                            if fit_param['ResolveOII']:
+                                r_k, dr_k = result.best_values['r_OII3729_3727_{}'.format(k + 1)], \
+                                        result.params['r_OII3729_3727_{}'.format(k + 1)].stderr
+                                r_fit[k, i, j], dr_fit[k, i, j] = r_k, dr_k
 
-                    for k in range(fit_param['OIII']):
-                        # z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
-                        # sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
-                        #                     result.params['sigma_kms_{}'.format(k + 1)].stderr
-                        flux_f_OIII_k, dflux_f_OIII_k = result.best_values['flux_OIII5008_{}'.format(k + 1)], \
-                                                      result.params['flux_OIII5008_{}'.format(k + 1)].stderr
-                        flux_OIII_fit[k, i, j], dflux_OIII_fit[k, i, j] = flux_f_OIII_k, dflux_f_OIII_k
-            else:
-                pass
+                        for k in range(fit_param['OIII']):
+                            # z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
+                            # sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
+                            #                     result.params['sigma_kms_{}'.format(k + 1)].stderr
+                            flux_f_OIII_k, dflux_f_OIII_k = result.best_values['flux_OIII5008_{}'.format(k + 1)], \
+                                                          result.params['flux_OIII5008_{}'.format(k + 1)].stderr
+                            flux_OIII_fit[k, i, j], dflux_OIII_fit[k, i, j] = flux_f_OIII_k, dflux_f_OIII_k
+                else:
+                    pass
 
-    # 2nd interation  if 2nd Gaussians help to improve the fit
-    # Calculate Chi^2
+        # 2nd interation  if 2nd Gaussians help to improve the fit
+        # Calculate Chi^2
+        if fit_param['OII_2nd'] != 0 or fit_param['OIII_2nd'] != 0:
+            redchi_mean, redchi_median, redchi_std = stats.sigma_clipped_stats(redchi[redchi != 0], sigma=3, maxiters=5)
+            refit_seg = np.where((redchi > 1.0), redchi, 0)
+            print(len(redchi[redchi != 0]))
+            print(len(refit_seg[refit_seg != 0]))
+            print(redchi_mean, redchi_std)
+            # plt.figure()
+            # plt.hist(redchi[redchi != 0].flatten(), bins=100, range=[-10, 100])
+            # plt.show()
+            # raise ValueError('testing')
+
+            # Fitting start
+            # write
+            path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
+                format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
+            hdul = fits.open(path_fit)
+            v_guess_fit, z_guess_fit, dz_guess_fit = hdul[2].data, hdul[3].data, hdul[4].data
+            sigma_guess_fit, dsigma_guess_fit = hdul[5].data, hdul[6].data
+            z_guess_fit = np.random.rand(*np.shape(z_guess_fit)[1:]) * 0.001 + z_guess_fit
+            sigma_guess_fit = np.random.rand(*np.shape(sigma_guess_fit)[1:]) * 10 + sigma_guess_fit
+            z_guess_fit = np.vstack((z_guess_fit, z_guess_fit[1:, :, :]))
+            sigma_guess_fit = np.vstack((sigma_guess_fit, sigma_guess_fit[1:, :, :]))
+            parameters['OII'].value = fit_param['OII_2nd']
+            parameters['OIII'].value = fit_param['OIII_2nd']
+            # parameters.add('bound', vary=True, min=-0.003, max=0, expr=None, brute_step=None)
+            # parameters['z_1'].expr = 'z_2 + bound'
+            for i in range(size[0]):
+                for j in range(size[1]):
+                    if refit_seg[i, j] != 0:
+                        # Give initial condition
+                        flux_ij, flux_err_ij = flux[:, i, j], flux_err[:, i, j]
+                        if line == 'OII':
+                            for k in range(fit_param['OII_2nd']):
+                                parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
+                                parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j] / 2
+                                parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array[i, j]
+                        elif line == 'OIII':
+                            for k in range(fit_param['OIII_2nd']):
+                                parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
+                                parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j] / 2
+                                parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array[i, j]
+                        elif line == 'OII+OIII':
+                            for k in range(fit_param['OII_2nd']):
+                                parameters['z_{}'.format(k + 1)].value = z_guess_fit[k, i, j]
+                                parameters['z_{}'.format(k + 1)].max = z_guess_fit[k, i, j] + 0.002
+                                parameters['z_{}'.format(k + 1)].min = z_guess_fit[k, i, j] - 0.002
+                                parameters['sigma_kms_{}'.format(k + 1)].value = sigma_guess_fit[k, i, j]
+                                # parameters['sigma_kms_{}'.format(k + 1)].value = sigma_kms_guess_array[i, j] / 2
+                                # parameters['sigma_kms_{}'.format(k + 1)].max = 0.7 * sigma_fit[0, i, j]
+                                # parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array_OII[i, j]
+                            for k in range(fit_param['OIII_2nd']):
+                                parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array_OIII[i, j]
+                        #
+                        spec_model = lmfit.Model(model, missing='drop')
+                        result = spec_model.fit(flux_ij, wave_vac=wave_vac, params=parameters, weights=1 / flux_err_ij)
+                        fit_success[i, j] = result.success
+                        # residual = result.residual
+                        chisqr_2[i, j], redchi_2[i, j] = result.chisqr, result.redchi
+
+                        if line == 'OII':
+                            a, b = result.best_values['a'], result.best_values['b']
+                            da, db = result.params['a'].stderr, result.params['b'].stderr
+                            a_fit[i, j], b_fit[i, j] = a, b
+                            da_fit[i, j], db_fit[i, j] = da, db
+
+                            for k in range(fit_param['OII_2nd']):
+                                z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
+                                sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
+                                                    result.params['sigma_kms_{}'.format(k + 1)].stderr
+                                flux_f_OII_k, dflux_f_OII_k = result.best_values['flux_OII_{}'.format(k + 1)], \
+                                                              result.params['flux_OII_{}'.format(k + 1)].stderr
+                                v_fit[k, i, j], z_fit[k, i, j], dz_fit[k, i, j] = c_kms * (z_k - z_qso) / (1 + z_qso), z_k, dz_k
+                                sigma_fit[k, i, j], dsigma_fit[k, i, j] = sigma_k, dsigma_k
+                                flux_fit[k, i, j], dflux_fit[k, i, j] = flux_f_OII_k, dflux_f_OII_k
+
+                                if fit_param['ResolveOII']:
+                                    r_k, dr_k = result.best_values['r_OII3729_3727_{}'.format(k + 1)], \
+                                            result.params['r_OII3729_3727_{}'.format(k + 1)].stderr
+                                    r_fit[k, i, j], dr_fit[k, i, j] = r_k, dr_k
+                        elif line == 'OIII':
+                            flux_f_OIII, dflux_f_OIII = result.best_values['flux_OIII5008'], result.params['flux_OIII5008'].stderr
+                            a, b = result.best_values['a'], result.best_values['b']
+                            da, db = result.params['a'].stderr, result.params['b'].stderr
+                            flux_fit[i, j], dflux_fit[i, j] = flux_f_OIII, dflux_f_OIII
+                            a_fit[i, j], b_fit[i, j] = a, b
+                            da_fit[i, j], db_fit[i, j] = da, db
+                        elif line == 'OII+OIII':
+                            a_OII, b_OII = result.best_values['a_OII'], result.best_values['b_OII']
+                            da_OII, db_OII = result.params['a_OII'].stderr, result.params['b_OII'].stderr
+                            a_OIII, b_OIII = result.best_values['a_OIII5008'], result.best_values['b_OIII5008']
+                            da_OIII, db_OIII = result.params['a_OIII5008'].stderr, result.params['b_OIII5008'].stderr
+                            a_OII_fit[i, j], da_OII_fit[i, j], b_OII_fit[i, j], db_OII_fit[i, j] = a_OII, da_OII, b_OII, db_OII
+                            a_OIII_fit[i, j], da_OIII_fit[i, j] = a_OIII, da_OIII
+                            b_OIII_fit[i, j], db_OIII_fit[i, j] = b_OIII, db_OIII
+
+                            for k in range(fit_param['OII_2nd']):
+                                z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
+                                sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
+                                                    result.params['sigma_kms_{}'.format(k + 1)].stderr
+                                flux_f_OII_k, dflux_f_OII_k = result.best_values['flux_OII_{}'.format(k + 1)], \
+                                                              result.params['flux_OII_{}'.format(k + 1)].stderr
+                                v_fit[k, i, j], z_fit[k, i, j], dz_fit[k, i, j] = c_kms * (z_k - z_qso) / (1 + z_qso), z_k, dz_k
+                                sigma_fit[k, i, j], dsigma_fit[k, i, j] = sigma_k, dsigma_k
+                                flux_OII_fit[k, i, j], dflux_OII_fit[k, i, j] = flux_f_OII_k, dflux_f_OII_k
+
+                                if fit_param['ResolveOII']:
+                                    r_k, dr_k = result.best_values['r_OII3729_3727_{}'.format(k + 1)], \
+                                            result.params['r_OII3729_3727_{}'.format(k + 1)].stderr
+                                    r_fit[k, i, j], dr_fit[k, i, j] = r_k, dr_k
+
+                            for k in range(fit_param['OIII_2nd']):
+                                # z_k, dz_k = result.best_values['z_{}'.format(k + 1)], result.params['z_{}'.format(k + 1)].stderr
+                                # sigma_k, dsigma_k = result.best_values['sigma_kms_{}'.format(k + 1)], \
+                                #                     result.params['sigma_kms_{}'.format(k + 1)].stderr
+                                flux_f_OIII_k, dflux_f_OIII_k = result.best_values['flux_OIII5008_{}'.format(k + 1)], \
+                                                              result.params['flux_OIII5008_{}'.format(k + 1)].stderr
+                                flux_OIII_fit[k, i, j], dflux_OIII_fit[k, i, j] = flux_f_OIII_k, dflux_f_OIII_k
+                    else:
+                        pass
+
+    # Iterating each
     if fit_param['OII_2nd'] != 0 or fit_param['OIII_2nd'] != 0:
-        redchi_mean, redchi_median, redchi_std = stats.sigma_clipped_stats(redchi[redchi != 0], sigma=3, maxiters=5)
-        refit_seg = np.where((redchi > 1.0), redchi, 0)
-        print(len(redchi[redchi != 0]))
-        print(len(refit_seg[refit_seg != 0]))
-        print(redchi_mean, redchi_std)
-        # plt.figure()
-        # plt.hist(redchi[redchi != 0].flatten(), bins=100, range=[-10, 100])
-        # plt.show()
-        # raise ValueError('testing')
-
         # Fitting start
         # write
         path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
@@ -567,15 +682,15 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
         sigma_guess_fit = np.random.rand(*np.shape(sigma_guess_fit)[1:]) * 10 + sigma_guess_fit
         z_guess_fit = np.vstack((z_guess_fit, z_guess_fit[1:, :, :]))
         sigma_guess_fit = np.vstack((sigma_guess_fit, sigma_guess_fit[1:, :, :]))
-        parameters['OII'].value = fit_param['OII_2nd']
-        parameters['OIII'].value = fit_param['OIII_2nd']
-        # parameters.add('bound', vary=True, min=-0.003, max=0, expr=None, brute_step=None)
-        # parameters['z_1'].expr = 'z_2 + bound'
+
+
+        # Define the model
         for i in range(size[0]):
             for j in range(size[1]):
-                if refit_seg[i, j] != 0:
+                if mask_seg[i, j] != 0:
                     # Give initial condition
                     flux_ij, flux_err_ij = flux[:, i, j], flux_err[:, i, j]
+
                     if line == 'OII':
                         for k in range(fit_param['OII_2nd']):
                             parameters['z_{}'.format(k + 1)].value = z_guess_array[i, j]
@@ -597,12 +712,17 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
                             # parameters['flux_OII_{}'.format(k + 1)].value = flux_guess_array_OII[i, j]
                         for k in range(fit_param['OIII_2nd']):
                             parameters['flux_OIII5008_{}'.format(k + 1)].value = flux_guess_array_OIII[i, j]
-                    #
-                    spec_model = lmfit.Model(model, missing='drop')
-                    result = spec_model.fit(flux_ij, wave_vac=wave_vac, params=parameters, weights=1 / flux_err_ij)
-                    fit_success[i, j] = result.success
-                    # residual = result.residual
-                    chisqr_2[i, j], redchi_2[i, j] = result.chisqr, result.redchi
+
+                    for o in range(max_line):
+                        parameters['OII'].value = i + 1
+                        parameters['OIII'].value = i + 1
+
+                        #
+                        spec_model = lmfit.Model(model, missing='drop')
+                        result = spec_model.fit(flux_ij, wave_vac=wave_vac, params=parameters, weights=1 / flux_err_ij)
+                        fit_success_3D[o, i, j] = result.success
+                        chisqr_3D[o, i, j], redchi_3D[o, i, j] = result.chisqr, result.redchi
+                        result_3D[o, i, j] = result
 
                     if line == 'OII':
                         a, b = result.best_values['a'], result.best_values['b']
@@ -664,11 +784,6 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
                             flux_OIII_fit[k, i, j], dflux_OIII_fit[k, i, j] = flux_f_OIII_k, dflux_f_OIII_k
                 else:
                     pass
-
-
-
-
-
 
 
     #
@@ -1707,8 +1822,8 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 #           '-s_spe 1.5 -k_spe gauss -ssf False')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss '
 #           '-ssf False')
-fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
-             'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 0}
+# fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='HE0238-1904', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 # PlotKinematics(cubename='HE0238-1904', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
@@ -1758,8 +1873,8 @@ fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
 #                sigma_max=300, contour_level=0.25)
 fit_param = {"OII": 1, "OII_2nd": 3, 'ResolveOII': True, 'r_max': 1.6,
              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 3}
-# FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
-#          width_OII=10, width_OIII=10)
+FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
+         width_OII=10, width_OIII=10)
 PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=None, v_min=-350, v_max=350, width_OII=10,
                S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
                FixAstrometry=True, CheckSpectraSeg=True, CheckSpectra_2=True)
