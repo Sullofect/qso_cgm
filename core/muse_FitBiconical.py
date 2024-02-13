@@ -26,6 +26,10 @@ rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
 rc('ytick', direction='in')
+rc('xtick.minor', size=3, visible=True)
+rc('ytick.minor', size=3, visible=True)
+rc('xtick', direction='in', labelsize=15)
+rc('ytick', direction='in', labelsize=15)
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 
@@ -37,19 +41,39 @@ data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
 #
-path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
-hdul = fits.open(path_fit)
-fs, hdr = hdul[1].data, hdul[2].header
-v, z, dz = hdul[2].data, hdul[3].data, hdul[4].data
-sigma, dsigma = hdul[5].data, hdul[6].data
-print(np.shape(v))
+path_fit_N1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N1.fits'
+path_fit_N2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N2.fits'
+path_fit_N3 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N3.fits'
+
+# N1
+hdul_N1 = fits.open(path_fit_N1)
+fs_N1, hdr_N1 = hdul_N1[1].data, hdul_N1[2].header
+v_N1, z_N1, dz_N1 = hdul_N1[2].data, hdul_N1[3].data, hdul_N1[4].data
+sigma_N1, dsigma_N1 = hdul_N1[5].data, hdul_N1[6].data
+flux_OIII_N1 = hdul_N1[9].data
+
+# N2
+hdul_N2 = fits.open(path_fit_N2)
+fs_N2, hdr_N2 = hdul_N2[1].data, hdul_N2[2].header
+v_N2, z_N2, dz_N2 = hdul_N2[2].data, hdul_N2[3].data, hdul_N2[4].data
+sigma_N2, dsigma_N2 = hdul_N2[5].data, hdul_N2[6].data
+flux_OIII_N2 = hdul_N2[9].data
+
+# N3
+hdul_N3 = fits.open(path_fit_N3)
+fs_N3, hdr_N3 = hdul_N3[1].data, hdul_N3[2].header
+v_N3, z_N3, dz_N3 = hdul_N3[2].data, hdul_N3[3].data, hdul_N3[4].data
+sigma_N3, dsigma_N3 = hdul_N3[5].data, hdul_N3[6].data
+flux_OIII_N3 = hdul_N3[9].data
+
 
 # plot the velocity field
-x, y = np.meshgrid(np.arange(v.shape[1]), np.arange(v.shape[1]))
+x, y = np.meshgrid(np.arange(v_N1.shape[1]), np.arange(v_N1.shape[1]))
 x, y = x.flatten(), y.flatten()
 pixcoord = PixCoord(x=x, y=y)
 
 #
+hdr = hdr_N1
 str_zap = ''
 path_sub_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
 hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
@@ -65,26 +89,64 @@ hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
 w = WCS(hdr, naxis=2)
 center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
 c2 = w.world_to_pixel(center_qso)
-# region_sky = RectangleSkyRegion(center=center_qso, width=3 * u.deg, height=4 * u.deg, angle=5 * u.deg)
-rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=2, angle=Angle(-30, 'deg'))
+rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=3, angle=Angle(-30, 'deg'))
 mask = rectangle.contains(pixcoord)
 dis = np.sqrt((x - c2[0])**2 + (y - c2[1])**2) * 0.2 * 50 / 7
+red = ((x[mask] - c2[0]) < 0) * ((y[mask] - c2[1]) > 0)
+blue = ~red
 
 # Slit position
 fig, ax = plt.subplots(1, 1)
-plt.imshow(v[0, :, :], origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+plt.imshow(v_N1[0, :, :], origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
 patch = rectangle.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
 plt.plot(c2[0], c2[1], '*', markersize=15)
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox_inches='tight')
 
+
 # Velocity profile
+# ax.errorbar(radius, profile_Hbeta, dprofile_Hbeta, fmt='.k', capsize=8, elinewidth=0.7, mfc='C2',
+#             ms=15, markeredgewidth=0.7, label=r'$\rm H\beta$')
+
+
 fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
-ax.plot(v[0, :, :].flatten()[mask], dis[mask], 'k.')
-ax.plot(v[1, :, :].flatten()[mask], dis[mask], 'k*')
+#
+v_N1_flatten = v_N1[0, :, :].flatten()
+ax.plot(v_N1_flatten[mask][blue], dis[mask][blue], '.k')
+# ax.plot(v_N1_flatten[mask][red], dis[mask][red], '.k')
+
+#
+v_N2_flatten_C1 = v_N2[0, :, :].flatten()
+v_N2_flatten_C2 = v_N2[1, :, :].flatten()
+flux_OIII_N2_flatten_C1 = flux_OIII_N2[0, :, :].flatten()
+flux_OIII_N2_flatten_C2 = flux_OIII_N2[1, :, :].flatten()
+v_N2_flatten_weight = (v_N2_flatten_C1 * flux_OIII_N2_flatten_C1
+                       + v_N2_flatten_C2 * flux_OIII_N2_flatten_C2) / (flux_OIII_N2_flatten_C1 + flux_OIII_N2_flatten_C2)
+ax.plot(v_N2_flatten_C1[mask][red], dis[mask][red], '.r')
+ax.plot(v_N2_flatten_C2[mask][red], dis[mask][red], '.r')
+ax.plot(v_N2_flatten_weight[mask][red], dis[mask][red], '.b', ms=10)
+print(len(flux_OIII_N2_flatten_C2[np.isnan(flux_OIII_N2_flatten_C2)]))
+
+#
+v_N3_flatten_C1 = v_N3[0, :, :].flatten()
+v_N3_flatten_C2 = v_N3[1, :, :].flatten()
+v_N3_flatten_C3 = v_N3[2, :, :].flatten()
+flux_OIII_N3_flatten_C1 = flux_OIII_N3[0, :, :].flatten()
+flux_OIII_N3_flatten_C2 = flux_OIII_N3[1, :, :].flatten()
+flux_OIII_N3_flatten_C3 = flux_OIII_N3[2, :, :].flatten()
+v_N3_flatten_weight = (v_N3_flatten_C1 * flux_OIII_N3_flatten_C1 + v_N3_flatten_C2 * flux_OIII_N3_flatten_C2
+                       + v_N3_flatten_C3 * flux_OIII_N3_flatten_C3) \
+                      / (flux_OIII_N3_flatten_C1 + flux_OIII_N3_flatten_C2 + flux_OIII_N3_flatten_C3)
+# ax.plot(v_N3[0, :, :].flatten()[mask], dis[mask], '.C2')
+# ax.plot(v_N3[1, :, :].flatten()[mask], dis[mask], '.C2')
+# ax.plot(v_N3[2, :, :].flatten()[mask], dis[mask], '.C2')
+ax.plot(v_N3_flatten_weight[mask][red], dis[mask][red], '.', color='C6', ms=5)
+# ax.errorbar(radius, profile_Hbeta, np.zeros_like(dis[mask]), fmt='.k', capsize=8, elinewidth=0.7, mfc='C2',
+#             ms=15, markeredgewidth=0.7, label=r'$\rm H\beta$')
+
 ax.set_xlim(-500, 500)
 ax.set_ylim(40, 0)
-ax.set_xlabel('Velocity (km/s)', size=20)
-ax.set_ylabel('Distance (kpc)', size=20)
+ax.set_xlabel(r'$\Delta v \rm \, [km \, s^{-1}]$', size=20)
+ax.set_ylabel(r'$\rm Distance \, [kpc]$', size=20)
 
 
 # ax[0].plot(v[0, :, :].flatten()[mask], dis[mask], 'k.')
