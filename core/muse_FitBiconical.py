@@ -89,11 +89,16 @@ hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
 w = WCS(hdr, naxis=2)
 center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
 c2 = w.world_to_pixel(center_qso)
-rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=3, angle=Angle(-30, 'deg'))
+rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=2, angle=Angle(-30, 'deg'))
 mask = rectangle.contains(pixcoord)
 dis = np.sqrt((x - c2[0])**2 + (y - c2[1])**2) * 0.2 * 50 / 7
+dis_mask = dis[mask]
+
+#
 red = ((x[mask] - c2[0]) < 0) * ((y[mask] - c2[1]) > 0)
 blue = ~red
+dis_red = dis_mask[red]
+dis_blue = dis_mask[blue] * -1
 
 # Slit position
 fig, ax = plt.subplots(1, 1)
@@ -103,16 +108,63 @@ plt.plot(c2[0], c2[1], '*', markersize=15)
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox_inches='tight')
 
 
-# Velocity profile
-# ax.errorbar(radius, profile_Hbeta, dprofile_Hbeta, fmt='.k', capsize=8, elinewidth=0.7, mfc='C2',
-#             ms=15, markeredgewidth=0.7, label=r'$\rm H\beta$')
-
-
+# Position-velocity diagram
+i = 70
 fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
+
+# NFW profile
+h = 0.7
+G = 6.674e-8
+M_sun = 1.989e33
+M_halo = 10 ** 13 * M_sun
+rho_c = 1.8788e-29 * h ** 2
+kpc = 3.086e21
+c = 15
+x = np.linspace(0, 0.2, 1000)
+R_vir = (3 * M_halo / 4 / np.pi / 200 / rho_c) ** (1 / 3)
+f_cx = np.log(1 + c * x) - c * x / (1 + c * x)
+f_c = np.log(1 + c) - c / (1 + c)
+v_vir = np.sqrt(G * M_halo / R_vir) / 1e5
+v_c = v_vir * np.sqrt(f_cx / x / f_c) * np.sin(i * np.pi / 180)
+ax.plot(x * R_vir / kpc, v_c, '-r', label='NFW profile with i={} deg'.format(i))
+ax.plot(- x * R_vir / kpc, -v_c, '-r')
+
+
+# Velocity profile
+def v(index=2, v_max=800, i_deg=5, R_max=30):
+    #
+    # theta = np.arcsin(d / R)
+    # P1 = - 2 * d * (np.tan(i_rad) * np.cos(theta_rad) - np.tan(i_rad) ** 2 * np.sin(theta_rad))
+    # P2 = np.sqrt(4 * d ** 2 * (np.tan(i_rad) ** 2 * np.cos(theta_rad) ** 2 + np.tan(i_rad) * np.sin(2 * theta_rad) + np.sin(theta_rad) ** 2))
+    # P3 = 2 * (np.sin(theta_rad) ** 2 * (np.tan(i_rad) ** 2 - 1) - np.tan(i_rad)* np.sin(2 * theta_rad))
+    # R = - 2 * d * (np.tan(i_deg * np.pi / 180) + np.tan(theta))
+    # r = d / np.sin(i_deg * np.pi / 180)
+
+    #
+    R = np.arange(0, R_max + 0.1, 0.1)
+    i_rad = i_deg * np.pi / 180
+    theta_rad = np.arccos((R / 2) / (R_max / 2))
+    v_3D = v_max * (R / R_max) ** index
+
+    #
+    d_minus = R * np.sin(np.pi / 2 - theta_rad - i_rad)
+    d_plus = R * np.sin(np.pi / 2 + theta_rad - i_rad)
+
+    #
+    v_minus = -1 * v_3D * np.cos(np.pi / 2 - theta_rad - i_rad)
+    v_plus = -1 * v_3D * np.cos(np.pi / 2 + theta_rad - i_rad)
+    return d_minus, d_plus, v_minus, v_plus
+
 #
+ax.plot(v()[0], v()[2], '-', linewidth=1, color='k')
+ax.plot(v()[1], v()[3], '-', linewidth=1, color='k')
+
+
+# Components
 v_N1_flatten = v_N1[0, :, :].flatten()
-ax.plot(v_N1_flatten[mask][blue], dis[mask][blue], '.k')
-# ax.plot(v_N1_flatten[mask][red], dis[mask][red], '.k')
+ax.errorbar(dis_blue, v_N1_flatten[mask][blue], np.zeros_like(dis[mask][blue]),
+            fmt='.k', capsize=0, elinewidth=0.7, mfc='C0', ms=8, markeredgewidth=0.7)
+# ax.plot(dis[mask][red], v_N1_flatten[mask][red], '.k')
 
 #
 v_N2_flatten_C1 = v_N2[0, :, :].flatten()
@@ -121,10 +173,11 @@ flux_OIII_N2_flatten_C1 = flux_OIII_N2[0, :, :].flatten()
 flux_OIII_N2_flatten_C2 = flux_OIII_N2[1, :, :].flatten()
 v_N2_flatten_weight = (v_N2_flatten_C1 * flux_OIII_N2_flatten_C1
                        + v_N2_flatten_C2 * flux_OIII_N2_flatten_C2) / (flux_OIII_N2_flatten_C1 + flux_OIII_N2_flatten_C2)
-ax.plot(v_N2_flatten_C1[mask][red], dis[mask][red], '.r')
-ax.plot(v_N2_flatten_C2[mask][red], dis[mask][red], '.r')
-ax.plot(v_N2_flatten_weight[mask][red], dis[mask][red], '.b', ms=10)
-print(len(flux_OIII_N2_flatten_C2[np.isnan(flux_OIII_N2_flatten_C2)]))
+ax.plot(dis_red, v_N2_flatten_C1[mask][red], '.r')
+ax.plot(dis_red, v_N2_flatten_C2[mask][red], '.r')
+# ax.plot(dis[mask][red], v_N2_flatten_weight[mask][red], '.b', ms=10)
+ax.errorbar(dis[mask][red], v_N2_flatten_weight[mask][red], np.zeros_like(dis[mask][red]),
+            fmt='.k', capsize=0, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
 
 #
 v_N3_flatten_C1 = v_N3[0, :, :].flatten()
@@ -139,53 +192,71 @@ v_N3_flatten_weight = (v_N3_flatten_C1 * flux_OIII_N3_flatten_C1 + v_N3_flatten_
 # ax.plot(v_N3[0, :, :].flatten()[mask], dis[mask], '.C2')
 # ax.plot(v_N3[1, :, :].flatten()[mask], dis[mask], '.C2')
 # ax.plot(v_N3[2, :, :].flatten()[mask], dis[mask], '.C2')
-ax.plot(v_N3_flatten_weight[mask][red], dis[mask][red], '.', color='C6', ms=5)
-# ax.errorbar(radius, profile_Hbeta, np.zeros_like(dis[mask]), fmt='.k', capsize=8, elinewidth=0.7, mfc='C2',
-#             ms=15, markeredgewidth=0.7, label=r'$\rm H\beta$')
+# ax.plot(v_N3_flatten_weight[mask][red], dis[mask][red], '.', color='C6', ms=5)
 
-ax.set_xlim(-500, 500)
-ax.set_ylim(40, 0)
-ax.set_xlabel(r'$\Delta v \rm \, [km \, s^{-1}]$', size=20)
-ax.set_ylabel(r'$\rm Distance \, [kpc]$', size=20)
-
-
-# ax[0].plot(v[0, :, :].flatten()[mask], dis[mask], 'k.')
-# ax[1].plot(v[1, :, :].flatten()[mask], dis[mask], 'k.')
-# # ax[2].plot(v[0, :, :].flatten(), dis, 'k.')
-# ax[0].set_ylim(5, 0)
-# ax[1].set_ylim(5, 0)
-# # ax[2].set_ylim(5, 0)
-# ax[0].set_xlabel('Velocity (km/s)')
-# ax[0].set_ylabel('Distance (kpc)')
+ax.axhline(0, linestyle='--', color='k', linewidth=1)
+ax.axvline(0, linestyle='--', color='k', linewidth=1)
+ax.set_xlim(-40, 40)
+ax.set_ylim(-450, 450)
+ax.set_xlabel(r'$\rm Distance \, [kpc]$', size=20)
+ax.set_ylabel(r'$\Delta v \rm \, [km \, s^{-1}]$', size=20)
+ax.legend(loc=4, fontsize=15)
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile.png', bbox_inches='tight')
 # plt.show()
 
-# # NFW profile
-# # constants
-# h = 0.7
-# G = 6.674e-8
-# M_sun = 1.989e33
-# M_halo = 10 ** 13 * M_sun
-# rho_c = 1.8788e-29 * h ** 2
-# kpc = 3.086e21
-# c = 20
-#
-# #
-# x = np.linspace(0, 0.2, 1000)
-# R_vir = (3 * M_halo / 4 / np.pi / 200 / rho_c) ** (1 / 3)
-# f_cx = np.log(1 + c * x) - c * x / (1 + c * x)
-# f_c = np.log(1 + c) - c / (1 + c)
-# v_vir = np.sqrt(G * M_halo / R_vir) / 1e5
-# v_c = v_vir * np.sqrt(f_cx / x / f_c)
-#
-# fig, ax = plt.subplots(1, 1)
-# ax.plot(dis[mask], np.abs(v[0, :, :].flatten()[mask]), 'k.')
-# ax.plot(dis[mask], np.abs(v[1, :, :].flatten()[mask]), 'b.')
-# ax.plot(x * R_vir / kpc, v_c, '-r')
-# ax.set_xlabel('R (kpc)')
-# ax.set_ylabel('V (km/s)')
-# fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_NFW_profile.png', bbox_inches='tight')
-#
+
+# Biconical outflow model
+# Model Parameters
+A = 0.00 # dust extinction level (0.0 - 1.0)
+tau = 5.00  # shape of flux profile
+D = 1.0  # length of bicone (arbitrary units)
+fn = 1.0e3  # initial flux value at center
+
+theta_in_deg = 20.0     # inner opening angle (degrees)
+theta_out_deg = 40.0    # outer opening angle (degrees)
+
+# Bicone inclination and PA
+theta_B1_deg = 60.0  # rotation along x
+theta_B2_deg = 45.0     # rotation along y
+theta_B3_deg = 45.0     # rotation along z
+# Dust plane inclination and PA
+theta_D1_deg = 135.0    # rotation along x
+theta_D2_deg = 0.0     # rotation along y
+theta_D3_deg = 0.0     # rotation along z
+
+# Velocity profile parameters
+vmax = 1000.0  # km/s
+vtype = 'increasing'  # 'increasing','decreasing', or 'constant'
+# vtype = 'constant'
+# vtype = 'increasing'
+
+# Sampling paramters
+sampling = 100  # point sampling
+# 3d Plot orientation
+azim = 45
+elev = 15
+
+# 2d Map options
+map_interpolation = 'none'
+# emission model options
+obs_res = 68.9  # resolution of SDSS for emission line model
+nbins = 60  # number of bins for emission line histogram
+
+# Bicone coordinate, flux, and velocity grids
+xbgrid, ybgrid, zbgrid, fgrid, vgrid = bicone.generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg,
+                                                              theta_B3_deg, theta_D1_deg, theta_D2_deg, theta_D3_deg,
+                                                              D=D, tau=tau, fn=fn, A=A, vmax=vmax, vtype=vtype,
+                                                              sampling=sampling, plot=False, orientation=(azim, elev),
+                                                              save_fig=False)
+
+fmap, vmap, dmap, v_int, d_int = bicone.map_2d(xbgrid, ybgrid, zbgrid, fgrid, vgrid,
+                                               D=D, sampling=sampling, interpolation=map_interpolation,
+                                               plot=True, save_fig=True)
+
+
+
+
+
 # # VVD
 # v1, v2 = v[0, :, :], v[1, :, :]
 # sigma1, sigma2 = sigma[0, :, :], sigma[1, :, :]
@@ -202,54 +273,3 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile.png
 # ax.set_xlabel('V (km/s)')
 # ax.set_ylabel(r'$\sigma$ (km/s)')
 # fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_VVD_profile.png', bbox_inches='tight')
-#
-# # Biconical outflow model
-# # Model Parameters
-# A = 0.90 # dust extinction level (0.0 - 1.0)
-# tau = 5.00  # shape of flux profile
-# D = 1.0  # length of bicone (arbitrary units)
-# fn = 1.0e3  # initial flux value at center
-#
-# theta_in_deg = 20.0     # inner opening angle (degrees)
-# theta_out_deg = 40.0    # outer opening angle (degrees)
-#
-# # Bicone inclination and PA
-# theta_B1_deg = 60.0  # rotation along x
-# theta_B2_deg = 45.0     # rotation along y
-# theta_B3_deg = 45.0     # rotation along z
-# # Dust plane inclination and PA
-# theta_D1_deg = 135.0    # rotation along x
-# theta_D2_deg = 0.0     # rotation along y
-# theta_D3_deg = 0.0     # rotation along z
-#
-# # Velocity profile parameters
-# vmax = 1000.0  # km/s
-# vtype = 'decreasing'  # 'increasing','decreasing', or 'constant'
-# # vtype = 'constant'
-# # vtype = 'increasing'
-#
-# # Sampling paramters
-# sampling = 100  # point sampling
-# # 3d Plot orientation
-# azim = 45
-# elev = 15
-#
-# # 2d Map options
-# map_interpolation = 'none'
-# # emission model options
-# obs_res = 68.9  # resolution of SDSS for emission line model
-# nbins = 60  # number of bins for emission line histogram
-#
-# # Bicone coordinate, flux, and velocity grids
-# # xbgrid,ybgrid,zbgrid,fgrid,vgrid = bicone.generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg,
-# #                                                           theta_B3_deg, theta_D1_deg, theta_D2_deg, theta_D3_deg,
-# #                                                           D=D, tau=tau, fn=fn, A=A, vmax=vmax, vtype=vtype,
-# #                                                           sampling=sampling, plot=False, orientation=(azim, elev),
-# #                                                           save_fig=False)
-# #
-# # fmap, vmap, dmap,v_int,d_int = bicone.map_2d(xbgrid,ybgrid,zbgrid,fgrid,vgrid,
-# #                                              D=D,sampling=sampling,interpolation=map_interpolation,
-# #                                              plot=True,save_fig=True)
-#
-#
-#

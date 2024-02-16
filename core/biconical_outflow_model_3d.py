@@ -204,11 +204,11 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
 
 #####################################################################################
 
-def velocity_profile(bicone_grid,bicone_coords,D=1.0,vmax=1000.0,vtype='decreasing'):
+def velocity_profile(bicone_grid, bicone_coords, D=1.0, vmax=1000.0, vtype='decreasing'):
     # Calculates the velocity at a distance d from the nucleus
-    xb,yb,zb = bicone_coords
-    d = (xb**2+yb**2+zb**2)**0.5
-    if (vtype=='increasing') or (vtype==1):
+    xb, yb, zb = bicone_coords
+    d = (xb ** 2 + yb ** 2 + zb ** 2) ** 0.5
+    if (vtype == 'increasing') or (vtype == 1):
         # Linearly increasing
         # vd = 0 at d =0, vd = vmax at d=D=1
         k = float(vmax)/float(D)
