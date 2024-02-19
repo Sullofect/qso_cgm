@@ -131,7 +131,7 @@ ax.plot(- x * R_vir / kpc, -v_c, '-r')
 
 
 # Velocity profile
-def v(index=2, v_max=800, i_deg=5, R_max=30):
+def v(index=2, v_max=800, i_deg=70, R_max=30):
     #
     # theta = np.arcsin(d / R)
     # P1 = - 2 * d * (np.tan(i_rad) * np.cos(theta_rad) - np.tan(i_rad) ** 2 * np.sin(theta_rad))
@@ -257,7 +257,7 @@ fmap, vmap, dmap, v_int, d_int = bicone.map_2d(xbgrid, ybgrid, zbgrid, fgrid, vg
 
 
 
-# # VVD
+# VVD
 # v1, v2 = v[0, :, :], v[1, :, :]
 # sigma1, sigma2 = sigma[0, :, :], sigma[1, :, :]
 # v1 = np.where(v2 != 0, v1, 0)
