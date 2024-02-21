@@ -1,6 +1,6 @@
 import os
-import aplpy
-import lmfit
+# import aplpy
+# import lmfit
 import numpy as np
 import matplotlib as mpl
 import astropy.io.fits as fits
@@ -9,19 +9,15 @@ from astropy import units as u
 from astropy import stats
 from astropy.io import ascii
 from matplotlib import rc
-from PyAstronomy import pyasl
-from mpdaf.obj import Cube, WaveCoord, Image
 from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
-from photutils.segmentation import detect_sources
-from photutils.segmentation import deblend_sources
-from palettable.scientific.sequential import Acton_6
-from palettable.cubehelix import red_16
-from palettable.cmocean.sequential import Dense_20_r
 from regions import PixCoord
 from regions import RectangleSkyRegion, RectanglePixelRegion
+from scipy.interpolate import interp1d
 from astropy.coordinates import Angle
 import biconical_outflow_model_3d as bicone
+from mpdaf.obj import Cube, WaveCoord, Image
+from PyAstronomy import pyasl
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -51,6 +47,7 @@ fs_N1, hdr_N1 = hdul_N1[1].data, hdul_N1[2].header
 v_N1, z_N1, dz_N1 = hdul_N1[2].data, hdul_N1[3].data, hdul_N1[4].data
 sigma_N1, dsigma_N1 = hdul_N1[5].data, hdul_N1[6].data
 flux_OIII_N1 = hdul_N1[9].data
+chisqr_N1, redchi_N1 = hdul_N1[15].data, hdul_N1[16].data
 
 # N2
 hdul_N2 = fits.open(path_fit_N2)
@@ -58,6 +55,7 @@ fs_N2, hdr_N2 = hdul_N2[1].data, hdul_N2[2].header
 v_N2, z_N2, dz_N2 = hdul_N2[2].data, hdul_N2[3].data, hdul_N2[4].data
 sigma_N2, dsigma_N2 = hdul_N2[5].data, hdul_N2[6].data
 flux_OIII_N2 = hdul_N2[9].data
+chisqr_N2, redchi_N2 = hdul_N2[15].data, hdul_N2[16].data
 
 # N3
 hdul_N3 = fits.open(path_fit_N3)
@@ -65,6 +63,7 @@ fs_N3, hdr_N3 = hdul_N3[1].data, hdul_N3[2].header
 v_N3, z_N3, dz_N3 = hdul_N3[2].data, hdul_N3[3].data, hdul_N3[4].data
 sigma_N3, dsigma_N3 = hdul_N3[5].data, hdul_N3[6].data
 flux_OIII_N3 = hdul_N3[9].data
+chisqr_N3, redchi_N3 = hdul_N3[15].data, hdul_N3[16].data
 
 
 # plot the velocity field
@@ -212,13 +211,14 @@ tau = 5.00  # shape of flux profile
 D = 1.0  # length of bicone (arbitrary units)
 fn = 1.0e3  # initial flux value at center
 
-theta_in_deg = 20.0     # inner opening angle (degrees)
-theta_out_deg = 40.0    # outer opening angle (degrees)
+theta_in_deg = 10.0     # inner opening angle (degrees)
+theta_out_deg = 20.0    # outer opening angle (degrees)
 
 # Bicone inclination and PA
 theta_B1_deg = 60.0  # rotation along x
-theta_B2_deg = 45.0     # rotation along y
-theta_B3_deg = 45.0     # rotation along z
+theta_B2_deg = 60     # rotation along y
+theta_B3_deg = 0     # rotation along z
+
 # Dust plane inclination and PA
 theta_D1_deg = 135.0    # rotation along x
 theta_D2_deg = 0.0     # rotation along y
@@ -232,6 +232,7 @@ vtype = 'increasing'  # 'increasing','decreasing', or 'constant'
 
 # Sampling paramters
 sampling = 100  # point sampling
+
 # 3d Plot orientation
 azim = 45
 elev = 15
@@ -246,16 +247,119 @@ nbins = 60  # number of bins for emission line histogram
 xbgrid, ybgrid, zbgrid, fgrid, vgrid = bicone.generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg,
                                                               theta_B3_deg, theta_D1_deg, theta_D2_deg, theta_D3_deg,
                                                               D=D, tau=tau, fn=fn, A=A, vmax=vmax, vtype=vtype,
-                                                              sampling=sampling, plot=False, orientation=(azim, elev),
-                                                              save_fig=False)
+                                                              sampling=sampling, plot=True, orientation=(azim, elev),
+                                                              save_fig=True)
 
 fmap, vmap, dmap, v_int, d_int = bicone.map_2d(xbgrid, ybgrid, zbgrid, fgrid, vgrid,
                                                D=D, sampling=sampling, interpolation=map_interpolation,
                                                plot=True, save_fig=True)
 
 
+x, emline = bicone.emission_model(fgrid, vgrid, vmax=vmax, obs_res=obs_res, nbins=nbins, sampling=sampling,
+                                  plot=True, save_fig=True)
+
+# Compare with the data
+UseDetectionSeg = (1.5, 'gauss', 1.5, 'gauss')
+UseSmoothedCubes = True
+line_OII, line_OIII = 'OII', 'OIII'
+path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+    format(cubename, str_zap, line_OII, *UseDetectionSeg)
+path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+    format(cubename, str_zap, line_OIII, *UseDetectionSeg)
+path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+    format(cubename, str_zap, line_OII)
+path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+                         '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDetectionSeg)
+path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+    format(cubename, str_zap, line_OIII)
+path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+                          '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDetectionSeg)
+# Load data and smoothing
+if UseSmoothedCubes:
+    cube_OII, cube_OIII = Cube(path_cube_smoothed_OII), Cube(path_cube_smoothed_OIII)
+else:
+    cube_OII, cube_OIII = Cube(path_cube_OII), Cube(path_cube_OIII)
+wave_OII_vac, wave_OIII_vac = pyasl.airtovac2(cube_OII.wave.coord()), pyasl.airtovac2(
+    cube_OIII.wave.coord())
+flux_OII, flux_err_OII = cube_OII.data * 1e-3, np.sqrt(cube_OII.var) * 1e-3
+flux_OIII, flux_err_OIII = cube_OIII.data * 1e-3, np.sqrt(cube_OIII.var) * 1e-3
+seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
+mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
+flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
 
 
+# redchi_mean, redchi_median, redchi_std = stats.sigma_clipped_stats(redchi_N1[redchi_N1 != 0], sigma=3, maxiters=5)
+# refit_seg = np.where((redchi_N1 > 1.0), redchi_N1, 0)
+# v_N1_seg = refit_seg * v_N1[0, :, :]
+
+# remap the vmap to the observed grid
+coord_MUSE = (65, 81)
+
+#
+fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
+ax.imshow(v_N1[0, :, :], origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+ax.imshow(np.flip(vmap, 1), cmap='coolwarm', extent=[c2[0] - 20, c2[0] + 20, c2[1] - 20, c2[1] + 20],
+          vmin=-300, vmax=300, origin='lower')
+ax.plot(c2[0], c2[1], '*', markersize=15)
+fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_cone.png', bbox_inches='tight')
+
+
+def emission_pixel(fgrid, vgrid, vmax, coord_MUSE=(65, 81), nbins=25, sampling=100, z=z_qso):
+    global c2
+    # Having an odd sampling ensures that there is a value at (0,0,0)
+    if int(sampling) % 2 == 0:
+            sampling = int(sampling)+1
+
+    X_sample, Y_sample = np.meshgrid(np.arange(sampling), np.arange(sampling))
+    X_sample, Y_sample = X_sample.ravel(), Y_sample.ravel()
+    pixcoord_sample = PixCoord(x=X_sample, y=Y_sample)
+
+    #
+    center_x, center_y = (sampling - 1) / 2, (sampling - 1) / 2
+    pixel_scale = 40 / (sampling - 1)
+    coord_sample = int(coord_MUSE[0] - c2[0]) / pixel_scale + center_x, \
+                   int(coord_MUSE[1] - c2[1]) / pixel_scale + center_y
+    rect_sample = RectanglePixelRegion(center=PixCoord(x=coord_sample[0], y=coord_sample[1]),
+                                       width=1 / pixel_scale, height=1 / pixel_scale)
+    mask_sample = rect_sample.contains(pixcoord_sample)
+
+    # Reshape grids into cubes
+    mask_sample = mask_sample.reshape(sampling, sampling)
+    fgrid = fgrid.reshape(sampling, sampling, sampling)
+    vgrid = vgrid.reshape(sampling, sampling, sampling)
+
+    bins = np.linspace(-vmax, vmax, nbins)
+
+    # find specific pixel
+    v_xy = np.where(np.flip(mask_sample, 1)[np.newaxis, :, :], vgrid, np.nan).ravel()
+    f_xy = np.where(np.flip(mask_sample, 1)[np.newaxis, :, :], fgrid, np.nan).ravel()
+    v_xy = v_xy[f_xy > 0]
+    f_xy = f_xy[f_xy > 0]
+    print(v_xy)
+
+    v_hist, v_edges = np.histogram(v_xy, bins=bins, weights=f_xy)
+    v_mid = (v_edges[1:] + v_edges[:-1]) / 2
+
+    # convert x in km/s to angstroms
+    c = 299792. # speed of light in km/s
+    cw = 5008.239 * (1 + z)  # central wavelength; [OIII]5007 (SDSS)
+    lambda_mid = cw + (v_mid * cw) / c
+    return lambda_mid, v_hist / v_hist.max()
+
+
+# Define the pixel coordinates
+lambda_mid, v_hist = emission_pixel(fgrid, vgrid, vmax=vmax, nbins=nbins, sampling=sampling)
+
+
+# plt.close('all')
+fig, ax = plt.subplots(1, 1, dpi=300, figsize=(8, 5))
+ax.plot(wave_OIII_vac, flux_OIII[:, coord_MUSE[1], coord_MUSE[0]] / flux_OIII[:, coord_MUSE[1], coord_MUSE[0]].max(), '-k')
+ax.plot(wave_OIII_vac, flux_err_OIII[:, coord_MUSE[1], coord_MUSE[0]], '-C0')
+ax.plot(lambda_mid, v_hist, '-r', drawstyle='steps-mid')
+ax.set_xlabel('V (km/s)')
+ax.set_ylabel('Flux')
+fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_cone_flux.png', bbox_inches='tight')
+# plt.show()
 
 # VVD
 # v1, v2 = v[0, :, :], v[1, :, :]
@@ -273,3 +377,4 @@ fmap, vmap, dmap, v_int, d_int = bicone.map_2d(xbgrid, ybgrid, zbgrid, fgrid, vg
 # ax.set_xlabel('V (km/s)')
 # ax.set_ylabel(r'$\sigma$ (km/s)')
 # fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_VVD_profile.png', bbox_inches='tight')
+

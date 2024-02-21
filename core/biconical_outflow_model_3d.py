@@ -32,6 +32,7 @@ matplotlib.rcParams['agg.path.chunksize'] = 100000
 # np.set_printoptions(threshold=sys.maxsize)
 
 # plt.style.use('dark_background')
+path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/'
 
 #####################################################################################
 def bicone_inclination(B1_deg, B2_deg):
@@ -110,16 +111,16 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     # print('\n Bicone grid sampling = %d' % sampling)
     # Generate a uniform meshgrid in Cartesian coordinates 
     # print('\n Generating bicone...')
-    Xg, Yg, Zg = np.meshgrid(np.linspace(-D,D,sampling), np.linspace(-D,D,sampling), np.linspace(-D,D,sampling) )
+    Xg, Yg, Zg = np.meshgrid(np.linspace(-D, D, sampling), np.linspace(-D, D, sampling), np.linspace(-D, D, sampling))
     xbgrid, ybgrid, zbgrid = Xg.ravel(), Yg.ravel(), Zg.ravel()
     # Calculate d
-    d = (xbgrid**2+ybgrid**2+zbgrid**2)**0.5
+    d = (xbgrid ** 2 + ybgrid ** 2 + zbgrid ** 2) ** 0.5
     ind = np.where(d<=D)[0] # indices within a spere of radius D
     # Generate grid of zeros which we will occupy for valid values of the bicone
     # 1 for valid entries, 0 for none; this will be used for flux and velocity grids
     bicone_grid = np.zeros(len(d))
     # Calculate r_in,r_out
-    theta_in_rad  = theta_in_deg * np.pi/180.
+    theta_in_rad = theta_in_deg * np.pi/180.
     theta_out_rad = theta_out_deg * np.pi/180.
     r_in = (xbgrid**2+ybgrid**2)**0.5/np.cos(np.pi/2.0 - theta_in_rad)
     r_out = (xbgrid**2+ybgrid**2)**0.5/np.cos(np.pi/2.0 - theta_out_rad)
@@ -153,8 +154,6 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     # scipy.interpolate.griddata uses Delauney triangulation for irregular grids which 
     # makes this method very slow.
     # points = zip(xb_rot, yb_rot, zb_rot) #
-    print(len(xb_rot), len(yb_rot), len(zb_rot))
-    print(len(bicone_grid))
     points = zip(xb_rot, yb_rot, zb_rot) #
     # Xbgrid, Ybgrid, Zbgrid = np.meshgrid(xbgrid, ybgrid, zbgrid)
     values = bicone_grid #
@@ -173,9 +172,9 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     # Generate dust plane grid
     # print('\n Generating dust plane...')
     rd = 2.0*D # dust plane radius (defualt 2 x D)
-    Xg, Yg = np.meshgrid(np.linspace(-rd,rd,sampling),np.linspace(-rd,rd,sampling) )
-    xdgrid,ydgrid = Xg.ravel(),Yg.ravel()
-    zdgrid = np.full(np.shape(xdgrid),0.0) # zero thickness for simplicity
+    Xg, Yg = np.meshgrid(np.linspace(-rd,rd,sampling),np.linspace(-rd,rd,sampling))
+    xdgrid, ydgrid = Xg.ravel(), Yg.ravel()
+    zdgrid = np.full(np.shape(xdgrid), 0.0) # zero thickness for simplicity
     d = (xdgrid**2+ydgrid**2)**0.5
     xdg, ydg, zdg = xdgrid[d<=rd], ydgrid[d<=rd], zdgrid[d<=rd]
     # Rotate the dust plane in 3d
@@ -192,9 +191,9 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     vgrid = velocity_profile(new_bicone_grid,bicone_coords,D=D,vmax=vmax,vtype=vtype)
     
     # Plot model of the bicone and dust plane in 3d for visualization purposes
-    if plot==True:
+    if plot == True:
         bicone_vec = bicone_vector(theta_B1_deg,theta_B2_deg,theta_B3_deg)
-        dust_vec   = dust_vector(theta_D1_deg,theta_D2_deg,theta_D3_deg)
+        dust_vec = dust_vector(theta_D1_deg,theta_D2_deg,theta_D3_deg)
         plot_model(bicone_coords,dust_coords,fgrid,vgrid,bicone_vec,dust_vec,save_fig=save_fig,orientation=orientation)
         # plot_model_3D(bicone_coords,dust_coords,fgrid,vgrid,bicone_vec,dust_vec,save_fig=save_fig,orientation=orientation)
 
@@ -213,13 +212,13 @@ def velocity_profile(bicone_grid, bicone_coords, D=1.0, vmax=1000.0, vtype='decr
         # vd = 0 at d =0, vd = vmax at d=D=1
         k = float(vmax)/float(D)
         vd = k*d
-    elif (vtype=='decreasing') or (vtype==2):
+    elif (vtype == 'decreasing') or (vtype == 2):
         # Linearly decreasing
         # vd = vmax at d = 0, vd = 0 at d=D=1
         k = float(vmax)/float(D)
         vd = vmax-k*d
         
-    elif (vtype=='constant') or (vtype==3):
+    elif (vtype == 'constant') or (vtype == 3):
         # Constant velocity at all d
         vd = float(vmax)
 
@@ -229,7 +228,7 @@ def velocity_profile(bicone_grid, bicone_coords, D=1.0, vmax=1000.0, vtype='decr
     # Calculate the projected velocity along the LOS
     cos_i = (-yb/(yb**2+zb**2)**0.5)
     cos_i[~np.isfinite(cos_i)]=0
-    vp = vgrid  * cos_i
+    vp = vgrid * cos_i
 
     return vp
 
@@ -239,7 +238,7 @@ def flux_profile(bicone_grid,bicone_coords,dust_coords,tau=5.0,D=1.0,fn=1.0,A=0.
     # print('\n Generating flux profile...\n')
     xb,yb,zb = bicone_coords
     xd,yd,zd = dust_coords
-    d = ( (xb)**2 + (yb)**2 + (zb)**2 )**0.5
+    d = ((xb)**2 + (yb)**2 + (zb)**2 )**0.5
     
     points = (xd,zd)
     values = yd
@@ -330,29 +329,33 @@ def dust_vector(theta_D1_deg,theta_D2_deg,theta_D3_deg):
 # Custom class for 3D arrows
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
-        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
+        # FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
+        super().__init__((0,0), (0,0), *args, **kwargs)
         self._verts3d = xs, ys, zs
  
-    def draw(self, renderer):
+    def do_3d_projection(self, renderer=None):
         xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
         self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
-        FancyArrowPatch.draw(self, renderer)
+        # FancyArrowPatch.do_3d_projection(self, renderer)
+        return np.min(zs)
  
-    def set_data(self, xs, ys, zs):
-        self._verts3d = xs, ys, zs
+    # def set_data(self, xs, ys, zs):
+    #     self._verts3d = xs, ys, zs
+
 
 #####################################################################################
 
 def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',plot=True,save_fig=True):
-    if int(sampling)%2==0:
+    if int(sampling) %2 == 0:
         # Having an odd sampling ensures that there is a value at (0,0,0)
-        sampling = int(sampling)+1 
+        sampling = int(sampling) + 1
     # Reshape grids into cubes
-    fgrid = fgrid.reshape(sampling,sampling,sampling)
-    vgrid = vgrid.reshape(sampling,sampling,sampling)
+    fgrid = fgrid.reshape(sampling, sampling, sampling)
+    vgrid = vgrid.reshape(sampling, sampling, sampling)
+
     #### Flux map ###
-    fmap = simps(fgrid,axis=0)
+    fmap = simps(fgrid, axis=0)
     fmap[fmap<=0]=1
     fmap = np.log10(fmap)
     fmap[fmap<=0] = np.nan
@@ -360,17 +363,17 @@ def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',p
     
     #### Velocity map ###
 
-    vmap = simps(np.multiply(fgrid,vgrid),axis=0)/simps(fgrid,axis=0)
+    vmap = simps(np.multiply(fgrid, vgrid), axis=0) / simps(fgrid, axis=0)
 
 
     ### Dispersion map ###
 
-    dmap = ( simps(np.multiply(fgrid,vgrid**2),axis=0)/simps(fgrid,axis=0) - vmap**2 )**0.5
+    dmap = (simps(np.multiply(fgrid, vgrid**2), axis=0) / simps(fgrid, axis=0) - vmap**2)**0.5
 
     # Integrated velocity along LOS
     F = simps(simps(simps(fgrid,axis=2),axis=1),axis=0)
     v_int = simps(simps(simps(vgrid*fgrid,axis=2),axis=1),axis=0)/F
-    d_int = ( simps(simps(simps(vgrid**2*fgrid,axis=2),axis=1),axis=0)/F - v_int**2 )**0.5
+    d_int = (simps(simps(simps(vgrid**2*fgrid,axis=2),axis=1),axis=0)/F - v_int**2 )**0.5
 
     print('Integrated velocity = %s (km/s)' % v_int)
     print('Integrated velocity dispersion = %s (km/s)' % d_int)
@@ -397,7 +400,7 @@ def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',p
         new_cmap = truncate_colormap(cmap, 0.0, 0.9)
 
 
-        flux_axes = ax1.imshow(fmap.T,cmap=new_cmap,interpolation=interpolation,origin='lower',
+        flux_axes = ax1.imshow(fmap.T, cmap=new_cmap,interpolation=interpolation,origin='lower',
                    vmin=(np.nanmin(fmap)),vmax=(np.nanmax(fmap)),
                    extent=[np.min(xb),np.max(xb),np.min(zb),np.max(zb)])
 
@@ -420,9 +423,12 @@ def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',p
         ax1.invert_xaxis()
 
         # Axes 2: Velocity Map
+        # vel_axes = ax2.imshow(vmap.T,
+        #            extent=[np.min(xb),np.max(xb),np.min(zb),np.max(zb)],cmap=cm.RdBu_r,
+        #            vmin=-(np.nanmax(np.abs(vmap))),vmax=(np.nanmax(np.abs(vmap))),interpolation=interpolation,origin='lower')
         vel_axes = ax2.imshow(vmap.T,
                    extent=[np.min(xb),np.max(xb),np.min(zb),np.max(zb)],cmap=cm.RdBu_r,
-                   vmin=-(np.nanmax(np.abs(vmap))),vmax=(np.nanmax(np.abs(vmap))),interpolation=interpolation,origin='lower')
+                   vmin=-(np.nanmax(np.abs(500))),vmax=(np.nanmax(np.abs(500))),interpolation=interpolation,origin='lower')
         ax2.contour(fmap.T,extent=[np.min(xb),np.max(xb),np.min(zb),np.max(zb)],colors='black',linewidths=0.5,alpha=0.75,
                     levels=np.linspace(np.nanmin(fmap),np.nanmax(fmap)+1,nlevels))
 
@@ -457,7 +463,7 @@ def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',p
         plt.tight_layout()
         if save_fig==True:
             # plt.savefig('maps_2d.pdf',dpi=150,fmt='pdf')
-            plt.savefig('maps_2d.png',dpi=300,fmt='png')
+            plt.savefig(path_savefig + 'maps_2d.png',dpi=300,fmt='png')
 
         # plt.close()
 
@@ -556,7 +562,7 @@ def plot_model(bicone_coords,dust_coords,flux_profile,vel_profile,bicone_vec,dus
     ax3.plot(0, 0,color='xkcd:red',alpha=alpha,marker='o',zorder=12)
     ax3.set_xlim(-2.5,2.5)
     ax3.set_ylim(-2.5,2.5)
-    ax3.set_xlabel(r'$y$')
+    ax3.set_xlabel(r'$x$')
     ax3.set_ylabel(r'$z$')
     ax3.invert_xaxis()
     ax3.grid(color='black',alpha=0.5)
@@ -650,188 +656,188 @@ def plot_model(bicone_coords,dust_coords,flux_profile,vel_profile,bicone_vec,dus
 
     if save_fig==True:
         # plt.savefig('model_3d.pdf',dpi=150,fmt='pdf')
-        plt.savefig('model_3d.png',dpi=300,fmt='png')
+        fig.savefig(path_savefig + 'model_3d.png', dpi=300, fmt='png')
         # plt.savefig('model_3d.png', dpi=300)
         # plt.show()
     # plt.close()
     return None
 
-def plot_model_3D(bicone_coords,dust_coords,flux_profile,vel_profile,bicone_vec,dust_vec,save_fig,orientation):
-
-    azim, elev = orientation
-
-    xb,yb,zb = bicone_coords
-    xd,yd,zd = dust_coords
-    fd = flux_profile
-    vd = np.copy(vel_profile)
-    vd[vd==0] = np.nan
-
-    points = (xd,yd)
-    values = zd
-    # Put on uniform grid
-    xdgrid,ydgrid = np.meshgrid(np.linspace(np.min(xd),np.max(xd),1000),np.linspace(np.min(yd),np.max(yd),1000))
-    zdgrid = griddata(points, values, (xdgrid, ydgrid), method='cubic')
-
-    # Truncate flux colormap
-    def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
-        new_cmap = colors.LinearSegmentedColormap.from_list(
-            'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
-            cmap(np.linspace(minval, maxval, n)))
-        return new_cmap
-    cmap = plt.get_cmap('nipy_spectral')
-    new_cmap = truncate_colormap(cmap, 0.0, 0.9)
-
-    fig = plt.figure(figsize=(14,5))
-    ax4 = fig.add_subplot(1,2,1,projection='3d')
-    ax5 = fig.add_subplot(1,2,2,projection='3d')
-    # Plotting function for animation
-    fontsize = 12
-    axis_size = 2
-    alpha = 1.0
-    
-    #################################################################################
-    # Axis 4: 3D Flux Plot
-    # Bicone
-    flux = ax4.scatter(xb,yb,zb, marker='.',s=1,c=np.log10(fd),  alpha=0.25,zorder=10,cmap=new_cmap)
-    B_arrow = Arrow3D(bicone_vec[0], bicone_vec[1], bicone_vec[2], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:cerulean blue',alpha=0.5)
-    ax4.add_artist(B_arrow)
-    # Dust Plane
-    ax4.plot_wireframe(xdgrid,ydgrid,zdgrid,alpha=0.25,color='xkcd:orange',zorder=3)
-    D_arrow = Arrow3D(dust_vec[0], dust_vec[1], dust_vec[2], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:dark orange',alpha=0.5)
-    ax4.add_artist(D_arrow)
-    # Axes labels annd lines
-    LOS_arrow = Arrow3D([0,0], [2,1.], [0,0], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:red',alpha=alpha)
-    ax4.add_artist(LOS_arrow)
-    ax4.text(0, 2, +0.1, "L.O.S.", color='black',size=fontsize,alpha=alpha)
-    # x-axis
-    ax4.set_xlim(-2,2)
-    ax4.set_xlabel(r'$x$',fontsize=fontsize)
-    xAxisLine_pos = Arrow3D([0,axis_size], [0,0], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    xAxisLine_neg = Arrow3D([0,-axis_size], [0,0], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    ax4.add_artist(xAxisLine_pos)
-    ax4.add_artist(xAxisLine_neg)
-    ax4.text(axis_size+0.1, 0, -0.1, r'$x$', color='black',size=fontsize,alpha=alpha)
-    # y-axis
-    ax4.set_ylim(-2,2)
-    ax4.set_ylabel(r'$y$',fontsize=fontsize)
-    yAxisLine_pos = Arrow3D([0,0], [0,axis_size], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    yAxisLine_neg = Arrow3D([0,0], [0,-axis_size], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    ax4.add_artist(yAxisLine_pos)
-    ax4.add_artist(yAxisLine_neg)
-    ax4.text(0, axis_size+0.1, -0.1, r'$y$', color='black',size=fontsize,alpha=alpha)
-    # z-axis
-    ax4.set_zlim(-2,2)
-    ax4.set_zlabel(r'$z$',fontsize=fontsize)
-    zAxisLine_pos = Arrow3D([0,0], [0,0], [0,axis_size], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    zAxisLine_neg = Arrow3D([0,0], [0,0], [0,-axis_size], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    ax4.add_artist(zAxisLine_pos)
-    ax4.add_artist(zAxisLine_neg)
-    ax4.text(0, 0, axis_size+0.1, r'$z$', color='black',size=fontsize,alpha=alpha)
-    # Add a color bar which maps values to colors.
-    fig.colorbar(flux, ax=ax4, shrink=0.5, aspect=5,label=r'$\log_{10}$ Flux')
-    ax4.view_init(azim=azim,elev=elev)
-
-    #################################################################################
-    # Axis 5: 3D Velocity Plot
-    # Bicone
-    vel = ax5.scatter(xb,yb,zb, marker='.',s=1,c=vd, cmap=cm.RdBu_r, alpha=0.25,zorder=10)
-    B_arrow = Arrow3D(bicone_vec[0], bicone_vec[1], bicone_vec[2], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:cerulean blue',alpha=0.5)
-    ax5.add_artist(B_arrow)
-    # Dust Plane
-    ax5.plot_wireframe(xdgrid,ydgrid,zdgrid,alpha=0.25,color='xkcd:orange',zorder=3)
-    D_arrow = Arrow3D(dust_vec[0], dust_vec[1], dust_vec[2], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:dark orange',alpha=0.5)
-    ax5.add_artist(D_arrow)
-    # Axes labels annd lines
-    LOS_arrow = Arrow3D([0,0], [2,1.], [0,0], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:red',alpha=alpha)
-    ax5.add_artist(LOS_arrow)
-    ax5.text(0, 2, +0.1, "L.O.S.", color='black',size=fontsize,alpha=alpha)
-    # x-axis
-    ax5.set_xlim(-2,2)
-    ax5.set_xlabel(r'$x$',fontsize=fontsize)
-    xAxisLine_pos = Arrow3D([0,axis_size], [0,0], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    xAxisLine_neg = Arrow3D([0,-axis_size], [0,0], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    ax5.add_artist(xAxisLine_pos)
-    ax5.add_artist(xAxisLine_neg)
-    ax5.text(axis_size+0.1, 0, -0.1, r'$x$', color='black',size=fontsize,alpha=alpha)
-    # y-axis
-    ax5.set_ylim(-2,2)
-    ax5.set_ylabel(r'$y$',fontsize=fontsize)
-    yAxisLine_pos = Arrow3D([0,0], [0,axis_size], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    yAxisLine_neg = Arrow3D([0,0], [0,-axis_size], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    ax5.add_artist(yAxisLine_pos)
-    ax5.add_artist(yAxisLine_neg)
-    ax5.text(0, axis_size+0.1, -0.1, r'$y$', color='black',size=fontsize,alpha=alpha)
-    # z-axis
-    ax5.set_zlim(-2,2)
-    ax5.set_zlabel(r'$z$',fontsize=fontsize)
-    zAxisLine_pos = Arrow3D([0,0], [0,0], [0,axis_size], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    zAxisLine_neg = Arrow3D([0,0], [0,0], [0,-axis_size], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
-    ax5.add_artist(zAxisLine_pos)
-    ax5.add_artist(zAxisLine_neg)
-    ax5.text(0, 0, axis_size+0.1, r'$z$', color='black',size=fontsize,alpha=alpha)
-    # Add a color bar which maps values to colors.
-    fig.colorbar(vel, ax=ax5, shrink=0.5, aspect=5,label=r'Projected Velocity along LOS (km/s)')
-    ax5.view_init(azim=azim,elev=elev)
-
-    plt.tight_layout()
-
-    if save_fig==True:
-        # plt.savefig('model_3d.pdf',dpi=150,fmt='pdf')
-        plt.savefig('model_3d.png',dpi=300,fmt='png')
-    # plt.close()
-    return None
+# def plot_model_3D(bicone_coords,dust_coords,flux_profile,vel_profile,bicone_vec,dust_vec,save_fig,orientation):
+#
+#     azim, elev = orientation
+#
+#     xb,yb,zb = bicone_coords
+#     xd,yd,zd = dust_coords
+#     fd = flux_profile
+#     vd = np.copy(vel_profile)
+#     vd[vd==0] = np.nan
+#
+#     points = (xd,yd)
+#     values = zd
+#     # Put on uniform grid
+#     xdgrid,ydgrid = np.meshgrid(np.linspace(np.min(xd),np.max(xd),1000),np.linspace(np.min(yd),np.max(yd),1000))
+#     zdgrid = griddata(points, values, (xdgrid, ydgrid), method='cubic')
+#
+#     # Truncate flux colormap
+#     def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+#         new_cmap = colors.LinearSegmentedColormap.from_list(
+#             'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+#             cmap(np.linspace(minval, maxval, n)))
+#         return new_cmap
+#     cmap = plt.get_cmap('nipy_spectral')
+#     new_cmap = truncate_colormap(cmap, 0.0, 0.9)
+#
+#     fig = plt.figure(figsize=(14,5))
+#     ax4 = fig.add_subplot(1,2,1,projection='3d')
+#     ax5 = fig.add_subplot(1,2,2,projection='3d')
+#     # Plotting function for animation
+#     fontsize = 12
+#     axis_size = 2
+#     alpha = 1.0
+#
+#     #################################################################################
+#     # Axis 4: 3D Flux Plot
+#     # Bicone
+#     flux = ax4.scatter(xb,yb,zb, marker='.',s=1,c=np.log10(fd),  alpha=0.25,zorder=10,cmap=new_cmap)
+#     B_arrow = Arrow3D(bicone_vec[0], bicone_vec[1], bicone_vec[2], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:cerulean blue',alpha=0.5)
+#     ax4.add_artist(B_arrow)
+#     # Dust Plane
+#     ax4.plot_wireframe(xdgrid,ydgrid,zdgrid,alpha=0.25,color='xkcd:orange',zorder=3)
+#     D_arrow = Arrow3D(dust_vec[0], dust_vec[1], dust_vec[2], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:dark orange',alpha=0.5)
+#     ax4.add_artist(D_arrow)
+#     # Axes labels annd lines
+#     LOS_arrow = Arrow3D([0,0], [2,1.], [0,0], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:red',alpha=alpha)
+#     ax4.add_artist(LOS_arrow)
+#     ax4.text(0, 2, +0.1, "L.O.S.", color='black',size=fontsize,alpha=alpha)
+#     # x-axis
+#     ax4.set_xlim(-2,2)
+#     ax4.set_xlabel(r'$x$',fontsize=fontsize)
+#     xAxisLine_pos = Arrow3D([0,axis_size], [0,0], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     xAxisLine_neg = Arrow3D([0,-axis_size], [0,0], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     ax4.add_artist(xAxisLine_pos)
+#     ax4.add_artist(xAxisLine_neg)
+#     ax4.text(axis_size+0.1, 0, -0.1, r'$x$', color='black',size=fontsize,alpha=alpha)
+#     # y-axis
+#     ax4.set_ylim(-2,2)
+#     ax4.set_ylabel(r'$y$',fontsize=fontsize)
+#     yAxisLine_pos = Arrow3D([0,0], [0,axis_size], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     yAxisLine_neg = Arrow3D([0,0], [0,-axis_size], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     ax4.add_artist(yAxisLine_pos)
+#     ax4.add_artist(yAxisLine_neg)
+#     ax4.text(0, axis_size+0.1, -0.1, r'$y$', color='black',size=fontsize,alpha=alpha)
+#     # z-axis
+#     ax4.set_zlim(-2,2)
+#     ax4.set_zlabel(r'$z$',fontsize=fontsize)
+#     zAxisLine_pos = Arrow3D([0,0], [0,0], [0,axis_size], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     zAxisLine_neg = Arrow3D([0,0], [0,0], [0,-axis_size], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     ax4.add_artist(zAxisLine_pos)
+#     ax4.add_artist(zAxisLine_neg)
+#     ax4.text(0, 0, axis_size+0.1, r'$z$', color='black',size=fontsize,alpha=alpha)
+#     # Add a color bar which maps values to colors.
+#     fig.colorbar(flux, ax=ax4, shrink=0.5, aspect=5,label=r'$\log_{10}$ Flux')
+#     ax4.view_init(azim=azim,elev=elev)
+#
+#     #################################################################################
+#     # Axis 5: 3D Velocity Plot
+#     # Bicone
+#     vel = ax5.scatter(xb,yb,zb, marker='.',s=1,c=vd, cmap=cm.RdBu_r, alpha=0.25,zorder=10)
+#     B_arrow = Arrow3D(bicone_vec[0], bicone_vec[1], bicone_vec[2], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:cerulean blue',alpha=0.5)
+#     ax5.add_artist(B_arrow)
+#     # Dust Plane
+#     ax5.plot_wireframe(xdgrid,ydgrid,zdgrid,alpha=0.25,color='xkcd:orange',zorder=3)
+#     D_arrow = Arrow3D(dust_vec[0], dust_vec[1], dust_vec[2], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:dark orange',alpha=0.5)
+#     ax5.add_artist(D_arrow)
+#     # Axes labels annd lines
+#     LOS_arrow = Arrow3D([0,0], [2,1.], [0,0], arrowstyle="-|>", lw=3,mutation_scale=20,color='xkcd:red',alpha=alpha)
+#     ax5.add_artist(LOS_arrow)
+#     ax5.text(0, 2, +0.1, "L.O.S.", color='black',size=fontsize,alpha=alpha)
+#     # x-axis
+#     ax5.set_xlim(-2,2)
+#     ax5.set_xlabel(r'$x$',fontsize=fontsize)
+#     xAxisLine_pos = Arrow3D([0,axis_size], [0,0], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     xAxisLine_neg = Arrow3D([0,-axis_size], [0,0], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     ax5.add_artist(xAxisLine_pos)
+#     ax5.add_artist(xAxisLine_neg)
+#     ax5.text(axis_size+0.1, 0, -0.1, r'$x$', color='black',size=fontsize,alpha=alpha)
+#     # y-axis
+#     ax5.set_ylim(-2,2)
+#     ax5.set_ylabel(r'$y$',fontsize=fontsize)
+#     yAxisLine_pos = Arrow3D([0,0], [0,axis_size], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     yAxisLine_neg = Arrow3D([0,0], [0,-axis_size], [0,0], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     ax5.add_artist(yAxisLine_pos)
+#     ax5.add_artist(yAxisLine_neg)
+#     ax5.text(0, axis_size+0.1, -0.1, r'$y$', color='black',size=fontsize,alpha=alpha)
+#     # z-axis
+#     ax5.set_zlim(-2,2)
+#     ax5.set_zlabel(r'$z$',fontsize=fontsize)
+#     zAxisLine_pos = Arrow3D([0,0], [0,0], [0,axis_size], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     zAxisLine_neg = Arrow3D([0,0], [0,0], [0,-axis_size], arrowstyle="-|>", lw=1,mutation_scale=10,color='xkcd:black',alpha=alpha)
+#     ax5.add_artist(zAxisLine_pos)
+#     ax5.add_artist(zAxisLine_neg)
+#     ax5.text(0, 0, axis_size+0.1, r'$z$', color='black',size=fontsize,alpha=alpha)
+#     # Add a color bar which maps values to colors.
+#     fig.colorbar(vel, ax=ax5, shrink=0.5, aspect=5,label=r'Projected Velocity along LOS (km/s)')
+#     ax5.view_init(azim=azim,elev=elev)
+#
+#     plt.tight_layout()
+#
+#     if save_fig==True:
+#         # plt.savefig('model_3d.pdf',dpi=150,fmt='pdf')
+#         plt.savefig(path_savefig + 'model_3d.png',dpi=300,fmt='png')
+#     # plt.close()
+#     return None
 
 
 #####################################################################################
 
-def emission_model(fgrid,vgrid,vmax,obs_res=68.9,nbins=25,sampling=100,plot=True,save_fig=True):  
-    
-    if int(sampling)%2==0:
+def emission_model(fgrid, vgrid, vmax, obs_res=68.9, nbins=25, sampling=100, plot=True, save_fig=True):
+
+    if int(sampling) %2 == 0:
             # Having an odd sampling ensures that there is a value at (0,0,0)
             sampling = int(sampling)+1
 
     # Reshape grids into cubes
-    fgrid = fgrid.reshape(sampling,sampling,sampling)
-    vgrid = vgrid.reshape(sampling,sampling,sampling)
-            
+    fgrid = fgrid.reshape(sampling, sampling, sampling)
+    vgrid = vgrid.reshape(sampling, sampling, sampling)
+
     def gaussian(x, f, vel, sig):
-        return f * 1.0/(sig * np.sqrt(2.0*np.pi)) * np.exp(-np.power(x - vel, 2.0) / (2.0 * np.power(sig, 2.0)) ) # 
-        
+        return f * 1.0/(sig * np.sqrt(2.0*np.pi)) * np.exp(-np.power(x - vel, 2.0) / (2.0 * np.power(sig, 2.0))) #
+
     def get_bin_centers(bins):
             bins = bins[:-1]
             bin_width = bins[1]-bins[0]
-            new_bins =  bins + bin_width/2.0
+            new_bins = bins + bin_width/2.0
             return new_bins
 
-    
+
     losvd = [] # an array to hold the losvd at every non-zero pixel
-    bins = np.linspace(-vmax,vmax,nbins)
+    bins = np.linspace(-vmax, vmax, nbins)
     # t0 = time.time()
     for i in range(sampling):
         for j in range(sampling):
-            v_xy = vgrid[:,i,j]
-            f_xy = fgrid[:,i,j]
-            v_xy = v_xy[f_xy>0]
-            f_xy = f_xy[f_xy>0]
-            if (len(v_xy)>0) and (len(f_xy)>0):
-                v_hist,v_edges = np.histogram(v_xy,bins=bins,weights=f_xy)
+            v_xy = vgrid[:, i, j]
+            f_xy = fgrid[:, i, j]
+            v_xy = v_xy[f_xy > 0]
+            f_xy = f_xy[f_xy > 0]
+            if (len(v_xy) > 0) and (len(f_xy) > 0):
+                v_hist, v_edges = np.histogram(v_xy, bins=bins, weights=f_xy)
                 losvd.append(v_hist)
-                
+
     # print('\n      %0.9f seconds' % float(time.time()-t0))
-    
-    losvd = (np.sum(losvd,axis=0)) # sum over x and y
+
+    losvd = (np.sum(losvd, axis=0)) # sum over x and y
     losvd = losvd/np.max(losvd) # normalize to 1
     # Interpolate the losvd histogram so it is smooth
-    x = np.arange(-vmax,vmax+1,1)
-    losvd_interp = interp1d(bins[:-1],losvd,kind='cubic',bounds_error=False,fill_value='extrapolate')
+    x = np.arange(-vmax, vmax + 1, 1)
+    losvd_interp = interp1d(bins[:-1], losvd, kind='cubic', bounds_error=False, fill_value='extrapolate')
     emline = losvd_interp(x)
-    # Convolve with gaussian centered at zero 
-    emline = gaussian_filter(emline,sigma=obs_res)
+    # Convolve with gaussian centered at zero
+    emline = gaussian_filter(emline, sigma=obs_res)
     # normalize to 1
-    emline = emline/np.max(emline) 
+    emline = emline/np.max(emline)
     # convert x in km/s to angstroms
     c = 299792. # speed of light in km/s
-    cw = 5008.240# central wavelength; [OIII]5007 (SDSS)
+    cw = 5008.240  # central wavelength; [OIII]5007 (SDSS)
     x_ang = cw+(x*cw)/c
 
     # Plot
@@ -849,7 +855,7 @@ def emission_model(fgrid,vgrid,vmax,obs_res=68.9,nbins=25,sampling=100,plot=True
         ax1.set_xlabel(r'$\lambda_{\rm{rest}}$ ($\rm{\AA}$)')
         ax1.set_ylabel(r'Normalized Flux')
         ax1.legend(loc='best')
-        # km/s 
+        # km/s
         ax2.plot(x,emline,color='red',label=r'$\sigma_{\rm{obs}}=$%0.1f (km s$^{-1}$)' % obs_res)
         ax2.bar(v_edges[:-1], losvd, width=np.diff(v_edges), ec="k", align="center")
         ax2.axvline(0.0,color='black',linestyle='--',linewidth=0.5)
@@ -862,7 +868,7 @@ def emission_model(fgrid,vgrid,vmax,obs_res=68.9,nbins=25,sampling=100,plot=True
         plt.tight_layout()
         if save_fig==True:
             # plt.savefig('emission_model.pdf',dpi=150,fmt='pdf')
-            plt.savefig('emission_model.png',dpi=300,fmt='png')
+            plt.savefig(path_savefig + 'emission_model.png',dpi=300,fmt='png')
         # plt.close()
     return x_ang, emline
 
@@ -884,62 +890,62 @@ def time_convert(seconds):
 
 ### Least Squares function #############################################################
 
-def likelihood(params,param_names, x, y, yerr):
-    pdict = {}
-    for k in range(0,len(param_names),1):
-        pdict[param_names[k]] = params[k]
-    A             = pdict['A']
-    tau           = pdict['tau']
-    theta_in_deg  = pdict['theta_in_deg']
-    theta_out_deg = pdict['theta_out_deg'] 
-    theta_B1_deg  = pdict['theta_B1_deg'] 
-    theta_D1_deg  = pdict['theta_D1_deg'] 
-    vmax          = pdict['vmax']
-
-    model = bicone_model(x, A, tau, theta_in_deg, theta_out_deg,
-                         theta_B1_deg,
-                         theta_D1_deg,
-                         vmax)
-    
-#     return np.sum((y-model)**2)
-    return np.sum(-np.log(yerr*np.sqrt(2*np.pi))-0.5*(y-model)**2/yerr**2)
-
-
-### Make model #######################################################################
-
-def bicone_model(wave, A, tau, theta_in_deg, theta_out_deg,
-                 theta_B1_deg,
-                 theta_D1_deg,
-                 vmax):
-    # Constant parameters
-    D             = 1.0  # length of bicone (arbitrary units)
-    fn            = 1.0e3 # initial flux value at center
-    theta_B2_deg  = 0.0 # Lock-out LOS y-axis rotation (symmetry)
-    theta_B3_deg  = 0.0 # Lock-out the z-axis rotation (symmetry)
-#     theta_D1_deg  = 90.0 # Lock-out the x-axis rotation (type 1 AGN)
-    theta_D2_deg  = 0.0 # Lock-out the y-axis rotation (symmetry)
-    theta_D3_deg  = 0.0 # Lock-out the z-axis rotation (symmetry)
-    vtype='decreasing' # 'increasing','decreasing', or 'constant'
-    # Sampling paramters
-    sampling = 50 # minimum point sampling
-    map_interpolation = 'none'
-    obs_res = 68.9 # resolution of SDSS for emission line model
-    nbins= 40
-    # Bicone coordinate, flux, and velocity grids
-    xbgrid,ybgrid,zbgrid,fgrid,vgrid = generate_bicone(theta_in_deg, theta_out_deg,
-                                                       theta_B1_deg, theta_B2_deg, theta_B3_deg,
-                                                       theta_D1_deg, theta_D2_deg, theta_D3_deg,
-                                                       D=D, tau=tau, fn=fn, A=A,
-                                                       vmax=vmax, vtype=vtype,
-                                                       sampling=sampling,plot=False,save_fig=False)
-    # Get emission line model
-    x,emline = emission_model(fgrid,vgrid,vmax=vmax,obs_res=obs_res,nbins=nbins,sampling=sampling,
-                              plot=False,save_fig=False)
-    # Interpolate emission line model onto wavelength grid
-    interp = interp1d(x,emline,bounds_error=False,fill_value=0.001)
-    model = interp(wave)
-            
-    return model
+# def likelihood(params,param_names, x, y, yerr):
+#     pdict = {}
+#     for k in range(0,len(param_names),1):
+#         pdict[param_names[k]] = params[k]
+#     A             = pdict['A']
+#     tau           = pdict['tau']
+#     theta_in_deg  = pdict['theta_in_deg']
+#     theta_out_deg = pdict['theta_out_deg']
+#     theta_B1_deg  = pdict['theta_B1_deg']
+#     theta_D1_deg  = pdict['theta_D1_deg']
+#     vmax          = pdict['vmax']
+#
+#     model = bicone_model(x, A, tau, theta_in_deg, theta_out_deg,
+#                          theta_B1_deg,
+#                          theta_D1_deg,
+#                          vmax)
+#
+# #     return np.sum((y-model)**2)
+#     return np.sum(-np.log(yerr*np.sqrt(2*np.pi))-0.5*(y-model)**2/yerr**2)
+#
+#
+# ### Make model #######################################################################
+#
+# def bicone_model(wave, A, tau, theta_in_deg, theta_out_deg,
+#                  theta_B1_deg,
+#                  theta_D1_deg,
+#                  vmax):
+#     # Constant parameters
+#     D             = 1.0  # length of bicone (arbitrary units)
+#     fn            = 1.0e3 # initial flux value at center
+#     theta_B2_deg  = 0.0 # Lock-out LOS y-axis rotation (symmetry)
+#     theta_B3_deg  = 0.0 # Lock-out the z-axis rotation (symmetry)
+# #     theta_D1_deg  = 90.0 # Lock-out the x-axis rotation (type 1 AGN)
+#     theta_D2_deg  = 0.0 # Lock-out the y-axis rotation (symmetry)
+#     theta_D3_deg  = 0.0 # Lock-out the z-axis rotation (symmetry)
+#     vtype='decreasing' # 'increasing','decreasing', or 'constant'
+#     # Sampling paramters
+#     sampling = 50 # minimum point sampling
+#     map_interpolation = 'none'
+#     obs_res = 68.9 # resolution of SDSS for emission line model
+#     nbins= 40
+#     # Bicone coordinate, flux, and velocity grids
+#     xbgrid,ybgrid,zbgrid,fgrid,vgrid = generate_bicone(theta_in_deg, theta_out_deg,
+#                                                        theta_B1_deg, theta_B2_deg, theta_B3_deg,
+#                                                        theta_D1_deg, theta_D2_deg, theta_D3_deg,
+#                                                        D=D, tau=tau, fn=fn, A=A,
+#                                                        vmax=vmax, vtype=vtype,
+#                                                        sampling=sampling,plot=False,save_fig=False)
+#     # Get emission line model
+#     x,emline = emission_model(fgrid,vgrid,vmax=vmax,obs_res=obs_res,nbins=nbins,sampling=sampling,
+#                               plot=False,save_fig=False)
+#     # Interpolate emission line model onto wavelength grid
+#     interp = interp1d(x,emline,bounds_error=False,fill_value=0.001)
+#     model = interp(wave)
+#
+#     return model
 
 ##################################################################################
 
