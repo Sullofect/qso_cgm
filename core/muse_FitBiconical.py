@@ -13,6 +13,7 @@ from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
 from regions import PixCoord
 from regions import RectangleSkyRegion, RectanglePixelRegion
+from astropy.convolution import convolve, Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel, Box1DKernel
 from scipy.interpolate import interp1d
 from astropy.coordinates import Angle
 import biconical_outflow_model_3d as bicone
@@ -293,7 +294,7 @@ flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII
 # v_N1_seg = refit_seg * v_N1[0, :, :]
 
 # remap the vmap to the observed grid
-coord_MUSE = (65, 81)
+coord_MUSE = (67, 81)
 
 #
 fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
@@ -303,8 +304,7 @@ ax.imshow(np.flip(vmap, 1), cmap='coolwarm', extent=[c2[0] - 20, c2[0] + 20, c2[
 ax.plot(c2[0], c2[1], '*', markersize=15)
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_cone.png', bbox_inches='tight')
 
-
-def emission_pixel(fgrid, vgrid, vmax, coord_MUSE=(65, 81), nbins=25, sampling=100, z=z_qso):
+def emission_pixel(fgrid, vgrid, vmax, coord_MUSE=None, nbins=25, sampling=100, z=z_qso):
     global c2
     # Having an odd sampling ensures that there is a value at (0,0,0)
     if int(sampling) % 2 == 0:
@@ -323,19 +323,35 @@ def emission_pixel(fgrid, vgrid, vmax, coord_MUSE=(65, 81), nbins=25, sampling=1
                                        width=1 / pixel_scale, height=1 / pixel_scale)
     mask_sample = rect_sample.contains(pixcoord_sample)
 
+    # fig, ax = plt.subplots(1, 1)
+    # # plt.imshow(v_N1[0, :, :], origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+    # ax.imshow(np.flip(vmap, 1), cmap='coolwarm', vmin=-300, vmax=300, origin='lower')
+    # patch = rect_sample.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
+    # ax.plot(c2[0], c2[1], '*', markersize=15)
+    # fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_cone_test.png', bbox_inches='tight')
+
     # Reshape grids into cubes
     mask_sample = mask_sample.reshape(sampling, sampling)
     fgrid = fgrid.reshape(sampling, sampling, sampling)
     vgrid = vgrid.reshape(sampling, sampling, sampling)
-
     bins = np.linspace(-vmax, vmax, nbins)
 
+    # Convolve with seeing
+    # kernel = Gaussian2DKernel(x_stddev=0.5 / pixel_scale, y_stddev=0.5 / pixel_scale,
+    #                           x_size=9, y_size=9)
+    # kernel_1 = Kernel(kernel.array[np.newaxis, :, :])
+    # fgrid = convolve(fgrid, kernel_1)
+
     # find specific pixel
-    v_xy = np.where(np.flip(mask_sample, 1)[np.newaxis, :, :], vgrid, np.nan).ravel()
-    f_xy = np.where(np.flip(mask_sample, 1)[np.newaxis, :, :], fgrid, np.nan).ravel()
+    v_xy = np.where(mask_sample[np.newaxis, :, :], np.flip(np.swapaxes(vgrid, 1, 2), 2), np.nan)
+    f_xy = np.where(mask_sample[np.newaxis, :, :], np.flip(np.swapaxes(fgrid, 1, 2), 2), np.nan)
+
+    # Remove NaNs
+    v_xy = v_xy.ravel()
+    f_xy = f_xy.ravel()
     v_xy = v_xy[f_xy > 0]
     f_xy = f_xy[f_xy > 0]
-    print(v_xy)
+    print(v_xy, f_xy)
 
     v_hist, v_edges = np.histogram(v_xy, bins=bins, weights=f_xy)
     v_mid = (v_edges[1:] + v_edges[:-1]) / 2
@@ -348,16 +364,19 @@ def emission_pixel(fgrid, vgrid, vmax, coord_MUSE=(65, 81), nbins=25, sampling=1
 
 
 # Define the pixel coordinates
-lambda_mid, v_hist = emission_pixel(fgrid, vgrid, vmax=vmax, nbins=nbins, sampling=sampling)
+lambda_mid, v_hist = emission_pixel(fgrid, vgrid, coord_MUSE=coord_MUSE, vmax=vmax, nbins=nbins, sampling=sampling)
 
 
 # plt.close('all')
-fig, ax = plt.subplots(1, 1, dpi=300, figsize=(8, 5))
-ax.plot(wave_OIII_vac, flux_OIII[:, coord_MUSE[1], coord_MUSE[0]] / flux_OIII[:, coord_MUSE[1], coord_MUSE[0]].max(), '-k')
-ax.plot(wave_OIII_vac, flux_err_OIII[:, coord_MUSE[1], coord_MUSE[0]], '-C0')
+fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
+ax.plot(wave_OIII_vac, flux_OIII[:, coord_MUSE[1], coord_MUSE[0]] / flux_OIII[:, coord_MUSE[1], coord_MUSE[0]].max(),
+        '-k', drawstyle='steps-mid')
+ax.plot(wave_OIII_vac, flux_err_OIII[:, coord_MUSE[1], coord_MUSE[0]] / flux_OIII[:, coord_MUSE[1], coord_MUSE[0]].max()
+        , '-C0', drawstyle='steps-mid')
 ax.plot(lambda_mid, v_hist, '-r', drawstyle='steps-mid')
-ax.set_xlabel('V (km/s)')
-ax.set_ylabel('Flux')
+ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
+ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size = 20)
+# ax.set_xlim(wave_OIII_vac.min(), wave_OIII_vac.max())
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_cone_flux.png', bbox_inches='tight')
 # plt.show()
 
