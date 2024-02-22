@@ -3,6 +3,7 @@ import os
 # import lmfit
 import numpy as np
 import matplotlib as mpl
+import gala.potential as gp
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from astropy import units as u
@@ -111,6 +112,12 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox
 # Position-velocity diagram
 i = 70
 fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
+
+# Milky Way rotation disk
+potential = gp.MilkyWayPotential()
+
+
+
 
 # NFW profile
 h = 0.7
