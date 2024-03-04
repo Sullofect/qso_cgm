@@ -169,26 +169,37 @@ def v(index=2, v_max=800, i_deg=70, R_max=30):
 # ax.plot(v()[0], v()[2], '-', linewidth=1, color='k')
 # ax.plot(v()[1], v()[3], '-', linewidth=1, color='k')
 
-def Bin(x, y, std, bins=20):
+def Bin(x, y, std, flux, bins=20):
     n, edges = np.histogram(x, bins=bins)
     y_mean = np.zeros(bins)
     y_std = np.zeros(bins)
+    y_flux = np.zeros(bins)
     x_mean = (edges[:-1] + edges[1:]) / 2
     for i in range(bins):
         mask = (x > edges[i]) * (x < edges[i + 1])
         y_mean[i] = y[mask].mean()
         y_std[i] = std[mask].mean()
-    return x_mean, y_mean, y_std
+        y_flux[i] = flux[mask].mean()
+    return x_mean, y_mean, y_std, y_flux
 
 # Components
 v_N1_flatten = v_N1[0, :, :].flatten()
 sigma_N1_flatten = sigma_N1[0, :, :].flatten()
-dis_blue_mean, v_N1_mean, sigma_N1_mean = Bin(dis_blue, v_N1_flatten[mask][blue], sigma_N1_flatten[mask][blue], bins=20)
+flux_OIII_N1_flatten = flux_OIII_N1[0, :, :].flatten()
+dis_blue_mean, v_N1_mean, sigma_N1_mean, flux_N1_mean = Bin(dis_blue, v_N1_flatten[mask][blue],
+                                                            sigma_N1_flatten[mask][blue],
+                                                            flux_OIII_N1_flatten[mask][blue], bins=20)
 # ax.errorbar(dis_blue, v_N1_flatten[mask][blue], sigma_N1_flatten[mask][blue],
 #             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8, markeredgewidth=0.7)
-ax.errorbar(dis_blue_mean, v_N1_mean, sigma_N1_mean, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8,
-            markeredgewidth=0.7)
+# ax.errorbar(dis_blue_mean, v_N1_mean, sigma_N1_mean, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8,
+#             markeredgewidth=0.7)
 # ax.plot(dis[mask][red], v_N1_flatten[mask][red], '.k')
+v_array = np.linspace(-500, 500, 1000)
+v_array = v_array[np.newaxis, :]
+peak = flux_N1_mean / np.sqrt(2 * sigma_N1_mean ** 2 * np.pi)
+model = peak[:, np.newaxis] * np.exp(-(v_array - v_N1_mean[:, np.newaxis]) ** 2 / 2 / sigma_N1_mean[:, np.newaxis] ** 2)
+violin_parts_0 = ax.violinplot(model.T, positions=dis_blue_mean, points=500, widths=1.5, showmeans=False,
+                               showextrema=False, showmedians=False)
 
 #
 v_N2_flatten_C1 = v_N2[0, :, :].flatten()
@@ -216,18 +227,18 @@ v_N2_flatten_weight = (v_N2_flatten_C1_sort * flux_OIII_N2_flatten_C1_sort
                        + v_N2_flatten_C2_sort * flux_OIII_N2_flatten_C2_sort) / (flux_OIII_N2_flatten_C1_sort + flux_OIII_N2_flatten_C2_sort)
 # ax.plot(dis_red, v_N2_flatten_C1[mask][red], '.r')
 # ax.plot(dis_red, v_N2_flatten_C2[mask][red], '.r')
-dis_red_mean_C1, v_N2_mean_C1, sigma_N2_mean_C1 = Bin(dis_red, v_N2_flatten_C1_sort[mask][red],
-                                                      sigma_N2_flatten_C1[mask][red], bins=20)
-dis_red_mean_C2, v_N2_mean_C2, sigma_N2_mean_C2 = Bin(dis_red, v_N2_flatten_C2_sort[mask][red],
-                                                      sigma_N2_flatten_C2[mask][red], bins=20)
+# dis_red_mean_C1, v_N2_mean_C1, sigma_N2_mean_C1 = Bin(dis_red, v_N2_flatten_C1_sort[mask][red],
+#                                                       sigma_N2_flatten_C1[mask][red], bins=20)
+# dis_red_mean_C2, v_N2_mean_C2, sigma_N2_mean_C2 = Bin(dis_red, v_N2_flatten_C2_sort[mask][red],
+#                                                       sigma_N2_flatten_C2[mask][red], bins=20)
 # ax.errorbar(dis_red, v_N2_flatten_C1[mask][red], sigma_N2_flatten_C1[mask][red],
 #             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
 # ax.errorbar(dis_red, v_N2_flatten_C2[mask][red], sigma_N2_flatten_C2[mask][red],
 #             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
-ax.errorbar(dis_red_mean_C1, v_N2_mean_C1, sigma_N2_mean_C1, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C2', ms=8,
-            markeredgewidth=0.7)
-ax.errorbar(dis_red_mean_C2, v_N2_mean_C2, sigma_N2_mean_C2, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8,
-            markeredgewidth=0.7)
+# ax.errorbar(dis_red_mean_C1, v_N2_mean_C1, sigma_N2_mean_C1, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C2', ms=8,
+#             markeredgewidth=0.7)
+# ax.errorbar(dis_red_mean_C2, v_N2_mean_C2, sigma_N2_mean_C2, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8,
+#             markeredgewidth=0.7)
 # ax.plot(dis[mask][red], v_N2_flatten_weight[mask][red], '.b', ms=10)
 # ax.errorbar(dis[mask][red], v_N2_flatten_weight[mask][red], np.zeros_like(dis[mask][red]),
 #             fmt='.k', capsize=0, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
@@ -258,7 +269,7 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile.png
 # plt.show()
 
 
-# raise ValueError('stop')
+raise ValueError('stop')
 
 # Biconical outflow model
 # Model Parameters
@@ -271,7 +282,7 @@ theta_in_deg = 10.0     # inner opening angle (degrees)
 theta_out_deg = 50.0    # outer opening angle (degrees)
 
 # Bicone inclination and PA
-theta_B1_deg = 10.0  # rotation along x
+theta_B1_deg = 10  # rotation along x
 theta_B2_deg = 60     # rotation along y
 theta_B3_deg = 0     # rotation along z
 
