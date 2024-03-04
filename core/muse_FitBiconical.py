@@ -20,6 +20,7 @@ from astropy.coordinates import Angle
 import biconical_outflow_model_3d as bicone
 from mpdaf.obj import Cube, WaveCoord, Image
 from PyAstronomy import pyasl
+from gala.units import galactic, solarsystem, dimensionless
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -110,14 +111,16 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox
 
 
 # Position-velocity diagram
-i = 70
+i = 30
 fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
 
 # Milky Way rotation disk
-potential = gp.MilkyWayPotential()
-
-
-
+MW = gp.MilkyWayPotential(units=galactic)
+R = np.zeros((3, 100))
+R[0, :] = np.linspace(0, 20, 100)
+MW_v = MW.circular_velocity(q=R * u.kpc)
+ax.plot(R[0, :], MW_v * np.sin(i * np.pi / 180), 'k--', lw=1, label='MW disk')
+ax.plot(-R[0, :], -MW_v * np.sin(i * np.pi / 180), 'k--', lw=1)
 
 # NFW profile
 h = 0.7
@@ -133,8 +136,8 @@ f_cx = np.log(1 + c * x) - c * x / (1 + c * x)
 f_c = np.log(1 + c) - c / (1 + c)
 v_vir = np.sqrt(G * M_halo / R_vir) / 1e5
 v_c = v_vir * np.sqrt(f_cx / x / f_c) * np.sin(i * np.pi / 180)
-ax.plot(x * R_vir / kpc, v_c, '-r', label='NFW profile with i={} deg'.format(i))
-ax.plot(- x * R_vir / kpc, -v_c, '-r')
+# ax.plot(x * R_vir / kpc, v_c, '-r', label='NFW profile with i={} deg'.format(i))
+# ax.plot(- x * R_vir / kpc, -v_c, '-r')
 
 
 # Velocity profile
@@ -163,28 +166,71 @@ def v(index=2, v_max=800, i_deg=70, R_max=30):
     return d_minus, d_plus, v_minus, v_plus
 
 #
-ax.plot(v()[0], v()[2], '-', linewidth=1, color='k')
-ax.plot(v()[1], v()[3], '-', linewidth=1, color='k')
+# ax.plot(v()[0], v()[2], '-', linewidth=1, color='k')
+# ax.plot(v()[1], v()[3], '-', linewidth=1, color='k')
 
+def Bin(x, y, std, bins=20):
+    n, edges = np.histogram(x, bins=bins)
+    y_mean = np.zeros(bins)
+    y_std = np.zeros(bins)
+    x_mean = (edges[:-1] + edges[1:]) / 2
+    for i in range(bins):
+        mask = (x > edges[i]) * (x < edges[i + 1])
+        y_mean[i] = y[mask].mean()
+        y_std[i] = std[mask].mean()
+    return x_mean, y_mean, y_std
 
 # Components
 v_N1_flatten = v_N1[0, :, :].flatten()
-ax.errorbar(dis_blue, v_N1_flatten[mask][blue], np.zeros_like(dis[mask][blue]),
-            fmt='.k', capsize=0, elinewidth=0.7, mfc='C0', ms=8, markeredgewidth=0.7)
+sigma_N1_flatten = sigma_N1[0, :, :].flatten()
+dis_blue_mean, v_N1_mean, sigma_N1_mean = Bin(dis_blue, v_N1_flatten[mask][blue], sigma_N1_flatten[mask][blue], bins=20)
+# ax.errorbar(dis_blue, v_N1_flatten[mask][blue], sigma_N1_flatten[mask][blue],
+#             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8, markeredgewidth=0.7)
+ax.errorbar(dis_blue_mean, v_N1_mean, sigma_N1_mean, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8,
+            markeredgewidth=0.7)
 # ax.plot(dis[mask][red], v_N1_flatten[mask][red], '.k')
 
 #
 v_N2_flatten_C1 = v_N2[0, :, :].flatten()
 v_N2_flatten_C2 = v_N2[1, :, :].flatten()
+v_N2_flatten_C1_sort = np.copy(v_N2_flatten_C1)
+v_N2_flatten_C2_sort = np.copy(v_N2_flatten_C2)
+sigma_N2_flatten_C1 = sigma_N2[0, :, :].flatten()
+sigma_N2_flatten_C2 = sigma_N2[1, :, :].flatten()
+sigma_N2_flatten_C1_sort = np.copy(sigma_N2_flatten_C1)
+sigma_N2_flatten_C2_sort = np.copy(sigma_N2_flatten_C2)
 flux_OIII_N2_flatten_C1 = flux_OIII_N2[0, :, :].flatten()
 flux_OIII_N2_flatten_C2 = flux_OIII_N2[1, :, :].flatten()
-v_N2_flatten_weight = (v_N2_flatten_C1 * flux_OIII_N2_flatten_C1
-                       + v_N2_flatten_C2 * flux_OIII_N2_flatten_C2) / (flux_OIII_N2_flatten_C1 + flux_OIII_N2_flatten_C2)
-ax.plot(dis_red, v_N2_flatten_C1[mask][red], '.r')
-ax.plot(dis_red, v_N2_flatten_C2[mask][red], '.r')
+flux_OIII_N2_flatten_C1_sort = np.copy(flux_OIII_N2_flatten_C1)
+flux_OIII_N2_flatten_C2_sort = np.copy(flux_OIII_N2_flatten_C2)
+
+#
+v_sort = v_N2_flatten_C1 > v_N2_flatten_C2
+v_N2_flatten_C1_sort[~v_sort] = v_N2_flatten_C2[~v_sort]
+v_N2_flatten_C2_sort[~v_sort] = v_N2_flatten_C1[~v_sort]
+sigma_N2_flatten_C1_sort[~v_sort] = sigma_N2_flatten_C2[~v_sort]
+sigma_N2_flatten_C2_sort[~v_sort] = sigma_N2_flatten_C1[~v_sort]
+flux_OIII_N2_flatten_C1_sort[~v_sort] = flux_OIII_N2_flatten_C2[~v_sort]
+flux_OIII_N2_flatten_C2_sort[~v_sort] = flux_OIII_N2_flatten_C1[~v_sort]
+v_N2_flatten_weight = (v_N2_flatten_C1_sort * flux_OIII_N2_flatten_C1_sort
+                       + v_N2_flatten_C2_sort * flux_OIII_N2_flatten_C2_sort) / (flux_OIII_N2_flatten_C1_sort + flux_OIII_N2_flatten_C2_sort)
+# ax.plot(dis_red, v_N2_flatten_C1[mask][red], '.r')
+# ax.plot(dis_red, v_N2_flatten_C2[mask][red], '.r')
+dis_red_mean_C1, v_N2_mean_C1, sigma_N2_mean_C1 = Bin(dis_red, v_N2_flatten_C1_sort[mask][red],
+                                                      sigma_N2_flatten_C1[mask][red], bins=20)
+dis_red_mean_C2, v_N2_mean_C2, sigma_N2_mean_C2 = Bin(dis_red, v_N2_flatten_C2_sort[mask][red],
+                                                      sigma_N2_flatten_C2[mask][red], bins=20)
+# ax.errorbar(dis_red, v_N2_flatten_C1[mask][red], sigma_N2_flatten_C1[mask][red],
+#             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
+# ax.errorbar(dis_red, v_N2_flatten_C2[mask][red], sigma_N2_flatten_C2[mask][red],
+#             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
+ax.errorbar(dis_red_mean_C1, v_N2_mean_C1, sigma_N2_mean_C1, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C2', ms=8,
+            markeredgewidth=0.7)
+ax.errorbar(dis_red_mean_C2, v_N2_mean_C2, sigma_N2_mean_C2, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8,
+            markeredgewidth=0.7)
 # ax.plot(dis[mask][red], v_N2_flatten_weight[mask][red], '.b', ms=10)
-ax.errorbar(dis[mask][red], v_N2_flatten_weight[mask][red], np.zeros_like(dis[mask][red]),
-            fmt='.k', capsize=0, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
+# ax.errorbar(dis[mask][red], v_N2_flatten_weight[mask][red], np.zeros_like(dis[mask][red]),
+#             fmt='.k', capsize=0, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
 
 #
 v_N3_flatten_C1 = v_N3[0, :, :].flatten()
@@ -212,6 +258,8 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile.png
 # plt.show()
 
 
+# raise ValueError('stop')
+
 # Biconical outflow model
 # Model Parameters
 A = 0.00 # dust extinction level (0.0 - 1.0)
@@ -220,10 +268,10 @@ D = 1.0  # length of bicone (arbitrary units)
 fn = 1.0e3  # initial flux value at center
 
 theta_in_deg = 10.0     # inner opening angle (degrees)
-theta_out_deg = 20.0    # outer opening angle (degrees)
+theta_out_deg = 50.0    # outer opening angle (degrees)
 
 # Bicone inclination and PA
-theta_B1_deg = 60.0  # rotation along x
+theta_B1_deg = 10.0  # rotation along x
 theta_B2_deg = 60     # rotation along y
 theta_B3_deg = 0     # rotation along z
 
@@ -301,7 +349,7 @@ flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII
 # v_N1_seg = refit_seg * v_N1[0, :, :]
 
 # remap the vmap to the observed grid
-coord_MUSE = (67, 81)
+coord_MUSE = (56, 83)
 
 #
 fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
