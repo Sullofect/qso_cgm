@@ -34,10 +34,80 @@ rc('ytick.major', size=8)
 
 # QSO information
 cubename = '3C57'
+str_zap = ''
 path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
 data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
+
+#
+UseDetectionSeg = (1.5, 'gauss', 1.5, 'gauss')
+UseSmoothedCubes = True
+line_OII, line_OIII = 'OII', 'OIII'
+path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+    format(cubename, str_zap, line_OII, *UseDetectionSeg)
+path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+    format(cubename, str_zap, line_OIII, *UseDetectionSeg)
+path_SB_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+    format(cubename, str_zap, line_OII, *UseDetectionSeg)
+path_SB_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+    format(cubename, str_zap, line_OIII, *UseDetectionSeg)
+path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+    format(cubename, str_zap, line_OII)
+path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+                         '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDetectionSeg)
+path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+    format(cubename, str_zap, line_OIII)
+path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+                          '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDetectionSeg)
+
+# Measure isophotal SB
+hdul_SB_OII = fits.open(path_SB_OII)
+hdul_SB_OIII = fits.open(path_SB_OIII)
+data_SB_OII = hdul_SB_OII[1].data
+data_SB_OIII = hdul_SB_OIII[1].data
+kernel = Gaussian2DKernel(x_stddev=1.0, y_stddev=1.0)
+data_SB_OII_smoothed = convolve(data_SB_OII, kernel)
+data_SB_OIII_smoothed = convolve(data_SB_OIII, kernel)
+
+from photutils.isophote import EllipseGeometry
+from photutils.isophote import build_ellipse_model
+from photutils.isophote import Ellipse
+geometry = EllipseGeometry(x0=72.5681, y0=74.3655, sma=20, eps=0.5,
+                           pa=-25.0 * np.pi / 180.0, fix_pa=True)
+ellipse_OII = Ellipse(data_SB_OII, geometry)
+isolist_OII = ellipse_OII.fit_image()
+geometry = EllipseGeometry(x0=72.5681, y0=74.3655, sma=10, eps=0.5,
+                           pa=-25.0 * np.pi / 180.0, fix_pa=False, fix_center=False)
+ellipse_OIII = Ellipse(data_SB_OIII_smoothed, geometry)
+isolist_OIII = ellipse_OIII.fit_image()
+
+fig, ax = plt.subplots(1, 2, figsize=(10, 5), dpi=150)
+ax[0].imshow(data_SB_OII, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=5)
+ax[1].imshow(data_SB_OIII, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=5)
+smas = np.linspace(10, 50, 10)[1:2]
+for sma in smas:
+    iso_OII = isolist_OII.get_closest(sma)
+    x_OII, y_OII = iso_OII.sampled_coordinates()
+    ax[0].plot(x_OII, y_OII, color='white')
+    print(iso_OII.x0, iso_OII.y0)
+    f, sma = iso_OII.eps, iso_OII.sma
+    smia = sma * (1 - f)
+    i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
+    print('inclination angle is', i)
+
+smas = np.linspace(5, 10, 3)[2:]
+for sma in smas:
+    iso_OIII = isolist_OIII.get_closest(sma)
+    x_OIII, y_OIII, = iso_OIII.sampled_coordinates()
+    ax[1].plot(x_OIII, y_OIII, color='white')
+    print(iso_OII.x0, iso_OII.y0)
+    f, sma = iso_OIII.eps, iso_OIII.sma
+    smia = sma * (1 - f)
+    i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
+    print('inclination angle is', i)
+fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_SB_OII_isophote.png', bbox_inches='tight')
+# raise ValueError('stop')
 
 #
 path_fit_N1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N1.fits'
@@ -76,7 +146,6 @@ pixcoord = PixCoord(x=x, y=y)
 
 #
 hdr = hdr_N1
-str_zap = ''
 path_sub_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
 hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
 hdr['CRVAL1'] = hdr_sub_gaia['CRVAL1']
@@ -91,6 +160,7 @@ hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
 w = WCS(hdr, naxis=2)
 center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
 c2 = w.world_to_pixel(center_qso)
+print(c2)
 rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=2, angle=Angle(-30, 'deg'))
 mask = rectangle.contains(pixcoord)
 dis = np.sqrt((x - c2[0])**2 + (y - c2[1])**2) * 0.2 * 50 / 7
@@ -111,8 +181,8 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox
 
 
 # Position-velocity diagram
-i = 30
-fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
+i = 70
+fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
 
 # Milky Way rotation disk
 MW = gp.MilkyWayPotential(units=galactic)
@@ -121,6 +191,18 @@ R[0, :] = np.linspace(0, 20, 100)
 MW_v = MW.circular_velocity(q=R * u.kpc)
 ax.plot(R[0, :], MW_v * np.sin(i * np.pi / 180), 'k--', lw=1, label='MW disk')
 ax.plot(-R[0, :], -MW_v * np.sin(i * np.pi / 180), 'k--', lw=1)
+
+# Sombero galaxy
+d_som = 11.219  # Mpc
+# r_som_arcsec = np.array([0.15, 0.30, 0.52, 0.82, 1.2, 1.7, 2.4, 3.3, 4.57, 6.45, 8.77,
+#                          11.4, 14.32, 17.7, 22.2, 28.58, 36.08, 44.4])
+# r_som_kpc = r_som_arcsec * d_som * 1e3 * np.pi / 180 / 3600
+# v_som = -1 * np.array([-36, -75, -112, -144, -172, -190, -208, -232, -236, -235, -189,
+#                        -171, -187, -201, -228, -235, -285, -277])
+r_som_kpc = np.array([0, 1.25, 2.5, 5, 10, 15])
+v_som = np.array([0, 120, 230, 305, 332, 343])
+ax.plot(r_som_kpc, v_som, '--', color='red', lw=1, label='Sombrero')
+ax.plot(-r_som_kpc, -v_som, '--', color='red', lw=1)
 
 # NFW profile
 h = 0.7
@@ -191,15 +273,29 @@ dis_blue_mean, v_N1_mean, sigma_N1_mean, flux_N1_mean = Bin(dis_blue, v_N1_flatt
                                                             flux_OIII_N1_flatten[mask][blue], bins=20)
 # ax.errorbar(dis_blue, v_N1_flatten[mask][blue], sigma_N1_flatten[mask][blue],
 #             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8, markeredgewidth=0.7)
-# ax.errorbar(dis_blue_mean, v_N1_mean, sigma_N1_mean, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8,
-#             markeredgewidth=0.7)
+ax.errorbar(dis_blue_mean, v_N1_mean, sigma_N1_mean, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8,
+            markeredgewidth=0.7)
 # ax.plot(dis[mask][red], v_N1_flatten[mask][red], '.k')
-v_array = np.linspace(-500, 500, 1000)
-v_array = v_array[np.newaxis, :]
-peak = flux_N1_mean / np.sqrt(2 * sigma_N1_mean ** 2 * np.pi)
-model = peak[:, np.newaxis] * np.exp(-(v_array - v_N1_mean[:, np.newaxis]) ** 2 / 2 / sigma_N1_mean[:, np.newaxis] ** 2)
-violin_parts_0 = ax.violinplot(model.T, positions=dis_blue_mean, points=500, widths=1.5, showmeans=False,
-                               showextrema=False, showmedians=False)
+print(v_N1_mean, flux_N1_mean)
+v_array = np.linspace(-500, 500, 100)
+# peak = flux_N1_mean / np.sqrt(2 * sigma_N1_mean ** 2 * np.pi)
+# print(peak)
+prob = np.exp(-(v_array[np.newaxis, :] - v_N1_mean[:, np.newaxis]) ** 2 / 2 / sigma_N1_mean[:, np.newaxis] ** 2)
+print(prob[5, :])
+prob = prob / np.nansum(prob, axis=1)[:, np.newaxis]
+# prob = prob.T
+
+# model = np.random.choice(v_array, size=(len(v_array), 20), p=prob)
+# print(model[0, :])
+
+for i in range(20):
+    print(i, dis_blue_mean[i])
+    prob_i = prob[i, :]
+    if len(prob_i[np.isnan(prob_i)]) != 100:
+        model = np.random.choice(v_array, size=len(v_array), p=prob_i)
+        violin_parts_0 = ax.violinplot(model, positions=np.asarray([dis_blue_mean[i]]), points=50, widths=1.5, showmeans=False,
+                                       showextrema=False, showmedians=False)
+        violin_parts_0['bodies'][0].set_facecolor('C1')
 
 #
 v_N2_flatten_C1 = v_N2[0, :, :].flatten()
@@ -326,21 +422,6 @@ x, emline = bicone.emission_model(fgrid, vgrid, vmax=vmax, obs_res=obs_res, nbin
                                   plot=True, save_fig=True)
 
 # Compare with the data
-UseDetectionSeg = (1.5, 'gauss', 1.5, 'gauss')
-UseSmoothedCubes = True
-line_OII, line_OIII = 'OII', 'OIII'
-path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-    format(cubename, str_zap, line_OII, *UseDetectionSeg)
-path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-    format(cubename, str_zap, line_OIII, *UseDetectionSeg)
-path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
-    format(cubename, str_zap, line_OII)
-path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                         '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDetectionSeg)
-path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
-    format(cubename, str_zap, line_OIII)
-path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                          '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDetectionSeg)
 # Load data and smoothing
 if UseSmoothedCubes:
     cube_OII, cube_OIII = Cube(path_cube_smoothed_OII), Cube(path_cube_smoothed_OIII)

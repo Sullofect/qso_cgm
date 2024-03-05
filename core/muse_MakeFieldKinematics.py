@@ -1996,7 +1996,7 @@ fit_param = {"OII": 1, "OII_2nd": 2, 'ResolveOII': True, 'r_max': 1.6,
              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 2}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
 #          width_OII=10, width_OIII=10)
-PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[73, 76], v_min=-350, v_max=350, width_OII=10,
+PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[93, 68], v_min=-350, v_max=350, width_OII=10,
                S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
                FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
 
