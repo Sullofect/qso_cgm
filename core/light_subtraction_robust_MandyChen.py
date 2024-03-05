@@ -93,27 +93,56 @@ ax[0].plot(wave, flux_initial, drawstyle='steps-mid', color='black', label=r'$\r
 # Now we will get a robust spectrum.
 # Mask the region outside of r1
 # cube_qso.mask_region(yx, args.r0, unit_center=None, unit_radius=None, inside=True)
-cube_qso.mask_region(yx, args.r1, unit_center=None, unit_radius=None, inside=False)
+# cube_qso.mask_region(yx, args.r1, unit_center=None, unit_radius=None, inside=False)
 
 
 # Start qso light subtraction
-cube_copy = cube.copy()
-print(cube_copy[500, 0, 0].data)
-cube_copy = cube_copy.mask_region(yx, args.r, unit_center=None, unit_radius=None, inside=False)
-print(cube_copy[:, 0, 0].data)
-cube_qso_light = cube_copy.clone(data_init=np.empty, var_init=np.zeros)
+# cube_copy = cube.mask_region(yx, args.r, unit_center=None, unit_radius=None, inside=False)
+image_mask = cube[200, :, :].mask_region(yx, args.r, unit_center=None, unit_radius=None, inside=False)
+
+nY, nX = image_white.shape
+fluxArray = np.zeros((len(wave), nY, nX))
+ratioArray = np.zeros((len(wave), nY, nX))
+
+# loop through each pixel
+xArray = range(0, cube.shape[2])
+yArray = range(0, cube.shape[1])
+for x in xArray:
+   for y in yArray:
+      # print(x, y)
+      if image_mask[y, x] is True:
+         # print('Masked')
+         pass
+      else:
+        # print('Not Masked')
+        # extract the spectrum
+        sp = cube[:, y, x]
+        thisFlux = sp.data
+        mask = thisFlux.mask
+        index = np.where(mask == False)
+
+        if len(index) == 0:
+            pass
+        else:
+            thisMed = np.nanmedian(thisFlux[index])
+            thisFlux = thisFlux / thisMed
+
+            coeff = np.polyfit(wave, thisFlux, 1)
+            slopes[i] = coeff[0]
+            if thisMed > 0:
+
+                ratio = median_filter(flux_initial / thisFlux, 101)
+
+                thisFlux_fixed = thisFlux * ratio
+                fluxArray[:, i] = thisFlux_fixed
+                ratioArray[:, i] = ratio
+                # print('Not Masked')
 
 
 
-nX, nY = image_white.shape
-fluxArray = np.zeros((len(wave), nX * nY))
-ratioArray = np.zeros((len(wave), nX * nY))
-slopes = np.zeros(nX * nY)
+for sp in iter_spe(cube):
 
-
-i = 0
-for sp, ql in zip(iter_spe(cube_copy), iter_spe(cube_qso_light)):
-
+    if
     thisFlux = sp.data
     mask = thisFlux.mask
     index = np.where(mask == False)
@@ -147,8 +176,6 @@ for sp, ql in zip(iter_spe(cube_copy), iter_spe(cube_qso_light)):
         else:
             fluxArray[:, i] = np.nan
             ratioArray[:, i] = np.nan
-
-        ql[:] = ratio * flux_initial
         i = i + 1
 
 # Calculate the median
@@ -175,6 +202,8 @@ qso.write(args.f.replace('.fits', '_QSO.fits'), overwrite=True)
 
 # Subtract the model and write-out the result
 print('Writing...')
+print(np.shape(ratioArray.reshape(len(wave), nX, nY)))
+cube_qso_light = cube_copy.clone(data_init=ratio_array.reshape, var_init=np.zeros)
 cube[:, :, :] = cube[:, :, :] - cube_qso_light
 cube.write(args.f.replace('.fits', '_subtracted.fits'))
 

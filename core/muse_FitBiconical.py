@@ -93,6 +93,7 @@ for sma in smas:
     print(iso_OII.x0, iso_OII.y0)
     f, sma = iso_OII.eps, iso_OII.sma
     smia = sma * (1 - f)
+    print(sma, smia)
     i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
     print('inclination angle is', i)
 
@@ -104,6 +105,7 @@ for sma in smas:
     print(iso_OII.x0, iso_OII.y0)
     f, sma = iso_OIII.eps, iso_OIII.sma
     smia = sma * (1 - f)
+    print(sma, smia)
     i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
     print('inclination angle is', i)
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_SB_OII_isophote.png', bbox_inches='tight')
@@ -201,8 +203,8 @@ d_som = 11.219  # Mpc
 #                        -171, -187, -201, -228, -235, -285, -277])
 r_som_kpc = np.array([0, 1.25, 2.5, 5, 10, 15])
 v_som = np.array([0, 120, 230, 305, 332, 343])
-ax.plot(r_som_kpc, v_som, '--', color='red', lw=1, label='Sombrero')
-ax.plot(-r_som_kpc, -v_som, '--', color='red', lw=1)
+ax.plot(r_som_kpc, v_som * np.sin(i * np.pi / 180), '--', color='red', lw=1, label='Sombrero')
+ax.plot(-r_som_kpc, -v_som * np.sin(i * np.pi / 180), '--', color='red', lw=1)
 
 # NFW profile
 h = 0.7
@@ -365,7 +367,7 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile.png
 # plt.show()
 
 
-raise ValueError('stop')
+# raise ValueError('stop')
 
 # Biconical outflow model
 # Model Parameters
@@ -378,8 +380,8 @@ theta_in_deg = 10.0     # inner opening angle (degrees)
 theta_out_deg = 50.0    # outer opening angle (degrees)
 
 # Bicone inclination and PA
-theta_B1_deg = 10  # rotation along x
-theta_B2_deg = 60     # rotation along y
+theta_B1_deg = 10   # rotation along x
+theta_B2_deg = 60    # rotation along y
 theta_B3_deg = 0     # rotation along z
 
 # Dust plane inclination and PA
