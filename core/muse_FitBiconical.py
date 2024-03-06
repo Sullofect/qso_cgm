@@ -371,7 +371,7 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile.png
 
 # Biconical outflow model
 # Model Parameters
-A = 0.00 # dust extinction level (0.0 - 1.0)
+A = 0.00  # dust extinction level (0.0 - 1.0)
 tau = 5.00  # shape of flux profile
 D = 1.0  # length of bicone (arbitrary units)
 fn = 1.0e3  # initial flux value at center
@@ -385,7 +385,7 @@ theta_B2_deg = 60    # rotation along y
 theta_B3_deg = 0     # rotation along z
 
 # Dust plane inclination and PA
-theta_D1_deg = 135.0    # rotation along x
+theta_D1_deg = 0.0    # rotation along x
 theta_D2_deg = 0.0     # rotation along y
 theta_D3_deg = 0.0     # rotation along z
 

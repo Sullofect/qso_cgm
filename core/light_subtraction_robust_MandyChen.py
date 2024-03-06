@@ -55,24 +55,24 @@ cube = cube.select_lambda(args.w0, args.w1)
 print('Creating white-light image')
 # image_white = cube.median(axis=0)
 image_white = cube[200, :, :]
-print(image_white)
 
 # Find the QSO center
 # print('Fitting gaussian to quasar position in the white-light image...')
-# gaussian = image_white.gauss_fit(center=(args.y, args.x), circular=True, fwhm=3, weight=True, unit_center=None)
+gaussian = image_white.gauss_fit(center=(args.y, args.x), circular=True, fwhm=3, weight=True, unit_center=None)
 
 # extract the subcube near the quasar
-# yx = (gaussian.center[0], gaussian.center[1])
-yx = (args.y, args.x)
-print(yx)
+yx = (gaussian.center[0], gaussian.center[1])
 cube_qso = cube.subcube(yx, args.r1 + 1, unit_center=None, unit_size=None)
+yx_cube = yx
+print(yx_cube)
 
 # Get an updated centroid for the quasar based on the smaller cube which is likely more outlier resistant.
 image_white = cube_qso[200, :, :]
 print(image_white.shape)
-# gaussian_subcube = image_white.gauss_fit(center=np.array(image_white.shape) / 2, circular=True, fwhm=1.0, weight=True,
-#                                          unit_center=None)
-# yx = (gaussian_subcube.center[0], gaussian_subcube.center[1])
+gaussian_subcube = image_white.gauss_fit(center=np.array(image_white.shape) / 2, circular=True, fwhm=1.0, weight=True,
+                                         unit_center=None)
+yx = (gaussian_subcube.center[0], gaussian_subcube.center[1])
+print(yx)
 
 # Mask the region inside of r0 and outside of r1
 cube_qso.mask_region(yx, args.r1, unit_center=None, unit_radius=None, inside=False)
@@ -81,7 +81,6 @@ cube_qso.mask_region(yx, args.r1, unit_center=None, unit_radius=None, inside=Fal
 cube_qso.write('test.fits')
 # Get the wavelength array.
 wave = cube_qso[:, 0, 0].wave.coord(np.arange(0, cube_qso.shape[0], 1.0))
-
 
 # First get the summed QSO spectrum
 spec = cube_qso.sum(axis=(1, 2))
@@ -97,10 +96,16 @@ ax[0].plot(wave, flux_initial, drawstyle='steps-mid', color='black', label=r'$\r
 
 
 # Start qso light subtraction
-# cube_copy = cube.mask_region(yx, args.r, unit_center=None, unit_radius=None, inside=False)
-image_mask = cube[200, :, :].mask_region(yx, args.r, unit_center=None, unit_radius=None, inside=False)
+image_mask = cube[300, :, :]
+image_mask.unmask()
+image_mask.mask_region(yx_cube, args.r, unit_center=None, unit_radius=None, inside=False)
+mask = image_mask.mask
+# plt.figure()
+# plt.imshow(mask)
+# plt.show()
+# raise ValueError('Stop here')
 
-nY, nX = image_white.shape
+nY, nX = cube.shape[1], cube.shape[2]
 fluxArray = np.zeros((len(wave), nY, nX))
 ratioArray = np.zeros((len(wave), nY, nX))
 
@@ -108,78 +113,39 @@ ratioArray = np.zeros((len(wave), nY, nX))
 xArray = range(0, cube.shape[2])
 yArray = range(0, cube.shape[1])
 for x in xArray:
-   for y in yArray:
-      # print(x, y)
-      if image_mask[y, x] is True:
-         # print('Masked')
-         pass
-      else:
-        # print('Not Masked')
-        # extract the spectrum
-        sp = cube[:, y, x]
-        thisFlux = sp.data
-        mask = thisFlux.mask
-        index = np.where(mask == False)
+    for y in yArray:
+        if mask[y, x] == 0:
+            # extract the spectrum
+            print(x, y)
+            sp = cube[:, y, x]
+            thisFlux = sp.data
+            # print(thisFlux)
+            mask_flux = thisFlux.mask
+            # print(mask_flux)
+            index = np.where(mask_flux == False)
+            # print(thisFlux[index])
 
-        if len(index) == 0:
-            pass
-        else:
             thisMed = np.nanmedian(thisFlux[index])
-            thisFlux = thisFlux / thisMed
-
-            coeff = np.polyfit(wave, thisFlux, 1)
-            slopes[i] = coeff[0]
+            # thisFlux = thisFlux / thisMed
             if thisMed > 0:
+                ratio = median_filter(thisFlux / flux_initial, 101)
+                thisFlux_fixed = flux_initial * ratio
+                fluxArray[:, y, x] = thisFlux_fixed
+                ratioArray[:, y, x] = ratio
 
-                ratio = median_filter(flux_initial / thisFlux, 101)
-
-                thisFlux_fixed = thisFlux * ratio
-                fluxArray[:, i] = thisFlux_fixed
-                ratioArray[:, i] = ratio
-                # print('Not Masked')
-
-
-
-for sp in iter_spe(cube):
-
-    if
-    thisFlux = sp.data
-    mask = thisFlux.mask
-    index = np.where(mask == False)
-
-    if len(index) == 0:
-        pass
-    else:
-        thisMed = np.nanmedian(thisFlux[index])
-        thisFlux = thisFlux / thisMed
-
-        if args.ao:
-            index = np.where((wave < 5800) | (wave > 5980) & np.isfinite(thisFlux) & (thisFlux != 0.0))
-            coeff = np.polyfit(wave[index], thisFlux[index], 1)
+                if ((x < 230) * (x > 226)) * ((y < 230) * (y > 226)):
+                    ax[1].plot(wave, thisFlux, drawstyle='steps-mid')
+                    ax[2].plot(wave, ratio, drawstyle='steps-mid')
+                    ax[3].plot(wave, thisFlux - thisFlux_fixed, drawstyle='steps-mid')
+            else:
+                fluxArray[:, y, x] = np.nan
+                ratioArray[:, y, x] = np.nan
         else:
-            coeff = np.polyfit(wave, thisFlux, 1)
-        slopes[i] = coeff[0]
-        if thisMed > 0:
+            pass
 
-            ratio = median_filter(flux_initial / thisFlux, 101)
-
-            thisFlux_fixed = thisFlux * ratio
-            fluxArray[:, i] = thisFlux_fixed
-            ratioArray[:, i] = ratio
-
-
-            ax[1].plot(wave, thisFlux, drawstyle='steps-mid')
-            ax[2].plot(wave, ratio, drawstyle='steps-mid')
-
-            ax[3].plot(wave, thisFlux_fixed, drawstyle='steps-mid')
-
-        else:
-            fluxArray[:, i] = np.nan
-            ratioArray[:, i] = np.nan
-        i = i + 1
 
 # Calculate the median
-flux_median = np.nanmedian(fluxArray, 1)
+flux_median = np.nanmedian(np.where(fluxArray != 0, fluxArray, np.nan), axis=(1, 2))
 ax[0].plot(wave, flux_median, drawstyle='steps-mid', color='red', linestyle=':', label=r'$\rm robust\ spectrum$')
 ax[0].legend()
 ax[0].minorticks_on()
@@ -189,10 +155,10 @@ ax[3].set_ylabel(r'$\rm Normalized\ flux$')
 ax[2].set_ylabel(r'$\rm smoothed\ ratio$')
 ax[1].set_ylabel(r'$\rm Normalized\ flux$')
 ax[0].set_ylabel(r'$\rm Normalized\ flux$')
-ax[0].legend()
 fig.tight_layout()
 plt.savefig(args.f.replace('.fits', '_QSO.pdf'))
 
+# raise ValueError('Stop here')
 #
 qso = Table()
 qso['wave'] = wave
@@ -203,9 +169,9 @@ qso.write(args.f.replace('.fits', '_QSO.fits'), overwrite=True)
 # Subtract the model and write-out the result
 print('Writing...')
 print(np.shape(ratioArray.reshape(len(wave), nX, nY)))
-cube_qso_light = cube_copy.clone(data_init=ratio_array.reshape, var_init=np.zeros)
-cube[:, :, :] = cube[:, :, :] - cube_qso_light
-cube.write(args.f.replace('.fits', '_subtracted.fits'))
-
+# cube_qso_light = cube.clone(data_init=np.empty, var_init=np.zeros)
+# cube_qso_light.data = ratioArray * flux_initial[:, np.newaxis, np.newaxis]
+cube.data -= fluxArray
+cube.write(args.f.replace('.fits', '_subtracted_ZQL.fits'))
 
 print('Done')
