@@ -5,6 +5,7 @@ import os
 import sys
 import argparse
 import numpy as np
+from scipy.signal import savgol_filter
 
 # set up the parser
 parser = argparse.ArgumentParser(description='Non-negative matrix factorization of point source spectrum.')
@@ -80,14 +81,31 @@ cube_qso.mask_region(yx, args.r1, unit_center=None, unit_radius=None, inside=Fal
 
 cube_qso.write('test.fits')
 # Get the wavelength array.
-wave = cube_qso[:, 0, 0].wave.coord(np.arange(0, cube_qso.shape[0], 1.0))
+# wave = cube_qso[:, 0, 0].wave.coord(np.arange(0, cube_qso.shape[0], 1.0))
+wave = cube.wave.coord()
+
+def interpLine(wv, ratio, wv1, wv2, wv3, wv4):
+    # interpolate through narrow lines
+    # blue window [wv1, wv2], red window [wv3, wv4]
+    mask_b = (wv>wv1)&(wv<wv2)
+    mask_r = (wv>wv3)&(wv<wv4)
+    mask_mid = (wv>wv2)&(wv<wv3)
+    med_b = np.median(ratio[mask_b])
+    med_r = np.median(ratio[mask_r])
+    interp = interp1d([(wv1+wv2)/2,(wv3+wv4)/2],[med_b,med_r])
+    return mask_mid, interp(wv[mask_mid])
 
 # First get the summed QSO spectrum
 spec = cube_qso.sum(axis=(1, 2))
 flux_initial = spec.data
-flux_initial = flux_initial / np.nanmedian(flux_initial)  # median normalize
+# flux_initial = cube.data[:, 234, 226]
+flux_initial = savgol_filter(flux_initial, window_length=7, polyorder=1)
+wv1, wv2, wv3, wv4 = 7930, 7935, 7965, 7970
+mask, interp = interpLine(wave, flux_initial, wv1, wv2, wv3, wv4)
+
+flux_initial_med = flux_initial / np.nanmedian(flux_initial)  # median normalize
 fig, ax = plt.subplots(4, figsize=(7, 7), sharex=True)
-ax[0].plot(wave, flux_initial, drawstyle='steps-mid', color='black', label=r'$\rm initial\ spectrum$')
+ax[0].plot(wave, flux_initial_med, drawstyle='steps-mid', color='black', label=r'$\rm initial\ spectrum$')
 
 # Now we will get a robust spectrum.
 # Mask the region outside of r1
@@ -99,10 +117,11 @@ ax[0].plot(wave, flux_initial, drawstyle='steps-mid', color='black', label=r'$\r
 image_mask = cube[300, :, :]
 image_mask.unmask()
 image_mask.mask_region(yx_cube, args.r, unit_center=None, unit_radius=None, inside=False)
-mask = image_mask.mask
+mask = image_mask.mask.data
 # plt.figure()
 # plt.imshow(mask)
 # plt.show()
+# raise ValueError('Stop here')
 # raise ValueError('Stop here')
 
 nY, nX = cube.shape[1], cube.shape[2]
@@ -119,23 +138,21 @@ for x in xArray:
             print(x, y)
             sp = cube[:, y, x]
             thisFlux = sp.data
-            # print(thisFlux)
             mask_flux = thisFlux.mask
-            # print(mask_flux)
             index = np.where(mask_flux == False)
-            # print(thisFlux[index])
-
             thisMed = np.nanmedian(thisFlux[index])
-            # thisFlux = thisFlux / thisMed
+            thisFlux_Med = thisFlux.data / thisMed
+
             if thisMed > 0:
-                ratio = median_filter(thisFlux / flux_initial, 101)
+                ratio = median_filter(thisFlux / flux_initial, size=51)
+                # ratio = thisFlux / flux_initial
                 thisFlux_fixed = flux_initial * ratio
                 fluxArray[:, y, x] = thisFlux_fixed
                 ratioArray[:, y, x] = ratio
 
-                if ((x < 230) * (x > 226)) * ((y < 230) * (y > 226)):
-                    ax[1].plot(wave, thisFlux, drawstyle='steps-mid')
-                    ax[2].plot(wave, ratio, drawstyle='steps-mid')
+                if ((x < 227) * (x > 224)) * ((y < 238) * (y > 232)):
+                    ax[1].plot(wave, thisFlux_Med, drawstyle='steps-mid')
+                    ax[2].plot(wave, ratio / thisMed, drawstyle='steps-mid')
                     ax[3].plot(wave, thisFlux - thisFlux_fixed, drawstyle='steps-mid')
             else:
                 fluxArray[:, y, x] = np.nan
@@ -146,7 +163,7 @@ for x in xArray:
 
 # Calculate the median
 flux_median = np.nanmedian(np.where(fluxArray != 0, fluxArray, np.nan), axis=(1, 2))
-ax[0].plot(wave, flux_median, drawstyle='steps-mid', color='red', linestyle=':', label=r'$\rm robust\ spectrum$')
+# ax[0].plot(wave, flux_median, drawstyle='steps-mid', color='red', linestyle=':', label=r'$\rm robust\ spectrum$')
 ax[0].legend()
 ax[0].minorticks_on()
 ax[1].minorticks_on()
@@ -168,7 +185,6 @@ qso.write(args.f.replace('.fits', '_QSO.fits'), overwrite=True)
 
 # Subtract the model and write-out the result
 print('Writing...')
-print(np.shape(ratioArray.reshape(len(wave), nX, nY)))
 # cube_qso_light = cube.clone(data_init=np.empty, var_init=np.zeros)
 # cube_qso_light.data = ratioArray * flux_initial[:, np.newaxis, np.newaxis]
 cube.data -= fluxArray

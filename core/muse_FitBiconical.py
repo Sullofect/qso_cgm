@@ -378,10 +378,12 @@ fn = 1.0e3  # initial flux value at center
 
 theta_in_deg = 10.0     # inner opening angle (degrees)
 theta_out_deg = 50.0    # outer opening angle (degrees)
+theta_in_deg = 20.0     # inner opening angle (degrees)
+theta_out_deg = 40.0    # outer opening angle (degrees)
 
 # Bicone inclination and PA
-theta_B1_deg = 10   # rotation along x
-theta_B2_deg = 60    # rotation along y
+theta_B1_deg = 10    # rotation along x
+theta_B2_deg = 0    # rotation along y
 theta_B3_deg = 0     # rotation along z
 
 # Dust plane inclination and PA
@@ -390,7 +392,7 @@ theta_D2_deg = 0.0     # rotation along y
 theta_D3_deg = 0.0     # rotation along z
 
 # Velocity profile parameters
-vmax = 1000.0  # km/s
+vmax = 500.0  # km/s
 vtype = 'increasing'  # 'increasing','decreasing', or 'constant'
 # vtype = 'constant'
 # vtype = 'increasing'

@@ -364,6 +364,7 @@ def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',p
     #### Velocity map ###
 
     vmap = simps(np.multiply(fgrid, vgrid), axis=0) / simps(fgrid, axis=0)
+    # vmap =
 
 
     ### Dispersion map ###
@@ -372,7 +373,7 @@ def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',p
 
     # Integrated velocity along LOS
     F = simps(simps(simps(fgrid,axis=2),axis=1),axis=0)
-    v_int = simps(simps(simps(vgrid*fgrid,axis=2),axis=1),axis=0)/F
+    v_int = simps(simps(simps(vgrid*fgrid,axis=2), axis=1), axis=0) / F
     d_int = (simps(simps(simps(vgrid**2*fgrid,axis=2),axis=1),axis=0)/F - v_int**2 )**0.5
 
     print('Integrated velocity = %s (km/s)' % v_int)
