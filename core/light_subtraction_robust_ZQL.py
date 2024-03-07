@@ -112,6 +112,47 @@ ax[0].plot(wave, flux_initial_med, drawstyle='steps-mid', color='black', label=r
 # cube_qso.mask_region(yx, args.r0, unit_center=None, unit_radius=None, inside=True)
 # cube_qso.mask_region(yx, args.r1, unit_center=None, unit_radius=None, inside=False)
 
+def median_rolling_window(fi, window_size=51):
+    """
+    Median smoothing applied on input function fi tabulated at points xi
+    with a rolling window of size window_size.
+
+    Parameters:
+    -----------
+    xi, fi     : 1d nd arrays
+                 training point location, corresponding function values, and their weights
+                 Note that for numpy polyfit, weights should be set as wi=1/sigma, not as wi=1/sigma**2
+
+    window_size: an odd integer, default = 5
+                 size of the window to use in constructing polynomials
+                 must be an odd integer
+
+    Returns:
+    --------
+
+    fi_smoothed: 1d numpy array containing smoothed values at xi
+
+    """
+    # first check input window_size and order with S-G requirements
+    try:
+        window_size = np.abs(np.int(window_size))
+    except ValueError:
+        raise ValueError("window_size and order have to be of type int")
+    if window_size % 2 != 1 or window_size < 1:
+        raise ValueError("window_size size must be a positive odd number")
+    if window_size > np.shape(fi)[0]:
+        raise ValueError("window_size is too large for input function vector")
+
+    whalf = (window_size - 1) // 2
+    # first handle non-edge case where symmetric window can be used
+    fip = np.copy(fi)
+    for i in range(whalf, np.shape(fi)[0] - whalf):
+        fid = fi[i - whalf:i + whalf + 1]
+        fip[i] = np.median(fid)
+
+    # leaving edge pixels unsmoothed, could be handled differently if needed
+
+    return fip
 
 # Start qso light subtraction
 image_mask = cube[300, :, :]
@@ -144,7 +185,8 @@ for x in xArray:
             thisFlux_Med = thisFlux.data / thisMed
 
             if thisMed > 0:
-                ratio = median_filter(thisFlux / flux_initial, size=51)
+                # ratio = median_filter(thisFlux / flux_initial, size=51)
+                ratio = median_rolling_window(thisFlux / flux_initial, window_size=91)
                 # ratio = thisFlux / flux_initial
                 thisFlux_fixed = flux_initial * ratio
                 fluxArray[:, y, x] = thisFlux_fixed
@@ -179,7 +221,7 @@ plt.savefig(args.f.replace('.fits', '_QSO.pdf'))
 #
 qso = Table()
 qso['wave'] = wave
-qso['flux'] = flux_median
+qso['flux'] = flux_initial
 qso.write(args.f.replace('.fits', '_QSO.fits'), overwrite=True)
 
 
