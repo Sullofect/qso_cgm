@@ -123,7 +123,11 @@ def MakeFieldImage(cubename=None):
     # gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
     gc.show_colorscale(cmap='Greys', vmin=-0.005, vmax=1, vmid=-0.001, stretch='arcsinh')
     gc.add_colorbar()
-    gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
+    # gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
+    gc.colorbar.set_font(size=30)
+    gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
+                                    r's^{-1} \; arcsec^{-2}]}$')
+    gc.colorbar.set_axis_label_font(size=30)
     gc.colorbar.hide()
 
 

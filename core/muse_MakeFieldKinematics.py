@@ -1185,6 +1185,8 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='black', linewidths=2,
                         smooth=5, kernel='box', hdu=1)
         APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
+        gc.add_label(0.97, 0.92, r'$\rm [O\,II]$', color='black', size=30, relative=True, horizontalalignment='right')
+        gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
         fig.savefig(figurename_SB_OII, bbox_inches='tight')
 
         fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -1193,6 +1195,8 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='black', linewidths=2,
                         smooth=5, kernel='box', hdu=1)
         APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
+        gc.add_label(0.97, 0.92, r'$\rm [O\,III]$', color='black', size=30, relative=True, horizontalalignment='right')
+        gc.add_label(0.08, 0.08, '(c)', color='k', size=40, relative=True)
         fig.savefig(figurename_SB_OIII, bbox_inches='tight')
     else:
         hdul_SB_kin = fits.ImageHDU(fits.open(path_SB)[1].data, header=hdr)
@@ -1766,15 +1770,16 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     if type == 'NarrowBand':
         gc.colorbar.set_location('bottom')
         gc.colorbar.set_ticks([0, 1, 2, 3, 4, 5])
-        gc.colorbar.set_font(size=20)
-        gc.colorbar.set_axis_label_text(r'$\mathrm{Surface \; Brightness \; [10^{-17} \; erg \; cm^{-2} \; '
+        gc.colorbar.set_font(size=30)
+        gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
                                         r's^{-1} \; arcsec^{-2}]}$')
-        gc.add_scalebar(length=7 * u.arcsecond)
+        gc.colorbar.set_axis_label_font(size=30)
+        gc.add_scalebar(length=6 * u.arcsecond)
         gc.scalebar.set_corner('top left')
         gc.scalebar.set_label(r"$6'' \approx 50 \mathrm{\; kpc}$")
-        gc.scalebar.set_font_size(35)
-        gc.add_label(0.98, 0.94, cubename, size=35, relative=True, horizontalalignment='right')
-        gc.add_label(0.98, 0.87, r'$z={}$'.format(z_qso), size=35, relative=True, horizontalalignment='right')
+        gc.scalebar.set_font_size(30)
+        # gc.add_label(0.98, 0.94, cubename, size=35, relative=True, horizontalalignment='right')
+        # gc.add_label(0.98, 0.87, r'$z={}$'.format(z_qso), size=35, relative=True, horizontalalignment='right')
     elif type == 'FieldImage':
         gc.colorbar.hide()
     elif type == 'GasMap':
