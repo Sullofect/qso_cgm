@@ -77,10 +77,16 @@ def LoadFieldGals(cubename=None, z_qso=None, ):
 
 #
 def MakeFieldImage(cubename=None):
+    str_zap, UseSeg = '', (1.5, 'gauss', 1.5, 'gauss')
+    line_OII, line_OIII = 'OII', 'OIII'
     path_savefig_mini = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mini_gaia.png'.format(cubename)
     path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_gaia.png'.format(cubename)
     path_dat = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia.dat'.format(cubename)
     path_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_OII_SB_3DSeg_1.5_gauss_1.5_gauss.fits'.format(cubename)
+    path_SB_OII_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+        format(cubename, str_zap, line_OII, *UseSeg)
+    path_SB_OIII_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+        format(cubename, str_zap, line_OIII, *UseSeg)
 
     # Load info
     path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
@@ -114,10 +120,12 @@ def MakeFieldImage(cubename=None):
 
     #
     gc.set_system_latex(True)
-    gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+    # gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+    gc.show_colorscale(cmap='Greys', vmin=-0.005, vmax=1, vmid=-0.001, stretch='arcsinh')
     gc.add_colorbar()
     gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
     gc.colorbar.hide()
+
 
     # Hide ticks
     gc.ticks.set_length(30)
@@ -126,12 +134,34 @@ def MakeFieldImage(cubename=None):
     gc.axis_labels.hide()
 
     # Markers
+    gc.add_scalebar(length=6 * u.arcsecond)
+    # gc.add_scalebar(length=15 * u.arcsecond)
+    gc.scalebar.set_corner('top left')
+    # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+    gc.scalebar.set_label(r"$6'' \approx 50 \mathrm{\; pkpc}$")
+    gc.scalebar.set_font_size(30)
+
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
-                    edgecolors='k', linewidths=0.5, s=800)
+                    edgecolors='k', linewidths=0.5, s=600)
     gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
+
+    # Draw contours
+    contour_level = 0.20
+    gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='blue', linewidths=2,
+                    smooth=5, kernel='box', hdu=1)
+    gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='red', linewidths=2,
+                    smooth=5, kernel='box', hdu=1)
+
+    # labels
+    gc.add_label(0.58, 0.88, r'$\rm MUSE \, [O\,II]$', color='blue', size=30, relative=True, horizontalalignment='left')
+    gc.add_label(0.58, 0.80, r'$\rm MUSE \, [O\,III]$', color='red', size=30, relative=True, horizontalalignment='left')
+    gc.add_label(0.58, 0.95, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=30, relative=True, horizontalalignment='left')
+    gc.add_label(0.08, 0.08, '(a)', color='k', size=40, relative=True)
 
     # Labels
     fig.savefig(path_savefig_mini, bbox_inches='tight')
+
+    raise ValueError('STOP')
 
     # Figure
     fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -210,9 +240,9 @@ def MakeFieldImage(cubename=None):
 # MakeFieldImage(cubename='Q0107-0235')
 # MakeFieldImage(cubename='PB6291')
 # MakeFieldImage(cubename='HE0153-4520')
-# MakeFieldImage(cubename='3C57')
+MakeFieldImage(cubename='3C57')
 # MakeFieldImage(cubename='TEX0206-048')
-MakeFieldImage(cubename='HE0226-4110')
+# MakeFieldImage(cubename='HE0226-4110')
 # MakeFieldImage(cubename='PKS0232-04')
 # MakeFieldImage(cubename='HE0435-5304')
 # MakeFieldImage(cubename='HE0439-5254')

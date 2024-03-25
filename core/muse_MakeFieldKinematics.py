@@ -988,7 +988,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
     else:
         str_zap = ''
 
-    path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
+    path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N1.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
     path_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
@@ -1969,7 +1969,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
 #           '-ssf False -n 3 -sl 6205 6270')
 # os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8350 8390 -n 2')
+#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8350 8390 -n 2')   # change it to 3
 # os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss '
 #           '-ssf False -sl 8350 8390 -n 2')
 # FitLines(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None, kernel_1D=None)
@@ -1992,8 +1992,8 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
 #                kernel_1D='gauss', CheckSpectra=[70, 80], v_min=-300, v_max=300,
 #                sigma_max=300, contour_level=0.25)
-fit_param = {"OII": 1, "OII_2nd": 2, 'ResolveOII': True, 'r_max': 1.6,
-             'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 2}
+fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
+             'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
 #          width_OII=10, width_OIII=10)
 PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[93, 68], v_min=-350, v_max=350, width_OII=10,

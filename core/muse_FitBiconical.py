@@ -13,22 +13,23 @@ from matplotlib import rc
 from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
 from regions import PixCoord
-from regions import RectangleSkyRegion, RectanglePixelRegion
-from astropy.convolution import convolve, Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel, Box1DKernel
+from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
+from astropy.convolution import convolve, Kernel, Gaussian2DKernel
 from scipy.interpolate import interp1d
 from astropy.coordinates import Angle
 import biconical_outflow_model_3d as bicone
 from mpdaf.obj import Cube, WaveCoord, Image
 from PyAstronomy import pyasl
 from gala.units import galactic, solarsystem, dimensionless
+from photutils.isophote import EllipseGeometry
+from photutils.isophote import build_ellipse_model
+from photutils.isophote import Ellipse
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
-rc('xtick', direction='in')
-rc('ytick', direction='in')
-rc('xtick.minor', size=3, visible=True)
-rc('ytick.minor', size=3, visible=True)
-rc('xtick', direction='in', labelsize=15)
-rc('ytick', direction='in', labelsize=15)
+rc('xtick.minor', size=5, visible=True)
+rc('ytick.minor', size=5, visible=True)
+rc('xtick', direction='in', labelsize=25, top='on')
+rc('ytick', direction='in', labelsize=25, right='on')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 
@@ -40,7 +41,7 @@ data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
-#
+# Path to the data
 UseDetectionSeg = (1.5, 'gauss', 1.5, 'gauss')
 UseSmoothedCubes = True
 line_OII, line_OIII = 'OII', 'OIII'
@@ -70,9 +71,14 @@ kernel = Gaussian2DKernel(x_stddev=1.0, y_stddev=1.0)
 data_SB_OII_smoothed = convolve(data_SB_OII, kernel)
 data_SB_OIII_smoothed = convolve(data_SB_OIII, kernel)
 
-from photutils.isophote import EllipseGeometry
-from photutils.isophote import build_ellipse_model
-from photutils.isophote import Ellipse
+# check OIII / OII ratio
+plt.figure()
+plt.imshow(data_SB_OIII / data_SB_OII, origin='lower', cmap='viridis', vmin=0, vmax=1)
+plt.show()
+
+raise ValueError
+
+# Measure isophotal SB
 geometry = EllipseGeometry(x0=72.5681, y0=74.3655, sma=20, eps=0.5,
                            pa=-25.0 * np.pi / 180.0, fix_pa=True)
 ellipse_OII = Ellipse(data_SB_OII, geometry)
@@ -90,10 +96,10 @@ for sma in smas:
     iso_OII = isolist_OII.get_closest(sma)
     x_OII, y_OII = iso_OII.sampled_coordinates()
     ax[0].plot(x_OII, y_OII, color='white')
-    print(iso_OII.x0, iso_OII.y0)
+    # print(iso_OII.x0, iso_OII.y0)
     f, sma = iso_OII.eps, iso_OII.sma
     smia = sma * (1 - f)
-    print(sma, smia)
+    # print(sma, smia)
     i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
     print('inclination angle is', i)
 
@@ -102,16 +108,16 @@ for sma in smas:
     iso_OIII = isolist_OIII.get_closest(sma)
     x_OIII, y_OIII, = iso_OIII.sampled_coordinates()
     ax[1].plot(x_OIII, y_OIII, color='white')
-    print(iso_OII.x0, iso_OII.y0)
+    # print(iso_OII.x0, iso_OII.y0)
     f, sma = iso_OIII.eps, iso_OIII.sma
     smia = sma * (1 - f)
-    print(sma, smia)
+    # print(sma, smia)
     i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
     print('inclination angle is', i)
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_SB_OII_isophote.png', bbox_inches='tight')
 # raise ValueError('stop')
 
-#
+# Measure kinematics
 path_fit_N1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N1.fits'
 path_fit_N2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N2.fits'
 path_fit_N3 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N3.fits'
@@ -140,13 +146,12 @@ sigma_N3, dsigma_N3 = hdul_N3[5].data, hdul_N3[6].data
 flux_OIII_N3 = hdul_N3[9].data
 chisqr_N3, redchi_N3 = hdul_N3[15].data, hdul_N3[16].data
 
-
 # plot the velocity field
 x, y = np.meshgrid(np.arange(v_N1.shape[1]), np.arange(v_N1.shape[1]))
 x, y = x.flatten(), y.flatten()
 pixcoord = PixCoord(x=x, y=y)
 
-#
+# Hedaer information
 hdr = hdr_N1
 path_sub_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
 hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
@@ -158,25 +163,33 @@ hdr['CD1_1'] = hdr_sub_gaia['CD1_1']
 hdr['CD2_1'] = hdr_sub_gaia['CD2_1']
 hdr['CD1_2'] = hdr_sub_gaia['CD1_2']
 hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
-
 w = WCS(hdr, naxis=2)
 center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
 c2 = w.world_to_pixel(center_qso)
-print(c2)
-rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=2, angle=Angle(-30, 'deg'))
+
+# mask the center
+circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=3)
+center_mask_flatten = ~circle.contains(pixcoord)
+center_mask = center_mask_flatten.reshape(v_N1[0, :, :].shape)
+x, y = x[center_mask_flatten], y[center_mask_flatten]
+pixcoord = pixcoord[center_mask_flatten]
+
+# mask a slit
+rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=5, angle=Angle(-30, 'deg'))
 mask = rectangle.contains(pixcoord)
 dis = np.sqrt((x - c2[0])**2 + (y - c2[1])**2) * 0.2 * 50 / 7
 dis_mask = dis[mask]
+# dis_mask = dis_mask[center_mask_flatten[mask]]
 
-#
+# mask each side
 red = ((x[mask] - c2[0]) < 0) * ((y[mask] - c2[1]) > 0)
 blue = ~red
 dis_red = dis_mask[red]
 dis_blue = dis_mask[blue] * -1
 
 # Slit position
-fig, ax = plt.subplots(1, 1)
-plt.imshow(v_N1[0, :, :], origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
+plt.imshow(np.where(center_mask, v_N1[0, :, :], np.nan), origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
 patch = rectangle.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
 plt.plot(c2[0], c2[1], '*', markersize=15)
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox_inches='tight')
@@ -184,27 +197,28 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox
 
 # Position-velocity diagram
 i = 70
-fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300)
+fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=300, sharex=True)
+# fig.subplots_adjust(hspace=0, wspace=0.1)
 
 # Milky Way rotation disk
 MW = gp.MilkyWayPotential(units=galactic)
 R = np.zeros((3, 100))
 R[0, :] = np.linspace(0, 20, 100)
 MW_v = MW.circular_velocity(q=R * u.kpc)
-ax.plot(R[0, :], MW_v * np.sin(i * np.pi / 180), 'k--', lw=1, label='MW disk')
-ax.plot(-R[0, :], -MW_v * np.sin(i * np.pi / 180), 'k--', lw=1)
+MW_v = MW_v.value
+# ax[1].fill_between(R[0, :], MW_v * np.sin(30 * np.pi / 180), MW_v, color='gray', alpha=0.3, label='MW disk')
+# ax[1].fill_between(- R[0, :], - MW_v * np.sin(30 * np.pi / 180), - MW_v, color='gray', alpha=0.3)
 
 # Sombero galaxy
 d_som = 11.219  # Mpc
-# r_som_arcsec = np.array([0.15, 0.30, 0.52, 0.82, 1.2, 1.7, 2.4, 3.3, 4.57, 6.45, 8.77,
-#                          11.4, 14.32, 17.7, 22.2, 28.58, 36.08, 44.4])
-# r_som_kpc = r_som_arcsec * d_som * 1e3 * np.pi / 180 / 3600
-# v_som = -1 * np.array([-36, -75, -112, -144, -172, -190, -208, -232, -236, -235, -189,
-#                        -171, -187, -201, -228, -235, -285, -277])
 r_som_kpc = np.array([0, 1.25, 2.5, 5, 10, 15])
 v_som = np.array([0, 120, 230, 305, 332, 343])
-ax.plot(r_som_kpc, v_som * np.sin(i * np.pi / 180), '--', color='red', lw=1, label='Sombrero')
-ax.plot(-r_som_kpc, -v_som * np.sin(i * np.pi / 180), '--', color='red', lw=1)
+ax.plot(r_som_kpc, v_som * np.sin(30 * np.pi / 180), color='red', alpha=0.3, label='Sombrero')
+ax.plot(r_som_kpc, v_som, color='red', alpha=0.8)
+ax.plot(- r_som_kpc, - v_som * np.sin(30 * np.pi / 180), color='red', alpha=0.3)
+ax.plot(- r_som_kpc, - v_som, color='red', alpha=0.8)
+# ax.fill_between(r_som_kpc, v_som * np.sin(30 * np.pi / 180), v_som, color='red', alpha=0.3, label='Sombrero')
+# ax.fill_between(- r_som_kpc, - v_som * np.sin(30 * np.pi / 180), - v_som, color='red', alpha=0.3)
 
 # NFW profile
 h = 0.7
@@ -214,26 +228,22 @@ M_halo = 10 ** 13 * M_sun
 rho_c = 1.8788e-29 * h ** 2
 kpc = 3.086e21
 c = 15
-x = np.linspace(0, 0.2, 1000)
+x = np.linspace(0.03, 0.2, 1000)
 R_vir = (3 * M_halo / 4 / np.pi / 200 / rho_c) ** (1 / 3)
 f_cx = np.log(1 + c * x) - c * x / (1 + c * x)
 f_c = np.log(1 + c) - c / (1 + c)
 v_vir = np.sqrt(G * M_halo / R_vir) / 1e5
-v_c = v_vir * np.sqrt(f_cx / x / f_c) * np.sin(i * np.pi / 180)
-# ax.plot(x * R_vir / kpc, v_c, '-r', label='NFW profile with i={} deg'.format(i))
-# ax.plot(- x * R_vir / kpc, -v_c, '-r')
+v_c = v_vir * np.sqrt(f_cx / x / f_c)
+ax.plot(x * R_vir / kpc, v_c * np.sin(30 * np.pi / 180), color='blue', alpha=0.3)
+ax.plot(- x * R_vir / kpc, -v_c * np.sin(30 * np.pi / 180), color='blue', alpha=0.3)
+ax.plot(x * R_vir / kpc, v_c, color='blue', alpha=0.8, label='NFW profile')
+ax.plot(- x * R_vir / kpc, -v_c, color='blue', alpha=0.8)
+# ax.fill_between(x * R_vir / kpc, v_c * np.sin(30 * np.pi / 180), v_c, color='blue', alpha=0.3, label='NFW profile')
+# ax.fill_between(- x * R_vir / kpc, -v_c * np.sin(30 * np.pi / 180), -v_c, color='blue', alpha=0.3)
 
 
 # Velocity profile
 def v(index=2, v_max=800, i_deg=70, R_max=30):
-    #
-    # theta = np.arcsin(d / R)
-    # P1 = - 2 * d * (np.tan(i_rad) * np.cos(theta_rad) - np.tan(i_rad) ** 2 * np.sin(theta_rad))
-    # P2 = np.sqrt(4 * d ** 2 * (np.tan(i_rad) ** 2 * np.cos(theta_rad) ** 2 + np.tan(i_rad) * np.sin(2 * theta_rad) + np.sin(theta_rad) ** 2))
-    # P3 = 2 * (np.sin(theta_rad) ** 2 * (np.tan(i_rad) ** 2 - 1) - np.tan(i_rad)* np.sin(2 * theta_rad))
-    # R = - 2 * d * (np.tan(i_deg * np.pi / 180) + np.tan(theta))
-    # r = d / np.sin(i_deg * np.pi / 180)
-
     #
     R = np.arange(0, R_max + 0.1, 0.1)
     i_rad = i_deg * np.pi / 180
@@ -253,6 +263,7 @@ def v(index=2, v_max=800, i_deg=70, R_max=30):
 # ax.plot(v()[0], v()[2], '-', linewidth=1, color='k')
 # ax.plot(v()[1], v()[3], '-', linewidth=1, color='k')
 
+
 def Bin(x, y, std, flux, bins=20):
     n, edges = np.histogram(x, bins=bins)
     y_mean = np.zeros(bins)
@@ -266,50 +277,59 @@ def Bin(x, y, std, flux, bins=20):
         y_flux[i] = flux[mask].mean()
     return x_mean, y_mean, y_std, y_flux
 
+
 # Components
-v_N1_flatten = v_N1[0, :, :].flatten()
-sigma_N1_flatten = sigma_N1[0, :, :].flatten()
-flux_OIII_N1_flatten = flux_OIII_N1[0, :, :].flatten()
+v_N1_flatten = v_N1[0, :, :].flatten()[center_mask_flatten]
+sigma_N1_flatten = sigma_N1[0, :, :].flatten()[center_mask_flatten]
+flux_OIII_N1_flatten = flux_OIII_N1[0, :, :].flatten()[center_mask_flatten]
 dis_blue_mean, v_N1_mean, sigma_N1_mean, flux_N1_mean = Bin(dis_blue, v_N1_flatten[mask][blue],
-                                                            sigma_N1_flatten[mask][blue],
-                                                            flux_OIII_N1_flatten[mask][blue], bins=20)
+                                                            sigma_N1_flatten[mask][blue], flux_OIII_N1_flatten[mask][blue], bins=20)
 # ax.errorbar(dis_blue, v_N1_flatten[mask][blue], sigma_N1_flatten[mask][blue],
 #             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8, markeredgewidth=0.7)
-ax.errorbar(dis_blue_mean, v_N1_mean, sigma_N1_mean, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8,
-            markeredgewidth=0.7)
-# ax.plot(dis[mask][red], v_N1_flatten[mask][red], '.k')
-print(v_N1_mean, flux_N1_mean)
+# ax[0].errorbar(dis_blue_mean, v_N1_mean, sigma_N1_mean, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8,
+#                markeredgewidth=0.7)
+# ax[0].plot(dis_blue_mean, v_N1_mean, '.', color='k', mfc='grey', ms=12, markeredgewidth=1.0)
+pos = ax.scatter(dis_blue_mean, v_N1_mean, s=50, c=sigma_N1_mean, marker='D', edgecolors='k', vmin=50, vmax=300,
+                 cmap='Reds', linewidths=0.5)
+cax = fig.add_axes([0.2, 0.7, 0.25, 0.035])
+fig.colorbar(pos, cax=cax, ax=ax, orientation='horizontal')
+cax.set_title(r'$\sigma \rm \, [km \, s^{-1}]$', fontsize=15)
+# ax[0].plot(dis_blue, v_N1_flatten[mask][blue], '.k')
+
+# Plot the distribution
 v_array = np.linspace(-500, 500, 100)
-# peak = flux_N1_mean / np.sqrt(2 * sigma_N1_mean ** 2 * np.pi)
-# print(peak)
 prob = np.exp(-(v_array[np.newaxis, :] - v_N1_mean[:, np.newaxis]) ** 2 / 2 / sigma_N1_mean[:, np.newaxis] ** 2)
-print(prob[5, :])
 prob = prob / np.nansum(prob, axis=1)[:, np.newaxis]
-# prob = prob.T
 
-# model = np.random.choice(v_array, size=(len(v_array), 20), p=prob)
-# print(model[0, :])
+# for i in range(20):
+#     print(i, dis_blue_mean[i])
+#     prob_i = prob[i, :]
+#     if len(prob_i[np.isnan(prob_i)]) != 100:
+#         model = np.random.choice(v_array, size=len(v_array), p=prob_i)
+#         violin_parts_0 = ax[1].violinplot(model, positions=np.asarray([dis_blue_mean[i]]), points=50, widths=1.5,
+#                                           showmeans=False, showextrema=False, showmedians=False)
+#         violin_parts_0['bodies'][0].set_facecolor('C1')
 
-for i in range(20):
-    print(i, dis_blue_mean[i])
-    prob_i = prob[i, :]
-    if len(prob_i[np.isnan(prob_i)]) != 100:
-        model = np.random.choice(v_array, size=len(v_array), p=prob_i)
-        violin_parts_0 = ax.violinplot(model, positions=np.asarray([dis_blue_mean[i]]), points=50, widths=1.5, showmeans=False,
-                                       showextrema=False, showmedians=False)
-        violin_parts_0['bodies'][0].set_facecolor('C1')
+# ax[1].errorbar(dis_blue_mean, v_N1_mean, sigma_N1_mean, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C0', ms=8,
+#                markeredgewidth=0.7)
+# ax[1].fill_between(dis_blue_mean, v_N1_mean - sigma_N1_mean, v_N1_mean + sigma_N1_mean, color='brown', alpha=0.3)
+# ax.plot(dis_blue_mean, sigma_N1_mean, '.', color='k', mfc='grey', alpha=0.3, markeredgewidth=1.0)
+
+# ax[1].fill_between(dis_blue, v_N1_flatten[mask][blue] - sigma_N1_flatten[mask][blue],
+#                    v_N1_flatten[mask][blue] + sigma_N1_flatten[mask][blue], color='brown', alpha=0.3)
+
 
 #
-v_N2_flatten_C1 = v_N2[0, :, :].flatten()
-v_N2_flatten_C2 = v_N2[1, :, :].flatten()
+v_N2_flatten_C1 = v_N2[0, :, :].flatten()[center_mask_flatten]
+v_N2_flatten_C2 = v_N2[1, :, :].flatten()[center_mask_flatten]
 v_N2_flatten_C1_sort = np.copy(v_N2_flatten_C1)
 v_N2_flatten_C2_sort = np.copy(v_N2_flatten_C2)
-sigma_N2_flatten_C1 = sigma_N2[0, :, :].flatten()
-sigma_N2_flatten_C2 = sigma_N2[1, :, :].flatten()
+sigma_N2_flatten_C1 = sigma_N2[0, :, :].flatten()[center_mask_flatten]
+sigma_N2_flatten_C2 = sigma_N2[1, :, :].flatten()[center_mask_flatten]
 sigma_N2_flatten_C1_sort = np.copy(sigma_N2_flatten_C1)
 sigma_N2_flatten_C2_sort = np.copy(sigma_N2_flatten_C2)
-flux_OIII_N2_flatten_C1 = flux_OIII_N2[0, :, :].flatten()
-flux_OIII_N2_flatten_C2 = flux_OIII_N2[1, :, :].flatten()
+flux_OIII_N2_flatten_C1 = flux_OIII_N2[0, :, :].flatten()[center_mask_flatten]
+flux_OIII_N2_flatten_C2 = flux_OIII_N2[1, :, :].flatten()[center_mask_flatten]
 flux_OIII_N2_flatten_C1_sort = np.copy(flux_OIII_N2_flatten_C1)
 flux_OIII_N2_flatten_C2_sort = np.copy(flux_OIII_N2_flatten_C2)
 
@@ -323,16 +343,26 @@ flux_OIII_N2_flatten_C1_sort[~v_sort] = flux_OIII_N2_flatten_C2[~v_sort]
 flux_OIII_N2_flatten_C2_sort[~v_sort] = flux_OIII_N2_flatten_C1[~v_sort]
 v_N2_flatten_weight = (v_N2_flatten_C1_sort * flux_OIII_N2_flatten_C1_sort
                        + v_N2_flatten_C2_sort * flux_OIII_N2_flatten_C2_sort) / (flux_OIII_N2_flatten_C1_sort + flux_OIII_N2_flatten_C2_sort)
-# ax.plot(dis_red, v_N2_flatten_C1[mask][red], '.r')
-# ax.plot(dis_red, v_N2_flatten_C2[mask][red], '.r')
-# dis_red_mean_C1, v_N2_mean_C1, sigma_N2_mean_C1 = Bin(dis_red, v_N2_flatten_C1_sort[mask][red],
-#                                                       sigma_N2_flatten_C1[mask][red], bins=20)
-# dis_red_mean_C2, v_N2_mean_C2, sigma_N2_mean_C2 = Bin(dis_red, v_N2_flatten_C2_sort[mask][red],
-#                                                       sigma_N2_flatten_C2[mask][red], bins=20)
-# ax.errorbar(dis_red, v_N2_flatten_C1[mask][red], sigma_N2_flatten_C1[mask][red],
-#             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
-# ax.errorbar(dis_red, v_N2_flatten_C2[mask][red], sigma_N2_flatten_C2[mask][red],
-#             fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
+# ax[0].plot(dis_red, v_N2_flatten_C1_sort[mask][red], 'd', color='white', mec='r', ms=5, markeredgewidth=1.0)
+# ax[0].plot(dis_red, v_N2_flatten_C2_sort[mask][red], 'd', color='white', mec='b', ms=5, markeredgewidth=1.0)
+dis_red_mean_C1, v_N2_mean_C1, sigma_N2_mean_C1, flux_N2_mean_C1 = Bin(dis_red, v_N2_flatten_C1_sort[mask][red],
+                                                                       sigma_N2_flatten_C1_sort[mask][red],
+                                                                       flux_OIII_N2_flatten_C1_sort[mask][red], bins=20)
+dis_red_mean_C2, v_N2_mean_C2, sigma_N2_mean_C2, flux_N2_mean_C2 = Bin(dis_red, v_N2_flatten_C2_sort[mask][red],
+                                                                       sigma_N2_flatten_C2_sort[mask][red],
+                                                                       flux_OIII_N2_flatten_C2_sort[mask][red], bins=20)
+# ax[0].plot(dis_red_mean_C1, v_N2_mean_C1, '.', color='k', mfc='red', ms=12, markeredgewidth=1.0)
+# ax[0].plot(dis_red_mean_C2, v_N2_mean_C2, '.', color='k', mfc='blue', ms=12, markeredgewidth=1.0)
+# ax[1].plot(dis_red_mean_C1, sigma_N2_mean_C1, '.', color='k', mfc='red', alpha=0.3, markeredgewidth=1.0)
+# ax[1].plot(dis_red_mean_C2, sigma_N2_mean_C2, '.', color='k', mfc='blue', alpha=0.3, markeredgewidth=1.0)
+ax.scatter(dis_red_mean_C1, v_N2_mean_C1, s=60, c=sigma_N2_mean_C1, marker="^", edgecolors='k',
+           cmap='Reds', vmin=50, vmax=300, linewidths=0.5)
+ax.scatter(dis_red_mean_C2, v_N2_mean_C2, s=60, c=sigma_N2_mean_C2, marker="v", edgecolors='k',
+           cmap='Reds', vmin=50, vmax=300, linewidths=0.5)
+# ax[0].errorbar(dis_red, v_N2_flatten_C1[mask][red], sigma_N2_flatten_C1[mask][red],
+#                fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
+# ax[0].errorbar(dis_red, v_N2_flatten_C2[mask][red], sigma_N2_flatten_C2[mask][red],
+#                fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
 # ax.errorbar(dis_red_mean_C1, v_N2_mean_C1, sigma_N2_mean_C1, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C2', ms=8,
 #             markeredgewidth=0.7)
 # ax.errorbar(dis_red_mean_C2, v_N2_mean_C2, sigma_N2_mean_C2, fmt='.k', capsize=1.5, elinewidth=0.7, mfc='C1', ms=8,
@@ -341,30 +371,35 @@ v_N2_flatten_weight = (v_N2_flatten_C1_sort * flux_OIII_N2_flatten_C1_sort
 # ax.errorbar(dis[mask][red], v_N2_flatten_weight[mask][red], np.zeros_like(dis[mask][red]),
 #             fmt='.k', capsize=0, elinewidth=0.7, mfc='C1', ms=8, markeredgewidth=0.7)
 
-#
-v_N3_flatten_C1 = v_N3[0, :, :].flatten()
-v_N3_flatten_C2 = v_N3[1, :, :].flatten()
-v_N3_flatten_C3 = v_N3[2, :, :].flatten()
-flux_OIII_N3_flatten_C1 = flux_OIII_N3[0, :, :].flatten()
-flux_OIII_N3_flatten_C2 = flux_OIII_N3[1, :, :].flatten()
-flux_OIII_N3_flatten_C3 = flux_OIII_N3[2, :, :].flatten()
-v_N3_flatten_weight = (v_N3_flatten_C1 * flux_OIII_N3_flatten_C1 + v_N3_flatten_C2 * flux_OIII_N3_flatten_C2
-                       + v_N3_flatten_C3 * flux_OIII_N3_flatten_C3) \
-                      / (flux_OIII_N3_flatten_C1 + flux_OIII_N3_flatten_C2 + flux_OIII_N3_flatten_C3)
+# N3
+# v_N3_flatten_C1 = v_N3[0, :, :].flatten()
+# v_N3_flatten_C2 = v_N3[1, :, :].flatten()
+# v_N3_flatten_C3 = v_N3[2, :, :].flatten()
+# flux_OIII_N3_flatten_C1 = flux_OIII_N3[0, :, :].flatten()
+# flux_OIII_N3_flatten_C2 = flux_OIII_N3[1, :, :].flatten()
+# flux_OIII_N3_flatten_C3 = flux_OIII_N3[2, :, :].flatten()
+# v_N3_flatten_weight = (v_N3_flatten_C1 * flux_OIII_N3_flatten_C1 + v_N3_flatten_C2 * flux_OIII_N3_flatten_C2
+#                        + v_N3_flatten_C3 * flux_OIII_N3_flatten_C3) \
+#                       / (flux_OIII_N3_flatten_C1 + flux_OIII_N3_flatten_C2 + flux_OIII_N3_flatten_C3)
 # ax.plot(v_N3[0, :, :].flatten()[mask], dis[mask], '.C2')
 # ax.plot(v_N3[1, :, :].flatten()[mask], dis[mask], '.C2')
 # ax.plot(v_N3[2, :, :].flatten()[mask], dis[mask], '.C2')
 # ax.plot(v_N3_flatten_weight[mask][red], dis[mask][red], '.', color='C6', ms=5)
 
-ax.axhline(0, linestyle='--', color='k', linewidth=1)
-ax.axvline(0, linestyle='--', color='k', linewidth=1)
+ax.axhline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
+ax.axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
+# ax.axhline(0, linestyle='--', color='k', linewidth=1)
+# ax.axvline(0, linestyle='--', color='k', linewidth=1)
 ax.set_xlim(-40, 40)
 ax.set_ylim(-450, 450)
-ax.set_xlabel(r'$\rm Distance \, [kpc]$', size=20)
-ax.set_ylabel(r'$\Delta v \rm \, [km \, s^{-1}]$', size=20)
+# ax.set_ylim(0, 450)
+ax.set_ylabel(r'$\Delta v \rm \, [km \, s^{-1}]$', size=25)
+ax.set_xlabel(r'$\rm Distance \, [kpc]$', size=25)
+# ax.set_ylabel(r'$\sigma \rm \, [km \, s^{-1}]$', size=25)
+# fig.supylabel(r'$\Delta v \rm \, [km \, s^{-1}]$', size=25, x=-0.02)
 ax.legend(loc=4, fontsize=15)
+# ax.legend(loc=4, fontsize=15)
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile.png', bbox_inches='tight')
-# plt.show()
 
 
 # raise ValueError('stop')
@@ -383,7 +418,7 @@ theta_out_deg = 40.0    # outer opening angle (degrees)
 
 # Bicone inclination and PA
 theta_B1_deg = 10    # rotation along x
-theta_B2_deg = 0    # rotation along y
+theta_B2_deg = 60    # rotation along y
 theta_B3_deg = 0     # rotation along z
 
 # Dust plane inclination and PA
@@ -392,7 +427,7 @@ theta_D2_deg = 0.0     # rotation along y
 theta_D3_deg = 0.0     # rotation along z
 
 # Velocity profile parameters
-vmax = 500.0  # km/s
+vmax = 1000.0  # km/s
 vtype = 'increasing'  # 'increasing','decreasing', or 'constant'
 # vtype = 'constant'
 # vtype = 'increasing'
@@ -445,15 +480,23 @@ flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII
 # v_N1_seg = refit_seg * v_N1[0, :, :]
 
 # remap the vmap to the observed grid
-coord_MUSE = (56, 83)
+coord_MUSE = (65, 80)
 
-#
-fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
-ax.imshow(v_N1[0, :, :], origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+
+# Plot the cone
+fig, ax = plt.subplots(1, 1, dpi=300, figsize=(8, 8))
+# ax.imshow(v_N1[0, :, :], origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
 ax.imshow(np.flip(vmap, 1), cmap='coolwarm', extent=[c2[0] - 20, c2[0] + 20, c2[1] - 20, c2[1] + 20],
           vmin=-300, vmax=300, origin='lower')
 ax.plot(c2[0], c2[1], '*', markersize=15)
+ax.set_xlim(0, 150)
+ax.set_ylim(0, 150)
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_xticklabels([])
+ax.set_yticklabels([])
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_cone.png', bbox_inches='tight')
+
 
 def emission_pixel(fgrid, vgrid, vmax, coord_MUSE=None, nbins=25, sampling=100, z=z_qso):
     global c2

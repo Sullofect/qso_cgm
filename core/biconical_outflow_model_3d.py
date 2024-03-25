@@ -168,7 +168,6 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     # print('\n      %0.2f seconds' % float(time.time()-t0))
 
 
-
     # Generate dust plane grid
     # print('\n Generating dust plane...')
     rd = 2.0*D # dust plane radius (defualt 2 x D)
@@ -224,10 +223,14 @@ def velocity_profile(bicone_grid, bicone_coords, D=1.0, vmax=1000.0, vtype='decr
 
     # Calculate velocity on the bicone grid
     vgrid = bicone_grid * vd
+    # vgrid = vd
+    # print(bicone_grid.shape)
+    # print(bicone_grid[0:100])
 
     # Calculate the projected velocity along the LOS
-    cos_i = (-yb/(yb**2+zb**2)**0.5)
-    cos_i[~np.isfinite(cos_i)]=0
+    # cos_i = (-yb / (xb ** 2 + yb ** 2 + zb ** 2) ** 0.5)
+    cos_i = (-yb / (xb ** 2 + yb ** 2 + zb ** 2) ** 0.5)
+    cos_i[~np.isfinite(cos_i)] = 0
     vp = vgrid * cos_i
 
     return vp
@@ -238,7 +241,7 @@ def flux_profile(bicone_grid,bicone_coords,dust_coords,tau=5.0,D=1.0,fn=1.0,A=0.
     # print('\n Generating flux profile...\n')
     xb,yb,zb = bicone_coords
     xd,yd,zd = dust_coords
-    d = ((xb)**2 + (yb)**2 + (zb)**2 )**0.5
+    d = ((xb)**2 + (yb)**2 + (zb)**2)**0.5
     
     points = (xd,zd)
     values = yd
@@ -256,7 +259,7 @@ def flux_profile(bicone_grid,bicone_coords,dust_coords,tau=5.0,D=1.0,fn=1.0,A=0.
     # print('\n      %0.2f seconds' % float(time.time()-t0))
 
     # t0 = time.time()
-    ind =  np.where((yb<=yc))[0]
+    ind = np.where((yb<=yc))[0]
     fd_ext[ind]*=(1.0-A)
     # print('\n      %0.2f seconds' % float(time.time()-t0))
     flux = fd_ext
@@ -364,7 +367,6 @@ def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',p
     #### Velocity map ###
 
     vmap = simps(np.multiply(fgrid, vgrid), axis=0) / simps(fgrid, axis=0)
-    # vmap =
 
 
     ### Dispersion map ###

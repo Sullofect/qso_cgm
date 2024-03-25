@@ -99,9 +99,10 @@ def interpLine(wv, ratio, wv1, wv2, wv3, wv4):
 spec = cube_qso.sum(axis=(1, 2))
 flux_initial = spec.data
 # flux_initial = cube.data[:, 234, 226]
-flux_initial = savgol_filter(flux_initial, window_length=7, polyorder=1)
-wv1, wv2, wv3, wv4 = 7930, 7935, 7965, 7970
-mask, interp = interpLine(wave, flux_initial, wv1, wv2, wv3, wv4)
+# flux_initial = savgol_filter(flux_initial, window_length=7, polyorder=1)
+# wv1, wv2, wv3, wv4 = 7930, 7935, 7965, 7970
+# mask, interp = interpLine(wave, flux_initial, wv1, wv2, wv3, wv4)
+# flux_initial[mask] = interp
 
 flux_initial_med = flux_initial / np.nanmedian(flux_initial)  # median normalize
 fig, ax = plt.subplots(4, figsize=(7, 7), sharex=True)
@@ -112,59 +113,12 @@ ax[0].plot(wave, flux_initial_med, drawstyle='steps-mid', color='black', label=r
 # cube_qso.mask_region(yx, args.r0, unit_center=None, unit_radius=None, inside=True)
 # cube_qso.mask_region(yx, args.r1, unit_center=None, unit_radius=None, inside=False)
 
-def median_rolling_window(fi, window_size=51):
-    """
-    Median smoothing applied on input function fi tabulated at points xi
-    with a rolling window of size window_size.
-
-    Parameters:
-    -----------
-    xi, fi     : 1d nd arrays
-                 training point location, corresponding function values, and their weights
-                 Note that for numpy polyfit, weights should be set as wi=1/sigma, not as wi=1/sigma**2
-
-    window_size: an odd integer, default = 5
-                 size of the window to use in constructing polynomials
-                 must be an odd integer
-
-    Returns:
-    --------
-
-    fi_smoothed: 1d numpy array containing smoothed values at xi
-
-    """
-    # first check input window_size and order with S-G requirements
-    try:
-        window_size = np.abs(np.int(window_size))
-    except ValueError:
-        raise ValueError("window_size and order have to be of type int")
-    if window_size % 2 != 1 or window_size < 1:
-        raise ValueError("window_size size must be a positive odd number")
-    if window_size > np.shape(fi)[0]:
-        raise ValueError("window_size is too large for input function vector")
-
-    whalf = (window_size - 1) // 2
-    # first handle non-edge case where symmetric window can be used
-    fip = np.copy(fi)
-    for i in range(whalf, np.shape(fi)[0] - whalf):
-        fid = fi[i - whalf:i + whalf + 1]
-        fip[i] = np.median(fid)
-
-    # leaving edge pixels unsmoothed, could be handled differently if needed
-
-    return fip
 
 # Start qso light subtraction
 image_mask = cube[300, :, :]
 image_mask.unmask()
 image_mask.mask_region(yx_cube, args.r, unit_center=None, unit_radius=None, inside=False)
 mask = image_mask.mask.data
-# plt.figure()
-# plt.imshow(mask)
-# plt.show()
-# raise ValueError('Stop here')
-# raise ValueError('Stop here')
-
 nY, nX = cube.shape[1], cube.shape[2]
 fluxArray = np.zeros((len(wave), nY, nX))
 ratioArray = np.zeros((len(wave), nY, nX))
@@ -184,21 +138,15 @@ for x in xArray:
             thisMed = np.nanmedian(thisFlux[index])
             thisFlux_Med = thisFlux.data / thisMed
 
-            if thisMed > 0:
-                # ratio = median_filter(thisFlux / flux_initial, size=51)
-                ratio = median_rolling_window(thisFlux / flux_initial, window_size=91)
-                # ratio = thisFlux / flux_initial
-                thisFlux_fixed = flux_initial * ratio
-                fluxArray[:, y, x] = thisFlux_fixed
-                ratioArray[:, y, x] = ratio
+            ratio = median_filter(thisFlux / flux_initial, size=91)
+            thisFlux_fixed = flux_initial * ratio
+            fluxArray[:, y, x] = thisFlux_fixed
+            ratioArray[:, y, x] = ratio
 
-                if ((x < 227) * (x > 224)) * ((y < 238) * (y > 232)):
-                    ax[1].plot(wave, thisFlux_Med, drawstyle='steps-mid')
-                    ax[2].plot(wave, ratio / thisMed, drawstyle='steps-mid')
-                    ax[3].plot(wave, thisFlux - thisFlux_fixed, drawstyle='steps-mid')
-            else:
-                fluxArray[:, y, x] = np.nan
-                ratioArray[:, y, x] = np.nan
+            if ((x < 227) * (x > 224)) * ((y < 238) * (y > 232)):
+                ax[1].plot(wave, thisFlux_Med, drawstyle='steps-mid')
+                ax[2].plot(wave, ratio / thisMed, drawstyle='steps-mid')
+                ax[3].plot(wave, thisFlux - thisFlux_fixed, drawstyle='steps-mid')
         else:
             pass
 
@@ -217,7 +165,6 @@ ax[0].set_ylabel(r'$\rm Normalized\ flux$')
 fig.tight_layout()
 plt.savefig(args.f.replace('.fits', '_QSO.pdf'))
 
-# raise ValueError('Stop here')
 #
 qso = Table()
 qso['wave'] = wave
@@ -227,8 +174,6 @@ qso.write(args.f.replace('.fits', '_QSO.fits'), overwrite=True)
 
 # Subtract the model and write-out the result
 print('Writing...')
-# cube_qso_light = cube.clone(data_init=np.empty, var_init=np.zeros)
-# cube_qso_light.data = ratioArray * flux_initial[:, np.newaxis, np.newaxis]
 cube.data -= fluxArray
 cube.write(args.f.replace('.fits', '_subtracted_ZQL.fits'))
 
