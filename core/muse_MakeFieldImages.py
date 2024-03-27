@@ -124,6 +124,8 @@ def MakeFieldImage(cubename=None):
     gc.show_colorscale(cmap='Greys', vmin=-0.005, vmax=1, vmid=-0.001, stretch='arcsinh')
     gc.add_colorbar()
     # gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
+    gc.colorbar.set_location('bottom')
+    gc.colorbar.set_pad(0.0)
     gc.colorbar.set_font(size=30)
     gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
                                     r's^{-1} \; arcsec^{-2}]}$')
@@ -138,11 +140,11 @@ def MakeFieldImage(cubename=None):
     gc.axis_labels.hide()
 
     # Markers
-    gc.add_scalebar(length=6 * u.arcsecond)
+    gc.add_scalebar(length=7 * u.arcsecond)
     # gc.add_scalebar(length=15 * u.arcsecond)
     gc.scalebar.set_corner('top left')
     # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
-    gc.scalebar.set_label(r"$6'' \approx 50 \mathrm{\; pkpc}$")
+    gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
     gc.scalebar.set_font_size(30)
 
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
@@ -165,7 +167,7 @@ def MakeFieldImage(cubename=None):
     # Labels
     fig.savefig(path_savefig_mini, bbox_inches='tight')
 
-    raise ValueError('STOP')
+    # raise ValueError('STOP')
 
     # Figure
     fig = plt.figure(figsize=(8, 8), dpi=300)

@@ -1774,9 +1774,9 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
                                         r's^{-1} \; arcsec^{-2}]}$')
         gc.colorbar.set_axis_label_font(size=30)
-        gc.add_scalebar(length=6 * u.arcsecond)
+        gc.add_scalebar(length=7 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        gc.scalebar.set_label(r"$6'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
         gc.scalebar.set_font_size(30)
         # gc.add_label(0.98, 0.94, cubename, size=35, relative=True, horizontalalignment='right')
         # gc.add_label(0.98, 0.87, r'$z={}$'.format(z_qso), size=35, relative=True, horizontalalignment='right')
