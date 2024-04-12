@@ -737,6 +737,45 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
         fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + figname_extra +
                     '_violin.png', bbox_inches='tight')
 
+    # Make a histogram for poster
+    bins_cloudy = np.arange(1.5, np.log10(sample_max//10 * 10 + 10), 0.05)
+    fig, ax = plt.subplots(1, 1, figsize=(8, 6), dpi=300)
+    nums_cloudy, _ = np.histogram(samples[:, 0], bins=bins_cloudy,
+                                  range=(1.5, np.log10(sample_max//10 * 10 + 10)))
+    weights = np.ones_like(samples[:, 0]) / nums_cloudy.max()
+    ax.hist(samples[:, 0], bins=bins_cloudy, range=(1.5, np.log10(sample_max//10 * 10 + 10)),
+               weights=weights, color='C1', histtype='stepfilled', lw=2, alpha=0.6, label=r'$\rm Cloudy$')
+    nums_OII, _ = np.histogram(np.log10(samples_OII[:, 0]), bins=bins_cloudy,
+                               range=(1.5, np.log10(sample_max//10 * 10 + 10)))
+    weights = np.ones_like(samples_OII[:, 0]) / nums_OII.max()
+    nums, _, __ = ax.hist(np.log10(samples_OII[:, 0]), bins=bins_cloudy,
+                             range=(1.5, np.log10(sample_max//10 * 10 + 10)),
+                             weights=weights, color='red', histtype='step', lw=2,
+                             alpha=1, label=r'$\rm [O \, II]$')
+    # ax.annotate("", xy=(1.52, np.max(nums) + 0.05), xytext=(1.9, np.max(nums) + 0.05), xycoords='data',
+    #                arrowprops=dict(arrowstyle="->", color='red'))
+    ax.minorticks_on()
+    ax.set_yticks([0.25, 0.5, 0.75, 1.0])
+    # ax.set_xlim(1.5, np.log10(sample_max//10 * 10 + 10))
+    if region == 'S2' and trial == 't1':
+        ax.set_xticks([1.5, 1.75])
+    ax.set_ylim(0, np.max(nums) + 0.2)
+    ax.set_xlabel(r'$\mathrm{log(} n \mathrm{/cm^{-3})}$', size=20)
+    ax.set_ylabel(r'$\mathrm{Peak \, Normalized \, Posterior}$', size=20)
+    ax.tick_params(axis='both', which='major', direction='in', bottom='on', top='on', left='on', right='on',
+                      labelleft='on', labelright=False, labelsize=20, size=5)
+    ax.tick_params(axis='both', which='minor', direction='in', bottom='on', top='on', left='on', right='on',
+                      size=3)
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    # ax.legend(loc=1)
+    if deredden:
+        fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + figname_extra +
+                    '_violin_dered_poster.png', bbox_inches='tight')
+    else:
+        fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/cloudy_MCMC/' + region + '_' + trial + figname_extra +
+                    '_violin_poster.png', bbox_inches='tight')
+
+
 # S1
 # S1_bnds = np.array([[-2, 2.6],
 #                     [-1.8, 0],
@@ -867,18 +906,18 @@ def RunCloudyMCMC(den_array=den_default, Z_array=Z_default, T_array=None, alpha_
 #               deredden=True, nums_chain=5000, nums_disc=2000, figname_extra='_lognormal_4')
 
 # S2
-S2_bnds = np.array([[-2, 2.6],
-                    [-1.8, 0],
-                    [-1.5, 0.5]])
-S2_param = np.array([['NeV3346', True],
-                     ['OII', True],
-                     ['NeIII3869', False],
-                     ['Hdel', True],
-                     ['Hgam', True],
-                     ['OIII4364', True],
-                     ['HeII4687', True],
-                     ['OIII5008', True]], dtype=bool)
-RunCloudyMCMC(region='S2', trial='t1', bnds=S2_bnds, line_param=S2_param, deredden=True)
+# S2_bnds = np.array([[-2, 2.6],
+#                     [-1.8, 0],
+#                     [-1.5, 0.5]])
+# S2_param = np.array([['NeV3346', True],
+#                      ['OII', True],
+#                      ['NeIII3869', False],
+#                      ['Hdel', True],
+#                      ['Hgam', True],
+#                      ['OIII4364', True],
+#                      ['HeII4687', True],
+#                      ['OIII5008', True]], dtype=bool)
+# RunCloudyMCMC(region='S2', trial='t1', bnds=S2_bnds, line_param=S2_param, deredden=True)
 
 
 # S2 low ionizaton
@@ -1000,19 +1039,19 @@ RunCloudyMCMC(region='S2', trial='t1', bnds=S2_bnds, line_param=S2_param, deredd
 
 
 # S6
-# S6_bnds = np.array([[-2, 3.4],
-#                     [-1.8, 0],
-#                     [-1.5, 0.5]])
-# S6_param = np.array([['NeV3346', True],
-#                      ['OII', True],
-#                      ['NeIII3869', False],
-#                      ['Hdel', True],
-#                      ['Hgam', True],
-#                      ['OIII4364', True],
-#                      ['HeII4687', True],
-#                      ['OIII5008', True]], dtype=bool)
-# Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 3.4, 4, dtype='f2')))
-# RunCloudyMCMC(den_array=Hden_ext, region='S6', trial='t1', bnds=S6_bnds, line_param=S6_param, deredden=True)
+S6_bnds = np.array([[-2, 3.4],
+                    [-1.8, 0],
+                    [-1.5, 0.5]])
+S6_param = np.array([['NeV3346', True],
+                     ['OII', True],
+                     ['NeIII3869', False],
+                     ['Hdel', True],
+                     ['Hgam', True],
+                     ['OIII4364', True],
+                     ['HeII4687', True],
+                     ['OIII5008', True]], dtype=bool)
+Hden_ext = np.hstack((np.linspace(-2, 2.6, 24, dtype='f2'), np.linspace(2.8, 3.4, 4, dtype='f2')))
+RunCloudyMCMC(den_array=Hden_ext, region='S6', trial='t1', bnds=S6_bnds, line_param=S6_param, deredden=True)
 # RunCloudyMCMC(region='S6', trial='t2', bnds=S6_bnds, line_param=S6_param, deredden=True)
 
 # S6 lognormal

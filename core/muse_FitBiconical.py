@@ -72,11 +72,10 @@ data_SB_OII_smoothed = convolve(data_SB_OII, kernel)
 data_SB_OIII_smoothed = convolve(data_SB_OIII, kernel)
 
 # check OIII / OII ratio
-plt.figure()
-plt.imshow(data_SB_OIII / data_SB_OII, origin='lower', cmap='viridis', vmin=0, vmax=1)
-plt.show()
+# plt.figure()
+# plt.imshow(data_SB_OIII / data_SB_OII, origin='lower', cmap='viridis', vmin=0, vmax=1)
+# plt.show()
 
-raise ValueError
 
 # Measure isophotal SB
 geometry = EllipseGeometry(x0=72.5681, y0=74.3655, sma=20, eps=0.5,
@@ -213,10 +212,10 @@ MW_v = MW_v.value
 d_som = 11.219  # Mpc
 r_som_kpc = np.array([0, 1.25, 2.5, 5, 10, 15])
 v_som = np.array([0, 120, 230, 305, 332, 343])
-ax.plot(r_som_kpc, v_som * np.sin(30 * np.pi / 180), color='red', alpha=0.3, label='Sombrero')
-ax.plot(r_som_kpc, v_som, color='red', alpha=0.8)
-ax.plot(- r_som_kpc, - v_som * np.sin(30 * np.pi / 180), color='red', alpha=0.3)
-ax.plot(- r_som_kpc, - v_som, color='red', alpha=0.8)
+# ax.plot(r_som_kpc, v_som * np.sin(30 * np.pi / 180), color='red', alpha=0.3, label='Sombrero')
+# ax.plot(r_som_kpc, v_som, color='red', alpha=0.8)
+# ax.plot(- r_som_kpc, - v_som * np.sin(30 * np.pi / 180), color='red', alpha=0.3)
+# ax.plot(- r_som_kpc, - v_som, color='red', alpha=0.8)
 # ax.fill_between(r_som_kpc, v_som * np.sin(30 * np.pi / 180), v_som, color='red', alpha=0.3, label='Sombrero')
 # ax.fill_between(- r_som_kpc, - v_som * np.sin(30 * np.pi / 180), - v_som, color='red', alpha=0.3)
 
@@ -234,12 +233,58 @@ f_cx = np.log(1 + c * x) - c * x / (1 + c * x)
 f_c = np.log(1 + c) - c / (1 + c)
 v_vir = np.sqrt(G * M_halo / R_vir) / 1e5
 v_c = v_vir * np.sqrt(f_cx / x / f_c)
-ax.plot(x * R_vir / kpc, v_c * np.sin(30 * np.pi / 180), color='blue', alpha=0.3)
-ax.plot(- x * R_vir / kpc, -v_c * np.sin(30 * np.pi / 180), color='blue', alpha=0.3)
-ax.plot(x * R_vir / kpc, v_c, color='blue', alpha=0.8, label='NFW profile')
-ax.plot(- x * R_vir / kpc, -v_c, color='blue', alpha=0.8)
+# ax.plot(x * R_vir / kpc, v_c * np.sin(30 * np.pi / 180), color='blue', alpha=0.3)
+# ax.plot(- x * R_vir / kpc, -v_c * np.sin(30 * np.pi / 180), color='blue', alpha=0.3)
+# ax.plot(x * R_vir / kpc, v_c, color='blue', alpha=0.8, label='NFW profile')
+# ax.plot(- x * R_vir / kpc, -v_c, color='blue', alpha=0.8)
 # ax.fill_between(x * R_vir / kpc, v_c * np.sin(30 * np.pi / 180), v_c, color='blue', alpha=0.3, label='NFW profile')
 # ax.fill_between(- x * R_vir / kpc, -v_c * np.sin(30 * np.pi / 180), -v_c, color='blue', alpha=0.3)
+
+# Load NGC5582
+gal_name = 'NGC5582'
+path_table_gals = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
+table_gals = fits.open(path_table_gals)[1].data
+gal_name_ = gal_name.replace('C', 'C ')
+name_sort = table_gals['Object Name'] == gal_name_
+ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
+v_sys_gal = table_gals[name_sort]['cz (Velocity)']
+
+#
+path_ETG = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_name)
+path_ETG_mom2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom2.fits'.format(gal_name)
+hdul_ETG = fits.open(path_ETG)
+hdr_ETG = hdul_ETG[0].header
+v_ETG = hdul_ETG[0].data[0, :, :] - v_sys_gal
+sigma_ETG = fits.open(path_ETG_mom2)[1].data
+flux_ETG = np.zeros_like(v_ETG)
+
+
+#
+w = WCS(hdr_ETG, naxis=2)
+center_gal = SkyCoord(ra_gal[0], dec_gal[0], unit='deg', frame='icrs')
+c_gal = w.world_to_pixel(center_gal)
+x_gal, y_gal = np.meshgrid(np.arange(v_ETG.shape[0]), np.arange(v_ETG.shape[1]))
+x_gal, y_gal = x_gal.flatten(), y_gal.flatten()
+pixcoord_gal = PixCoord(x=x_gal, y=y_gal)
+
+# mask a slit
+rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=50, height=5, angle=Angle(-60, 'deg'))
+mask_gal = rectangle_gal.contains(pixcoord_gal)
+dis_gal = np.sqrt((x_gal - c_gal[0])**2 + (y_gal - c_gal[1])**2) * 0.2 * 50 / 7
+dis_mask_gal = dis_gal[mask_gal]
+
+# mask each side
+red_gal = ((x_gal[mask_gal] - c_gal[0]) < 0) * ((y_gal[mask_gal] - c_gal[1]) > 0)
+blue_gal = ~red_gal
+dis_red_gal = dis_mask_gal[red_gal]
+dis_blue_gal = dis_mask_gal[blue_gal] * -1
+
+# Slit position
+# fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
+# plt.imshow(v_ETG, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+# patch = rectangle_gal.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
+# plt.plot(c_gal[0], c_gal[1], '*', markersize=15)
+# fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/NGC5582_sudo_slit.png', bbox_inches='tight')
 
 
 # Velocity profile
@@ -277,6 +322,20 @@ def Bin(x, y, std, flux, bins=20):
         y_flux[i] = flux[mask].mean()
     return x_mean, y_mean, y_std, y_flux
 
+# Galaxy
+v_ETG_flatten = v_ETG.flatten()
+sigma_ETG_flatten = sigma_ETG.flatten()
+flux_ETG_flatten = flux_ETG.flatten()
+
+#
+dis_red_gal_mean, v_red_gal_mean, sigma_red_gal_mean, flux_red_gal_mean = Bin(dis_red_gal, v_ETG_flatten[mask_gal][red_gal],
+                                                                              sigma_ETG_flatten[mask_gal][red_gal],
+                                                                              flux_ETG_flatten[mask_gal][red_gal], bins=20)
+dis_blue_gal_mean, v_blue_gal_mean, sigma_blue_gal_mean, flux_blue_gal_mean = Bin(dis_blue_gal, v_ETG_flatten[mask_gal][blue_gal],
+                                                                              sigma_ETG_flatten[mask_gal][blue_gal],
+                                                                              flux_ETG_flatten[mask_gal][blue_gal], bins=20)
+ax.plot(dis_red_gal_mean, v_red_gal_mean, '-k')
+ax.plot(dis_blue_gal_mean, v_blue_gal_mean, '-k', label='Serra et al. 2012')
 
 # Components
 v_N1_flatten = v_N1[0, :, :].flatten()[center_mask_flatten]
@@ -294,7 +353,7 @@ pos = ax.scatter(dis_blue_mean, v_N1_mean, s=50, c=sigma_N1_mean, marker='D', ed
 cax = fig.add_axes([0.2, 0.7, 0.25, 0.035])
 fig.colorbar(pos, cax=cax, ax=ax, orientation='horizontal')
 cax.set_title(r'$\sigma \rm \, [km \, s^{-1}]$', fontsize=15)
-# ax[0].plot(dis_blue, v_N1_flatten[mask][blue], '.k')
+
 
 # Plot the distribution
 v_array = np.linspace(-500, 500, 100)
@@ -402,7 +461,41 @@ ax.legend(loc=4, fontsize=15)
 fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile.png', bbox_inches='tight')
 
 
-# raise ValueError('stop')
+# Make a figure for the poster
+fig, ax = plt.subplots(2, 1, figsize=(10, 7), dpi=300, sharex=True)
+fig.subplots_adjust(hspace=0.05)
+
+# ETG
+ax[0].plot(dis_red_gal_mean, v_red_gal_mean, '-k', lw=2)
+ax[0].plot(dis_blue_gal_mean, v_blue_gal_mean, '-k', label='HI 21-cm around NGC 5582 \n from Serra et al. 2012')
+ax[1].plot(dis_red_gal_mean, sigma_red_gal_mean, '-k', lw=2)
+ax[1].plot(dis_blue_gal_mean, sigma_blue_gal_mean, '-k', lw=2)
+
+# 3C57
+ax[0].scatter(dis_blue_mean, v_N1_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='C0', label='3C57 nebula')
+ax[0].scatter(dis_red_mean_C1, v_N2_mean_C1, s=60, marker="D", edgecolors='k', linewidths=0.5, color='red')
+ax[0].scatter(dis_red_mean_C2, v_N2_mean_C2, s=60, marker="D", edgecolors='k', linewidths=0.5, color='blue')
+ax[1].scatter(dis_blue_mean, sigma_N1_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='C0')
+ax[1].scatter(dis_red_mean_C1, sigma_N2_mean_C1, s=60,  marker="D", edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(dis_red_mean_C2, sigma_N2_mean_C2, s=60, marker="D", edgecolors='k', linewidths=0.5, color='blue')
+ax[0].axhline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
+ax[0].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
+ax[1].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
+ax[0].set_xlim(-40, 40)
+ax[0].set_ylim(-450, 450)
+ax[1].set_ylim(0, 200)
+ax[0].set_ylabel(r'$\Delta v \rm \, [km \, s^{-1}]$', size=25)
+ax[1].set_xlabel(r'$\rm Distance \, [kpc]$', size=25)
+ax[1].set_ylabel(r'$\sigma \rm \, [km \, s^{-1}]$', size=25)
+ax[0].legend(loc='best', fontsize=19)
+fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile_poster.png', bbox_inches='tight')
+
+
+
+
+
+
+raise ValueError('stop')
 
 # Biconical outflow model
 # Model Parameters

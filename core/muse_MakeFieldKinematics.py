@@ -564,15 +564,15 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
 
             # Fitting start
             # write
-            path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
+            path_fit_ini = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
                 format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-            hdul = fits.open(path_fit)
+            hdul = fits.open(path_fit_ini)
             v_guess_fit, z_guess_fit, dz_guess_fit = hdul[2].data, hdul[3].data, hdul[4].data
             sigma_guess_fit, dsigma_guess_fit = hdul[5].data, hdul[6].data
-            z_guess_fit = np.random.rand(*np.shape(z_guess_fit)[1:]) * 0.001 + z_guess_fit
-            sigma_guess_fit = np.random.rand(*np.shape(sigma_guess_fit)[1:]) * 10 + sigma_guess_fit
-            z_guess_fit = np.vstack((z_guess_fit, z_guess_fit[1:, :, :]))
-            sigma_guess_fit = np.vstack((sigma_guess_fit, sigma_guess_fit[1:, :, :]))
+            z_guess_fit = np.random.rand(*np.shape(z_guess_fit)) * 0.001 + z_guess_fit
+            sigma_guess_fit = np.random.rand(*np.shape(sigma_guess_fit)) * 10 + sigma_guess_fit
+            z_guess_fit = np.vstack((z_guess_fit, z_guess_fit))
+            sigma_guess_fit = np.vstack((sigma_guess_fit, sigma_guess_fit))
             parameters['OII'].value = fit_param['OII_2nd']
             parameters['OIII'].value = fit_param['OIII_2nd']
             # parameters.add('bound', vary=True, min=-0.003, max=0, expr=None, brute_step=None)
@@ -971,7 +971,6 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
     data_qso = ascii.read(path_qso, format='fixed_width')
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
-    print(z_qso)
 
     # Galaxies infomation
     path_gal = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info.fits'.format(cubename)
@@ -989,6 +988,8 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         str_zap = ''
 
     path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N1.fits'.\
+        format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
+    path_fit_N1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N1.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
     path_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
@@ -1011,6 +1012,15 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
 
     # Unpack correct one
     if fit_param['OII_2nd'] > 1 or fit_param['OIII_2nd'] > 1:
+        # hdul_N1 = fits.open(path_fit_N1)
+        # v_N1 = hdul_N1[2].data
+        # redchi_N1 = hdul_N1[22].data
+        # plt.figure()
+        # plt.imshow(redchi_N1, origin='lower')
+        # plt.show()
+        # plt.close()
+        # refit_seg = np.where((redchi_N1 > 1.0), redchi_N1, 0)
+
         sigma_0, sigma_1 = sigma[0], sigma[1]
         v_0, v_1 = v[0], v[1]
         z_0, z_1 = z[0], z[1]
@@ -1035,6 +1045,9 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         sigma_1_2nd = np.where(sigma_1_2nd != 0, sigma_1_2nd, np.nan)
         v_plot[0, :, :] = v_0_2nd
         v_plot[1, :, :] = v_1_2nd
+        # v_plot[0, :, :] = np.where((redchi_N1 > 1.0), v_0_2nd, v_N1)
+        # v_plot[1, :, :] = np.where((redchi_N1 > 1.0), v_1_2nd, np.nan)
+
         sigma_plot[0, :, :] = sigma_0_2nd
         sigma_plot[1, :, :] = sigma_1_2nd
 
@@ -1158,7 +1171,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
     #
     hdul_v = fits.ImageHDU(v_plot[0], header=hdr)
     hdul_v.writeto(path_v, overwrite=True)
-    # hdul_v_2nd = fits.ImageHDU(v[1], header=hdr)
+    # hdul_v_2nd = fits.ImageHDU(v_plot[1], header=hdr)
     # hdul_v_2nd.writeto(path_v_2nd, overwrite=True)
 
     hdul_sigma = fits.ImageHDU(sigma_plot[0], header=hdr)
@@ -1215,13 +1228,15 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         fig.savefig(figurename_SB, bbox_inches='tight')
 
     # LOS velocity
+    path_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_N2_V50.fits'
+    path_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_N2_W80.fits'
     fig = plt.figure(figsize=(8, 8), dpi=300)
     # plt.imshow(fits.open(path_v)[1].data, vmin=v_min, vmax=v_max, cmap=plt.get_cmap('coolwarm'), origin='lower')
     gc = aplpy.FITSFigure(path_v, figure=fig, hdu=1)
-    # if fit_param['OII_2nd'] > 1 or fit_param['OIII_2nd'] > 1:
-    #     axins = gc.ax.inset_axes([0.0, 0.0, 0.33, 0.33], xticklabels=[], yticklabels=[], xlim=(50, 100), ylim=(50, 100),
-    #                              yticks=[], xticks=[])
-    #     axins.imshow(v_plot[1], origin='lower', cmap='coolwarm', vmin=v_min, vmax=v_max)
+    if fit_param['OII_2nd'] > 1 or fit_param['OIII_2nd'] > 1:
+        axins = gc.ax.inset_axes([0.0, 0.0, 0.33, 0.33], xticklabels=[], yticklabels=[], xlim=(50, 100), ylim=(50, 100),
+                                 yticks=[], xticks=[])
+        axins.imshow(v_plot[1], origin='lower', cmap='coolwarm', vmin=v_min, vmax=v_max)
     gc.show_colorscale(vmin=v_min, vmax=v_max, cmap='coolwarm')
     APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
     gc.show_markers(ra_gal, dec_gal, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
@@ -1238,6 +1253,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                                  yticks=[], xticks=[])
         axins.imshow(sigma_plot[1], origin='lower', cmap=Dense_20_r.mpl_colormap, vmin=0, vmax=sigma_max)
     gc.show_colorscale(vmin=0, vmax=sigma_max, cmap=Dense_20_r.mpl_colormap)
+    # gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
     APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
     fig.savefig(figurename_sigma, bbox_inches='tight')
 
@@ -1765,8 +1781,8 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     gc.add_colorbar()
     gc.colorbar.set_location('bottom')
     gc.colorbar.set_pad(0.0)
-    gc.colorbar.set_font(size=20)
-    gc.colorbar.set_axis_label_font(size=20)
+    gc.colorbar.set_font(size=30)
+    gc.colorbar.set_axis_label_font(size=30)
     if type == 'NarrowBand':
         gc.colorbar.set_location('bottom')
         gc.colorbar.set_ticks([0, 1, 2, 3, 4, 5])
@@ -1783,11 +1799,13 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'FieldImage':
         gc.colorbar.hide()
     elif type == 'GasMap':
-        # gc.colorbar.set_ticks([-200, -100, 0, 100, 200])
+        gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
+        # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
         gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
     elif type == 'GasMap_sigma':
         # gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
         gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
+        # gc.colorbar.set_axis_label_text(r'$\mathrm{W}_{80} \mathrm{\; [km \, s^{-1}]}$')
     else:
         gc.colorbar.set_ticks([-0.5, 0.0, 0.5, 1.0, 1.5])
         gc.colorbar.set_axis_label_text(r'$\rm log([O \, III]/[O \, II])$')
@@ -2000,8 +2018,8 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
-#          width_OII=10, width_OIII=10)
-PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[93, 68], v_min=-350, v_max=350, width_OII=10,
+#          width_OII=10, width_OIII=10, FitType='sequential')
+PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_min=-350, v_max=350, width_OII=10,
                S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
                FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
 

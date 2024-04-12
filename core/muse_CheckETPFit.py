@@ -1,6 +1,6 @@
 import os
 import aplpy
-# import lmfit
+import lmfit
 import numpy as np
 import matplotlib as mpl
 import gala.potential as gp
@@ -17,10 +17,8 @@ from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
 from astropy.convolution import convolve, Kernel, Gaussian2DKernel
 from scipy.interpolate import interp1d
 from astropy.coordinates import Angle
-import biconical_outflow_model_3d as bicone
 from mpdaf.obj import Cube, WaveCoord, Image
 from PyAstronomy import pyasl
-from gala.units import galactic, solarsystem, dimensionless
 from photutils.isophote import EllipseGeometry
 from photutils.isophote import build_ellipse_model
 from photutils.isophote import Ellipse
@@ -29,13 +27,13 @@ from palettable.cubehelix import red_16
 from palettable.cmocean.sequential import Dense_20_r
 from scipy.ndimage import rotate
 from astropy.table import Table
+import mpl_interactions.ipyplot as iplt
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
 rc('ytick', direction='in')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
-
 
 def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None, name_gal='NGC 3945', dis_gal=None):
     scale_phy_3C57 = 30 * 50 / 7
@@ -108,6 +106,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     # gc.add_label(0.9778, 0.81, r'N', size=20, relative=True)
     # gc.add_label(0.88, 0.70, r'E', size=20, relative=True)
 
+def Gaussian(v, v_c, sigma, flux):
+    peak = flux / np.sqrt(2 * sigma ** 2 * np.pi)
+    gaussian = peak * np.exp(-(v - v_c) ** 2 / 2 / sigma ** 2)
+
+    return gaussian
+
 # load
 gal_name = 'NGC5582'
 path_table_gals = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
@@ -117,7 +121,7 @@ name_sort = table_gals['Object Name'] == gal_name_
 ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
 v_sys_gal = table_gals[name_sort]['cz (Velocity)']
 
-# NGC3945
+# NGC5582
 path_ETG = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_name)
 path_ETG_new = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1_new.fits'.format(gal_name)
 path_ETG_mom2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom2.fits'.format(gal_name)
@@ -144,164 +148,55 @@ hdul_ETG_cube = fits.open(path_ETG_cube)
 hdr_ETG_cube = hdul_ETG_cube[0].header
 flux = hdul_ETG_cube[0].data
 flux = np.where(~np.isnan(v_ETG)[np.newaxis, :, :], flux, np.nan)
-
-
 v_array = np.arange(hdr_ETG_cube['CRVAL3'], hdr_ETG_cube['CRVAL3'] + flux.shape[0] * hdr_ETG_cube['CDELT3'],
-                    hdr_ETG_cube['CDELT3']) / 1e3  - v_sys_gal  # Convert from m/s to km/s, # and then shift wrt v_gal
-# print(v_array)
-mask_v1 = (v_array < 0) * (v_array > -350)
-mask_v2 = (v_array < 250) * (v_array > 0)
-mask_v3 = (v_array < 100) * (v_array > -150)
+                    hdr_ETG_cube['CDELT3']) / 1e3 - v_sys_gal # Convert from m/s to km/s,
+mask = ~np.isnan(v_ETG)
+size = np.shape(flux)[1:]
 
-v_1 = v_array[mask_v1]
-v_2 = v_array[mask_v2]
-v_3 = v_array[mask_v3]
-flux_1 = flux[mask_v1, :, :]
-flux_2 = flux[mask_v2, :, :]
-flux_3 = flux[mask_v3, :, :]
-# print(np.shape(flux_1), np.shape(v_2))
 
-# Moments
-flux_cumsum_1 = np.cumsum(flux_1, axis=0)
-flux_cumsum_1 /= flux_cumsum_1.max(axis=0)
-v_1_array = np.zeros_like(flux_1)
-v_1_array[:] = v_1[:, np.newaxis, np.newaxis]
-
-v_10_1 = np.take_along_axis(v_1_array, np.argmin(np.abs(flux_cumsum_1 - 0.10), axis=0)[np.newaxis, :, :], axis=0)[0]
-v_50_1 = np.take_along_axis(v_1_array, np.argmin(np.abs(flux_cumsum_1 - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
-v_90_1 = np.take_along_axis(v_1_array, np.argmin(np.abs(flux_cumsum_1 - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
-sigma_1 = v_90_1 - v_10_1
-sigma_1 /= 2.563  # W_80 = 2.563sigma
-
-#
-flux_cumsum_2 = np.cumsum(flux_2, axis=0)
-flux_cumsum_2 /= flux_cumsum_2.max(axis=0)
-v_2_array = np.zeros_like(flux_2)
-v_2_array[:] = v_2[:, np.newaxis, np.newaxis]
-
-v_10_2 = np.take_along_axis(v_2_array, np.argmin(np.abs(flux_cumsum_2 - 0.10), axis=0)[np.newaxis, :, :], axis=0)[0]
-v_50_2 = np.take_along_axis(v_2_array, np.argmin(np.abs(flux_cumsum_2 - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
-v_90_2 = np.take_along_axis(v_2_array, np.argmin(np.abs(flux_cumsum_2 - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
-sigma_2 = v_90_2 - v_10_2
-sigma_2 /= 2.563  # W_80 = 2.563sigma
-
-flux_cumsum_3 = np.cumsum(flux_3, axis=0)
-flux_cumsum_3 /= flux_cumsum_3.max(axis=0)
-v_3_array = np.zeros_like(flux_3)
-v_3_array[:] = v_3[:, np.newaxis, np.newaxis]
-
-v_10_3 = np.take_along_axis(v_3_array, np.argmin(np.abs(flux_cumsum_3 - 0.10), axis=0)[np.newaxis, :, :], axis=0)[0]
-v_50_3 = np.take_along_axis(v_3_array, np.argmin(np.abs(flux_cumsum_3 - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
-v_90_3 = np.take_along_axis(v_3_array, np.argmin(np.abs(flux_cumsum_3 - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
-sigma_3 = v_90_3 - v_10_3
-sigma_3 /= 2.563  # W_80 = 2.563sigma
-
-#
-sigma = np.where(v_ETG <= 0, sigma_1, sigma_2)
-sigma = np.where((v_ETG > 50) | (v_ETG < -50), sigma, sigma_3)
-sigma = np.where(~np.isnan(v_ETG), sigma, np.nan)
-
-# Guess the velocity field and compare with the original one
-v_guess = np.where(v_ETG <= 0, v_50_1, v_50_2)
-v_guess = np.where((v_ETG > 50) | (v_ETG < -50), v_guess, v_50_3)
-v_guess = np.where(~np.isnan(v_ETG), v_guess, np.nan)
-v_rot = np.where(~np.isnan(v_guess), v_guess, -1)
-v_rot = rotate(v_rot, 45)
-v_rot = np.where(v_rot != -1, v_rot, np.nan)
-
+# Load ETG fit
 path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_fit.fits'.format(gal_name)
 hdul_fit = fits.open(path_fit)
-v_fit, sigma_fit = hdul_fit[1].data, hdul_fit[3].data
+v_fit, sigma_fit, flux_fit = hdul_fit[1].data, hdul_fit[3].data, hdul_fit[5].data
+flux_fit_array = Gaussian(v_array[:, np.newaxis, np.newaxis], v_fit, sigma_fit, flux_fit)
 
+def flux_cube(v, i, j):
+    return flux[:, j, i]
+def flux_fit(v, j, i):
+    return flux_fit_array[:, j, i]
 
-# Save the moment 1 and moment 2 maps
-sigma_fit = np.where(~np.isnan(v_ETG), sigma_fit, np.nan)
-hdul_ETG_sigma = fits.ImageHDU(sigma_fit, header=hdr_ETG)
-hdul_ETG_sigma.writeto(path_ETG_mom2, overwrite=True)
+# print(flux_cube(v_array, 174, 197))
 
-#
-# fig = plt.figure(figsize=(10, 5), dpi=300)
-# plt.plot(v_array, flux[:, 183, 174], 'k')
-# plt.xlabel('Velocity [km/s]')
-# plt.ylabel('Flux [arbitrary unit]')
-# fig.savefig(path_figure_spec, bbox_inches='tight')
-
-
-# Plot the kinematic map
-fig = plt.figure(figsize=(8, 8), dpi=300)
-gc = aplpy.FITSFigure(path_ETG_new, figure=fig, hdu=1)
-gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
-APLpyStyle(gc, type='GasMap', ra_qso=ra_gal, dec_qso=dec_gal, name_gal=gal_name, dis_gal=33.791)
-fig.savefig(path_figure_mom1, bbox_inches='tight')
-
-# Plot the sigma map
-fig = plt.figure(figsize=(8, 8), dpi=300)
-gc = aplpy.FITSFigure(path_ETG_mom2, figure=fig, hdu=1)
-gc.show_colorscale(vmin=0, vmax=300, cmap=Dense_20_r.mpl_colormap)
-APLpyStyle(gc, type='GasMap_sigma', ra_qso=ra_gal, dec_qso=dec_gal, name_gal=gal_name, dis_gal=33.791)
-fig.savefig(path_figure_mom2, bbox_inches='tight')
-
-# testing
-# plt.figure(figsize=(5, 5))
-# plt.imshow(v_fit, origin='lower', cmap='coolwarm', vmin=-350, vmax=350)
-# plt.colorbar()
+# fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+# controls = iplt.plot(v_array, flux_cube, i=np.arange(360), j=np.arange(360),
+#                      label="data", drawstyle='steps-mid', color='k')
+# iplt.plot(v_array, flux_fit, controls=controls, label="fit", color='r')
+# _ = plt.legend()
+# plt.ylim(flux_cube.min(), flux_cube.max())
 # plt.show()
 
-raise ValueError('Stop here')
-#
-# plt.figure(figsize=(8, 8))
-# plt.imshow(data[0, :, :], origin='lower', cmap='RdBu_r', vmin=-200, vmax=200)
-# plt.show()
 
-gal_list = ['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941',
-            'NGC3945', 'NGC4203', 'NGC4262', 'NGC5173', 'NGC5582', 'NGC5631', 'NGC6798',
-            'UGC06176', 'UGC09519']
-dis_list = [35.1, 13.05, 37.40, 31.967, 17.755, 23.5, 11.816,
-            23.400, 18.836, 19.741, 38.000, 33.791, 23.933, 37.5,
-            40.1, 27.6]  # in Mpc
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton
+import sys
 
-def PlotEachGal(gals, dis):
-    # path_table_gals = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
-    # table_gals = fits.open(path_table_gals)[1].data
-    for ind, i in enumerate(gals):
-        # fix missed name
-        if i == 'NGC2594':
-            i_cube = 'NGC2592'
-        elif i == 'NGC3619':
-            i_cube = 'NGC3613'
-        else:
-            i_cube = i
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-        #
-        name_i = i.replace('C', 'C ')
-        name_sort = table_gals['Object Name'] == name_i
+        self.setWindowTitle("My App")
 
+        button = QPushButton("Press Me!")
+        button.setCheckable(True)
+        button.clicked.connect(self.the_button_was_clicked)
 
-        # Galaxy information
-        ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
-        v_sys_gal = table_gals[name_sort]['cz (Velocity)']
-        print(i, v_sys_gal)
+        # Set the central widget of the Window.
+        self.setCentralWidget(button)
 
-        path_ETG_i = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(i_cube)
-        path_ETG_new_i = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1_new.fits'.format(i_cube)
-        path_figure_mom1_i = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mom1_noframe.png'.format(i)
-        hdul_ETG = fits.open(path_ETG_i)
-        hdr_ETG = hdul_ETG[0].header
-        hdr_ETG['NAXIS'] = 2
-        hdr_ETG.remove('NAXIS3')
-        hdr_ETG.remove('CTYPE3')
-        hdr_ETG.remove('CDELT3')
-        hdr_ETG.remove('CRPIX3')
-        hdr_ETG.remove('CRVAL3')
-        v_ETG = hdul_ETG[0].data[0, :, :] - v_sys_gal
-        hdul_ETG_new = fits.ImageHDU(v_ETG, header=hdr_ETG)
-        hdul_ETG_new.writeto(path_ETG_new_i, overwrite=True)
+    def the_button_was_clicked(self):
+        print("Clicked!")
 
-        fig = plt.figure(figsize=(8, 8), dpi=300)
-        gc = aplpy.FITSFigure(path_ETG_new_i, figure=fig, hdu=1)
-        gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
-        gc.frame.set_color('white')
-        APLpyStyle(gc, type='GasMap', ra_qso=ra_gal, dec_qso=dec_gal, name_gal=name_i, dis_gal=dis[ind])
-        fig.savefig(path_figure_mom1_i, bbox_inches='tight')
+app = QApplication(sys.argv)
+widget = MainWindow()
+widget.show()
 
-PlotEachGal(gal_list, dis_list)
+app.exec()
