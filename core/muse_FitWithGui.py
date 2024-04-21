@@ -19,15 +19,17 @@ from scipy.interpolate import interp1d
 from astropy.coordinates import Angle
 from mpdaf.obj import Cube, WaveCoord, Image
 from PyAstronomy import pyasl
-from photutils.isophote import EllipseGeometry
-from photutils.isophote import build_ellipse_model
-from photutils.isophote import Ellipse
 from palettable.scientific.sequential import Acton_6
 from palettable.cubehelix import red_16
 from palettable.cmocean.sequential import Dense_20_r
 from scipy.ndimage import rotate
 from astropy.table import Table
-import mpl_interactions.ipyplot as iplt
+import sys
+from PyQt5 import QtGui, QtCore
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+import pyqtgraph as pg
+from matplotlib import cm
+
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -112,82 +114,52 @@ def Gaussian(v, v_c, sigma, flux):
 
     return gaussian
 
-# load
-gal_name = 'NGC5582'
+#
 path_table_gals = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
-table_gals = fits.open(path_table_gals)[1].data
-gal_name_ = gal_name.replace('C', 'C ')
-name_sort = table_gals['Object Name'] == gal_name_
-ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
-v_sys_gal = table_gals[name_sort]['cz (Velocity)']
-
-# NGC5582
-path_ETG = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_name)
-path_ETG_new = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1_new.fits'.format(gal_name)
-path_ETG_mom2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom2.fits'.format(gal_name)
-path_ETG_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/allcubes/{}_cube.fits'.format(gal_name)
-path_figure_mom1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mom1.png'.format(gal_name)
-path_figure_mom2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mom2.png'.format(gal_name)
-path_figure_spec = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_spec.png'.format(gal_name)
-
-# Load the kinematic map
-hdul_ETG = fits.open(path_ETG)
-hdr_ETG = hdul_ETG[0].header
-hdr_ETG['NAXIS'] = 2
-hdr_ETG.remove('NAXIS3')
-hdr_ETG.remove('CTYPE3')
-hdr_ETG.remove('CDELT3')
-hdr_ETG.remove('CRPIX3')
-hdr_ETG.remove('CRVAL3')
-v_ETG = hdul_ETG[0].data[0, :, :] - v_sys_gal
-hdul_ETG_new = fits.ImageHDU(v_ETG, header=hdr_ETG)
-hdul_ETG_new.writeto(path_ETG_new, overwrite=True)
-
-# Load the cube
-hdul_ETG_cube = fits.open(path_ETG_cube)
-hdr_ETG_cube = hdul_ETG_cube[0].header
-flux = hdul_ETG_cube[0].data
-flux = np.where(~np.isnan(v_ETG)[np.newaxis, :, :], flux, np.nan)
-v_array = np.arange(hdr_ETG_cube['CRVAL3'], hdr_ETG_cube['CRVAL3'] + flux.shape[0] * hdr_ETG_cube['CDELT3'],
-                    hdr_ETG_cube['CDELT3']) / 1e3 - v_sys_gal # Convert from m/s to km/s,
-mask = ~np.isnan(v_ETG)
-size = np.shape(flux)[1:]
 
 
-# Load ETG fit
-path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_fit.fits'.format(gal_name)
-hdul_fit = fits.open(path_fit)
-v_fit, sigma_fit, flux_fit = hdul_fit[1].data, hdul_fit[3].data, hdul_fit[5].data
-flux_fit_array = Gaussian(v_array[:, np.newaxis, np.newaxis], v_fit, sigma_fit, flux_fit)
-v_fit = np.where(mask, v_fit, np.nan)
-sigma_fit = np.where(mask, sigma_fit, np.nan)
-
-def flux_cube(v, i, j):
-    return flux[:, j, i]
-def flux_fit(v, j, i):
-    return flux_fit_array[:, j, i]
-
-# print(flux_cube(v_array, 174, 197))
-
-# fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-# controls = iplt.plot(v_array, flux_cube, i=np.arange(360), j=np.arange(360),
-#                      label="data", drawstyle='steps-mid', color='k')
-# iplt.plot(v_array, flux_fit, controls=controls, label="fit", color='r')
-# _ = plt.legend()
-# plt.ylim(flux_fit_array.min(), flux_fit_array.max())
-# plt.show()
-
-
-import sys
-import numpy as np
-from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-import pyqtgraph as pg
-from matplotlib import cm
 
 class PlotWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, gal_name='NGC5582'):
         super().__init__()
+
+        # Load the data
+        self.gal_name = gal_name
+        table_gals = fits.open(path_table_gals)[1].data
+        gal_name_ = gal_name.replace('C', 'C ')
+        name_sort = table_gals['Object Name'] == gal_name_
+        ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
+        v_sys_gal = table_gals[name_sort]['cz (Velocity)']
+
+        # Load data
+        path_Serra = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_name)
+        path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/allcubes/{}_cube.fits'.format(gal_name)
+        hdul_Serra = fits.open(path_Serra)
+        self.v_Serra = hdul_Serra[0].data[0, :, :] - v_sys_gal
+
+        # Load the cube
+        hdul_cube = fits.open(path_cube)
+        hdr_cube = hdul_cube[0].header
+        flux = hdul_cube[0].data
+        self.flux = np.where(~np.isnan(self.v_Serra)[np.newaxis, :, :], flux, np.nan)
+        self.v_array = np.arange(hdr_cube['CRVAL3'], hdr_cube['CRVAL3'] + flux.shape[0] * hdr_cube['CDELT3'],
+                                 hdr_cube['CDELT3']) / 1e3 - v_sys_gal  # Convert from m/s to km/s,
+        self.mask = ~np.isnan(self.v_Serra)
+        self.size = np.shape(flux)[1:]
+
+
+        # Load ETG fit
+        self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_fit.fits'.\
+            format(self.gal_name)
+        if os.path.exists(self.path_fit) is False:
+            print('The fit file does not exist, start fitting from scratch.')
+            self.fit()
+        hdul_fit = fits.open(self.path_fit)
+        self.v_fit, self.sigma_fit, flux_fit = hdul_fit[1].data, hdul_fit[3].data, hdul_fit[5].data
+        self.flux_fit_array = Gaussian(self.v_array[:, np.newaxis, np.newaxis], self.v_fit, self.sigma_fit, flux_fit)
+        self.v_fit = np.where(self.mask, self.v_fit, np.nan)
+        self.sigma_fit = np.where(self.mask, self.sigma_fit, np.nan)
+
 
         # Define a top-level widget
         self.widget = QWidget()
@@ -211,11 +183,11 @@ class PlotWindow(QMainWindow):
         self.widget3.setFixedSize(900, 450)
 
         # Set background color
-        self.widget1.setBackground((200, 200, 255))
-        self.widget2.setBackground("w")
+        self.widget1.setBackground((112, 181, 116))
+        self.widget2.setBackground((230, 161, 92))
         # self.widget3.setBackground("w")
-        self.widget1_plot.setLimits(xMin=0, xMax=size[0], yMin=0, yMax=size[1])
-        self.widget2_plot.setLimits(xMin=0, xMax=size[0], yMin=0, yMax=size[1])
+        self.widget1_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
+        self.widget2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget3_plot.setLimits(xMin=-1000, xMax=1000)
 
         #
@@ -228,33 +200,73 @@ class PlotWindow(QMainWindow):
         self.widget1_plot.addItem(self.v_map)
         colormap = cm.get_cmap("coolwarm")
         colormap._init()
-        lut = (colormap._lut * 255).view(np.ndarray)  # Convert matplotlib colormap from 0-1 to 0 -255 for Qt
+        lut = (colormap._lut * 255).view(np.ndarray)
         self.v_map.setLookupTable(lut)
-        self.v_map.updateImage(image=v_fit.T, levels=(-350, 350))
+        self.v_map.updateImage(image=self.v_fit.T, levels=(-350, 350))
 
         # Plot the 2D map in the second plot
         self.sigma_map = pg.ImageItem()
         self.widget2_plot.addItem(self.sigma_map)
-        colormap = Dense_20_r.mpl_colormap  # cm.get_cmap("CMRmap")
+        colormap = Dense_20_r.mpl_colormap
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)  # Convert matplotlib colormap from 0-1 to 0 -255 for Qt
         self.sigma_map.setLookupTable(lut)
-        self.sigma_map.updateImage(image=sigma_fit.T, levels=(0, 300))
+        self.sigma_map.updateImage(image=self.sigma_fit.T, levels=(0, 300))
         self.widget2_plot.setXLink(self.widget1_plot)
         self.widget2_plot.setYLink(self.widget1_plot)
         self.widget1_plot.setXLink(self.widget2_plot)
         self.widget1_plot.setYLink(self.widget2_plot)
 
         # Plot initial data in the second plot
-        self.x = v_array
-        self.y1 = flux
-        self.y2 = flux_fit_array
         self.widget3_plot.setLabel('bottom', 'Velocity (km/s)')
         self.widget3_plot.setLabel('left', 'Flux')
 
         # Connect mouse click event to update plot
         self.widget1_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget2_plot.scene().sigMouseClicked.connect(self.update_plot)
+
+    def fit(self):
+        # fitting starts
+        v_guess, sigma_guess, flux_guess = 0, 50, 0.5
+        parameters = lmfit.Parameters()
+        model = Gaussian
+        parameters.add_many(('v', v_guess, True, -300, 300, None),
+                            ('sigma', sigma_guess, True, 0, 150, None),
+                            ('flux', flux_guess, True, 0, None, None))
+        fit_success = np.zeros(self.size)
+        self.v_fit, dself.v_fit = np.zeros(self.size), np.zeros(self.size)
+        self.sigma_fit, dself.sigma_fit = np.zeros(self.size), np.zeros(self.size)
+        flux_fit, dflux_fit = np.zeros(self.size), np.zeros(self.size)
+
+        for i in range(self.size[0]):  # i = p (y), j = q (x)
+            for j in range(self.size[1]):
+                if self.mask[i, j]:
+                    parameters['v_c'].value = self.v_Serra[i, j]
+                    flux_ij = self.flux[:, i, j]
+                    spec_model = lmfit.Model(model, missing='drop')
+                    result = spec_model.fit(flux_ij, v=v_array, params=parameters)
+
+                    # Access the fitting results
+                    fit_success[i, j] = result.success
+                    v_c, dv_c = result.best_values['v'], result.params['v'].stderr
+                    sigma, dsigma = result.best_values['sigma'], result.params['sigma'].stderr
+                    flux, dflux = result.best_values['flux'], \
+                                      result.params['flux'].stderr
+
+                    # fill the value
+                    self.v_fit[i, j], dself.v_fit[i, j] = v, dv_c
+                    self.sigma_fit[i, j], dself.sigma_fit[i, j] = sigma, dsigma
+                    flux_fit[i, j], dflux_fit[i, j] = flux, dflux
+                else:
+                    pass
+
+        # Save fitting results
+        hdul_fs = fits.PrimaryHDU(fit_success, header=hdr_ETG)
+        hdul_v, hdul_dv = fits.ImageHDU(self.v_fit, header=hdr_ETG), fits.ImageHDU(dself.v_fit, header=hdr_ETG)
+        hdul_sigma, hdul_dsigma = fits.ImageHDU(self.sigma_fit, header=hdr_ETG), fits.ImageHDU(dself.sigma_fit, header=hdr_ETG)
+        hdul_flux, hdul_dflux = fits.ImageHDU(flux_fit, header=hdr_ETG), fits.ImageHDU(dflux_fit, header=hdr_ETG)
+        hdul = fits.HDUList([hdul_fs, hdul_v, hdul_dv, hdul_sigma, hdul_dsigma, hdul_flux, hdul_dflux])
+        hdul.writeto(self.path_fit, overwrite=True)
 
     def update_plot(self, event):
         if event.double():
@@ -269,13 +281,17 @@ class PlotWindow(QMainWindow):
             x_pixel, y_pixel = int(np.floor(pos.x() + 1)), int(np.floor(pos.y()))
 
             # Plot new data
-            self.widget1_plot.setLabel('top', 'v={:.0f}'.format(v_fit[y_pixel, x_pixel]))
-            self.widget2_plot.setLabel('top', 'sigma={:.0f}'.format(sigma_fit[y_pixel, x_pixel]))
+            self.widget1_plot.setLabel('top', 'v={:.0f}'.format(self.v_fit[y_pixel, x_pixel]))
+            self.widget2_plot.setLabel('top', 'sigma={:.0f}'.format(self.sigma_fit[y_pixel, x_pixel]))
 
             # Plot spectrum
-            self.widget3_plot.plot(self.x, self.y1[:, y_pixel, x_pixel], pen='w')
-            self.widget3_plot.plot(self.x, self.y2[:, y_pixel, x_pixel], pen='r')
+            self.widget3_plot.plot(self.v_array, self.flux[:, y_pixel, x_pixel], pen='w')
+            self.widget3_plot.plot(self.v_array, self.flux_fit_array[:, y_pixel, x_pixel], pen='r')
             self.widget3_plot.setLabel('top', 'x={}, y={}'.format(x_pixel, y_pixel))
+
+    def update_fit(self):
+        print('working')
+
 
 
 if __name__ == '__main__':
@@ -283,67 +299,3 @@ if __name__ == '__main__':
     window = PlotWindow()
     window.show()
     sys.exit(app.exec_())
-
-# import sys
-# import numpy as np
-# from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-# from matplotlib.figure import Figure
-# from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-#
-# class PlotWindow(QMainWindow):
-#     def __init__(self):
-#         super().__init__()
-#
-#         self.setWindowTitle("Plot Window")
-#
-#         # Create central widget and layout
-#         central_widget = QWidget()
-#         self.setCentralWidget(central_widget)
-#         layout = QVBoxLayout(central_widget)
-#
-#         # Create Matplotlib figure and axes for the first plot
-#         self.figure1 = Figure()
-#         self.canvas1 = FigureCanvas(self.figure1)
-#         layout.addWidget(self.canvas1)
-#         self.ax1 = self.figure1.add_subplot(111)
-#
-#         # Create Matplotlib figure and axes for the second plot
-#         self.figure2 = Figure()
-#         self.canvas2 = FigureCanvas(self.figure2)
-#         layout.addWidget(self.canvas2)
-#         self.ax2 = self.figure2.add_subplot(111)
-#
-#         # Generate some data for plotting
-#         self.image_data = v_ETG  # Example 2D map data
-#
-#         # Plot the 2D map in the first plot
-#         self.ax1.imshow(self.image_data, cmap='coolwarm', vmin=-350, vmax=350, origin='lower')
-#
-#         # Plot initial data in the second plot
-#         self.x = v_array
-#         self.y1 = flux
-#         self.y2 = flux_fit_array
-#         self.ax2.plot(self.x, self.y2[:, 0, 0], color='blue')
-#
-#         # Connect mouse click event to update plot
-#         self.canvas1.mpl_connect('button_press_event', self.update_plot)
-#
-#     def update_plot(self, event):
-#         if event.dblclick:
-#             # Get pixel coordinates of mouse click
-#             x_pixel, y_pixel = int(event.xdata), int(event.ydata)
-#
-#             # Plot corresponding y values in the second plot
-#             # y_values = self.image_data[y_pixel, :]
-#
-#             self.ax2.clear()
-#             self.ax2.plot(self.x, self.y1[:, y_pixel, x_pixel], c='k')
-#             self.ax2.plot(self.x, self.y2[:, y_pixel, x_pixel], c='r')
-#             self.canvas2.draw()
-#
-#
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     window = PlotWindow()
-#     window.show()
-#     sys.exit(app.exec_())

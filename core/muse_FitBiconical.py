@@ -250,12 +250,17 @@ ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
 v_sys_gal = table_gals[name_sort]['cz (Velocity)']
 
 #
+path_ETG_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_fit.fits'.format(gal_name)
 path_ETG = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_name)
 path_ETG_mom2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom2.fits'.format(gal_name)
 hdul_ETG = fits.open(path_ETG)
 hdr_ETG = hdul_ETG[0].header
-v_ETG = hdul_ETG[0].data[0, :, :] - v_sys_gal
-sigma_ETG = fits.open(path_ETG_mom2)[1].data
+v_ETG_paper = hdul_ETG[0].data[0, :, :] - v_sys_gal
+# sigma_ETG = fits.open(path_ETG_mom2)[1].data
+hdul_ETG_fit = fits.open(path_ETG_fit)
+v_ETG, sigma_ETG = hdul_ETG_fit[1].data, hdul_ETG_fit[3].data
+v_ETG = np.where(~np.isnan(v_ETG_paper), v_ETG, np.nan)
+sigma_ETG = np.where(~np.isnan(v_ETG_paper), sigma_ETG, np.nan)
 flux_ETG = np.zeros_like(v_ETG)
 
 
@@ -268,9 +273,9 @@ x_gal, y_gal = x_gal.flatten(), y_gal.flatten()
 pixcoord_gal = PixCoord(x=x_gal, y=y_gal)
 
 # mask a slit
-rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=50, height=5, angle=Angle(-60, 'deg'))
+rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=60, height=5, angle=Angle(-60, 'deg'))
 mask_gal = rectangle_gal.contains(pixcoord_gal)
-dis_gal = np.sqrt((x_gal - c_gal[0])**2 + (y_gal - c_gal[1])**2) * 0.2 * 50 / 7
+dis_gal = np.sqrt((x_gal - c_gal[0])**2 + (y_gal - c_gal[1])**2) * 2.77777798786E-03 * 3600 * 50 / 305
 dis_mask_gal = dis_gal[mask_gal]
 
 # mask each side
@@ -280,11 +285,11 @@ dis_red_gal = dis_mask_gal[red_gal]
 dis_blue_gal = dis_mask_gal[blue_gal] * -1
 
 # Slit position
-# fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
-# plt.imshow(v_ETG, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
-# patch = rectangle_gal.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
-# plt.plot(c_gal[0], c_gal[1], '*', markersize=15)
-# fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/NGC5582_sudo_slit.png', bbox_inches='tight')
+fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
+plt.imshow(v_ETG, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+patch = rectangle_gal.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
+plt.plot(c_gal[0], c_gal[1], '*', markersize=15)
+fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/NGC5582_sudo_slit.png', bbox_inches='tight')
 
 
 # Velocity profile

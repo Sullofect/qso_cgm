@@ -987,7 +987,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
     else:
         str_zap = ''
 
-    path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N1.fits'.\
+    path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
     path_fit_N1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N1.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
@@ -1199,7 +1199,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                         smooth=5, kernel='box', hdu=1)
         APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
         gc.add_label(0.97, 0.92, r'$\rm [O\,II]$', color='black', size=30, relative=True, horizontalalignment='right')
-        gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
+        # gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
         fig.savefig(figurename_SB_OII, bbox_inches='tight')
 
         fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -1790,19 +1790,31 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
                                         r's^{-1} \; arcsec^{-2}]}$')
         gc.colorbar.set_axis_label_font(size=30)
-        gc.add_scalebar(length=7 * u.arcsecond)
+        # gc.add_scalebar(length=7 * u.arcsecond)
+        gc.add_scalebar(length=8 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
+        # gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # 3C57
+        gc.scalebar.set_label(r"$8'' \approx 50 \mathrm{\; kpc}$")  # HE0226
         gc.scalebar.set_font_size(30)
         # gc.add_label(0.98, 0.94, cubename, size=35, relative=True, horizontalalignment='right')
         # gc.add_label(0.98, 0.87, r'$z={}$'.format(z_qso), size=35, relative=True, horizontalalignment='right')
     elif type == 'FieldImage':
         gc.colorbar.hide()
     elif type == 'GasMap':
+        gc.add_scalebar(length=8 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_label(r"$8'' \approx 50 \mathrm{\; kpc}$")  # HE0226
+        gc.scalebar.set_font_size(30)
+
         gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
         # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
         gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
     elif type == 'GasMap_sigma':
+        gc.add_scalebar(length=8 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_label(r"$8'' \approx 50 \mathrm{\; kpc}$")  # HE0226
+        gc.scalebar.set_font_size(30)
+
         # gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
         gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
         # gc.colorbar.set_axis_label_text(r'$\mathrm{W}_{80} \mathrm{\; [km \, s^{-1}]}$')
@@ -1900,14 +1912,13 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 #                kernel_1D=None, CheckSpectra=[10, 10], v_min=-350, v_max=350, width_OII=10, S_N_thr=1,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
 #                offset_gaia=True, FixAstrometry=True)
-# fit_param = {"OII": 1, "OII_2nd": 2, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 2}
+fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': False, 'r_max': 1.6,
+             'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None, kernel_1D=None,
 #          CheckGuess=[10, 10], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[77, 71], v_min=-350, v_max=350, width_OII=10, S_N_thr=1,
-#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-#                offset_gaia=True, FixAstrometry=True)
+PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, CheckSpectra=[77, 71], v_min=-350, v_max=350,
+               width_OII=10, S_N_thr=1, sigma_max=300, contour_level=0.1, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+               FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
 
 # PKS0405-12
 # muse_MakeNBImageWith3DSeg.py -m PKS0405-12_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
@@ -1941,6 +1952,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='PKS0405-123', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[84, 14], v_min=-1200, v_max=1200, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
+
 
 # HE0238-1904
 # muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
@@ -2019,9 +2031,9 @@ fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
 #          width_OII=10, width_OIII=10, FitType='sequential')
-PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_min=-350, v_max=350, width_OII=10,
-               S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-               FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
+# PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_min=-350, v_max=350, width_OII=10,
+#                S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+#                FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
 
 # PKS0552-640
 # muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
