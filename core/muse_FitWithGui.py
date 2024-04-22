@@ -142,16 +142,24 @@ class PlotWindow(QMainWindow):
         hdul_cube = fits.open(path_cube)
         hdr_cube = hdul_cube[0].header
         flux = hdul_cube[0].data
-        self.flux = np.where(~np.isnan(self.v_Serra)[np.newaxis, :, :], flux, np.nan)
-        self.v_array = np.arange(hdr_cube['CRVAL3'], hdr_cube['CRVAL3'] + flux.shape[0] * hdr_cube['CDELT3'],
-                                 hdr_cube['CDELT3']) / 1e3 - v_sys_gal  # Convert from m/s to km/s,
         self.mask = ~np.isnan(self.v_Serra)
+        flux_err = np.where(~self.mask[np.newaxis, :, :], flux, np.nan)
+        self.flux_err = np.nanstd(flux_err, axis=(1, 2))[:, np.newaxis, np.newaxis] + 0.0004
+        self.flux = np.where(self.mask[np.newaxis, :, :], flux, np.nan)
+        self.v_array = np.arange(hdr_cube['CRVAL3'], hdr_cube['CRVAL3'] + flux.shape[0] * hdr_cube['CDELT3'],
+                                 hdr_cube['CDELT3']) / 1e3 - v_sys_gal  # Convert from m/s to km/s, and shift to v_sys
         self.size = np.shape(flux)[1:]
 
 
         # Load ETG fit
         self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_fit.fits'.\
             format(self.gal_name)
+        v_guess, sigma_guess, flux_guess = 0, 50, 0.5
+        self.model = Gaussian
+        self.parameters = lmfit.Parameters()
+        self.parameters.add_many(('v', v_guess, True, -300, 300, None),
+                                 ('sigma', sigma_guess, True, 0, 150, None),
+                                 ('flux', flux_guess, True, 0, None, None))
         if os.path.exists(self.path_fit) is False:
             print('Fitting result file does not exist, start fitting from scratch.')
             hdr_Serra = hdul_Serra[0].header
@@ -162,18 +170,19 @@ class PlotWindow(QMainWindow):
             hdr_Serra.remove('CRPIX3')
             hdr_Serra.remove('CRVAL3')
             self.hdr = hdr_Serra
-            v_guess, sigma_guess, flux_guess = 0, 50, 0.5
-            self.model = Gaussian
-            self.parameters = lmfit.Parameters()
-            self.parameters.add_many(('v', v_guess, True, -300, 300, None),
-                                     ('sigma', sigma_guess, True, 0, 150, None),
-                                     ('flux', flux_guess, True, 0, None, None))
             self.fit()
         hdul_fit = fits.open(self.path_fit)
         self.v_fit, self.sigma_fit, self.flux_fit = hdul_fit[1].data, hdul_fit[3].data, hdul_fit[5].data
         self.flux_fit_array = Gaussian(self.v_array[:, np.newaxis, np.newaxis], self.v_fit, self.sigma_fit, self.flux_fit)
         self.v_fit = np.where(self.mask, self.v_fit, np.nan)
         self.sigma_fit = np.where(self.mask, self.sigma_fit, np.nan)
+
+        # Calculate chi-square
+        chi2 = ((self.flux - self.flux_fit_array) / self.flux_err) ** 2
+        chi2 = np.where((self.v_array[:, np.newaxis, np.newaxis] > self.v_fit - 4 * self.sigma_fit)
+                        * (self.v_array[:, np.newaxis, np.newaxis] < self.v_fit + 4 * self.sigma_fit), chi2, np.nan)
+        self.chi_fit = np.nansum(chi2, axis=0)
+        self.chi_fit = np.where(self.mask, self.chi_fit, np.nan)
 
 
         # Define a top-level widget
@@ -190,34 +199,43 @@ class PlotWindow(QMainWindow):
         self.widget1 = pg.GraphicsLayoutWidget()
         self.widget2 = pg.GraphicsLayoutWidget()
         self.widget3 = pg.GraphicsLayoutWidget()
+        self.widget4 = pg.GraphicsLayoutWidget()
         self.widget1_plot = self.widget1.addPlot()
         self.widget2_plot = self.widget2.addPlot()
         self.widget3_plot = self.widget3.addPlot()
+        self.widget4_plot = self.widget4.addPlot()
         self.widget1.setFixedSize(450, 450)
         self.widget2.setFixedSize(450, 450)
-        self.widget3.setFixedSize(900, 450)
+        self.widget3.setFixedSize(450, 450)
+        self.widget4.setFixedSize(900, 450)
 
         # Set background color
-        self.widget1.setBackground((112, 181, 116))
-        self.widget2.setBackground((230, 161, 92))
+        self.widget1.setBackground((235, 233, 221))
+        self.widget2.setBackground((235, 233, 221))
+        self.widget3.setBackground((235, 233, 221))
         # self.widget3.setBackground("w")
         self.widget1_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
-        self.widget3_plot.setLimits(xMin=-1000, xMax=1000)
+        self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
+        self.widget4_plot.setLimits(xMin=-1000, xMax=1000)
 
         # Set param
         self.paramSpec = [dict(name='v=', type='float', value=None, dec=False, readonly=False),
                           dict(name='sigma=', type='float', value=None, readonly=False),
-                          dict(name='flux=', type='float', value=None, readonly=False)]
+                          dict(name='flux=', type='float', value=None, readonly=False),
+                          dict(name='Re-fit', type='action'),
+                          dict(name='chi=', type='float', value=None, dec=False, readonly=False)]
         self.param = pt.Parameter.create(name='Options', type='group', children=self.paramSpec)
         self.tree = pt.ParameterTree()
         self.tree.setParameters(self.param)
+        self.param.children()[3].sigStateChanged.connect(self.update_fit)
 
         #
         self.layout.addWidget(self.widget1, 0, 0, 1, 1)
         self.layout.addWidget(self.widget2, 0, 1, 1, 1)
-        self.layout.addWidget(self.widget3, 1, 0, 1, 2)
-        self.layout.addWidget(self.tree, 0, 2, 1, 1)
+        self.layout.addWidget(self.widget3, 0, 2, 1, 1)
+        self.layout.addWidget(self.widget4, 1, 0, 1, 2)
+        self.layout.addWidget(self.tree, 1, 2, 1, 1)
 
 
         # Plot the 2D map in the first plot
@@ -234,21 +252,38 @@ class PlotWindow(QMainWindow):
         self.widget2_plot.addItem(self.sigma_map)
         colormap = Dense_20_r.mpl_colormap
         colormap._init()
-        lut = (colormap._lut * 255).view(np.ndarray)  # Convert matplotlib colormap from 0-1 to 0 -255 for Qt
+        lut = (colormap._lut * 255).view(np.ndarray)
         self.sigma_map.setLookupTable(lut)
         self.sigma_map.updateImage(image=self.sigma_fit.T, levels=(0, 300))
-        self.widget2_plot.setXLink(self.widget1_plot)
-        self.widget2_plot.setYLink(self.widget1_plot)
+
+        # Plot the chi 2D map in the third plot
+        self.chi_map = pg.ImageItem()
+        self.widget3_plot.addItem(self.chi_map)
+        colormap = cm.get_cmap("viridis")
+        colormap._init()
+        lut = (colormap._lut * 255).view(np.ndarray)
+        self.chi_map.setLookupTable(lut)
+        chi_min = np.nanmin(self.chi_fit)
+        chi_max = np.nanmax(self.chi_fit)
+        chi_mean = np.nanmean(self.chi_fit)
+        self.chi_map.updateImage(image=self.chi_fit.T, levels=(0, 50))
+
+
         self.widget1_plot.setXLink(self.widget2_plot)
         self.widget1_plot.setYLink(self.widget2_plot)
+        self.widget2_plot.setXLink(self.widget1_plot)
+        self.widget2_plot.setYLink(self.widget1_plot)
+        self.widget3_plot.setXLink(self.widget2_plot)
+        self.widget3_plot.setYLink(self.widget2_plot)
 
         # Plot initial data in the second plot
-        self.widget3_plot.setLabel('bottom', 'Velocity (km/s)')
-        self.widget3_plot.setLabel('left', 'Flux')
+        self.widget4_plot.setLabel('bottom', 'Velocity (km/s)')
+        self.widget4_plot.setLabel('left', 'Flux')
 
         # Connect mouse click event to update plot
         self.widget1_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget2_plot.scene().sigMouseClicked.connect(self.update_plot)
+        self.widget3_plot.scene().sigMouseClicked.connect(self.update_plot)
 
     def fit(self):
         # fitting starts
@@ -262,8 +297,10 @@ class PlotWindow(QMainWindow):
                 if self.mask[i, j]:
                     self.parameters['v'].value = self.v_Serra[i, j]
                     flux_ij = self.flux[:, i, j]
+                    flux_err_ij = self.flux_err[:, 0, 0]
                     spec_model = lmfit.Model(self.model, missing='drop')
-                    result = spec_model.fit(flux_ij, velocity=self.v_array, params=self.parameters)
+                    result = spec_model.fit(flux_ij, velocity=self.v_array, params=self.parameters,
+                                            weights=1 / flux_err_ij)
 
                     # Access the fitting results
                     fit_success[i, j] = result.success
@@ -290,65 +327,88 @@ class PlotWindow(QMainWindow):
     def update_plot(self, event):
         if event.double():
             # Clear plot
-            self.widget3_plot.clear()
+            self.widget4_plot.clear()
 
             # Get pixel coordinates
             pos = event.pos()
             # pos = self.widget1_plot.vb.mapSceneToView(pos)
             pos = self.v_map.mapFromScene(pos)
             # print(pos.x(), pos.y())
-            x_pixel, y_pixel = int(np.floor(pos.x() + 1)), int(np.floor(pos.y()))
+            self.xpixel, self.ypixel = int(np.floor(pos.x() + 1)), int(np.floor(pos.y()))
 
-            if self.mask[y_pixel, x_pixel]:
-                # Plot new data
-                # self.widget1_plot.setLabel('top', 'v={:.0f}'.format(self.v_fit[y_pixel, x_pixel]))
-                # self.widget2_plot.setLabel('top', 'sigma={:.0f}'.format(self.sigma_fit[y_pixel, x_pixel]))
-                self.param['v='] = '{:.0f}'.format(self.v_fit[y_pixel, x_pixel])
-                self.param['sigma='] = '{:.0f}'.format(self.sigma_fit[y_pixel, x_pixel])
-                self.param['flux='] = '{:.2f}'.format(self.flux_fit[y_pixel, x_pixel])
+            self.plot()
 
-                # Plot spectrum
-                self.widget3_plot.plot(self.v_array, self.flux[:, y_pixel, x_pixel], pen='w')
-                self.widget3_plot.plot(self.v_array, self.flux_fit_array[:, y_pixel, x_pixel], pen='r')
-                self.widget3_plot.setLabel('top', 'x={}, y={}'.format(x_pixel, y_pixel))
-                self.widget3_plot.addItem(pg.InfiniteLine(self.v_fit[y_pixel, x_pixel],
-                                                          pen=pg.mkPen('r', width=2, style=QtCore.Qt.DashLine),
-                                                          label=None,
-                                                         labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
-                self.widget3_plot.addItem(pg.InfiniteLine(self.v_fit[y_pixel, x_pixel] + self.sigma_fit[y_pixel, x_pixel],
-                                                          pen=pg.mkPen('b', width=2, style=QtCore.Qt.DashLine),
-                                                          label=None,
-                                                          labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
-                self.widget3_plot.addItem(pg.InfiniteLine(self.v_fit[y_pixel, x_pixel] - self.sigma_fit[y_pixel, x_pixel],
-                                                          pen=pg.mkPen('b', width=2, style=QtCore.Qt.DashLine),
-                                                          label=None,
-                                                          labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
+    def plot(self):
+        i, j = self.ypixel, self.xpixel
+        if self.mask[i, j]:
+            # Plot new data
+            self.widget4_plot.clear()
+            # self.widget1_plot.setLabel('top', 'v={:.0f}'.format(self.v_fit[y_pixel, x_pixel]))
+            # self.widget2_plot.setLabel('top', 'sigma={:.0f}'.format(self.sigma_fit[y_pixel, x_pixel]))
+            self.param['v='] = '{:.0f}'.format(self.v_fit[i, j])
+            self.param['sigma='] = '{:.0f}'.format(self.sigma_fit[i, j])
+            self.param['flux='] = '{:.2f}'.format(self.flux_fit[i, j])
+            self.param['chi='] = '{:.2f}'.format(self.chi_fit[i, j])
+
+            # Plot spectrum
+            scatter = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
+            scatter.addPoints([j + 0.5], [i + 0.5])
+            self.widget1_plot.addItem(scatter)
+            self.widget4_plot.plot(self.v_array, self.flux[:, i, j], pen='w')
+            self.widget4_plot.plot(self.v_array, self.flux_fit_array[:, i, j], pen='r')
+            self.widget4_plot.plot(self.v_array, self.flux_err[:, 0, 0], pen='g')
+            self.widget4_plot.setLabel('top', 'x={}, y={}'.format(i, j))
+            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j],
+                                                      pen=pg.mkPen('r', width=2, style=QtCore.Qt.DashLine),
+                                                      labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
+            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j]
+                                                      + self.sigma_fit[i, j],
+                                                      pen=pg.mkPen('b', width=2, style=QtCore.Qt.DashLine),
+                                                      labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
+            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j]
+                                                      - self.sigma_fit[i, j],
+                                                      pen=pg.mkPen('b', width=2, style=QtCore.Qt.DashLine),
+                                                      labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
 
     def update_fit(self):
-        print('U')
-        hdul_fit = fits.open(self.path_fit)
-        self.v_fit, self.sigma_fit, flux_fit = hdul_fit[1].data, hdul_fit[3].data, hdul_fit[5].data
-        self.flux_fit_array = Gaussian(self.v_array[:, np.newaxis, np.newaxis], self.v_fit, self.sigma_fit, flux_fit)
+        i, j = self.ypixel, self.xpixel
 
         # Refite that specific pixel
-        self.parameters['v'].value = self.v_Serra[i, j]
-        self.parameters['sigma'].value = self.sigma_Serra[i, j]
+        self.parameters['v'].value = self.param['v=']
+        self.parameters['sigma'].value = self.param['sigma=']
+        self.parameters['v'].max = self.param['v='] + 10
+        self.parameters['v'].min = self.param['v='] - 10
+        self.parameters['sigma'].max = self.param['sigma='] + 10
+        self.parameters['sigma'].min = self.param['sigma='] - 10
 
+        #
         flux_ij = self.flux[:, i, j]
+        flux_err_ij = self.flux_err[:, 0, 0]
         spec_model = lmfit.Model(self.model, missing='drop')
-        result = spec_model.fit(flux_ij, velocity=self.v_array, params=self.parameters)
-
-        # Access the fitting results
-        fit_success[i, j] = result.success
-        v, dv = result.best_values['v'], result.params['v'].stderr
-        sigma, dsigma = result.best_values['sigma'], result.params['sigma'].stderr
-        flux, dflux = result.best_values['flux'], \
-                      result.params['flux'].stderr
+        result = spec_model.fit(flux_ij, velocity=self.v_array, params=self.parameters, weights=1 / flux_err_ij)
 
         # fill the value
-        v_fit[i, j], dv_fit[i, j] = v, dv
-        sigma_fit[i, j], dsigma_fit[i, j] = sigma, dsigma
-        flux_fit[i, j], dflux_fit[i, j] = flux, dflux
+        hdul_fit = fits.open(self.path_fit)
+        hdul_fit[0].data[i, j] = result.success
+        hdul_fit[1].data[i, j], hdul_fit[2].data[i, j] = result.best_values['v'], result.params['v'].stderr
+        hdul_fit[3].data[i, j], hdul_fit[4].data[i, j] = result.best_values['sigma'], result.params['sigma'].stderr
+        hdul_fit[5].data[i, j], hdul_fit[6].data[i, j] = result.best_values['flux'], result.params['flux'].stderr
+
+        # Re initiolize
+        self.v_fit[i, j], self.sigma_fit[i, j], self.flux_fit[i, j] = result.best_values['v'], \
+                                                                      result.best_values['sigma'], \
+                                                                      result.best_values['flux']
+        self.flux_fit_array[:, i, j] = Gaussian(self.v_array, self.v_fit[i, j],
+                                                self.sigma_fit[i, j], self.flux_fit[i, j])
+        # Save fitting results
+        hdul_fit.writeto(self.path_fit, overwrite=True)
+        print('Refit finished')
+
+        # Replot
+        self.plot()
+        self.v_map.updateImage(image=self.v_fit.T)
+        self.sigma_map.updateImage(image=self.sigma_fit.T)
+
 
 
 
