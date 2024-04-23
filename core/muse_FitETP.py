@@ -124,3 +124,4 @@ hdul = fits.HDUList([hdul_fs, hdul_v_c, hdul_dv_c, hdul_sigma, hdul_dsigma, hdul
 hdul.writeto(path_fit, overwrite=True)
 
 
+

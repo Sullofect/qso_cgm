@@ -497,9 +497,6 @@ fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile_pos
 
 
 
-
-
-
 raise ValueError('stop')
 
 # Biconical outflow model

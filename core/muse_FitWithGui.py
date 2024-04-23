@@ -30,7 +30,6 @@ from astropy.table import Table
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from matplotlib import cm
-
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -124,8 +123,15 @@ class PlotWindow(QMainWindow):
     def __init__(self, gal_name='NGC5582'):
         super().__init__()
 
+        gal_name = gal_name
+        if gal_name == 'NGC2594':
+            gal_cube = 'NGC2592'
+        elif gal_name == 'NGC3619':
+            gal_cube = 'NGC3613'
+        else:
+            gal_cube = gal_name
+
         # Load the data
-        self.gal_name = gal_name
         table_gals = fits.open(path_table_gals)[1].data
         gal_name_ = gal_name.replace('C', 'C ')
         name_sort = table_gals['Object Name'] == gal_name_
@@ -133,8 +139,8 @@ class PlotWindow(QMainWindow):
         v_sys_gal = table_gals[name_sort]['cz (Velocity)']
 
         # Load data
-        path_Serra = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_name)
-        path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/allcubes/{}_cube.fits'.format(gal_name)
+        path_Serra = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_cube)
+        path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/allcubes/{}_cube.fits'.format(gal_cube)
         hdul_Serra = fits.open(path_Serra)
         self.v_Serra = hdul_Serra[0].data[0, :, :] - v_sys_gal
 
@@ -152,13 +158,13 @@ class PlotWindow(QMainWindow):
 
 
         # Load ETG fit
-        self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_fit.fits'.\
-            format(self.gal_name)
+        self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.\
+            format(gal_name)
         v_guess, sigma_guess, flux_guess = 0, 50, 0.5
         self.model = Gaussian
         self.parameters = lmfit.Parameters()
         self.parameters.add_many(('v', v_guess, True, -300, 300, None),
-                                 ('sigma', sigma_guess, True, 0, 150, None),
+                                 ('sigma', sigma_guess, True, 5, 70, None),
                                  ('flux', flux_guess, True, 0, None, None))
         if os.path.exists(self.path_fit) is False:
             print('Fitting result file does not exist, start fitting from scratch.')
@@ -191,6 +197,7 @@ class PlotWindow(QMainWindow):
         self.setCentralWidget(self.widget)
         self.layout = QtGui.QGridLayout()
         self.widget.setLayout(self.layout)
+        self.setStyleSheet("background-color: white;")
 
         # Set title
         self.setWindowTitle("Check fitting")
@@ -210,10 +217,13 @@ class PlotWindow(QMainWindow):
         self.widget4.setFixedSize(900, 450)
 
         # Set background color
-        self.widget1.setBackground((235, 233, 221))
-        self.widget2.setBackground((235, 233, 221))
-        self.widget3.setBackground((235, 233, 221))
-        # self.widget3.setBackground("w")
+        # self.widget1.setBackground((235, 233, 221, 100))
+        # self.widget2.setBackground((235, 233, 221, 100))
+        # self.widget3.setBackground((235, 233, 221, 100))
+        self.widget1.setBackground('w')
+        self.widget2.setBackground('w')
+        self.widget3.setBackground('w')
+        self.widget4.setBackground('w')
         self.widget1_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
@@ -263,9 +273,6 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.chi_map.setLookupTable(lut)
-        chi_min = np.nanmin(self.chi_fit)
-        chi_max = np.nanmax(self.chi_fit)
-        chi_mean = np.nanmean(self.chi_fit)
         self.chi_map.updateImage(image=self.chi_fit.T, levels=(0, 50))
 
 
@@ -343,30 +350,34 @@ class PlotWindow(QMainWindow):
         if self.mask[i, j]:
             # Plot new data
             self.widget4_plot.clear()
-            # self.widget1_plot.setLabel('top', 'v={:.0f}'.format(self.v_fit[y_pixel, x_pixel]))
-            # self.widget2_plot.setLabel('top', 'sigma={:.0f}'.format(self.sigma_fit[y_pixel, x_pixel]))
             self.param['v='] = '{:.0f}'.format(self.v_fit[i, j])
             self.param['sigma='] = '{:.0f}'.format(self.sigma_fit[i, j])
             self.param['flux='] = '{:.2f}'.format(self.flux_fit[i, j])
             self.param['chi='] = '{:.2f}'.format(self.chi_fit[i, j])
 
             # Plot spectrum
-            scatter = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
-            scatter.addPoints([j + 0.5], [i + 0.5])
-            self.widget1_plot.addItem(scatter)
-            self.widget4_plot.plot(self.v_array, self.flux[:, i, j], pen='w')
+            scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
+            scatter_1.addPoints([j + 0.5], [i + 0.5])
+            scatter_2 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
+            scatter_2.addPoints([j + 0.5], [i + 0.5])
+            scatter_3 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
+            scatter_3.addPoints([j + 0.5], [i + 0.5])
+            self.widget1_plot.addItem(scatter_1)
+            self.widget2_plot.addItem(scatter_2)
+            self.widget3_plot.addItem(scatter_3)
+
+            # Plot spectrum
+            self.widget4_plot.plot(self.v_array, self.flux[:, i, j], pen='k')
             self.widget4_plot.plot(self.v_array, self.flux_fit_array[:, i, j], pen='r')
             self.widget4_plot.plot(self.v_array, self.flux_err[:, 0, 0], pen='g')
             self.widget4_plot.setLabel('top', 'x={}, y={}'.format(i, j))
             self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j],
                                                       pen=pg.mkPen('r', width=2, style=QtCore.Qt.DashLine),
                                                       labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
-            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j]
-                                                      + self.sigma_fit[i, j],
+            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j] + self.sigma_fit[i, j],
                                                       pen=pg.mkPen('b', width=2, style=QtCore.Qt.DashLine),
                                                       labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
-            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j]
-                                                      - self.sigma_fit[i, j],
+            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j] - self.sigma_fit[i, j],
                                                       pen=pg.mkPen('b', width=2, style=QtCore.Qt.DashLine),
                                                       labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
 
@@ -400,24 +411,28 @@ class PlotWindow(QMainWindow):
                                                                       result.best_values['flux']
         self.flux_fit_array[:, i, j] = Gaussian(self.v_array, self.v_fit[i, j],
                                                 self.sigma_fit[i, j], self.flux_fit[i, j])
+
+        chi2_ij = ((flux_ij - self.flux_fit_array[:, i, j]) / flux_err_ij) ** 2
+        chi2_ij = np.where((self.v_array > self.v_fit[i, j] - 4 * self.sigma_fit[i, j])
+                           * (self.v_array < self.v_fit[i, j] + 4 * self.sigma_fit[i, j]),
+                           chi2_ij, np.nan)
+        chi_fit_ij = np.nansum(chi2_ij, axis=0)
+        self.chi_fit[i, j] = chi_fit_ij
+
         # Save fitting results
         hdul_fit.writeto(self.path_fit, overwrite=True)
-        print('Refit finished')
 
         # Replot
         self.plot()
         self.v_map.updateImage(image=self.v_fit.T)
         self.sigma_map.updateImage(image=self.sigma_fit.T)
-
-
-
-
+        self.chi_map.updateImage(image=self.chi_fit.T)
 
 
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(gal_name='NGC6798')
+    window = PlotWindow(gal_name='UGC09519')
     window.show()
     sys.exit(app.exec_())

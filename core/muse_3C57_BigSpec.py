@@ -1,6 +1,4 @@
 import os
-# import aplpy
-# import lmfit
 import numpy as np
 import matplotlib as mpl
 import gala.potential as gp
@@ -140,7 +138,7 @@ x_range = (47, 98)
 y_range = (47, 92)
 size = (x_range[1] - x_range[0] + 1, y_range[1] - y_range[0] + 1)
 x_range, y_range = np.arange(x_range[0], x_range[1] + 1), np.arange(y_range[0], y_range[1] + 1)
-flux_OIII_rebin = flux_seg_OIII
+flux_OIII_rebin = flux_OIII
 
 
 # Create a figure with subplots
@@ -154,15 +152,12 @@ for j in x_range:
         ax = axs[y_range[-1] - i, j - x_range[0]]
         if ~np.isnan(v_rebin[i, j]):
             ax.plot(wave_OIII_vac, flux_OIII_rebin[:, i, j], color='black', drawstyle='steps-mid')
-            # ax.set_title(f'Spaxel ({i}, {j})')
-            # ax.set_xlim(0, len(spectrum))
-            # ax.set_ylim(0, 1)  # Adjust y-axis limits as needed
-            ax.set_xticks([])  # Disable x-axis ticks
-            ax.set_yticks([])  # Disable y-axis ticks
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.spines[['right', 'top', 'left', 'bottom']].set_visible(False)
 
             # Color the full panel according to its velocity
             ax.set_facecolor(plt.cm.coolwarm(norm(v_rebin[i, j])))
         else:
             ax.axis('off')
-
 plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/spaxel_spectra.png', bbox_inches='tight')

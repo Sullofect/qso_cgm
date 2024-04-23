@@ -304,4 +304,55 @@ def PlotEachGal(gals, dis):
         APLpyStyle(gc, type='GasMap', ra_qso=ra_gal, dec_qso=dec_gal, name_gal=name_i, dis_gal=dis[ind])
         fig.savefig(path_figure_mom1_i, bbox_inches='tight')
 
-PlotEachGal(gal_list, dis_list)
+# PlotEachGal(gal_list, dis_list)
+
+
+# Place sudo slit
+def PlaceSudoSlitOnEachGal(gals, dis):
+    for ind, i in enumerate(gals):
+        # fix missed name
+        if i == 'NGC2594':
+            i_cube = 'NGC2592'
+        elif i == 'NGC3619':
+            i_cube = 'NGC3613'
+        else:
+            i_cube = i
+
+        # Galaxy information
+        name_i = i.replace('C', 'C ')
+        name_sort = table_gals['Object Name'] == name_i
+        ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
+        v_sys_gal = table_gals[name_sort]['cz (Velocity)']
+        print(i, v_sys_gal)
+
+        #
+        path_Serra = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(i_cube)
+        hdul_Serra = fits.open(path_Serra)
+        hdr_Serra = hdul_Serra[0].header
+        v_Serra = hdul_Serra[0].data[0, :, :] - v_sys_gal
+
+        #
+        path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.format(i)
+        hdul_fit = fits.open(path_fit)
+        v_fit, sigma_fit = hdul_fit[1].data, hdul_fit[3].data
+
+        #
+        w = WCS(hdr_Serra, naxis=2)
+        center_gal = SkyCoord(ra_gal[0], dec_gal[0], unit='deg', frame='icrs')
+        c_gal = w.world_to_pixel(center_gal)
+        x_gal, y_gal = np.meshgrid(np.arange(v_ETG.shape[0]), np.arange(v_ETG.shape[1]))
+        x_gal, y_gal = x_gal.flatten(), y_gal.flatten()
+        pixcoord_gal = PixCoord(x=x_gal, y=y_gal)
+
+        # mask a slit
+        rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=60, height=5,
+                                             angle=Angle(-60, 'deg'))
+        mask_gal = rectangle_gal.contains(pixcoord_gal)
+        dis_gal = np.sqrt((x_gal - c_gal[0]) ** 2 + (y_gal - c_gal[1]) ** 2) * 2.77777798786E-03 * 3600 * 50 / 305
+        dis_mask_gal = dis_gal[mask_gal]
+
+        # mask each side
+        red_gal = ((x_gal[mask_gal] - c_gal[0]) < 0) * ((y_gal[mask_gal] - c_gal[1]) > 0)
+        blue_gal = ~red_gal
+        dis_red_gal = dis_mask_gal[red_gal]
+        dis_blue_gal = dis_mask_gal[blue_gal] * -1
