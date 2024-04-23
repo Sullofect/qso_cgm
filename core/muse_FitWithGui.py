@@ -418,6 +418,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(gal_name='NGC3945')
+    window = PlotWindow(gal_name='NGC6798')
     window.show()
     sys.exit(app.exec_())
