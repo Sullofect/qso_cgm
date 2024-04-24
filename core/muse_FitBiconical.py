@@ -24,6 +24,7 @@ from gala.units import galactic, solarsystem, dimensionless
 from photutils.isophote import EllipseGeometry
 from photutils.isophote import build_ellipse_model
 from photutils.isophote import Ellipse
+from muse_kin_ETP import PlaceSudoSlitOnEachGal
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick.minor', size=5, visible=True)
@@ -78,42 +79,42 @@ data_SB_OIII_smoothed = convolve(data_SB_OIII, kernel)
 
 
 # Measure isophotal SB
-geometry = EllipseGeometry(x0=72.5681, y0=74.3655, sma=20, eps=0.5,
-                           pa=-25.0 * np.pi / 180.0, fix_pa=True)
-ellipse_OII = Ellipse(data_SB_OII, geometry)
-isolist_OII = ellipse_OII.fit_image()
-geometry = EllipseGeometry(x0=72.5681, y0=74.3655, sma=10, eps=0.5,
-                           pa=-25.0 * np.pi / 180.0, fix_pa=False, fix_center=False)
-ellipse_OIII = Ellipse(data_SB_OIII_smoothed, geometry)
-isolist_OIII = ellipse_OIII.fit_image()
-
-fig, ax = plt.subplots(1, 2, figsize=(10, 5), dpi=150)
-ax[0].imshow(data_SB_OII, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=5)
-ax[1].imshow(data_SB_OIII, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=5)
-smas = np.linspace(10, 50, 10)[1:2]
-for sma in smas:
-    iso_OII = isolist_OII.get_closest(sma)
-    x_OII, y_OII = iso_OII.sampled_coordinates()
-    ax[0].plot(x_OII, y_OII, color='white')
-    # print(iso_OII.x0, iso_OII.y0)
-    f, sma = iso_OII.eps, iso_OII.sma
-    smia = sma * (1 - f)
-    # print(sma, smia)
-    i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
-    print('inclination angle is', i)
-
-smas = np.linspace(5, 10, 3)[2:]
-for sma in smas:
-    iso_OIII = isolist_OIII.get_closest(sma)
-    x_OIII, y_OIII, = iso_OIII.sampled_coordinates()
-    ax[1].plot(x_OIII, y_OIII, color='white')
-    # print(iso_OII.x0, iso_OII.y0)
-    f, sma = iso_OIII.eps, iso_OIII.sma
-    smia = sma * (1 - f)
-    # print(sma, smia)
-    i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
-    print('inclination angle is', i)
-fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_SB_OII_isophote.png', bbox_inches='tight')
+# geometry = EllipseGeometry(x0=72.5681, y0=74.3655, sma=20, eps=0.5,
+#                            pa=-25.0 * np.pi / 180.0, fix_pa=True)
+# ellipse_OII = Ellipse(data_SB_OII, geometry)
+# isolist_OII = ellipse_OII.fit_image()
+# geometry = EllipseGeometry(x0=72.5681, y0=74.3655, sma=10, eps=0.5,
+#                            pa=-25.0 * np.pi / 180.0, fix_pa=False, fix_center=False)
+# ellipse_OIII = Ellipse(data_SB_OIII_smoothed, geometry)
+# isolist_OIII = ellipse_OIII.fit_image()
+#
+# fig, ax = plt.subplots(1, 2, figsize=(10, 5), dpi=150)
+# ax[0].imshow(data_SB_OII, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=5)
+# ax[1].imshow(data_SB_OIII, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=5)
+# smas = np.linspace(10, 50, 10)[1:2]
+# for sma in smas:
+#     iso_OII = isolist_OII.get_closest(sma)
+#     x_OII, y_OII = iso_OII.sampled_coordinates()
+#     ax[0].plot(x_OII, y_OII, color='white')
+#     # print(iso_OII.x0, iso_OII.y0)
+#     f, sma = iso_OII.eps, iso_OII.sma
+#     smia = sma * (1 - f)
+#     # print(sma, smia)
+#     i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
+#     print('inclination angle is', i)
+#
+# smas = np.linspace(5, 10, 3)[2:]
+# for sma in smas:
+#     iso_OIII = isolist_OIII.get_closest(sma)
+#     x_OIII, y_OIII, = iso_OIII.sampled_coordinates()
+#     ax[1].plot(x_OIII, y_OIII, color='white')
+#     # print(iso_OII.x0, iso_OII.y0)
+#     f, sma = iso_OIII.eps, iso_OIII.sma
+#     smia = sma * (1 - f)
+#     # print(sma, smia)
+#     i = (np.pi / 2 - np.arcsin(smia / sma)) * 180 / np.pi
+#     print('inclination angle is', i)
+# fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_SB_OII_isophote.png', bbox_inches='tight')
 # raise ValueError('stop')
 
 # Measure kinematics
@@ -187,11 +188,11 @@ dis_red = dis_mask[red]
 dis_blue = dis_mask[blue] * -1
 
 # Slit position
-fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
-plt.imshow(np.where(center_mask, v_N1[0, :, :], np.nan), origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
-patch = rectangle.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
-plt.plot(c2[0], c2[1], '*', markersize=15)
-fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox_inches='tight')
+# fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
+# plt.imshow(np.where(center_mask, v_N1[0, :, :], np.nan), origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+# patch = rectangle.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
+# plt.plot(c2[0], c2[1], '*', markersize=15)
+# fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox_inches='tight')
 
 
 # Position-velocity diagram
@@ -250,7 +251,7 @@ ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
 v_sys_gal = table_gals[name_sort]['cz (Velocity)']
 
 #
-path_ETG_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_fit.fits'.format(gal_name)
+path_ETG_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.format(gal_name)
 path_ETG = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_name)
 path_ETG_mom2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom2.fits'.format(gal_name)
 hdul_ETG = fits.open(path_ETG)
@@ -285,11 +286,11 @@ dis_red_gal = dis_mask_gal[red_gal]
 dis_blue_gal = dis_mask_gal[blue_gal] * -1
 
 # Slit position
-fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
-plt.imshow(v_ETG, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
-patch = rectangle_gal.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
-plt.plot(c_gal[0], c_gal[1], '*', markersize=15)
-fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/NGC5582_sudo_slit.png', bbox_inches='tight')
+# fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
+# plt.imshow(v_ETG, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+# patch = rectangle_gal.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
+# plt.plot(c_gal[0], c_gal[1], '*', markersize=15)
+# fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/NGC5582_sudo_slit.png', bbox_inches='tight')
 
 
 # Velocity profile
@@ -321,10 +322,15 @@ def Bin(x, y, std, flux, bins=20):
     y_flux = np.zeros(bins)
     x_mean = (edges[:-1] + edges[1:]) / 2
     for i in range(bins):
-        mask = (x > edges[i]) * (x < edges[i + 1])
-        y_mean[i] = y[mask].mean()
-        y_std[i] = std[mask].mean()
-        y_flux[i] = flux[mask].mean()
+        if n[i] == 0:
+            y_mean[i] = np.nan
+            y_std[i] = np.nan
+            y_flux[i] = np.nan
+        else:
+            mask = (x > edges[i]) * (x < edges[i + 1])
+            y_mean[i] = np.nanmean(y[mask])
+            y_std[i] = np.nanmean(std[mask])
+            y_flux[i] = np.nanmean(flux[mask])
     return x_mean, y_mean, y_std, y_flux
 
 # Galaxy
@@ -341,6 +347,9 @@ dis_blue_gal_mean, v_blue_gal_mean, sigma_blue_gal_mean, flux_blue_gal_mean = Bi
                                                                               flux_ETG_flatten[mask_gal][blue_gal], bins=20)
 ax.plot(dis_red_gal_mean, v_red_gal_mean, '-k')
 ax.plot(dis_blue_gal_mean, v_blue_gal_mean, '-k', label='Serra et al. 2012')
+
+# All galaxies
+
 
 # Components
 v_N1_flatten = v_N1[0, :, :].flatten()[center_mask_flatten]
@@ -471,10 +480,29 @@ fig, ax = plt.subplots(2, 1, figsize=(10, 7), dpi=300, sharex=True)
 fig.subplots_adjust(hspace=0.05)
 
 # ETG
-ax[0].plot(dis_red_gal_mean, v_red_gal_mean, '-k', lw=2)
-ax[0].plot(dis_blue_gal_mean, v_blue_gal_mean, '-k', label='HI 21-cm around NGC 5582 \n from Serra et al. 2012')
-ax[1].plot(dis_red_gal_mean, sigma_red_gal_mean, '-k', lw=2)
-ax[1].plot(dis_blue_gal_mean, sigma_blue_gal_mean, '-k', lw=2)
+gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
+
+for jj in range(len(gal_list)):
+    color = 'C' + str(jj)
+    dis_red_gal, dis_blue_gal, v_red_gal, v_blue_gal, \
+    sigma_red_gal, sigma_blue_gal = PlaceSudoSlitOnEachGal(igal=gal_list[jj])
+
+    dis_red_gal_mean, v_red_gal_mean, sigma_red_gal_mean, flux_red_gal_mean = Bin(dis_red_gal, v_red_gal, sigma_red_gal,
+                                                                                  np.zeros_like(v_red_gal), bins=20)
+    dis_blue_gal_mean, v_blue_gal_mean, sigma_blue_gal_mean, flux_blue_gal_mean = Bin(dis_blue_gal, v_blue_gal,
+                                                                                      sigma_blue_gal,
+                                                                                      np.zeros_like(v_blue_gal), bins=20)
+
+
+    ax[0].plot(dis_red_gal_mean, v_red_gal_mean, '-', color=color, lw=2, zorder=-100, label=gal_list[jj])
+    ax[0].plot(dis_blue_gal_mean, v_blue_gal_mean, '-', color=color, lw=2, zorder=-100)
+    ax[1].plot(dis_red_gal_mean, sigma_red_gal_mean, '-', color=color, lw=2, zorder=-100)
+    ax[1].plot(dis_blue_gal_mean, sigma_blue_gal_mean, '-', color=color, lw=2, zorder=-100)
+
+# ax[0].plot(dis_red_gal_mean, v_red_gal_mean, '-k', lw=2)
+# ax[0].plot(dis_blue_gal_mean, v_blue_gal_mean, '-k', label='HI 21-cm around NGC 5582 \n from Serra et al. 2012')
+# ax[1].plot(dis_red_gal_mean, sigma_red_gal_mean, '-k', lw=2)
+# ax[1].plot(dis_blue_gal_mean, sigma_blue_gal_mean, '-k', lw=2)
 
 # 3C57
 ax[0].scatter(dis_blue_mean, v_N1_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='C0', label='3C57 nebula')

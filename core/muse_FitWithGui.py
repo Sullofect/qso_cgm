@@ -118,7 +118,6 @@ def Gaussian(velocity, v, sigma, flux):
 path_table_gals = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
 
 
-
 class PlotWindow(QMainWindow):
     def __init__(self, gal_name='NGC5582'):
         super().__init__()
@@ -197,7 +196,8 @@ class PlotWindow(QMainWindow):
         self.setCentralWidget(self.widget)
         self.layout = QtGui.QGridLayout()
         self.widget.setLayout(self.layout)
-        self.setStyleSheet("background-color: white;")
+        self.setStyleSheet("background-color: (235, 233, 221)")
+        # self.setStyleSheet("background-color: white;")
 
         # Set title
         self.setWindowTitle("Check fitting")
@@ -217,13 +217,14 @@ class PlotWindow(QMainWindow):
         self.widget4.setFixedSize(900, 450)
 
         # Set background color
-        # self.widget1.setBackground((235, 233, 221, 100))
-        # self.widget2.setBackground((235, 233, 221, 100))
-        # self.widget3.setBackground((235, 233, 221, 100))
-        self.widget1.setBackground('w')
-        self.widget2.setBackground('w')
-        self.widget3.setBackground('w')
-        self.widget4.setBackground('w')
+        self.widget1.setBackground((235, 233, 221, 100))
+        self.widget2.setBackground((235, 233, 221, 100))
+        self.widget3.setBackground((235, 233, 221, 100))
+        self.widget4.setBackground((235, 233, 221, 100))
+        # self.widget1.setBackground('w')
+        # self.widget2.setBackground('w')
+        # self.widget3.setBackground('w')
+        # self.widget4.setBackground('w')
         self.widget1_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
@@ -433,6 +434,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(gal_name='UGC09519')
+    window = PlotWindow(gal_name='NGC3941')
     window.show()
     sys.exit(app.exec_())
