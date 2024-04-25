@@ -480,7 +480,14 @@ fig, ax = plt.subplots(2, 1, figsize=(10, 7), dpi=300, sharex=True)
 fig.subplots_adjust(hspace=0.05)
 
 # ETG
-gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
+# gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
+gal_list = np.array(['NGC2685', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
+# gal_list = np.array(['NGC5582'])
+
+# ax[0].plot(dis_red_gal_mean, v_red_gal_mean, '-k', lw=2)
+# ax[0].plot(dis_blue_gal_mean, v_blue_gal_mean, '-k', label='HI 21-cm around NGC 5582 \n from Serra et al. 2012')
+# ax[1].plot(dis_red_gal_mean, sigma_red_gal_mean, '-k', lw=2)
+# ax[1].plot(dis_blue_gal_mean, sigma_blue_gal_mean, '-k', lw=2)
 
 for jj in range(len(gal_list)):
     color = 'C' + str(jj)
@@ -499,10 +506,6 @@ for jj in range(len(gal_list)):
     ax[1].plot(dis_red_gal_mean, sigma_red_gal_mean, '-', color=color, lw=2, zorder=-100)
     ax[1].plot(dis_blue_gal_mean, sigma_blue_gal_mean, '-', color=color, lw=2, zorder=-100)
 
-# ax[0].plot(dis_red_gal_mean, v_red_gal_mean, '-k', lw=2)
-# ax[0].plot(dis_blue_gal_mean, v_blue_gal_mean, '-k', label='HI 21-cm around NGC 5582 \n from Serra et al. 2012')
-# ax[1].plot(dis_red_gal_mean, sigma_red_gal_mean, '-k', lw=2)
-# ax[1].plot(dis_blue_gal_mean, sigma_blue_gal_mean, '-k', lw=2)
 
 # 3C57
 ax[0].scatter(dis_blue_mean, v_N1_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='C0', label='3C57 nebula')

@@ -196,7 +196,7 @@ class PlotWindow(QMainWindow):
         self.setCentralWidget(self.widget)
         self.layout = QtGui.QGridLayout()
         self.widget.setLayout(self.layout)
-        self.setStyleSheet("background-color: (235, 233, 221)")
+        # self.setStyleSheet("background-color: rgb(235, 233, 221);")
         # self.setStyleSheet("background-color: white;")
 
         # Set title
@@ -221,10 +221,6 @@ class PlotWindow(QMainWindow):
         self.widget2.setBackground((235, 233, 221, 100))
         self.widget3.setBackground((235, 233, 221, 100))
         self.widget4.setBackground((235, 233, 221, 100))
-        # self.widget1.setBackground('w')
-        # self.widget2.setBackground('w')
-        # self.widget3.setBackground('w')
-        # self.widget4.setBackground('w')
         self.widget1_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
@@ -343,7 +339,6 @@ class PlotWindow(QMainWindow):
             pos = self.v_map.mapFromScene(pos)
             # print(pos.x(), pos.y())
             self.xpixel, self.ypixel = int(np.floor(pos.x() + 1)), int(np.floor(pos.y()))
-
             self.plot()
 
     def plot(self):
@@ -434,6 +429,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(gal_name='NGC3941')
+    window = PlotWindow(gal_name='NGC6798')
     window.show()
     sys.exit(app.exec_())

@@ -350,7 +350,7 @@ def PlaceSudoSlitOnEachGal(igal=None):
     pixcoord_gal = PixCoord(x=x_gal, y=y_gal)
 
     # mask a slit
-    rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=60, height=5,
+    rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=60, height=3,
                                          angle=Angle(ang_i, 'deg'))
     mask_gal = rectangle_gal.contains(pixcoord_gal)
 
