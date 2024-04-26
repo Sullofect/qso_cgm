@@ -28,8 +28,9 @@ from palettable.cmocean.sequential import Dense_20_r
 from scipy.ndimage import rotate
 from astropy.table import Table
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QPushButton
 from matplotlib import cm
+from scipy import integrate
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -50,6 +51,19 @@ path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
 
 def getSigma_MUSE(wave):
     return (5.866e-8 * wave ** 2 - 9.187e-4 * wave + 6.04) / 2.355
+
+def expand_wave(wave, stack=True, times=3):
+    if stack is True:
+        wave_expand = np.array([])
+    else:
+        wave_expand = np.empty_like(wave)
+    for i in range(len(wave)):
+        wave_i = np.linspace(wave[i].min(), wave[i].max(), times * len(wave[i]))
+        if stack is True:
+            wave_expand = np.hstack((wave_expand, wave_i))
+        else:
+            wave_expand[i] = wave_i
+    return wave_expand
 
 
 def Gaussian(wave_vac, z, sigma_kms, flux, wave_line_vac):
@@ -146,8 +160,8 @@ def model_OII_OIII(wave_vac, **params):
                           m_OIII5008 + params['a_OIII5008'] * wave_OIII_vac + params['b_OIII5008']))
 
 class PlotWindow(QMainWindow):
-    def __init__(self, cubename='3C57', zapped=False, UseDataSeg=(1.5, 'gauss', None, None), FitType='specific',
-             CheckGuess=None, width_OII=10, width_OIII=10, UseSmoothedCubes=True, UseDetectionSeg=None):
+    def __init__(self, cubename='3C57', zapped=False, UseDataSeg=(1.5, 'gauss', None, None),
+                 width_OII=10, width_OIII=10, UseSmoothedCubes=True, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss')):
         super().__init__()
 
         fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
@@ -248,7 +262,6 @@ class PlotWindow(QMainWindow):
             #
             # flux = np.where(flux_err != 0, flux, np.nan)
             # flux_err = np.where(flux_err != 0, flux_err, np.nan)
-
         else:
             if line == 'OII':
                 width = width_OII
@@ -285,6 +298,11 @@ class PlotWindow(QMainWindow):
             flux *= seg_3D
             flux_err *= seg_3D
             flux_err = np.where(flux_err != 0, flux_err, np.inf)
+
+
+        # Mask
+        self.mask_OII = mask_seg_OII
+        self.mask_OIII = mask_seg_OIII
         self.mask = mask_seg
         # Zeros
         # if line == 'OII':
@@ -339,12 +357,8 @@ class PlotWindow(QMainWindow):
         #     for i in range(max_OIII):
         #         parameters.add_many(('flux_OIII5008_{}'.format(i + 1), flux_guess, True, 0.0, None, None))
 
-
-        # Load the cube
-
-
         # Load the QSO field fit
-        self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
+        self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N2.fits'.\
             format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
         v_guess, sigma_guess, flux_guess = 0, 50, 0.5
         self.model = Gaussian
@@ -353,38 +367,83 @@ class PlotWindow(QMainWindow):
                                  ('sigma', sigma_guess, True, 5, 70, None),
                                  ('flux', flux_guess, True, 0, None, None))
         if os.path.exists(self.path_fit) is False:
+            print('Fitting result file does not exist, start fitting from scratch.')
+
             # if num_Gaussian == 1:
-            #     12
+            #
+            #     self.fit()
             # elif num_Gaussian == 2:
             #
             # elif num_Gaussian == 3:
             #
             # else:
-
-            print('Fitting result file does not exist, start fitting from scratch.')
-            hdr_Serra = hdul_Serra[0].header
-            hdr_Serra['NAXIS'] = 2
-            hdr_Serra.remove('NAXIS3')
-            hdr_Serra.remove('CTYPE3')
-            hdr_Serra.remove('CDELT3')
-            hdr_Serra.remove('CRPIX3')
-            hdr_Serra.remove('CRVAL3')
-            self.hdr = hdr_Serra
-            self.fit()
+            #
+            # self.fit()
         hdul_fit = fits.open(self.path_fit)
+        pri, fs, v, z, dz, sigma, dsigma, flux_OII_fit, dflux_OII_fit, flux_OIII_fit, dflux_OIII_fit, r, dr, a_OII, \
+        da_OII, b_OII, db_OII, a_OIII, da_OIII, b_OIII, db_OIII, chisqr, redchi = hdul_fit[:23]
         self.pri, self.fs, self.v, self.z, self.dz, self.sigma, self.dsigma, self.flux_OII_fit, \
         self.dflux_OII_fit, self.flux_OIII_fit, self.dflux_OIII_fit, self.r, self.dr, self.a_OII, \
         self.da_OII, self.b_OII, self.db_OII, self.a_OIII, self.da_OIII, self.b_OIII, \
-        self.db_OIII, self.chisqr, self.redchi = hdul_fit[:23]
-        self.size = self.fs.data.shape
-        self.v.data = self.v.data[0, :, :]
-        self.sigma.data = self.sigma.data[0, :, :]
-
+        self.db_OIII, self.chisqr, self.redchi = pri.data, fs.data, v.data, z.data, dz.data, sigma.data, dsigma.data, \
+                                                 flux_OII_fit.data, dflux_OII_fit.data, flux_OIII_fit.data, \
+                                                 dflux_OIII_fit.data, r.data, dr.data, a_OII.data, da_OII.data, \
+                                                 b_OII.data, db_OII.data, a_OIII.data, da_OIII.data, b_OIII.data, \
+                                                 db_OIII.data, chisqr.data, redchi.data
+        self.size = self.fs.shape
 
         # Calculae flux of each component
-        self.flux_OIII_fit_array = Gaussian(self.wave_OIII_vac[:, np.newaxis, np.newaxis], self.z, self.sigma, flux, wave_line_vac
-                                      self.size, self.model, self.v, self.sigma, self.flux_OIII_fit)
+        self.wave_OII_exp = expand_wave([self.wave_OII_vac], stack=True)
+        self.wave_OIII_exp = expand_wave([self.wave_OIII_vac], stack=True)
+        self.flux_OII_array = model_OII(self.wave_OII_exp[:, np.newaxis, np.newaxis, np.newaxis], self.z, self.sigma,
+                                        self.flux_OII_fit, self.r, plot=False)
+        self.flux_OIII_array = Gaussian(self.wave_OIII_exp[:, np.newaxis, np.newaxis, np.newaxis], self.z, self.sigma,
+                                        self.flux_OIII_fit, wave_OIII5008_vac)
 
+        # Calculate V_50 and W_80
+        wave_OII_exp_ = self.wave_OII_exp[:, np.newaxis, np.newaxis]
+        wave_OIII_exp_ = self.wave_OIII_exp[:, np.newaxis, np.newaxis]
+        flux_OII_sum = np.nansum(self.flux_OII_array, axis=1)
+        flux_OIII_sum = np.nansum(self.flux_OIII_array, axis=1)
+
+        flux_cumsum_OII = integrate.cumtrapz(flux_OII_sum, wave_OII_exp_, initial=None, axis=0)
+        flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
+
+        wave_10 = np.take_along_axis(wave_OII_exp_, np.argmin(np.abs(flux_cumsum_OII - 0.10), axis=0)[np.newaxis, :, :],
+                                     axis=0)[0]
+        wave_50 = \
+            np.take_along_axis(wave_OII_exp_, np.argmin(np.abs(flux_cumsum_OII - 0.50), axis=0)[np.newaxis, :, :],
+                               axis=0)[0]
+        wave_90 = \
+            np.take_along_axis(wave_OII_exp_, np.argmin(np.abs(flux_cumsum_OII - 0.90), axis=0)[np.newaxis, :, :],
+                               axis=0)[0]
+        z50_OII = (wave_50 - wave_OII3728_vac) / wave_OII3728_vac
+        w80_OII = c_kms * (wave_90 - wave_10) / (wave_OII3728_vac * (1 + z50_OII))
+
+        # Moments for OIII
+        flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_sum, wave_OIII_exp_, initial=None, axis=0)
+        flux_cumsum_OIII /= flux_cumsum_OIII.max(axis=0)
+
+        wave_10 = \
+            np.take_along_axis(wave_OIII_exp_, np.argmin(np.abs(flux_cumsum_OIII - 0.10), axis=0)[np.newaxis, :, :],
+                               axis=0)[0]
+        wave_50 = \
+            np.take_along_axis(wave_OIII_exp_, np.argmin(np.abs(flux_cumsum_OIII - 0.50), axis=0)[np.newaxis, :, :],
+                               axis=0)[0]
+        wave_90 = \
+            np.take_along_axis(wave_OIII_exp_, np.argmin(np.abs(flux_cumsum_OIII - 0.90), axis=0)[np.newaxis, :, :],
+                               axis=0)[0]
+        z50_OIII = (wave_50 - wave_OIII5008_vac) / wave_OIII5008_vac
+        w80_OIII = c_kms * (wave_90 - wave_10) / (wave_OIII5008_vac * (1 + z50_OIII))
+
+
+        z50 = np.where(self.mask_OIII != 0, z50_OIII, z50_OII)
+        v50 = c_kms * (z50 - z_qso) / (1 + z_qso)
+        w80 = np.where(self.mask_OIII > 0, w80_OIII, w80_OII)
+        v50 = np.where(self.mask != 0, v50, np.nan)
+        w80 = np.where(self.mask != 0, w80, np.nan)
+        self.v50 = v50
+        self.w80 = w80
 
 
         # Define a top-level widget
@@ -403,6 +462,7 @@ class PlotWindow(QMainWindow):
         self.widget3 = pg.GraphicsLayoutWidget()
         self.widget4 = pg.GraphicsLayoutWidget()
         self.widget5 = pg.GraphicsLayoutWidget()
+        self.widget6 = pg.LayoutWidget()
         self.widget1_plot = self.widget1.addPlot()
         self.widget2_plot = self.widget2.addPlot()
         self.widget3_plot = self.widget3.addPlot()
@@ -443,13 +503,26 @@ class PlotWindow(QMainWindow):
         self.tree.setParameters(self.param)
         self.param.children()[0].sigStateChanged.connect(self.update_fit)
 
+        # Buttons
+        btn_1 = QPushButton("Refit")
+        btn_2 = QPushButton("One Gaussian")
+        btn_3 = QPushButton("Two Gaussian")
+        btn_4 = QPushButton("Three Gaussian")
+        layout_btn = QHBoxLayout()
+        layout_btn.addWidget(btn_1)
+        layout_btn.addWidget(btn_2)
+        layout_btn.addWidget(btn_3)
+        layout_btn.addWidget(btn_4)
+        # btn.clicked.connect(onButtonClicked)
+
         #
         self.layout.addWidget(self.widget1, 0, 0, 1, 1)
         self.layout.addWidget(self.widget2, 0, 1, 1, 1)
         self.layout.addWidget(self.widget3, 0, 2, 1, 1)
-        self.layout.addWidget(self.widget4, 1, 0, 1, 2)
+        self.layout.addWidget(self.widget4, 1, 0, 1, 1)
         self.layout.addWidget(self.widget5, 1, 1, 1, 1)
-        self.layout.addWidget(self.tree, 1, 2, 1, 1)
+        self.layout.addLayout(layout_btn, 1, 2, 1, 1)
+        # self.layout.addWidget(self.tree, 1, 2, 1, 1)
 
 
         # Plot the 2D map in the first plot
@@ -459,7 +532,7 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.v_map.setLookupTable(lut)
-        self.v_map.updateImage(image=self.v.data.T, levels=(-350, 350))
+        self.v_map.updateImage(image=self.v50.T, levels=(-500, 500))
 
         # Plot the 2D map in the second plot
         self.sigma_map = pg.ImageItem()
@@ -468,7 +541,7 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.sigma_map.setLookupTable(lut)
-        self.sigma_map.updateImage(image=self.sigma.data.T, levels=(0, 300))
+        self.sigma_map.updateImage(image=self.w80.T, levels=(0, 1000))
 
         # Plot the chi 2D map in the third plot
         self.chi_map = pg.ImageItem()
@@ -477,7 +550,7 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.chi_map.setLookupTable(lut)
-        self.chi_map.updateImage(image=self.chisqr.data.T, levels=(0, 50))
+        self.chi_map.updateImage(image=self.chisqr.T, levels=(0, 50))
 
         # Link the axis of the plots
         self.widget1_plot.setXLink(self.widget2_plot)
@@ -548,46 +621,13 @@ class PlotWindow(QMainWindow):
             pos = self.v_map.mapFromScene(pos)
             # print(pos.x(), pos.y())
             self.xpixel, self.ypixel = int(np.floor(pos.x() + 1)), int(np.floor(pos.y()))
-            self.plot_OII()
-            self.plot_OIII()
 
-    def plot_OII(self):
-        i, j = self.ypixel, self.xpixel
-        if self.mask[i, j]:
-            # Plot new data
-            self.widget4_plot.clear()
-
-            # Plot the data
-            self.widget4_plot.plot(self.wave_OII_vac, self.flux_OII[:, i, j], pen='k')
-            self.widget4_plot.plot(self.wave_OII_vac, self.flux_err_OII[:, i, j], pen='g')
-            # self.widget4_plot.plot(self.wave_OII_vac, self.flux_OII_fit, pen='r')
-
-            # Plot each individual component
-
-    def plot_OIII(self):
-        i, j = self.ypixel, self.xpixel
-        if self.mask[i, j]:
-            # Plot new data
-            self.widget5_plot.clear()
-
-            # Plot the data and the fit
-            self.widget5_plot.plot(self.wave_OIII_vac, self.flux_OIII[:, i, j], pen='k')
-            self.widget5_plot.plot(self.wave_OIII_vac, self.flux_err_OIII[:, i, j], pen='g')
-            # self.widget5_plot.plot(self.wave_OIII_vac, self.flux_OIII_fit, pen='r')
-
-            # Plot each individual component
-
-    def plot(self):
-        i, j = self.ypixel, self.xpixel
-        if self.mask[i, j]:
-            # Plot new data
-            self.widget4_plot.clear()
-            self.param['v='] = '{:.0f}'.format(self.v_fit[i, j])
-            self.param['sigma='] = '{:.0f}'.format(self.sigma_fit[i, j])
-            self.param['flux='] = '{:.2f}'.format(self.flux_fit[i, j])
-            self.param['chi='] = '{:.2f}'.format(self.chi_fit[i, j])
-
-            # Plot spectrum
+            # Get the fitting results
+            i, j = self.ypixel, self.xpixel
+            self.param['v1='] = '{:.0f}'.format(self.v[0, i, j])
+            self.param['sigma1='] = '{:.0f}'.format(self.sigma[0, i, j])
+            self.param['flux1='] = '{:.2f}'.format(self.flux_OII_fit[0, i, j])
+            self.param['chi='] = '{:.2f}'.format(self.redchi[i, j])
             scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
             scatter_1.addPoints([j + 0.5], [i + 0.5])
             scatter_2 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
@@ -598,27 +638,48 @@ class PlotWindow(QMainWindow):
             self.widget2_plot.addItem(scatter_2)
             self.widget3_plot.addItem(scatter_3)
 
-            # Plot spectrum
-            self.widget4_plot.plot(self.v_array, self.flux[:, i, j], pen='k')
-            self.widget4_plot.plot(self.v_array, self.flux_fit_array[:, i, j], pen='r')
-            self.widget4_plot.plot(self.v_array, self.flux_err[:, 0, 0], pen='g')
-            self.widget4_plot.setLabel('top', 'x={}, y={}'.format(i, j))
-            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j],
-                                                      pen=pg.mkPen('r', width=2, style=QtCore.Qt.DashLine),
-                                                      labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
-            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j] + self.sigma_fit[i, j],
-                                                      pen=pg.mkPen('b', width=2, style=QtCore.Qt.DashLine),
-                                                      labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
-            self.widget4_plot.addItem(pg.InfiniteLine(self.v_fit[i, j] - self.sigma_fit[i, j],
-                                                      pen=pg.mkPen('b', width=2, style=QtCore.Qt.DashLine),
-                                                      labelOpts={'position': 0.8, 'rotateAxis': [1, 0]}))
+            self.plot_OII()
+            self.plot_OIII()
+
+    def plot_OII(self):
+        i, j = self.ypixel, self.xpixel
+        if self.mask_OII[i, j]:
+            # Plot new data
+            self.widget4_plot.clear()
+
+            # Plot the data
+            self.widget4_plot.plot(self.wave_OII_vac, self.flux_OII[:, i, j], pen='k')
+            self.widget4_plot.plot(self.wave_OII_vac, self.flux_err_OII[:, i, j], pen='g')
+
+            # Plot each individual component
+            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 0, i, j], pen='b')
+            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 1, i, j], pen='b')
+            self.widget4_plot.plot(self.wave_OII_exp, np.nansum(self.flux_OII_array[:, :, i, j], axis=1)
+                                   + self.b_OII[i, j] + self.a_OII[i, j] * self.wave_OII_exp, pen='r')
+
+    def plot_OIII(self):
+        i, j = self.ypixel, self.xpixel
+        if self.mask_OIII[i, j]:
+            # Plot new data
+            self.widget5_plot.clear()
+
+            # Plot the data and the fit
+            self.widget5_plot.plot(self.wave_OIII_vac, self.flux_OIII[:, i, j], pen='k')
+            self.widget5_plot.plot(self.wave_OIII_vac, self.flux_err_OIII[:, i, j], pen='g')
+
+            # Plot each individual component
+            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 0, i, j], pen='b')
+            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 1, i, j], pen='b')
+            self.widget5_plot.plot(self.wave_OIII_exp, np.nansum(self.flux_OIII_array[:, :, i, j], axis=1)
+                                   + self.b_OIII[i, j] + self.a_OIII[i, j] * self.wave_OIII_exp, pen='r')
+
 
     def update_fit(self):
         i, j = self.ypixel, self.xpixel
 
-        # Refite that specific pixel
-        self.parameters['v'].value = self.param['v=']
-        self.parameters['sigma'].value = self.param['sigma=']
+        # Refit that specific pixel
+        self.parameters['v'].value = self.param['v1=']
+        self.parameters['sigma'].value = self.param['sigma1=']
         self.parameters['v'].max = self.param['v='] + 10
         self.parameters['v'].min = self.param['v='] - 10
         self.parameters['sigma'].max = self.param['sigma='] + 10
@@ -662,8 +723,6 @@ class PlotWindow(QMainWindow):
 
     def update_fit_G2(self):
         print('in progress')
-
-
 
 
 
