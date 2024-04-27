@@ -450,7 +450,6 @@ class PlotWindow(QMainWindow):
         self.widget3 = pg.GraphicsLayoutWidget()
         self.widget4 = pg.GraphicsLayoutWidget()
         self.widget5 = pg.GraphicsLayoutWidget()
-        self.widget6 = pg.LayoutWidget()
         self.widget1_plot = self.widget1.addPlot()
         self.widget2_plot = self.widget2.addPlot()
         self.widget3_plot = self.widget3.addPlot()
@@ -476,15 +475,18 @@ class PlotWindow(QMainWindow):
 
         # Set param
         self.paramSpec = [dict(name='chi=', type='float', value=None, dec=False, readonly=False),
-                          dict(name='v1=', type='float', value=None, dec=False, readonly=False),
-                          dict(name='sigma1=', type='float', value=None, readonly=False),
-                          dict(name='flux1=', type='float', value=None, readonly=False),
-                          dict(name='v2=', type='float', value=None, dec=False, readonly=False),
-                          dict(name='sigma2=', type='float', value=None, readonly=False),
-                          dict(name='flux2=', type='float', value=None, readonly=False),
-                          dict(name='v3=', type='float', value=None, dec=False, readonly=False),
-                          dict(name='sigma3=', type='float', value=None, readonly=False),
-                          dict(name='flux3=', type='float', value=None, readonly=False)]
+                          dict(name='v_1=', type='float', value=None, dec=False, readonly=False),
+                          dict(name='sigma_1=', type='float', value=None, readonly=False),
+                          dict(name='OII_1=', type='float', value=None, readonly=False),
+                          dict(name='OIII_1=', type='float', value=None, readonly=False),
+                          dict(name='v_2=', type='float', value=None, dec=False, readonly=False),
+                          dict(name='sigma_2=', type='float', value=None, readonly=False),
+                          dict(name='OII_2=', type='float', value=None, readonly=False),
+                          dict(name='OIII_2=', type='float', value=None, readonly=False),
+                          dict(name='v_3=', type='float', value=None, dec=False, readonly=False),
+                          dict(name='sigma_3=', type='float', value=None, readonly=False),
+                          dict(name='OII_3=', type='float', value=None, readonly=False),
+                          dict(name='OIII_3=', type='float', value=None, readonly=False)]
         self.param = pt.Parameter.create(name='Options', type='group', children=self.paramSpec)
         self.tree = pt.ParameterTree()
         self.tree.setParameters(self.param)
@@ -495,9 +497,9 @@ class PlotWindow(QMainWindow):
         btn_3 = QPushButton("Two Gaussian")
         btn_4 = QPushButton("Three Gaussian")
         btn_1.clicked.connect(self.update_fit)
-        btn_2.clicked.connect(self.update_num_gaussian(nums=1))
-        btn_3.clicked.connect(self.update_num_gaussian(nums=2))
-        btn_4.clicked.connect(self.update_num_gaussian(nums=3))
+        btn_2.clicked.connect(self.N_1)
+        btn_3.clicked.connect(self.N_2)
+        btn_4.clicked.connect(self.N_3)
 
         layout_RHS = QVBoxLayout()
         layout_btn = QHBoxLayout()
@@ -617,10 +619,19 @@ class PlotWindow(QMainWindow):
 
             # Get the fitting results
             i, j = self.ypixel, self.xpixel
-            self.param['v1='] = '{:.0f}'.format(self.v[0, i, j])
-            self.param['sigma1='] = '{:.0f}'.format(self.sigma[0, i, j])
-            self.param['flux1='] = '{:.2f}'.format(self.flux_OII_fit[0, i, j])
             self.param['chi='] = '{:.2f}'.format(self.redchi[i, j])
+            self.param['v_1='] = '{:.0f}'.format(self.v[0, i, j])
+            self.param['sigma_1='] = '{:.0f}'.format(self.sigma[0, i, j])
+            self.param['OII_1='] = '{:.2f}'.format(self.flux_OII_fit[0, i, j])
+            self.param['OIII_1='] = '{:.2f}'.format(self.flux_OIII_fit[0, i, j])
+            self.param['v_2='] = '{:.0f}'.format(self.v[1, i, j])
+            self.param['sigma_2='] = '{:.0f}'.format(self.sigma[1, i, j])
+            self.param['OII_2='] = '{:.2f}'.format(self.flux_OII_fit[0, i, j])
+            self.param['OIII_2='] = '{:.2f}'.format(self.flux_OII_fit[0, i, j])
+            self.param['v_3='] = '{:.0f}'.format(self.v[2, i, j])
+            self.param['sigma_3='] = '{:.0f}'.format(self.sigma[2, i, j])
+            self.param['OII_3='] = '{:.2f}'.format(self.flux_OII_fit[0, i, j])
+            self.param['OIII_3='] = '{:.2f}'.format(self.flux_OII_fit[0, i, j])
             scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
             scatter_1.addPoints([j + 0.5], [i + 0.5])
             scatter_2 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
@@ -666,9 +677,17 @@ class PlotWindow(QMainWindow):
             self.widget5_plot.plot(self.wave_OIII_exp, np.nansum(self.flux_OIII_array[:, :, i, j], axis=1)
                                    + self.b_OIII[i, j] + self.a_OIII[i, j] * self.wave_OIII_exp, pen='r')
 
-    def define_num(self, nums=1):
-        parameters['OII'].value = nums
-        parameters['OIII'].value = nums
+    def N_1(self):
+        self.parameters['OII'].value = 1
+        self.parameters['OIII'].value = 1
+
+    def N_2(self):
+        self.parameters['OII'].value = 2
+        self.parameters['OIII'].value = 2
+
+    def N_3(self):
+        self.parameters['OII'].value = 3
+        self.parameters['OIII'].value = 3
 
     def update_fit(self):
         i, j = self.ypixel, self.xpixel
@@ -683,9 +702,9 @@ class PlotWindow(QMainWindow):
 
         #
         flux_ij = self.flux[:, i, j]
-        flux_err_ij = self.flux_err[:, 0, 0]
+        flux_err_ij = self.flux_err[:, i, j]
         spec_model = lmfit.Model(self.model, missing='drop')
-        result = spec_model.fit(flux_ij, velocity=self.v_array, params=self.parameters, weights=1 / flux_err_ij)
+        result = spec_model.fit(flux_ij, wave_vac=self.wave_vac, params=self.parameters, weights=1 / flux_err_ij)
 
         # fill the value
         hdul_fit = fits.open(self.path_fit)
