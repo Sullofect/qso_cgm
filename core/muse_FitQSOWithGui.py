@@ -28,7 +28,7 @@ from palettable.cmocean.sequential import Dense_20_r
 from scipy.ndimage import rotate
 from astropy.table import Table
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QPushButton
+from PyQt5.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QPushButton, QVBoxLayout
 from matplotlib import cm
 from scipy import integrate
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
@@ -111,7 +111,15 @@ def model_OII_OIII(wave_vac, **params):
         m_OII = np.zeros_like(wave_OII_vac)
         m_OIII5008 = np.zeros_like(wave_OIII_vac)
 
-    if params['OII'] == 2:
+    if params['OII'] == 1:
+        z_1, sigma_kms_1, flux_OII_1 = params['z_1'], params['sigma_kms_1'], params['flux_OII_1']
+        if params['ResolveOII']:
+            r_OII3729_3727_1 = params['r_OII3729_3727_1']
+            m_OII = model_OII(wave_OII_vac, z_1, sigma_kms_1, flux_OII_1, r_OII3729_3727_1)
+        else:
+            m_OII = Gaussian(wave_OII_vac, z_1, sigma_kms_1, flux_OII_1, wave_OII3728_vac)
+
+    elif params['OII'] == 2:
         z_1, sigma_kms_1, flux_OII_1 = params['z_1'], params['sigma_kms_1'], params['flux_OII_1']
         z_2, sigma_kms_2, flux_OII_2 = params['z_2'], params['sigma_kms_2'], params['flux_OII_2']
         if params['ResolveOII']:
@@ -124,32 +132,42 @@ def model_OII_OIII(wave_vac, **params):
             m_OII_2 = Gaussian(wave_OII_vac, z_2, sigma_kms_2, flux_OII_2, params['OII_center'])
         m_OII = m_OII_1 + m_OII_2
 
-    else:
-        for i in range(params['OII']):
-            z = params['z_{}'.format(i + 1)]
-            sigma_kms = params['sigma_kms_{}'.format(i + 1)]
-            flux_OII = params['flux_OII_{}'.format(i + 1)]
-            if params['ResolveOII']:
-                r_OII3729_3727 = params['r_OII3729_3727_{}'.format(i + 1)]
-                m_OII_i = model_OII(wave_OII_vac, z, sigma_kms, flux_OII, r_OII3729_3727)
-            else:
-                m_OII_i = Gaussian(wave_OII_vac, z, sigma_kms, flux_OII, params['OII_center'])
-            m_OII += m_OII_i
+    elif params['OII'] == 3:
+        z_1, sigma_kms_1, flux_OII_1 = params['z_1'], params['sigma_kms_1'], params['flux_OII_1']
+        z_2, sigma_kms_2, flux_OII_2 = params['z_2'], params['sigma_kms_2'], params['flux_OII_2']
+        z_3, sigma_kms_3, flux_OII_3 = params['z_3'], params['sigma_kms_3'], params['flux_OII_3']
+        if params['ResolveOII']:
+            r_OII3729_3727_1 = params['r_OII3729_3727_1']
+            r_OII3729_3727_2 = params['r_OII3729_3727_2']
+            r_OII3729_3727_3 = params['r_OII3729_3727_3']
+            m_OII_1 = model_OII(wave_OII_vac, z_1, sigma_kms_1, flux_OII_1, r_OII3729_3727_1)
+            m_OII_2 = model_OII(wave_OII_vac, z_2, sigma_kms_2, flux_OII_2, r_OII3729_3727_2)
+            m_OII_3 = model_OII(wave_OII_vac, z_3, sigma_kms_3, flux_OII_3, r_OII3729_3727_3)
+        else:
+            m_OII_1 = Gaussian(wave_OII_vac, z_1, sigma_kms_1, flux_OII_1, params['OII_center'])
+            m_OII_2 = Gaussian(wave_OII_vac, z_2, sigma_kms_2, flux_OII_2, params['OII_center'])
+            m_OII_3 = Gaussian(wave_OII_vac, z_3, sigma_kms_3, flux_OII_3, params['OII_center'])
+        m_OII = m_OII_1 + m_OII_2 + m_OII_3
 
-    #
-    if params['OIII'] == 2:
+    # [O III]
+    if params['OIII'] == 1:
+        z_1, sigma_kms_1, flux_OIII5008_1 = params['z_1'], params['sigma_kms_1'], params['flux_OIII5008_1']
+        m_OIII5008 = Gaussian(wave_OIII_vac, z_1, sigma_kms_1, flux_OIII5008_1, wave_OIII5008_vac)
+
+    elif params['OIII'] == 2:
         z_1, sigma_kms_1, flux_OIII5008_1 = params['z_1'], params['sigma_kms_1'], params['flux_OIII5008_1']
         z_2, sigma_kms_2, flux_OIII5008_2 = params['z_2'], params['sigma_kms_2'], params['flux_OIII5008_2']
         m_OIII5008_1 = Gaussian(wave_OIII_vac, z_1, sigma_kms_1, flux_OIII5008_1, wave_OIII5008_vac)
         m_OIII5008_2 = Gaussian(wave_OIII_vac, z_2, sigma_kms_2, flux_OIII5008_2, wave_OIII5008_vac)
         m_OIII5008 = m_OIII5008_1 + m_OIII5008_2
-    else:
-        for i in range(params['OIII']):
-            z = params['z_{}'.format(i + 1)]
-            sigma_kms = params['sigma_kms_{}'.format(i + 1)]
-            flux_OIII5008 = params['flux_OIII5008_{}'.format(i + 1)]
-            m_OIII5008_i = Gaussian(wave_OIII_vac, z, sigma_kms, flux_OIII5008, wave_OIII5008_vac)
-            m_OIII5008 += m_OIII5008_i
+    elif params['OIII'] == 3:
+        z_1, sigma_kms_1, flux_OIII5008_1 = params['z_1'], params['sigma_kms_1'], params['flux_OIII5008_1']
+        z_2, sigma_kms_2, flux_OIII5008_2 = params['z_2'], params['sigma_kms_2'], params['flux_OIII5008_2']
+        z_3, sigma_kms_3, flux_OIII5008_3 = params['z_3'], params['sigma_kms_3'], params['flux_OIII5008_3']
+        m_OIII5008_1 = Gaussian(wave_OIII_vac, z_1, sigma_kms_1, flux_OIII5008_1, wave_OIII5008_vac)
+        m_OIII5008_2 = Gaussian(wave_OIII_vac, z_2, sigma_kms_2, flux_OIII5008_2, wave_OIII5008_vac)
+        m_OIII5008_3 = Gaussian(wave_OIII_vac, z_3, sigma_kms_3, flux_OIII5008_3, wave_OIII5008_vac)
+        m_OIII5008 = m_OIII5008_1 + m_OIII5008_2 + m_OIII5008_3
 
     if params['OIII'] == 0:
         return m_OII + params['a'] * wave_vac + params['b']
@@ -254,9 +272,9 @@ class PlotWindow(QMainWindow):
 
             #
             mask_seg = mask_seg_OII + mask_seg_OIII
-            wave_vac = np.array([wave_OII_vac, wave_OIII_vac], dtype=object)
-            flux = np.vstack((flux_OII, flux_OIII))
-            flux_err = np.vstack((flux_err_OII, flux_err_OIII))
+            self.wave_vac = np.array([wave_OII_vac, wave_OIII_vac], dtype=object)
+            self.flux = np.vstack((flux_OII, flux_OIII))
+            self.flux_err = np.vstack((flux_err_OII, flux_err_OIII))
             # flux_err = np.where(flux_err != 0, flux_err, np.inf)
 
             #
@@ -304,68 +322,38 @@ class PlotWindow(QMainWindow):
         self.mask_OII = mask_seg_OII
         self.mask_OIII = mask_seg_OIII
         self.mask = mask_seg
-        # Zeros
-        # if line == 'OII':
-        #     a_fit, da_fit, b_fit, db_fit = np.zeros(size), np.zeros(size), np.zeros(size), np.zeros(size)
-        #     flux_fit, dflux_fit = np.zeros(size_3D), np.zeros(size_3D)
-        #     r_fit, dr_fit = np.zeros(size_3D), np.zeros(size_3D)
-        #     parameters.add('a', value=0, vary=False, min=None, max=None, expr=None, brute_step=None)
-        #     parameters.add('b', value=0, vary=False, min=None, max=None, expr=None, brute_step=None)
-        #
-        #     for i in range(max_OII):
-        #         parameters.add_many(('z_{}'.format(i + 1), redshift_guess, True, redshift_guess - 0.05,
-        #                              redshift_guess + 0.05, None),
-        #                             ('sigma_kms_{}'.format(i + 1), sigma_kms_guess, True, 50, 2000.0, None),
-        #                             ('flux_OII_{}'.format(i + 1), flux_guess, True, 0, None, None))
-        #         if fit_param['ResolveOII']:
-        #             parameters.add('r_OII3729_3727_{}'.format(i + 1),
-        #                            value=r_OII3729_3727_guess, vary=True, min=0.3, max=fit_param['r_max'])
-        #
-        # elif line == 'OIII':
-        #     flux_fit, dflux_fit = np.zeros(size), np.zeros(size)
-        #     a_fit, b_fit = np.zeros(size), np.zeros(size)
-        #     da_fit, db_fit = np.zeros(size), np.zeros(size)
-        #
-        #     parameters.add_many(('z', redshift_guess, True, redshift_guess - 0.02, redshift_guess + 0.02, None),
-        #                         ('sigma_kms', sigma_kms_guess, True, 50, 2000.0, None),
-        #                         ('flux_OIII5008', flux_guess, True, 0, None, None),
-        #                         ('a', 0.0, False, None, None, None),
-        #                         ('b', 0.0, False, None, None, None))
-        #
-        # else:
-        #     a_OII_fit, b_OII_fit = np.zeros(size), np.zeros(size)
-        #     da_OII_fit, db_OII_fit = np.zeros(size), np.zeros(size)
-        #     a_OIII_fit, b_OIII_fit = np.zeros(size), np.zeros(size)
-        #     da_OIII_fit, db_OIII_fit = np.zeros(size), np.zeros(size)
-        #     flux_OII_fit, dflux_OII_fit = np.zeros(size_3D), np.zeros(size_3D)
-        #     flux_OIII_fit, dflux_OIII_fit = np.zeros(size_3D), np.zeros(size_3D)
-        #     r_fit, dr_fit = np.zeros(size_3D), np.zeros(size_3D)
-        #     parameters.add('a_OII', value=0, vary=False, min=None, max=None, expr=None, brute_step=None)
-        #     parameters.add('b_OII', value=-0.0025, vary=True, min=-0.1, max=0.1, expr=None, brute_step=None)
-        #     parameters.add('a_OIII5008', value=0, vary=False, min=None, max=None, expr=None, brute_step=None)
-        #     parameters.add('b_OIII5008', value=-0.0025, vary=True, min=-0.1, max=0.1, expr=None, brute_step=None)
-        #
-        #     # Model
-        #     for i in range(max_OII):
-        #         parameters.add_many(('z_{}'.format(i + 1), redshift_guess, True, redshift_guess - 0.002,
-        #                              redshift_guess + 0.002, None),
-        #                             ('sigma_kms_{}'.format(i + 1), sigma_kms_guess, True, 50, 2000.0, None),
-        #                             ('flux_OII_{}'.format(i + 1), flux_guess, True, 0.0, None, None))
-        #         if fit_param['ResolveOII']:
-        #             parameters.add('r_OII3729_3727_{}'.format(i + 1), value=r_OII3729_3727_guess,
-        #                            vary=True, min=0.3, max=fit_param['r_max'])
-        #     for i in range(max_OIII):
-        #         parameters.add_many(('flux_OIII5008_{}'.format(i + 1), flux_guess, True, 0.0, None, None))
+
 
         # Load the QSO field fit
         self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N2.fits'.\
             format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-        v_guess, sigma_guess, flux_guess = 0, 50, 0.5
-        self.model = Gaussian
+        redshift_guess, sigma_kms_guess, flux_guess, r_OII3729_3727_guess = z_qso, 200.0, 1.0, 1.0
+        self.model = model_OII_OIII
         self.parameters = lmfit.Parameters()
-        self.parameters.add_many(('v', v_guess, True, -300, 300, None),
-                                 ('sigma', sigma_guess, True, 5, 70, None),
-                                 ('flux', flux_guess, True, 0, None, None))
+        self.parameters.add_many(('z_1', redshift_guess, True, redshift_guess - 0.02, redshift_guess + 0.02, None),
+                                 ('z_2', redshift_guess, True, redshift_guess - 0.02, redshift_guess + 0.02, None),
+                                 ('z_3', redshift_guess, True, redshift_guess - 0.02, redshift_guess + 0.02, None),
+                                 ('sigma_kms_1', sigma_kms_guess, True, 50, 2000.0, None),
+                                 ('sigma_kms_2', sigma_kms_guess, True, 50, 2000.0, None),
+                                 ('sigma_kms_3', sigma_kms_guess, True, 50, 2000.0, None),
+                                 ('flux_OII_1', flux_guess, True, 0.0, None, None),
+                                 ('flux_OII_2', flux_guess, True, 0.0, None, None),
+                                 ('flux_OII_3', flux_guess, True, 0.0, None, None),
+                                 ('r_OII3729_3727_1', r_OII3729_3727_guess, True, 0.3, fit_param['r_max'], None),
+                                 ('r_OII3729_3727_2', r_OII3729_3727_guess, True, 0.3, fit_param['r_max'], None),
+                                 ('r_OII3729_3727_3', r_OII3729_3727_guess, True, 0.3, fit_param['r_max'], None),
+                                 ('flux_OIII5008_1', flux_guess, True, 0, None, None),
+                                 ('flux_OIII5008_2', flux_guess, True, 0, None, None),
+                                 ('flux_OIII5008_3', flux_guess, True, 0, None, None),
+                                 ('a_OII', 0.0, False, None, None, None),
+                                 ('b_OII', 0.0, True, -0.1, 0.1, None),
+                                 ('a_OIII5008', 0.0, False, None, None, None),
+                                 ('b_OIII5008', 0.0, True, -0.1, 0.1, None),
+                                 ('OII', 1, False, None, None, None),
+                                 ('OIII', 1, False, None, None, None),
+                                 ('z_qso', redshift_guess, True, redshift_guess - 0.02, redshift_guess + 0.02, None),
+                                 ('ResolveOII', fit_param['ResolveOII'], False, None, None, None),
+                                 ('OII_center', fit_param['OII_center'], False, None, None, None))
         if os.path.exists(self.path_fit) is False:
             print('Fitting result file does not exist, start fitting from scratch.')
 
@@ -487,8 +475,7 @@ class PlotWindow(QMainWindow):
         # self.widget5_plot.setLimits(xMin=-1000, xMax=1000)
 
         # Set param
-        self.paramSpec = [dict(name='Re-fit', type='action'),
-                          dict(name='chi=', type='float', value=None, dec=False, readonly=False),
+        self.paramSpec = [dict(name='chi=', type='float', value=None, dec=False, readonly=False),
                           dict(name='v1=', type='float', value=None, dec=False, readonly=False),
                           dict(name='sigma1=', type='float', value=None, readonly=False),
                           dict(name='flux1=', type='float', value=None, readonly=False),
@@ -501,19 +488,25 @@ class PlotWindow(QMainWindow):
         self.param = pt.Parameter.create(name='Options', type='group', children=self.paramSpec)
         self.tree = pt.ParameterTree()
         self.tree.setParameters(self.param)
-        self.param.children()[0].sigStateChanged.connect(self.update_fit)
 
         # Buttons
         btn_1 = QPushButton("Refit")
         btn_2 = QPushButton("One Gaussian")
         btn_3 = QPushButton("Two Gaussian")
         btn_4 = QPushButton("Three Gaussian")
+        btn_1.clicked.connect(self.update_fit)
+        btn_2.clicked.connect(self.update_num_gaussian(nums=1))
+        btn_3.clicked.connect(self.update_num_gaussian(nums=2))
+        btn_4.clicked.connect(self.update_num_gaussian(nums=3))
+
+        layout_RHS = QVBoxLayout()
         layout_btn = QHBoxLayout()
         layout_btn.addWidget(btn_1)
         layout_btn.addWidget(btn_2)
         layout_btn.addWidget(btn_3)
         layout_btn.addWidget(btn_4)
-        # btn.clicked.connect(onButtonClicked)
+        layout_RHS.addLayout(layout_btn)
+        layout_RHS.addWidget(self.tree)
 
         #
         self.layout.addWidget(self.widget1, 0, 0, 1, 1)
@@ -521,7 +514,7 @@ class PlotWindow(QMainWindow):
         self.layout.addWidget(self.widget3, 0, 2, 1, 1)
         self.layout.addWidget(self.widget4, 1, 0, 1, 1)
         self.layout.addWidget(self.widget5, 1, 1, 1, 1)
-        self.layout.addLayout(layout_btn, 1, 2, 1, 1)
+        self.layout.addLayout(layout_RHS, 1, 2, 1, 1)
         # self.layout.addWidget(self.tree, 1, 2, 1, 1)
 
 
@@ -673,6 +666,9 @@ class PlotWindow(QMainWindow):
             self.widget5_plot.plot(self.wave_OIII_exp, np.nansum(self.flux_OIII_array[:, :, i, j], axis=1)
                                    + self.b_OIII[i, j] + self.a_OIII[i, j] * self.wave_OIII_exp, pen='r')
 
+    def define_num(self, nums=1):
+        parameters['OII'].value = nums
+        parameters['OIII'].value = nums
 
     def update_fit(self):
         i, j = self.ypixel, self.xpixel
