@@ -179,7 +179,7 @@ def model_OII_OIII(wave_vac, **params):
 
 class PlotWindow(QMainWindow):
     def __init__(self, cubename='3C57', zapped=False, UseDataSeg=(1.5, 'gauss', None, None),
-                 width_OII=10, width_OIII=10, UseSmoothedCubes=True, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss')):
+                 width_OII=50, width_OIII=50, UseSmoothedCubes=True, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss')):
         super().__init__()
 
         fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
@@ -377,6 +377,20 @@ class PlotWindow(QMainWindow):
                          dr.data, a_OII.data, da_OII.data, b_OII.data, db_OII.data, a_OIII.data, da_OIII.data, \
                          b_OIII.data, db_OIII.data, chisqr.data, redchi.data
         self.size = fs.shape
+
+        # Convert zeros to nan
+        # v, z, dz = np.where(v != 0, v, np.nan), np.where(z != 0, z, np.nan), np.where(dz != 0, dz, np.nan)
+        # sigma, dsigma = np.where(sigma != 0, sigma, np.nan), np.where(dsigma != 0, dsigma, np.nan)
+        # flux_OII_fit, dflux_OII_fit = np.where(flux_OII_fit != 0, flux_OII_fit, np.nan), np.where(dflux_OII_fit != 0, dflux_OII_fit, np.nan)
+        # flux_OIII_fit, dflux_OIII_fit = np.where(flux_OIII_fit != 0, flux_OIII_fit, np.nan), np.where(dflux_OIII_fit != 0, dflux_OIII_fit, np.nan)
+        # r, dr = np.where(r != 0, r, np.nan), np.where(dr != 0, dr, np.nan)
+        # self.hdul_fit[2].data, self.hdul_fit[3].data, self.hdul_fit[4].data, self.hdul_fit[5].data, \
+        # self.hdul_fit[6].data, self.hdul_fit[7].data, self.hdul_fit[8].data, self.hdul_fit[9].data, \
+        # self.hdul_fit[10].data, self.hdul_fit[11].data, self.hdul_fit[12].data = v, z, dz, sigma, dsigma, flux_OII_fit, dflux_OII_fit, \
+        #                                                                          flux_OIII_fit, dflux_OIII_fit, r, dr
+        # self.hdul_fit.writeto(self.path_fit, overwrite=True)
+        #
+        # raise ValueError('Convert zeros')
         # if v.shape[0] != 3:
         #     print('Number of Gaussian components is not 3, please check the fitting results.')
         #     row = np.zeros((1, *self.size))
@@ -491,32 +505,34 @@ class PlotWindow(QMainWindow):
         # self.widget5_plot.setLimits(xMin=-1000, xMax=1000)
 
         # Set param
-        self.paramSpec = [dict(name='chi=', type='float', value=None, dec=False, readonly=False),
-                          dict(name='v_1=', type='float', value=None, dec=False, readonly=False),
-                          dict(name='sigma_1=', type='float', value=None, readonly=False),
-                          dict(name='OII_1=', type='float', value=None, readonly=False),
-                          dict(name='OIII_1=', type='float', value=None, readonly=False),
-                          dict(name='v_2=', type='float', value=None, dec=False, readonly=False),
-                          dict(name='sigma_2=', type='float', value=None, readonly=False),
-                          dict(name='OII_2=', type='float', value=None, readonly=False),
-                          dict(name='OIII_2=', type='float', value=None, readonly=False),
-                          dict(name='v_3=', type='float', value=None, dec=False, readonly=False),
-                          dict(name='sigma_3=', type='float', value=None, readonly=False),
-                          dict(name='OII_3=', type='float', value=None, readonly=False),
-                          dict(name='OIII_3=', type='float', value=None, readonly=False)]
+        self.paramSpec = [dict(name='chi=', type='float', value=0, dec=False, readonly=False),
+                          dict(name='v_1=', type='float', value=0, dec=False, readonly=False),
+                          dict(name='sigma_1=', type='float', value=0, readonly=False),
+                          dict(name='OII_1=', type='float', value=0, readonly=False),
+                          dict(name='OIII_1=', type='float', value=0, readonly=False),
+                          dict(name='v_2=', type='float', value=0, dec=False, readonly=False),
+                          dict(name='sigma_2=', type='float', value=0, readonly=False),
+                          dict(name='OII_2=', type='float', value=0, readonly=False),
+                          dict(name='OIII_2=', type='float', value=0, readonly=False),
+                          dict(name='v_3=', type='float', value=0, dec=False, readonly=False),
+                          dict(name='sigma_3=', type='float', value=0, readonly=False),
+                          dict(name='OII_3=', type='float', value=0, readonly=False),
+                          dict(name='OIII_3=', type='float', value=0, readonly=False)]
         self.param = pt.Parameter.create(name='Options', type='group', children=self.paramSpec)
         self.tree = pt.ParameterTree()
         self.tree.setParameters(self.param)
 
         # Buttons
         btn_1 = QPushButton("Refit")
-        btn_2 = QPushButton("One Gaussian")
-        btn_3 = QPushButton("Two Gaussian")
-        btn_4 = QPushButton("Three Gaussian")
+        btn_2 = QPushButton("1 Gauss")
+        btn_3 = QPushButton("2 Gauss")
+        btn_4 = QPushButton("3 Gauss")
+        btn_5 = QPushButton("Save v50w80")
         btn_1.clicked.connect(self.update_fit)
         btn_2.clicked.connect(self.N_1)
         btn_3.clicked.connect(self.N_2)
         btn_4.clicked.connect(self.N_3)
+        btn_5.clicked.connect(self.save_v50w80)
 
         layout_RHS = QVBoxLayout()
         layout_btn = QHBoxLayout()
@@ -524,6 +540,7 @@ class PlotWindow(QMainWindow):
         layout_btn.addWidget(btn_2)
         layout_btn.addWidget(btn_3)
         layout_btn.addWidget(btn_4)
+        layout_btn.addWidget(btn_5)
         layout_RHS.addLayout(layout_btn)
         layout_RHS.addWidget(self.tree)
 
@@ -544,7 +561,7 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.v_map.setLookupTable(lut)
-        self.v_map.updateImage(image=self.v50.T, levels=(-500, 500))
+        self.v_map.updateImage(image=self.v50.T, levels=(-350, 350))
 
         # Plot the 2D map in the second plot
         self.sigma_map = pg.ImageItem()
@@ -553,7 +570,7 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.sigma_map.setLookupTable(lut)
-        self.sigma_map.updateImage(image=self.w80.T, levels=(0, 1000))
+        self.sigma_map.updateImage(image=self.w80.T, levels=(0, 800))
 
         # Plot the chi 2D map in the third plot
         self.chi_map = pg.ImageItem()
@@ -562,7 +579,7 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.chi_map.setLookupTable(lut)
-        self.chi_map.updateImage(image=self.chisqr.T, levels=(0, 50))
+        self.chi_map.updateImage(image=self.redchi.T, levels=(0, 3))
 
         # Link the axis of the plots
         self.widget1_plot.setXLink(self.widget2_plot)
@@ -631,8 +648,30 @@ class PlotWindow(QMainWindow):
             # print(pos.x(), pos.y())
             self.xpixel, self.ypixel = int(np.floor(pos.x() + 1)), int(np.floor(pos.y()))
 
+            self.show_fit()
+            self.plot_OII()
+            self.plot_OIII()
 
-            # Get the fitting results
+    def show_fit(self):
+        i, j = self.ypixel, self.xpixel
+        # Get the fitting results
+        if self.mask[i, j]:
+            # Show the fitting results
+            self.param['chi='] = '{:.2f}'.format(self.redchi[i, j])
+            self.param['v_1='] = '{:.0f}'.format(self.v[0, i, j])
+            self.param['sigma_1='] = '{:.0f}'.format(self.sigma[0, i, j])
+            self.param['OII_1='] = '{:.4f}'.format(self.flux_OII_fit[0, i, j])
+            self.param['OIII_1='] = '{:.4f}'.format(self.flux_OIII_fit[0, i, j])
+            self.param['v_2='] = '{:.0f}'.format(self.v[1, i, j])
+            self.param['sigma_2='] = '{:.0f}'.format(self.sigma[1, i, j])
+            self.param['OII_2='] = '{:.4f}'.format(self.flux_OII_fit[1, i, j])
+            self.param['OIII_2='] = '{:.4f}'.format(self.flux_OII_fit[1, i, j])
+            self.param['v_3='] = '{:.0f}'.format(self.v[2, i, j])
+            self.param['sigma_3='] = '{:.0f}'.format(self.sigma[2, i, j])
+            self.param['OII_3='] = '{:.4f}'.format(self.flux_OII_fit[2, i, j])
+            self.param['OIII_3='] = '{:.4f}'.format(self.flux_OII_fit[2, i, j])
+
+            # Draw points
             scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
             scatter_1.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
             scatter_2 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
@@ -643,140 +682,184 @@ class PlotWindow(QMainWindow):
             self.widget2_plot.addItem(scatter_2)
             self.widget3_plot.addItem(scatter_3)
 
-            self.plot_OII()
-            self.plot_OIII()
-
     def plot_OII(self):
         i, j = self.ypixel, self.xpixel
+        self.widget4_plot.clear()
         if self.mask_OII[i, j]:
-            # Plot new data
-            self.widget4_plot.clear()
-
-            # Show the fitting results
-            self.param['chi='] = '{:.2f}'.format(self.redchi[i, j])
-            self.param['v_1='] = '{:.0f}'.format(self.v[0, i, j])
-            self.param['sigma_1='] = '{:.0f}'.format(self.sigma[0, i, j])
-            self.param['OII_1='] = '{:.2f}'.format(self.flux_OII_fit[0, i, j])
-            self.param['OIII_1='] = '{:.2f}'.format(self.flux_OIII_fit[0, i, j])
-            self.param['v_2='] = '{:.0f}'.format(self.v[1, i, j])
-            self.param['sigma_2='] = '{:.0f}'.format(self.sigma[1, i, j])
-            self.param['OII_2='] = '{:.2f}'.format(self.flux_OII_fit[1, i, j])
-            self.param['OIII_2='] = '{:.2f}'.format(self.flux_OII_fit[1, i, j])
-            self.param['v_3='] = '{:.0f}'.format(self.v[2, i, j])
-            self.param['sigma_3='] = '{:.0f}'.format(self.sigma[2, i, j])
-            self.param['OII_3='] = '{:.2f}'.format(self.flux_OII_fit[2, i, j])
-            self.param['OIII_3='] = '{:.2f}'.format(self.flux_OII_fit[2, i, j])
-
             # Plot the data
             self.widget4_plot.plot(self.wave_OII_vac, self.flux_OII[:, i, j], pen='k')
             self.widget4_plot.plot(self.wave_OII_vac, self.flux_err_OII[:, i, j], pen='g')
 
             # Plot each individual component
-            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 0, i, j], pen='b')
-            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 1, i, j], pen='b')
-            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 2, i, j], pen='b')
+            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 0, i, j],
+                                   pen=pg.mkPen(color=(91, 28, 237), width=5, style=QtCore.Qt.DashLine))
+            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 1, i, j],
+                                   pen=pg.mkPen(color=(119, 73, 227), width=3, style=QtCore.Qt.DashLine))
+            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 2, i, j],
+                                   pen=pg.mkPen(color=(151, 116, 232), width=2, style=QtCore.Qt.DashLine))
             self.widget4_plot.plot(self.wave_OII_exp, np.nansum(self.flux_OII_array[:, :, i, j], axis=1)
                                    + self.b_OII[i, j] + self.a_OII[i, j] * self.wave_OII_exp, pen='r')
 
     def plot_OIII(self):
         i, j = self.ypixel, self.xpixel
+        self.widget5_plot.clear()
         if self.mask_OIII[i, j]:
-            # Plot new data
-            self.widget5_plot.clear()
-
             # Plot the data and the fit
             self.widget5_plot.plot(self.wave_OIII_vac, self.flux_OIII[:, i, j], pen='k')
             self.widget5_plot.plot(self.wave_OIII_vac, self.flux_err_OIII[:, i, j], pen='g')
 
             # Plot each individual component
-            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 0, i, j], pen='b')
-            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 1, i, j], pen='b')
-            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 2, i, j], pen='b')
+            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 0, i, j],
+                                   pen=pg.mkPen(color=(91, 28, 237), width=5, style=QtCore.Qt.DashLine))
+            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 1, i, j],
+                                   pen=pg.mkPen(color=(119, 73, 227), width=3, style=QtCore.Qt.DashLine))
+            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 2, i, j],
+                                   pen=pg.mkPen(color=(151, 116, 232), width=2, style=QtCore.Qt.DashLine))
             self.widget5_plot.plot(self.wave_OIII_exp, np.nansum(self.flux_OIII_array[:, :, i, j], axis=1)
                                    + self.b_OIII[i, j] + self.a_OIII[i, j] * self.wave_OIII_exp, pen='r')
 
     def N_1(self):
         self.parameters['OII'].value = 1
         self.parameters['OIII'].value = 1
+        self.parameters['z_2'].value = np.nan
+        self.parameters['z_2'].vary = False
+        self.parameters['z_3'].value = np.nan
+        self.parameters['z_3'].vary = False
+        self.parameters['sigma_kms_2'].value = np.nan
+        self.parameters['sigma_kms_2'].vary = False
+        self.parameters['sigma_kms_3'].value = np.nan
+        self.parameters['sigma_kms_3'].vary = False
+        self.parameters['flux_OII_2'].value = np.nan
+        self.parameters['flux_OII_2'].vary = False
+        self.parameters['flux_OII_3'].value = np.nan
+        self.parameters['flux_OII_3'].vary = False
+        self.parameters['r_OII3729_3727_2'].value = np.nan
+        self.parameters['r_OII3729_3727_2'].vary = False
+        self.parameters['r_OII3729_3727_3'].value = np.nan
+        self.parameters['r_OII3729_3727_3'].vary = False
+        self.parameters['flux_OIII5008_2'].value = np.nan
+        self.parameters['flux_OIII5008_2'].vary = False
+        self.parameters['flux_OIII5008_3'].value = np.nan
+        self.parameters['flux_OIII5008_3'].vary = False
 
     def N_2(self):
+        if self.parameters['OII'].value == 1:
+            self.param['v_2='] = 0
+            self.param['sigma_2='] = 0
         self.parameters['OII'].value = 2
         self.parameters['OIII'].value = 2
+        self.parameters['z_2'].value = self.z_qso
+        self.parameters['z_2'].vary = True
+        self.parameters['z_3'].value = np.nan
+        self.parameters['z_3'].vary = False
+        self.parameters['sigma_kms_2'].value = 200
+        self.parameters['sigma_kms_2'].vary = True
+        self.parameters['sigma_kms_3'].value = np.nan
+        self.parameters['sigma_kms_3'].vary = False
+        self.parameters['flux_OII_2'].value = 1
+        self.parameters['flux_OII_2'].vary = True
+        self.parameters['flux_OII_3'].value = np.nan
+        self.parameters['flux_OII_3'].vary = False
+        self.parameters['r_OII3729_3727_2'].value = 1
+        self.parameters['r_OII3729_3727_2'].vary = True
+        self.parameters['r_OII3729_3727_3'].value = np.nan
+        self.parameters['r_OII3729_3727_3'].vary = False
+        self.parameters['flux_OIII5008_2'].value = 1
+        self.parameters['flux_OIII5008_2'].vary = True
+        self.parameters['flux_OIII5008_3'].value = np.nan
+        self.parameters['flux_OIII5008_3'].vary = False
 
     def N_3(self):
         self.parameters['OII'].value = 3
         self.parameters['OIII'].value = 3
+        self.parameters['z_2'].value = self.z_qso
+        self.parameters['z_2'].vary = True
+        self.parameters['z_3'].value = self.z_qso
+        self.parameters['z_3'].vary = True
+        self.parameters['sigma_kms_2'].value = 200
+        self.parameters['sigma_kms_2'].vary = True
+        self.parameters['sigma_kms_3'].value = 200
+        self.parameters['sigma_kms_3'].vary = True
+        self.parameters['flux_OII_2'].value = 1
+        self.parameters['flux_OII_2'].vary = True
+        self.parameters['flux_OII_3'].value = 1
+        self.parameters['flux_OII_3'].vary = True
+        self.parameters['r_OII3729_3727_2'].value = 1
+        self.parameters['r_OII3729_3727_2'].vary = True
+        self.parameters['r_OII3729_3727_3'].value = 1
+        self.parameters['r_OII3729_3727_3'].vary = True
+        self.parameters['flux_OIII5008_2'].value = 1
+        self.parameters['flux_OIII5008_2'].vary = True
+        self.parameters['flux_OIII5008_3'].value = 1
+        self.parameters['flux_OIII5008_3'].vary = True
 
-    def compute_v50w80(self):
+    def compute_v50w80(self, i, j):
+        flux_OII_ij = model_OII(self.wave_OII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
+                                self.flux_OII_fit[:, i, j], self.r[:, i, j], plot=False)
+        flux_OIII_ij = Gaussian(self.wave_OIII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
+                                self.flux_OIII_fit[:, i, j], wave_OIII5008_vac)
+
         # Calculate V_50 and W_80 for a single pixel
-        wave_OII_exp_ = self.wave_OII_exp[:, np.newaxis, np.newaxis]
-        wave_OIII_exp_ = self.wave_OIII_exp[:, np.newaxis, np.newaxis]
-        flux_OII_sum = np.nansum(self.flux_OII_array, axis=1)
-        flux_OIII_sum = np.nansum(self.flux_OIII_array, axis=1)
+        flux_OII_sum = np.nansum(flux_OII_ij, axis=1)
+        flux_OIII_sum = np.nansum(flux_OIII_ij, axis=1)
 
-        flux_cumsum_OII = integrate.cumtrapz(flux_OII_sum, wave_OII_exp_, initial=None, axis=0)
+        flux_cumsum_OII = integrate.cumtrapz(flux_OII_sum, self.wave_OII_exp, initial=None, axis=0)
         flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
 
-        wave_10 = np.take_along_axis(wave_OII_exp_, np.argmin(np.abs(flux_cumsum_OII - 0.10), axis=0)[np.newaxis, :, :],
-                                     axis=0)[0]
-        wave_50 = \
-            np.take_along_axis(wave_OII_exp_, np.argmin(np.abs(flux_cumsum_OII - 0.50), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
-        wave_90 = \
-            np.take_along_axis(wave_OII_exp_, np.argmin(np.abs(flux_cumsum_OII - 0.90), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
+        wave_10 = self.wave_OII_exp[np.argmin(np.abs(flux_cumsum_OII - 0.10))]
+        wave_50 = self.wave_OII_exp[np.argmin(np.abs(flux_cumsum_OII - 0.50))]
+        wave_90 = self.wave_OII_exp[np.argmin(np.abs(flux_cumsum_OII - 0.90))]
         z50_OII = (wave_50 - wave_OII3728_vac) / wave_OII3728_vac
         w80_OII = c_kms * (wave_90 - wave_10) / (wave_OII3728_vac * (1 + z50_OII))
 
         # Moments for OIII
-        flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_sum, wave_OIII_exp_, initial=None, axis=0)
+        flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_sum, self.wave_OIII_exp, initial=None, axis=0)
         flux_cumsum_OIII /= flux_cumsum_OIII.max(axis=0)
 
-        wave_10 = \
-            np.take_along_axis(wave_OIII_exp_, np.argmin(np.abs(flux_cumsum_OIII - 0.10), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
-        wave_50 = \
-            np.take_along_axis(wave_OIII_exp_, np.argmin(np.abs(flux_cumsum_OIII - 0.50), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
-        wave_90 = \
-            np.take_along_axis(wave_OIII_exp_, np.argmin(np.abs(flux_cumsum_OIII - 0.90), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
+        wave_10 = self.wave_OIII_exp[np.argmin(np.abs(flux_cumsum_OIII - 0.10))]
+        wave_50 = self.wave_OIII_exp[np.argmin(np.abs(flux_cumsum_OIII - 0.50))]
+        wave_90 = self.wave_OIII_exp[np.argmin(np.abs(flux_cumsum_OIII - 0.90))]
         z50_OIII = (wave_50 - wave_OIII5008_vac) / wave_OIII5008_vac
         w80_OIII = c_kms * (wave_90 - wave_10) / (wave_OIII5008_vac * (1 + z50_OIII))
 
-        z50 = np.where(self.mask_OIII != 0, z50_OIII, z50_OII)
+        if self.mask_OIII[i, j] != 0:
+            z50 = z50_OIII
+            w80 = w80_OIII
+        else:
+            z50 = z50_OII
+            w80 = w80_OII
         v50 = c_kms * (z50 - self.z_qso) / (1 + self.z_qso)
-        w80 = np.where(self.mask_OIII > 0, w80_OIII, w80_OII)
-        v50 = np.where(self.mask != 0, v50, np.nan)
-        w80 = np.where(self.mask != 0, w80, np.nan)
-        self.v50 = v50
-        self.w80 = w80
+        return v50, w80
 
     def update_fit(self):
         i, j = self.ypixel, self.xpixel
 
         # Refit that specific pixel
         z_1 = (self.param['v_1='] / c_kms * (1 + self.z_qso)) + self.z_qso
-        z_2 = (self.param['v_2='] / c_kms * (1 + self.z_qso)) + self.z_qso
-        z_3 = (self.param['v_3='] / c_kms * (1 + self.z_qso)) + self.z_qso
         self.parameters['z_1'].value = z_1
-        self.parameters['z_1'].max = z_1 + ((10 / c_kms * (1 + self.z_qso)) + self.z_qso)
-        self.parameters['z_1'].min = z_1 - ((10 / c_kms * (1 + self.z_qso)) + self.z_qso)
-        self.parameters['z_2'].value = z_2
-        self.parameters['z_2'].max = z_2 + ((10 / c_kms * (1 + self.z_qso)) + self.z_qso)
-        self.parameters['z_2'].min = z_2 - ((10 / c_kms * (1 + self.z_qso)) + self.z_qso)
-        self.parameters['z_3'].value = z_3
-        self.parameters['z_3'].max = z_3 + ((10 / c_kms * (1 + self.z_qso)) + self.z_qso)
-        self.parameters['z_3'].min = z_3 - ((10 / c_kms * (1 + self.z_qso)) + self.z_qso)
+        self.parameters['z_1'].max = z_1 + ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
+        self.parameters['z_1'].min = z_1 - ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
         self.parameters['sigma_kms_1'].value = self.param['sigma_1=']
-        self.parameters['sigma_kms_1'].max = self.param['sigma_1='] + 10
-        self.parameters['sigma_kms_1'].min = self.param['sigma_1='] - 10
-        self.parameters['sigma_kms_2'].value = self.param['sigma_2=']
-        self.parameters['sigma_kms_2'].max = self.param['sigma_2='] + 10
-        self.parameters['sigma_kms_2'].min = self.param['sigma_2='] - 10
-        self.parameters['sigma_kms_3'].value = self.param['sigma_3=']
-        self.parameters['sigma_kms_3'].max = self.param['sigma_3='] + 10
-        self.parameters['sigma_kms_3'].min = self.param['sigma_3='] - 10
+        self.parameters['sigma_kms_1'].max = self.param['sigma_1='] + 100
+        self.parameters['sigma_kms_1'].min = 30
+
+        if self.parameters['OII'].value == 2:
+            z_2 = (self.param['v_2='] / c_kms * (1 + self.z_qso)) + self.z_qso
+            self.parameters['z_2'].value = z_2
+            self.parameters['z_2'].max = z_2 + ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
+            self.parameters['z_2'].min = z_2 - ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
+            self.parameters['sigma_kms_2'].value = self.param['sigma_2=']
+            self.parameters['sigma_kms_2'].max = self.param['sigma_2='] + 100
+            self.parameters['sigma_kms_2'].min = 30
+
+        elif self.parameters['OII'].value == 3:
+            z_3 = (self.param['v_3='] / c_kms * (1 + self.z_qso)) + self.z_qso
+            self.parameters['z_3'].value = z_3
+            self.parameters['z_3'].max = z_3 + ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
+            self.parameters['z_3'].min = z_3 - ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
+            self.parameters['sigma_kms_3'].value = self.param['sigma_3=']
+            self.parameters['sigma_kms_3'].max = self.param['sigma_3='] + 100
+            self.parameters['sigma_kms_3'].min = 30
 
         #
         flux_ij = self.flux[:, i, j]
@@ -803,43 +886,67 @@ class PlotWindow(QMainWindow):
         sigma_3, dsigma_3 = result.best_values['sigma_kms_3'], result.params['sigma_kms_3'].stderr
         self.z[:, i, j], self.sigma[:, i, j] = [z_1, z_2, z_3], [sigma_1, sigma_2, sigma_3]
         self.dz[:, i, j], self.dsigma[:, i, j] = [dz_1, dz_2, dz_3], [dsigma_1, dsigma_2, dsigma_3]
-        self.v[:, i, j] = [c_kms * (z_1 - self.z_qso), c_kms * (z_2 - self.z_qso), c_kms * (z_3 - self.z_qso)]
+        self.v[:, i, j] = [c_kms * (z_1 - self.z_qso) / (1 + self.z_qso),
+                           c_kms * (z_2 - self.z_qso) / (1 + self.z_qso),
+                           c_kms * (z_3 - self.z_qso) / (1 + self.z_qso)]
 
 
         flux_OII_1, dflux_OII_1 = result.best_values['flux_OII_1'], result.params['flux_OII_1'].stderr
         flux_OII_2, dflux_OII_2 = result.best_values['flux_OII_2'], result.params['flux_OII_2'].stderr
         flux_OII_3, dflux_OII_3 = result.best_values['flux_OII_3'], result.params['flux_OII_3'].stderr
-        r_1, dr_1 = result.best_values['r_1'], result.params['r_1'].stderr
-        r_2, dr_2 = result.best_values['r_2'], result.params['r_2'].stderr
-        r_3, dr_3 = result.best_values['r_3'], result.params['r_3'].stderr
-        self.flux_OII[:, i, j] = [flux_OII_1, flux_OII_2, flux_OII_3]
-        self.dflux_OII[:, i, j] = [dflux_OII_1, dflux_OII_2, dflux_OII_3]
+        r_1, dr_1 = result.best_values['r_OII3729_3727_1'], result.params['r_OII3729_3727_1'].stderr
+        r_2, dr_2 = result.best_values['r_OII3729_3727_2'], result.params['r_OII3729_3727_2'].stderr
+        r_3, dr_3 = result.best_values['r_OII3729_3727_3'], result.params['r_OII3729_3727_3'].stderr
+        self.flux_OII_fit[:, i, j] = [flux_OII_1, flux_OII_2, flux_OII_3]
+        self.dflux_OII_fit[:, i, j] = [dflux_OII_1, dflux_OII_2, dflux_OII_3]
         self.r[:, i, j] = [r_1, r_2, r_3]
         self.dr[:, i, j] = [dr_1, dr_2, dr_3]
 
-        flux_OIII_1, dflux_OIII_1 = result.best_values['flux_OIII_1'], result.params['flux_OIII_1'].stderr
-        flux_OIII_2, dflux_OIII_2 = result.best_values['flux_OIII_2'], result.params['flux_OIII_2'].stderr
-        flux_OIII_3, dflux_OIII_3 = result.best_values['flux_OIII_3'], result.params['flux_OIII_3'].stderr
-        self.flux_OIII[:, i, j] = [flux_OIII_1, flux_OIII_2, flux_OIII_3]
-        self.dflux_OIII[:, i, j] = [dflux_OIII_1, dflux_OIII_2, dflux_OIII_3]
+        flux_OIII_1, dflux_OIII_1 = result.best_values['flux_OIII5008_1'], result.params['flux_OIII5008_1'].stderr
+        flux_OIII_2, dflux_OIII_2 = result.best_values['flux_OIII5008_2'], result.params['flux_OIII5008_2'].stderr
+        flux_OIII_3, dflux_OIII_3 = result.best_values['flux_OIII5008_3'], result.params['flux_OIII5008_3'].stderr
+        self.flux_OIII_fit[:, i, j] = [flux_OIII_1, flux_OIII_2, flux_OIII_3]
+        self.dflux_OIII_fit[:, i, j] = [dflux_OIII_1, dflux_OIII_2, dflux_OIII_3]
 
-
-        # Re initiolize
-        # self.v50[i, j], self.w80[i, j] =
+        self.hdul_fit[1].data = self.fs
+        self.hdul_fit[2].data, self.hdul_fit[3].data, self.hdul_fit[4].data, self.hdul_fit[5].data, \
+        self.hdul_fit[6].data, self.hdul_fit[7].data, self.hdul_fit[8].data, self.hdul_fit[9].data, \
+        self.hdul_fit[10].data, self.hdul_fit[11].data, \
+        self.hdul_fit[12].data = self.v, self.z, self.dz, self.sigma, self.dsigma, self.flux_OII_fit, \
+                                 self.dflux_OII_fit, self.flux_OIII_fit, self.dflux_OIII_fit, self.r, self.dr
+        self.hdul_fit[21].data, self.hdul_fit[22].data = self.chisqr, self.redchi
 
         # Save fitting results
-        hdul_fit = fits.open(self.path_fit)
-        hdul_fit.writeto(self.path_fit, overwrite=True)
+        self.hdul_fit.writeto(self.path_fit, overwrite=True)
+
+        # Re initiolize
+        self.v50[i, j], self.w80[i, j] = self.compute_v50w80(i, j)
+
+        # Update fit
+        self.flux_OII_array[:, :, i, j] = model_OII(self.wave_OII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
+                                        self.flux_OII_fit[:, i, j], self.r[:, i, j], plot=False)
+        self.flux_OIII_array[:, :, i, j] = Gaussian(self.wave_OIII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
+                                        self.flux_OIII_fit[:, i, j], wave_OIII5008_vac)
 
         # Replot
+        self.show_fit()
         self.plot_OII()
         self.plot_OIII()
         self.v_map.updateImage(image=self.v50.T)
         self.sigma_map.updateImage(image=self.w80.T)
-        self.chi_map.updateImage(image=self.chisqr.T)
+        self.chi_map.updateImage(image=self.redchi.T)
 
-    def update_fit_G2(self):
-        print('in progress')
+    def save_v50w80(self):
+        path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
+        path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
+
+        hdul_v50 = fits.ImageHDU(self.v50, header=self.hdul_fit[2].header)
+        hdul_v50.writeto(path_v50, overwrite=True)
+        hdul_w80 = fits.ImageHDU(self.w80, header=self.hdul_fit[2].header)
+        hdul_w80.writeto(path_w80, overwrite=True)
+
+
+
 
 
 
