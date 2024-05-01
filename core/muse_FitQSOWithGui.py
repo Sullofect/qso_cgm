@@ -275,7 +275,7 @@ class PlotWindow(QMainWindow):
             self.wave_vac = np.array([wave_OII_vac, wave_OIII_vac], dtype=object)
             self.flux = np.vstack((flux_OII, flux_OIII))
             self.flux_err = np.vstack((flux_err_OII, flux_err_OIII))
-            # flux_err = np.where(flux_err != 0, flux_err, np.inf)
+            # self.flux_err = np.where(self.flux_err != 0, self.flux_err, np.inf)
 
             #
             # flux = np.where(flux_err != 0, flux, np.nan)
@@ -528,11 +528,13 @@ class PlotWindow(QMainWindow):
         btn_3 = QPushButton("2 Gauss")
         btn_4 = QPushButton("3 Gauss")
         btn_5 = QPushButton("Save v50w80")
+        btn_6 = QPushButton("Clear")
         btn_1.clicked.connect(self.update_fit)
         btn_2.clicked.connect(self.N_1)
         btn_3.clicked.connect(self.N_2)
         btn_4.clicked.connect(self.N_3)
         btn_5.clicked.connect(self.save_v50w80)
+        btn_6.clicked.connect(self.clear_scatter)
 
         layout_RHS = QVBoxLayout()
         layout_btn = QHBoxLayout()
@@ -541,6 +543,7 @@ class PlotWindow(QMainWindow):
         layout_btn.addWidget(btn_3)
         layout_btn.addWidget(btn_4)
         layout_btn.addWidget(btn_5)
+        layout_btn.addWidget(btn_6)
         layout_RHS.addLayout(layout_btn)
         layout_RHS.addWidget(self.tree)
 
@@ -579,7 +582,12 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.chi_map.setLookupTable(lut)
-        self.chi_map.updateImage(image=self.redchi.T, levels=(0, 3))
+        self.chi_map.updateImage(image=self.redchi.T, levels=(0, 2))
+
+        # Mark the locations
+        self.scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
+        self.scatter_2 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
+        self.scatter_3 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
 
         # Link the axis of the plots
         self.widget1_plot.setXLink(self.widget2_plot)
@@ -665,22 +673,19 @@ class PlotWindow(QMainWindow):
             self.param['v_2='] = '{:.0f}'.format(self.v[1, i, j])
             self.param['sigma_2='] = '{:.0f}'.format(self.sigma[1, i, j])
             self.param['OII_2='] = '{:.4f}'.format(self.flux_OII_fit[1, i, j])
-            self.param['OIII_2='] = '{:.4f}'.format(self.flux_OII_fit[1, i, j])
+            self.param['OIII_2='] = '{:.4f}'.format(self.flux_OIII_fit[1, i, j])
             self.param['v_3='] = '{:.0f}'.format(self.v[2, i, j])
             self.param['sigma_3='] = '{:.0f}'.format(self.sigma[2, i, j])
             self.param['OII_3='] = '{:.4f}'.format(self.flux_OII_fit[2, i, j])
-            self.param['OIII_3='] = '{:.4f}'.format(self.flux_OII_fit[2, i, j])
+            self.param['OIII_3='] = '{:.4f}'.format(self.flux_OIII_fit[2, i, j])
 
             # Draw points
-            scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
-            scatter_1.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
-            scatter_2 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
-            scatter_2.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
-            scatter_3 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
-            scatter_3.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
-            self.widget1_plot.addItem(scatter_1)
-            self.widget2_plot.addItem(scatter_2)
-            self.widget3_plot.addItem(scatter_3)
+            self.scatter_1.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
+            self.scatter_2.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
+            self.scatter_3.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
+            self.widget1_plot.addItem(self.scatter_1)
+            self.widget2_plot.addItem(self.scatter_2)
+            self.widget3_plot.addItem(self.scatter_3)
 
     def plot_OII(self):
         i, j = self.ypixel, self.xpixel
@@ -944,6 +949,14 @@ class PlotWindow(QMainWindow):
         hdul_v50.writeto(path_v50, overwrite=True)
         hdul_w80 = fits.ImageHDU(self.w80, header=self.hdul_fit[2].header)
         hdul_w80.writeto(path_w80, overwrite=True)
+
+    def clear_scatter(self):
+        self.scatter_1.clear()
+        self.scatter_2.clear()
+        self.scatter_3.clear()
+        # self.v_map.updateImage(image=self.v50.T)
+        # self.sigma_map.updateImage(image=self.w80.T)
+        # self.chi_map.updateImage(image=self.redchi.T)
 
 
 

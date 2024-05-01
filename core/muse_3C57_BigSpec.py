@@ -68,6 +68,7 @@ v_N2, z_N2, dz_N2 = hdul_N2[2].data, hdul_N2[3].data, hdul_N2[4].data
 sigma_N2, dsigma_N2 = hdul_N2[5].data, hdul_N2[6].data
 flux_OII_fit_N2, dflux_OII_fit_N2 = hdul_N2[7].data, hdul_N2[8].data
 flux_OIII_fit_N2, dflux_OIII_fit_N2 = hdul_N2[9].data, hdul_N2[10].data
+r_fit_N2, dr_fit_N2 = hdul_N2[11].data, hdul_N2[12].data
 r_N2, dr_N2 = hdul_N2[11].data, hdul_N2[12].data
 a_OII, da_OII = hdul_N2[13].data, hdul_N2[14].data
 a_OIII, da_OIII = hdul_N2[17].data, hdul_N2[18].data
