@@ -5,7 +5,6 @@ import lmfit
 import numpy as np
 import pyqtgraph as pg
 import matplotlib as mpl
-import gala.potential as gp
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 import pyqtgraph.parametertree as pt
@@ -30,7 +29,7 @@ from astropy.table import Table
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QPushButton, QVBoxLayout
 from matplotlib import cm
-from scipy import integrate
+from scipy import integrate, interpolate
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -422,40 +421,37 @@ class PlotWindow(QMainWindow):
                                         self.flux_OIII_fit, wave_OIII5008_vac)
 
         # Calculate V_50 and W_80
+        flux_OII_v50 = model_OII(self.wave_OII_exp[:, np.newaxis, np.newaxis, np.newaxis], self.z, self.sigma,
+                                 self.flux_OII_fit, self.r, plot=True)[0]
         wave_OII_exp_ = self.wave_OII_exp[:, np.newaxis, np.newaxis]
         wave_OIII_exp_ = self.wave_OIII_exp[:, np.newaxis, np.newaxis]
-        flux_OII_sum = np.nansum(self.flux_OII_array, axis=1)
+        flux_OII_sum = np.nansum(flux_OII_v50, axis=1)
         flux_OIII_sum = np.nansum(self.flux_OIII_array, axis=1)
 
-        flux_cumsum_OII = integrate.cumtrapz(flux_OII_sum, wave_OII_exp_, initial=None, axis=0)
+        # Moments
+        flux_cumsum_OII = integrate.cumtrapz(flux_OII_sum, wave_OII_exp_, initial=0, axis=0)
+        flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_sum, wave_OIII_exp_, initial=0, axis=0)
         flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
-
-        wave_10 = np.take_along_axis(wave_OII_exp_, np.argmin(np.abs(flux_cumsum_OII - 0.10), axis=0)[np.newaxis, :, :],
-                                     axis=0)[0]
-        wave_50 = \
-            np.take_along_axis(wave_OII_exp_, np.argmin(np.abs(flux_cumsum_OII - 0.50), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
-        wave_90 = \
-            np.take_along_axis(wave_OII_exp_, np.argmin(np.abs(flux_cumsum_OII - 0.90), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
-        z50_OII = (wave_50 - wave_OII3728_vac) / wave_OII3728_vac
-        w80_OII = c_kms * (wave_90 - wave_10) / (wave_OII3728_vac * (1 + z50_OII))
-
-        # Moments for OIII
-        flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_sum, wave_OIII_exp_, initial=None, axis=0)
         flux_cumsum_OIII /= flux_cumsum_OIII.max(axis=0)
 
-        wave_10 = \
-            np.take_along_axis(wave_OIII_exp_, np.argmin(np.abs(flux_cumsum_OIII - 0.10), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
-        wave_50 = \
-            np.take_along_axis(wave_OIII_exp_, np.argmin(np.abs(flux_cumsum_OIII - 0.50), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
-        wave_90 = \
-            np.take_along_axis(wave_OIII_exp_, np.argmin(np.abs(flux_cumsum_OIII - 0.90), axis=0)[np.newaxis, :, :],
-                               axis=0)[0]
-        z50_OIII = (wave_50 - wave_OIII5008_vac) / wave_OIII5008_vac
-        w80_OIII = c_kms * (wave_90 - wave_10) / (wave_OIII5008_vac * (1 + z50_OIII))
+        wave_10_OII, wave_10_OIII = np.nan * np.zeros(self.size), np.nan * np.zeros(self.size)
+        wave_50_OII, wave_50_OIII = np.nan * np.zeros(self.size), np.nan * np.zeros(self.size)
+        wave_90_OII, wave_90_OIII = np.nan * np.zeros(self.size), np.nan * np.zeros(self.size)
+        for i in range(self.size[0]):
+            for j in range(self.size[1]):
+                if self.mask[i, j] != 0:
+                    f_OII = interpolate.interp1d(flux_cumsum_OII[:, i, j], self.wave_OII_exp, fill_value='extrapolate')
+                    f_OIII = interpolate.interp1d(flux_cumsum_OIII[:, i, j], self.wave_OIII_exp, fill_value='extrapolate')
+                    wave_10_OII[i, j], wave_10_OIII[i, j] = f_OII(0.1), f_OIII(0.1)
+                    wave_50_OII[i, j], wave_50_OIII[i, j] = f_OII(0.5), f_OIII(0.5)
+                    wave_90_OII[i, j], wave_90_OIII[i, j] = f_OII(0.9), f_OIII(0.9)
+                else:
+                    pass
+
+        z50_OII = (wave_50_OII - wave_OII3727_vac) / wave_OII3727_vac
+        w80_OII = c_kms * (wave_90_OII - wave_10_OII) / (wave_OII3727_vac * (1 + z50_OII))
+        z50_OIII = (wave_50_OIII - wave_OIII5008_vac) / wave_OIII5008_vac
+        w80_OIII = c_kms * (wave_90_OIII - wave_10_OIII) / (wave_OIII5008_vac * (1 + z50_OIII))
 
         z50 = np.where(self.mask_OIII != 0, z50_OIII, z50_OII)
         v50 = c_kms * (z50 - self.z_qso) / (1 + self.z_qso)
@@ -501,8 +497,6 @@ class PlotWindow(QMainWindow):
         self.widget1_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
-        # self.widget4_plot.setLimits(xMin=-1000, xMax=1000)
-        # self.widget5_plot.setLimits(xMin=-1000, xMax=1000)
 
         # Set param
         self.paramSpec = [dict(name='chi=', type='float', value=0, dec=False, readonly=False),
@@ -800,7 +794,7 @@ class PlotWindow(QMainWindow):
 
     def compute_v50w80(self, i, j):
         flux_OII_ij = model_OII(self.wave_OII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
-                                self.flux_OII_fit[:, i, j], self.r[:, i, j], plot=False)
+                                self.flux_OII_fit[:, i, j], self.r[:, i, j], plot=True)[0]
         flux_OIII_ij = Gaussian(self.wave_OIII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
                                 self.flux_OIII_fit[:, i, j], wave_OIII5008_vac)
 
@@ -808,24 +802,23 @@ class PlotWindow(QMainWindow):
         flux_OII_sum = np.nansum(flux_OII_ij, axis=1)
         flux_OIII_sum = np.nansum(flux_OIII_ij, axis=1)
 
-        flux_cumsum_OII = integrate.cumtrapz(flux_OII_sum, self.wave_OII_exp, initial=None, axis=0)
+        # Moments
+        flux_cumsum_OII = integrate.cumtrapz(flux_OII_sum, self.wave_OII_exp, initial=0, axis=0)
         flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
-
-        wave_10 = self.wave_OII_exp[np.argmin(np.abs(flux_cumsum_OII - 0.10))]
-        wave_50 = self.wave_OII_exp[np.argmin(np.abs(flux_cumsum_OII - 0.50))]
-        wave_90 = self.wave_OII_exp[np.argmin(np.abs(flux_cumsum_OII - 0.90))]
-        z50_OII = (wave_50 - wave_OII3728_vac) / wave_OII3728_vac
-        w80_OII = c_kms * (wave_90 - wave_10) / (wave_OII3728_vac * (1 + z50_OII))
-
-        # Moments for OIII
-        flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_sum, self.wave_OIII_exp, initial=None, axis=0)
+        flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_sum, self.wave_OIII_exp, initial=0, axis=0)
         flux_cumsum_OIII /= flux_cumsum_OIII.max(axis=0)
 
-        wave_10 = self.wave_OIII_exp[np.argmin(np.abs(flux_cumsum_OIII - 0.10))]
-        wave_50 = self.wave_OIII_exp[np.argmin(np.abs(flux_cumsum_OIII - 0.50))]
-        wave_90 = self.wave_OIII_exp[np.argmin(np.abs(flux_cumsum_OIII - 0.90))]
-        z50_OIII = (wave_50 - wave_OIII5008_vac) / wave_OIII5008_vac
-        w80_OIII = c_kms * (wave_90 - wave_10) / (wave_OIII5008_vac * (1 + z50_OIII))
+        f_OII = interpolate.interp1d(flux_cumsum_OII, self.wave_OII_exp, fill_value='extrapolate')
+        f_OIII = interpolate.interp1d(flux_cumsum_OIII, self.wave_OIII_exp, fill_value='extrapolate')
+
+        wave_10_OII, wave_10_OIII = f_OII(0.1), f_OIII(0.1)
+        wave_50_OII, wave_50_OIII = f_OII(0.5), f_OIII(0.5)
+        wave_90_OII, wave_90_OIII = f_OII(0.9), f_OIII(0.9)
+
+        z50_OII = (wave_50_OII - wave_OII3727_vac) / wave_OII3727_vac
+        w80_OII = c_kms * (wave_90_OII - wave_10_OII) / (wave_OII3727_vac * (1 + z50_OII))
+        z50_OIII = (wave_50_OIII - wave_OIII5008_vac) / wave_OIII5008_vac
+        w80_OIII = c_kms * (wave_90_OIII - wave_10_OIII) / (wave_OIII5008_vac * (1 + z50_OIII))
 
         if self.mask_OIII[i, j] != 0:
             z50 = z50_OIII
@@ -842,8 +835,8 @@ class PlotWindow(QMainWindow):
         # Refit that specific pixel
         z_1 = (self.param['v_1='] / c_kms * (1 + self.z_qso)) + self.z_qso
         self.parameters['z_1'].value = z_1
-        self.parameters['z_1'].max = z_1 + ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
-        self.parameters['z_1'].min = z_1 - ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
+        self.parameters['z_1'].max = z_1 + (100 / c_kms * (1 + self.z_qso))
+        self.parameters['z_1'].min = z_1 - (100 / c_kms * (1 + self.z_qso))
         self.parameters['sigma_kms_1'].value = self.param['sigma_1=']
         self.parameters['sigma_kms_1'].max = self.param['sigma_1='] + 100
         self.parameters['sigma_kms_1'].min = 30
@@ -851,8 +844,8 @@ class PlotWindow(QMainWindow):
         if self.parameters['OII'].value == 2:
             z_2 = (self.param['v_2='] / c_kms * (1 + self.z_qso)) + self.z_qso
             self.parameters['z_2'].value = z_2
-            self.parameters['z_2'].max = z_2 + ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
-            self.parameters['z_2'].min = z_2 - ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
+            self.parameters['z_2'].max = z_2 + (100 / c_kms * (1 + self.z_qso))
+            self.parameters['z_2'].min = z_2 - (100 / c_kms * (1 + self.z_qso))
             self.parameters['sigma_kms_2'].value = self.param['sigma_2=']
             self.parameters['sigma_kms_2'].max = self.param['sigma_2='] + 100
             self.parameters['sigma_kms_2'].min = 30
@@ -860,8 +853,8 @@ class PlotWindow(QMainWindow):
         elif self.parameters['OII'].value == 3:
             z_3 = (self.param['v_3='] / c_kms * (1 + self.z_qso)) + self.z_qso
             self.parameters['z_3'].value = z_3
-            self.parameters['z_3'].max = z_3 + ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
-            self.parameters['z_3'].min = z_3 - ((100 / c_kms * (1 + self.z_qso)) + self.z_qso)
+            self.parameters['z_3'].max = z_3 + (100 / c_kms * (1 + self.z_qso))
+            self.parameters['z_3'].min = z_3 - (100 / c_kms * (1 + self.z_qso))
             self.parameters['sigma_kms_3'].value = self.param['sigma_3=']
             self.parameters['sigma_kms_3'].max = self.param['sigma_3='] + 100
             self.parameters['sigma_kms_3'].min = 30
@@ -954,9 +947,6 @@ class PlotWindow(QMainWindow):
         self.scatter_1.clear()
         self.scatter_2.clear()
         self.scatter_3.clear()
-        # self.v_map.updateImage(image=self.v50.T)
-        # self.sigma_map.updateImage(image=self.w80.T)
-        # self.chi_map.updateImage(image=self.redchi.T)
 
 
 
