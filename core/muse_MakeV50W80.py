@@ -19,6 +19,7 @@ from palettable.scientific.sequential import Acton_6
 from palettable.cubehelix import red_16
 from palettable.cmocean.sequential import Dense_20_r
 from scipy import integrate
+from scipy import interpolate
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -154,33 +155,19 @@ data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
-path_fit_N1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N1.fits'
-path_fit_N2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N2.fits'
-path_fit_N3 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None_N3.fits'
-# path_fit_N1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N1.fits'. \
-#     format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-# path_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.fits'. \
-#     format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-# figurename_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.png'. \
-#     format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-# path_sigma = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.fits'. \
-#     format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-# figurename_sigma = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.png'. \
-#     format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-# figurename = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_{}_{}_{}_{}_{}_checkspectra.png'. \
-#     format(cubename, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
+path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
 
-hdul_N2 = fits.open(path_fit_N2)
-fs_N2, hdr_N2 = hdul_N2[1].data, hdul_N2[2].header
-v_N2, z_N2, dz_N2 = hdul_N2[2].data, hdul_N2[3].data, hdul_N2[4].data
-sigma_N2, dsigma_N2 = hdul_N2[5].data, hdul_N2[6].data
-flux_OII_fit_N2, dflux_OII_fit_N2 = hdul_N2[7].data, hdul_N2[8].data
-flux_OIII_fit_N2, dflux_OIII_fit_N2 = hdul_N2[9].data, hdul_N2[10].data
-r_N2, dr_N2 = hdul_N2[11].data, hdul_N2[12].data
-a_OII, da_OII = hdul_N2[13].data, hdul_N2[14].data
-a_OIII, da_OIII = hdul_N2[17].data, hdul_N2[18].data
-b_OII, db_OII = hdul_N2[15].data, hdul_N2[16].data
-b_OIII, db_OIII = hdul_N2[19].data, hdul_N2[20].data
+hdul = fits.open(path_fit)
+fs, hdr = hdul[1].data, hdul[2].header
+v, z, dz = hdul[2].data, hdul[3].data, hdul[4].data
+sigma, dsigma = hdul[5].data, hdul[6].data
+flux_OII_fit, dflux_OII_fit = hdul[7].data, hdul[8].data
+flux_OIII_fit, dflux_OIII_fit = hdul[9].data, hdul[10].data
+r, dr = hdul[11].data, hdul[12].data
+a_OII, da_OII = hdul[13].data, hdul[14].data
+a_OIII, da_OIII = hdul[17].data, hdul[18].data
+b_OII, db_OII = hdul[15].data, hdul[16].data
+b_OIII, db_OIII = hdul[19].data, hdul[20].data
 
 # Load data
 UseSeg = (1.5, 'gauss', 1.5, 'gauss')
@@ -202,29 +189,43 @@ seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(p
 mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
 
 #
-flux_OII_C2 = model_OII(wave_OII_vac, z_N2[0, :, :], sigma_N2[0, :, :], flux_OII_fit_N2[0, :, :], r_N2[0, :, :]) \
-        + model_OII(wave_OII_vac, z_N2[1, :, :], sigma_N2[1, :, :], flux_OII_fit_N2[1, :, :], r_N2[1, :, :])
-flux_OIII_C2 = Gaussian(wave_OIII_vac, z_N2[0, :, :], sigma_N2[0, :, :], flux_OIII_fit_N2[0, :, :], wave_OIII5008_vac) \
-          + Gaussian(wave_OIII_vac, z_N2[1, :, :], sigma_N2[1, :, :], flux_OIII_fit_N2[1, :, :], wave_OIII5008_vac)
+flux_OII_C2 = model_OII(wave_OII_vac, z[0, :, :], sigma[0, :, :], flux_OII_fit[0, :, :], r[0, :, :]) \
+        + model_OII(wave_OII_vac, z[1, :, :], sigma[1, :, :], flux_OII_fit[1, :, :], r[1, :, :])
+flux_OIII_C2 = Gaussian(wave_OIII_vac, z[0, :, :], sigma[0, :, :], flux_OIII_fit[0, :, :], wave_OIII5008_vac) \
+          + Gaussian(wave_OIII_vac, z[1, :, :], sigma[1, :, :], flux_OIII_fit[1, :, :], wave_OIII5008_vac)
 
 #
 # flux_cumsum_OII = np.cumsum(flux_OII_C2, axis=0) * 1.25
-flux_cumsum_OII = integrate.cumtrapz(flux_OII_C2, wave_OII_vac, initial=None, axis=0)
+flux_cumsum_OII = integrate.cumtrapz(flux_OII_C2, wave_OII_vac, initial=0, axis=0)
 flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
+print(flux_cumsum_OII.shape, wave_OII_vac.shape)
 
+f = interpolate.interp1d(flux_cumsum_OII, wave_OII_vac, axis=0, fill_value='extrapolate')
+for i in range(v.shape[0]):
+    for j in range(v.shape[1]):
+        
+
+
+
+print('finished')
+wave_10 = f(0.10)
+# print(wave_10)
 wave_10 = \
     np.take_along_axis(wave_OII_vac, np.argmin(np.abs(flux_cumsum_OII - 0.10), axis=0)[np.newaxis, :, :], axis=0)[0]
+print(wave_10)
+
 wave_50 = \
     np.take_along_axis(wave_OII_vac, np.argmin(np.abs(flux_cumsum_OII - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
 wave_90 = \
     np.take_along_axis(wave_OII_vac, np.argmin(np.abs(flux_cumsum_OII - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
 z_guess_array_OII = (wave_50 - wave_OII3728_vac) / wave_OII3728_vac
+v_guess_array_OII = c_kms * (z_guess_array_OII - z_qso) / (1 + z_qso)
 W80_guess_array_OII = c_kms * (wave_90 - wave_10) / (wave_OII3728_vac * (1 + z_guess_array_OII))
 sigma_kms_guess_array_OII = W80_guess_array_OII / 2.563  # W_80 = 2.563sigma
 
 # Moments for OIII
 # flux_cumsum_OIII = np.cumsum(flux_OIII_C2, axis=0) * 1.25
-flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_C2, wave_OIII_vac, initial=None, axis=0)
+flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_C2, wave_OIII_vac, initial=0, axis=0)
 flux_cumsum_OIII /= flux_cumsum_OIII.max(axis=0)
 
 wave_10 = \
@@ -234,6 +235,7 @@ wave_50 = \
 wave_90 = \
     np.take_along_axis(wave_OIII_vac, np.argmin(np.abs(flux_cumsum_OIII - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
 z_guess_array_OIII = (wave_50 - wave_OIII5008_vac) / wave_OIII5008_vac
+v_guess_array_OIII = c_kms * (z_guess_array_OIII - z_qso) / (1 + z_qso)
 W80_guess_array_OIII = c_kms * (wave_90 - wave_10) / (wave_OIII5008_vac * (1 + z_guess_array_OIII))
 sigma_kms_guess_array_OIII = W80_guess_array_OIII / 2.563  # W_80 = 2.563sigma
 
@@ -245,10 +247,14 @@ v_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, v_guess_array, np.
 sigma_kms_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, sigma_kms_guess_array, np.nan)
 W80_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, W80_guess_array, np.nan)
 
-path_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_N2_V50.fits'
-path_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_N2_W80.fits'
 
-hdul_V50 = fits.ImageHDU(v_guess_array, header=hdr_N2)
-hdul_V50.writeto(path_V50, overwrite=True)
-hdul_W80 = fits.ImageHDU(W80_guess_array, header=hdr_N2)
-hdul_W80.writeto(path_W80, overwrite=True)
+plt.figure()
+plt.imshow(v_guess_array_OIII - v[0, :, :], origin='lower', cmap='coolwarm', vmin=-50, vmax=50)
+plt.show()
+# path_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
+# path_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
+#
+# hdul_V50 = fits.ImageHDU(v_guess_array, header=hdr)
+# hdul_V50.writeto(path_V50, overwrite=True)
+# hdul_W80 = fits.ImageHDU(W80_guess_array, header=hdr)
+# hdul_W80.writeto(path_W80, overwrite=True)
