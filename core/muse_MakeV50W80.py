@@ -170,27 +170,43 @@ b_OIII, db_OIII = hdul[19].data, hdul[20].data
 
 # Load data
 UseSeg = (1.5, 'gauss', 1.5, 'gauss')
+UseDataSeg=(1.5, 'gauss', None, None)
 line_OII, line_OIII = 'OII', 'OIII'
 path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OII)
 path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OIII)
+path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_{}_{}_' \
+                         '{}_{}_{}.fits'.format(cubename, line_OII, *UseDataSeg)
+path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_{}_{}_' \
+                          '{}_{}_{}.fits'.format(cubename, line_OIII, *UseDataSeg)
 path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
     format(line_OII, *UseSeg)
 path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
     format(line_OIII, *UseSeg)
 
 # Load data and smoothing
-cube_OII, cube_OIII = Cube(path_cube_OII), Cube(path_cube_OIII)
+cube_OII, cube_OIII = Cube(path_cube_smoothed_OII), Cube(path_cube_smoothed_OIII)
 wave_OII_vac, wave_OIII_vac = pyasl.airtovac2(cube_OII.wave.coord()), pyasl.airtovac2(cube_OIII.wave.coord())
+flux_OII, flux_err_OII = cube_OII.data * 1e-3, np.sqrt(cube_OII.var) * 1e-3
+flux_OIII, flux_err_OIII = cube_OIII.data * 1e-3, np.sqrt(cube_OIII.var) * 1e-3
 wave_OII_vac = expand_wave([wave_OII_vac], stack=True)
 wave_OIII_vac = expand_wave([wave_OIII_vac], stack=True)
 wave_OII_exp, wave_OIII_exp = wave_OII_vac[:, np.newaxis, np.newaxis], wave_OIII_vac[:, np.newaxis, np.newaxis]
 seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
 mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
 mask_seg = mask_seg_OII + mask_seg_OIII
+flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
+flux_err_seg_OII, flux_err_seg_OIII = flux_err_OII * seg_3D_OII_ori, flux_err_OIII * seg_3D_OIII_ori
+S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
+# S_N_OII = np.where(S_N_OII > 30, S_N_OII, np.nan)
+#
+# plt.figure()
+# plt.imshow(S_N_OII, origin='lower')
+# plt.show()
 
+# raise ValueError('testing')
 # flux components
 flux_OII_C2 = np.nansum(model_OII(wave_OII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
-                                  flux_OII_fit, r, plot=True)[0], axis=1)
+                                  flux_OII_fit, r, plot=True)[0] * (1 + r), axis=1)
 flux_OIII_C2 = np.nansum(Gaussian(wave_OIII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
                                   flux_OIII_fit, wave_OIII5008_vac), axis=1)
 
@@ -232,6 +248,10 @@ v_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, v_guess_array, np.
 sigma_kms_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, sigma_kms_guess_array, np.nan)
 W80_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, W80_guess_array, np.nan)
 
+
+#
+v_guess_array = np.where(S_N_OII > 15, v_guess_array, np.nan)
+# sigma_kms_guess_array = np.where(S_N_OII > 15, sigma_kms_guess_array, np.nan)
 plt.figure()
-plt.imshow(v_guess_array - v[0, :, :], origin='lower', cmap='coolwarm', vmin=0, vmax=500)
+plt.imshow(v_guess_array, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
 plt.show()

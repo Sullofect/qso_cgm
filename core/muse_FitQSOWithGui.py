@@ -422,7 +422,7 @@ class PlotWindow(QMainWindow):
 
         # Calculate V_50 and W_80
         flux_OII_v50 = model_OII(self.wave_OII_exp[:, np.newaxis, np.newaxis, np.newaxis], self.z, self.sigma,
-                                 self.flux_OII_fit, self.r, plot=True)[0]
+                                 self.flux_OII_fit, self.r, plot=True)[0] * (1 + self.r)
         wave_OII_exp_ = self.wave_OII_exp[:, np.newaxis, np.newaxis]
         wave_OIII_exp_ = self.wave_OIII_exp[:, np.newaxis, np.newaxis]
         flux_OII_sum = np.nansum(flux_OII_v50, axis=1)
@@ -504,14 +504,17 @@ class PlotWindow(QMainWindow):
                           dict(name='sigma_1=', type='float', value=0, readonly=False),
                           dict(name='OII_1=', type='float', value=0, readonly=False),
                           dict(name='OIII_1=', type='float', value=0, readonly=False),
+                          dict(name='r_1=', type='float', value=0, readonly=False),
                           dict(name='v_2=', type='float', value=0, dec=False, readonly=False),
                           dict(name='sigma_2=', type='float', value=0, readonly=False),
                           dict(name='OII_2=', type='float', value=0, readonly=False),
                           dict(name='OIII_2=', type='float', value=0, readonly=False),
+                          dict(name='r_2=', type='float', value=0, readonly=False),
                           dict(name='v_3=', type='float', value=0, dec=False, readonly=False),
                           dict(name='sigma_3=', type='float', value=0, readonly=False),
                           dict(name='OII_3=', type='float', value=0, readonly=False),
-                          dict(name='OIII_3=', type='float', value=0, readonly=False)]
+                          dict(name='OIII_3=', type='float', value=0, readonly=False),
+                          dict(name='r_3=', type='float', value=0, readonly=False)]
         self.param = pt.Parameter.create(name='Options', type='group', children=self.paramSpec)
         self.tree = pt.ParameterTree()
         self.tree.setParameters(self.param)
@@ -664,14 +667,17 @@ class PlotWindow(QMainWindow):
             self.param['sigma_1='] = '{:.0f}'.format(self.sigma[0, i, j])
             self.param['OII_1='] = '{:.4f}'.format(self.flux_OII_fit[0, i, j])
             self.param['OIII_1='] = '{:.4f}'.format(self.flux_OIII_fit[0, i, j])
+            self.param['r_1='] = '{:.4f}'.format(self.r[0, i, j])
             self.param['v_2='] = '{:.0f}'.format(self.v[1, i, j])
             self.param['sigma_2='] = '{:.0f}'.format(self.sigma[1, i, j])
             self.param['OII_2='] = '{:.4f}'.format(self.flux_OII_fit[1, i, j])
             self.param['OIII_2='] = '{:.4f}'.format(self.flux_OIII_fit[1, i, j])
+            self.param['r_2='] = '{:.4f}'.format(self.r[1, i, j])
             self.param['v_3='] = '{:.0f}'.format(self.v[2, i, j])
             self.param['sigma_3='] = '{:.0f}'.format(self.sigma[2, i, j])
             self.param['OII_3='] = '{:.4f}'.format(self.flux_OII_fit[2, i, j])
             self.param['OIII_3='] = '{:.4f}'.format(self.flux_OIII_fit[2, i, j])
+            self.param['r_3='] = '{:.4f}'.format(self.r[2, i, j])
 
             # Draw points
             self.scatter_1.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
@@ -745,6 +751,7 @@ class PlotWindow(QMainWindow):
         if self.parameters['OII'].value == 1:
             self.param['v_2='] = 0
             self.param['sigma_2='] = 0
+            self.param['r_2='] = 0
         self.parameters['OII'].value = 2
         self.parameters['OIII'].value = 2
         self.parameters['z_2'].value = self.z_qso
@@ -794,7 +801,7 @@ class PlotWindow(QMainWindow):
 
     def compute_v50w80(self, i, j):
         flux_OII_ij = model_OII(self.wave_OII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
-                                self.flux_OII_fit[:, i, j], self.r[:, i, j], plot=True)[0]
+                                self.flux_OII_fit[:, i, j], self.r[:, i, j], plot=True)[0] * (1 + self.r[:, i, j])
         flux_OIII_ij = Gaussian(self.wave_OIII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
                                 self.flux_OIII_fit[:, i, j], wave_OIII5008_vac)
 
@@ -840,6 +847,7 @@ class PlotWindow(QMainWindow):
         self.parameters['sigma_kms_1'].value = self.param['sigma_1=']
         self.parameters['sigma_kms_1'].max = self.param['sigma_1='] + 100
         self.parameters['sigma_kms_1'].min = 30
+        self.parameters['r_OII3729_3727_1'].value = self.param['r_1=']
 
         if self.parameters['OII'].value == 2:
             z_2 = (self.param['v_2='] / c_kms * (1 + self.z_qso)) + self.z_qso
@@ -849,6 +857,7 @@ class PlotWindow(QMainWindow):
             self.parameters['sigma_kms_2'].value = self.param['sigma_2=']
             self.parameters['sigma_kms_2'].max = self.param['sigma_2='] + 100
             self.parameters['sigma_kms_2'].min = 30
+            self.parameters['r_OII3729_3727_2'].value = self.param['r_2=']
 
         elif self.parameters['OII'].value == 3:
             z_3 = (self.param['v_3='] / c_kms * (1 + self.z_qso)) + self.z_qso
@@ -858,6 +867,7 @@ class PlotWindow(QMainWindow):
             self.parameters['sigma_kms_3'].value = self.param['sigma_3=']
             self.parameters['sigma_kms_3'].max = self.param['sigma_3='] + 100
             self.parameters['sigma_kms_3'].min = 30
+            self.parameters['r_OII3729_3727_3'].value = self.param['r_3=']
 
         #
         flux_ij = self.flux[:, i, j]
