@@ -376,8 +376,8 @@ def PlaceSudoSlitOnEachGal(igal=None):
     #
     red_gal = x_slit > 0
     blue_gal = ~red_gal
-    dis_red_gal = dis_slit[red_gal] * -1
-    dis_blue_gal = dis_slit[blue_gal]
+    dis_red_gal = dis_slit[red_gal]
+    dis_blue_gal = dis_slit[blue_gal] * -1
 
     v_red_gal = v_Serra.flatten()[mask_gal][red_gal]
     v_blue_gal = v_Serra.flatten()[mask_gal][blue_gal]

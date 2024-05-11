@@ -1228,8 +1228,8 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         fig.savefig(figurename_SB, bbox_inches='tight')
 
     # LOS velocity
-    path_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_N2_V50.fits'
-    path_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_N2_W80.fits'
+    path_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
+    path_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
     fig = plt.figure(figsize=(8, 8), dpi=300)
     # plt.imshow(fits.open(path_v)[1].data, vmin=v_min, vmax=v_max, cmap=plt.get_cmap('coolwarm'), origin='lower')
     gc = aplpy.FITSFigure(path_v, figure=fig, hdu=1)

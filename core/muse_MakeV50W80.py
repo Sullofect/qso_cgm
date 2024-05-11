@@ -148,6 +148,83 @@ def expand_wave(wave, stack=True, times=3):
             wave_expand[i] = wave_i
     return wave_expand
 
+def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None):
+    # only for TXS0206
+    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
+    gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
+                    linewidths=0.5, s=600, zorder=100)
+    gc.set_system_latex(True)
+
+    # Colorbar
+    gc.add_colorbar()
+    gc.colorbar.set_location('bottom')
+    gc.colorbar.set_pad(0.0)
+    gc.colorbar.set_font(size=30)
+    gc.colorbar.set_axis_label_font(size=30)
+    if type == 'NarrowBand':
+        gc.colorbar.set_location('bottom')
+        gc.colorbar.set_ticks([0, 1, 2, 3, 4, 5])
+        gc.colorbar.set_font(size=30)
+        gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
+                                        r's^{-1} \; arcsec^{-2}]}$')
+        gc.colorbar.set_axis_label_font(size=30)
+        # gc.add_scalebar(length=7 * u.arcsecond)
+        gc.add_scalebar(length=8 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        # gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # 3C57
+        gc.scalebar.set_label(r"$8'' \approx 50 \mathrm{\; kpc}$")  # HE0226
+        gc.scalebar.set_font_size(30)
+        # gc.add_label(0.98, 0.94, cubename, size=35, relative=True, horizontalalignment='right')
+        # gc.add_label(0.98, 0.87, r'$z={}$'.format(z_qso), size=35, relative=True, horizontalalignment='right')
+    elif type == 'FieldImage':
+        gc.colorbar.hide()
+    elif type == 'GasMap':
+        gc.add_scalebar(length=7 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # HE0226
+        gc.scalebar.set_font_size(30)
+
+        gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
+        # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
+        gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
+    elif type == 'GasMap_sigma':
+        gc.add_scalebar(length=7 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # HE0226
+        gc.scalebar.set_font_size(30)
+
+        # gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
+        gc.colorbar.set_axis_label_text(r'$\rm W_{80} \mathrm{\; [km \, s^{-1}]}$')
+        # gc.colorbar.set_axis_label_text(r'$\mathrm{W}_{80} \mathrm{\; [km \, s^{-1}]}$')
+    else:
+        gc.colorbar.set_ticks([-0.5, 0.0, 0.5, 1.0, 1.5])
+        gc.colorbar.set_axis_label_text(r'$\rm log([O \, III]/[O \, II])$')
+
+    # Scale bar
+    # gc.add_scalebar(length=3 * u.arcsecond)
+    # gc.add_scalebar(length=15 * u.arcsecond)
+    # gc.scalebar.set_corner('top left')
+    # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+    # gc.scalebar.set_label(r"$3'' \approx 20 \mathrm{\; pkpc}$")
+    # gc.scalebar.set_font_size(20)
+
+    # Hide
+    gc.ticks.hide()
+    gc.tick_labels.hide()
+    gc.axis_labels.hide()
+    gc.ticks.set_length(30)
+
+    # Label
+    # xw, yw = gc.pixel2world(146, 140)  # original figure
+    xw, yw = gc.pixel2world(140, 140)
+    # gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
+    # gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
+    # xw, yw = 40.1333130960119, -18.864847747328896
+    # gc.show_arrows(xw, yw, -0.000020 * yw, 0, color='k')
+    # gc.show_arrows(xw, yw, 0, -0.000020 * yw, color='k')
+    # gc.add_label(0.9778, 0.81, r'N', size=20, relative=True)
+    # gc.add_label(0.88, 0.70, r'E', size=20, relative=True)
+
 # QSO information
 cubename = '3C57'
 path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
@@ -155,6 +232,7 @@ data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
+# Load fitting
 path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
 hdul = fits.open(path_fit)
 fs, hdr = hdul[1].data, hdul[2].header
@@ -171,6 +249,7 @@ b_OIII, db_OIII = hdul[19].data, hdul[20].data
 # Load data
 UseSeg = (1.5, 'gauss', 1.5, 'gauss')
 UseDataSeg=(1.5, 'gauss', None, None)
+line = 'OII+OIII'
 line_OII, line_OIII = 'OII', 'OIII'
 path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OII)
 path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OIII)
@@ -182,6 +261,10 @@ path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_
     format(line_OII, *UseSeg)
 path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
     format(line_OIII, *UseSeg)
+figurename_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}.png'. \
+    format(cubename, line, True, 3728, *UseDataSeg)
+figurename_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_W80_{}_{}_{}_{}_{}_{}_{}.png'. \
+    format(cubename, line, True, 3728, *UseDataSeg)
 
 # Load data and smoothing
 cube_OII, cube_OIII = Cube(path_cube_smoothed_OII), Cube(path_cube_smoothed_OIII)
@@ -205,53 +288,107 @@ S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
 
 # raise ValueError('testing')
 # flux components
-flux_OII_C2 = np.nansum(model_OII(wave_OII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
-                                  flux_OII_fit, r, plot=True)[0] * (1 + r), axis=1)
-flux_OIII_C2 = np.nansum(Gaussian(wave_OIII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
-                                  flux_OIII_fit, wave_OIII5008_vac), axis=1)
+# flux_OII_C2 = np.nansum(model_OII(wave_OII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
+#                                   flux_OII_fit, r, plot=True)[0] * (1 + r), axis=1)
+# flux_OIII_C2 = np.nansum(Gaussian(wave_OIII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
+#                                   flux_OIII_fit, wave_OIII5008_vac), axis=1)
 
 # Moments
-flux_cumsum_OII = integrate.cumtrapz(flux_OII_C2, wave_OII_exp, initial=0, axis=0)
-flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_C2, wave_OIII_exp, initial=0, axis=0)
-flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
-flux_cumsum_OIII /= flux_cumsum_OIII.max(axis=0)
+# flux_cumsum_OII = integrate.cumtrapz(flux_OII_C2, wave_OII_exp, initial=0, axis=0)
+# flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_C2, wave_OIII_exp, initial=0, axis=0)
+# flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
+# flux_cumsum_OIII /= flux_cumsum_OIII.max(axis=0)
+#
+# wave_10_OII, wave_10_OIII = np.nan * np.zeros_like(v[0, :, :]), np.nan * np.zeros_like(v[0, :, :])
+# wave_50_OII, wave_50_OIII = np.nan * np.zeros_like(v[0, :, :]), np.nan * np.zeros_like(v[0, :, :])
+# wave_90_OII, wave_90_OIII = np.nan * np.zeros_like(v[0, :, :]), np.nan * np.zeros_like(v[0, :, :])
+# for i in range(v.shape[1]):
+#     for j in range(v.shape[2]):
+#         if mask_seg[i, j] != 0:
+#             f_OII = interpolate.interp1d(flux_cumsum_OII[:, i, j], wave_OII_vac, fill_value='extrapolate')
+#             f_OIII = interpolate.interp1d(flux_cumsum_OIII[:, i, j], wave_OIII_vac, fill_value='extrapolate')
+#             wave_10_OII[i, j], wave_10_OIII[i, j] = f_OII(0.1), f_OIII(0.1)
+#             wave_50_OII[i, j], wave_50_OIII[i, j] = f_OII(0.5), f_OIII(0.5)
+#             wave_90_OII[i, j], wave_90_OIII[i, j] = f_OII(0.9), f_OIII(0.9)
+#         else:
+#             pass
+#
+# z_guess_array_OII = (wave_50_OII - wave_OII3727_vac) / wave_OII3727_vac
+# v_guess_array_OII = c_kms * (z_guess_array_OII - z_qso) / (1 + z_qso)
+# W80_guess_array_OII = c_kms * (wave_90_OII - wave_10_OII) / (wave_OII3727_vac * (1 + z_guess_array_OII))
+# sigma_kms_guess_array_OII = W80_guess_array_OII / 2.563  # W_80 = 2.563sigma
+#
+# z_guess_array_OIII = (wave_50_OIII - wave_OIII5008_vac) / wave_OIII5008_vac
+# v_guess_array_OIII = c_kms * (z_guess_array_OIII - z_qso) / (1 + z_qso)
+# W80_guess_array_OIII = c_kms * (wave_90_OIII - wave_10_OIII) / (wave_OIII5008_vac * (1 + z_guess_array_OIII))
+# sigma_kms_guess_array_OIII = W80_guess_array_OIII / 2.563  # W_80 = 2.563sigma
+#
+# z_guess_array = np.where(mask_seg_OIII != 0, z_guess_array_OIII, z_guess_array_OII)
+# v_guess_array = c_kms * (z_guess_array - z_qso) / (1 + z_qso)
+# sigma_kms_guess_array = np.where(mask_seg_OIII != 0, sigma_kms_guess_array_OIII, sigma_kms_guess_array_OII)
+# W80_guess_array = np.where(mask_seg_OIII != 0, W80_guess_array_OIII, W80_guess_array_OII)
+# v_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, v_guess_array, np.nan)
+# sigma_kms_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, sigma_kms_guess_array, np.nan)
+# W80_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, W80_guess_array, np.nan)
+#
+#
+# #
+# v_guess_array = np.where(S_N_OII > 15, v_guess_array, np.nan)
+# # sigma_kms_guess_array = np.where(S_N_OII > 15, sigma_kms_guess_array, np.nan)
+# plt.figure()
+# plt.imshow(v_guess_array, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+# plt.show()
 
-wave_10_OII, wave_10_OIII = np.nan * np.zeros_like(v[0, :, :]), np.nan * np.zeros_like(v[0, :, :])
-wave_50_OII, wave_50_OIII = np.nan * np.zeros_like(v[0, :, :]), np.nan * np.zeros_like(v[0, :, :])
-wave_90_OII, wave_90_OIII = np.nan * np.zeros_like(v[0, :, :]), np.nan * np.zeros_like(v[0, :, :])
-for i in range(v.shape[1]):
-    for j in range(v.shape[2]):
-        if mask_seg[i, j] != 0:
-            f_OII = interpolate.interp1d(flux_cumsum_OII[:, i, j], wave_OII_vac, fill_value='extrapolate')
-            f_OIII = interpolate.interp1d(flux_cumsum_OIII[:, i, j], wave_OIII_vac, fill_value='extrapolate')
-            wave_10_OII[i, j], wave_10_OIII[i, j] = f_OII(0.1), f_OIII(0.1)
-            wave_50_OII[i, j], wave_50_OIII[i, j] = f_OII(0.5), f_OIII(0.5)
-            wave_90_OII[i, j], wave_90_OIII[i, j] = f_OII(0.9), f_OIII(0.9)
-        else:
-            pass
+path_gal = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+try:
+    data_gal = fits.open(path_gal)[1].data
+    ra_gal, dec_gal, v_gal = data_gal['ra'], data_gal['dec'], data_gal['v']
+except FileNotFoundError:
+    print('No galaxies info')
+    ra_gal, dec_gal, v_gal = [], [], []
 
-z_guess_array_OII = (wave_50_OII - wave_OII3727_vac) / wave_OII3727_vac
-v_guess_array_OII = c_kms * (z_guess_array_OII - z_qso) / (1 + z_qso)
-W80_guess_array_OII = c_kms * (wave_90_OII - wave_10_OII) / (wave_OII3727_vac * (1 + z_guess_array_OII))
-sigma_kms_guess_array_OII = W80_guess_array_OII / 2.563  # W_80 = 2.563sigma
+# Replace coordinate
+path_sub_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_WCS_subcube.fits'.format(cubename)
+hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
 
-z_guess_array_OIII = (wave_50_OIII - wave_OIII5008_vac) / wave_OIII5008_vac
-v_guess_array_OIII = c_kms * (z_guess_array_OIII - z_qso) / (1 + z_qso)
-W80_guess_array_OIII = c_kms * (wave_90_OIII - wave_10_OIII) / (wave_OIII5008_vac * (1 + z_guess_array_OIII))
-sigma_kms_guess_array_OIII = W80_guess_array_OIII / 2.563  # W_80 = 2.563sigma
-
-z_guess_array = np.where(mask_seg_OIII != 0, z_guess_array_OIII, z_guess_array_OII)
-v_guess_array = c_kms * (z_guess_array - z_qso) / (1 + z_qso)
-sigma_kms_guess_array = np.where(mask_seg_OIII != 0, sigma_kms_guess_array_OIII, sigma_kms_guess_array_OII)
-W80_guess_array = np.where(mask_seg_OIII != 0, W80_guess_array_OIII, W80_guess_array_OII)
-v_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, v_guess_array, np.nan)
-sigma_kms_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, sigma_kms_guess_array, np.nan)
-W80_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, W80_guess_array, np.nan)
-
+path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
+path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
+hdul_v50 = fits.open(path_v50)
+hdul_w80 = fits.open(path_w80)
+hdr = hdul_v50[1].header
+hdr['CRVAL1'] = hdr_sub_gaia['CRVAL1']
+hdr['CRVAL2'] = hdr_sub_gaia['CRVAL2']
+hdr['CRPIX1'] = hdr_sub_gaia['CRPIX1']
+hdr['CRPIX2'] = hdr_sub_gaia['CRPIX2']
+hdr['CD1_1'] = hdr_sub_gaia['CD1_1']
+hdr['CD2_1'] = hdr_sub_gaia['CD2_1']
+hdr['CD1_2'] = hdr_sub_gaia['CD1_2']
+hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
 
 #
-v_guess_array = np.where(S_N_OII > 15, v_guess_array, np.nan)
-# sigma_kms_guess_array = np.where(S_N_OII > 15, sigma_kms_guess_array, np.nan)
-plt.figure()
-plt.imshow(v_guess_array, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
-plt.show()
+path_v50_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
+path_w80_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
+v50, w80 = hdul_v50[1].data, hdul_w80[1].data
+hdul_v50[1].data = np.where(S_N_OII > 30, hdul_v50[1].data, np.nan)
+hdul_w80[1].data = np.where(S_N_OII > 30, hdul_w80[1].data, np.nan)
+hdul_v50[1].header = hdr
+hdul_w80[1].header = hdr
+hdul_v50.writeto(path_v50_plot, overwrite=True)
+hdul_w80.writeto(path_w80_plot, overwrite=True)
+
+#
+fig = plt.figure(figsize=(8, 8), dpi=300)
+gc = aplpy.FITSFigure(path_v50, figure=fig, hdu=1)
+gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
+APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+gc.show_markers(ra_gal, dec_gal, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
+gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
+gc.show_markers(ra_gal, dec_gal, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-350, vmax=350, cmap='coolwarm')
+fig.savefig(figurename_V50, bbox_inches='tight')
+
+# W870 map
+fig = plt.figure(figsize=(8, 8), dpi=300)
+gc = aplpy.FITSFigure(path_w80, figure=fig, hdu=1)
+gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
+APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+fig.savefig(figurename_W80, bbox_inches='tight')
