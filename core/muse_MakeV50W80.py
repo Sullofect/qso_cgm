@@ -280,13 +280,15 @@ mask_seg = mask_seg_OII + mask_seg_OIII
 flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
 flux_err_seg_OII, flux_err_seg_OIII = flux_err_OII * seg_3D_OII_ori, flux_err_OIII * seg_3D_OIII_ori
 S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
-# S_N_OII = np.where(S_N_OII > 30, S_N_OII, np.nan)
+S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
+S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
+
 #
 # plt.figure()
-# plt.imshow(S_N_OII, origin='lower')
+# plt.imshow(S_N, origin='lower')
 # plt.show()
-
 # raise ValueError('testing')
+
 # flux components
 # flux_OII_C2 = np.nansum(model_OII(wave_OII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
 #                                   flux_OII_fit, r, plot=True)[0] * (1 + r), axis=1)
@@ -369,8 +371,8 @@ hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
 path_v50_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
 path_w80_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
 v50, w80 = hdul_v50[1].data, hdul_w80[1].data
-hdul_v50[1].data = np.where(S_N_OII > 30, hdul_v50[1].data, np.nan)
-hdul_w80[1].data = np.where(S_N_OII > 30, hdul_w80[1].data, np.nan)
+hdul_v50[1].data = np.where(S_N > 10, hdul_v50[1].data, np.nan)
+hdul_w80[1].data = np.where(S_N > 10, hdul_w80[1].data, np.nan)
 hdul_v50[1].header = hdr
 hdul_w80[1].header = hdr
 hdul_v50.writeto(path_v50_plot, overwrite=True)
@@ -378,7 +380,7 @@ hdul_w80.writeto(path_w80_plot, overwrite=True)
 
 #
 fig = plt.figure(figsize=(8, 8), dpi=300)
-gc = aplpy.FITSFigure(path_v50, figure=fig, hdu=1)
+gc = aplpy.FITSFigure(path_v50_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
 APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
 gc.show_markers(ra_gal, dec_gal, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
@@ -388,7 +390,7 @@ fig.savefig(figurename_V50, bbox_inches='tight')
 
 # W870 map
 fig = plt.figure(figsize=(8, 8), dpi=300)
-gc = aplpy.FITSFigure(path_w80, figure=fig, hdu=1)
+gc = aplpy.FITSFigure(path_w80_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
 APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
 fig.savefig(figurename_W80, bbox_inches='tight')

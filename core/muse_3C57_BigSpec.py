@@ -127,13 +127,22 @@ flux_OII, flux_err_OII = cube_OII.data * 1e-3, np.sqrt(cube_OII.var) * 1e-3
 flux_OIII, flux_err_OIII = cube_OIII.data * 1e-3, np.sqrt(cube_OIII.var) * 1e-3
 # wave_OII_vac, wave_OIII_vac = wave_OII_vac[:, np.newaxis, np.newaxis], wave_OIII_vac[:, np.newaxis, np.newaxis]
 seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
-flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
 mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
 mask_seg = mask_seg_OII + mask_seg_OIII
+flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
+flux_err_seg_OII, flux_err_seg_OIII = flux_err_OII * seg_3D_OII_ori, flux_err_OIII * seg_3D_OIII_ori
+S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
+S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
+S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
+
+# plt.figure()
+# plt.imshow(S_N, origin='lower')
+# plt.show()
+# raise ValueError('stop')
 
 
 # Generate model data
-v_array = np.linspace(-1000, 1000, 500)
+v_array = np.linspace(-800, 800, 500)
 wave_OII3727 = wave_OII3727_vac * (1 + v_array / c_kms * (1 + z_qso) + z_qso)
 wave_OII3729 = wave_OII3729_vac * (1 + v_array  / c_kms * (1 + z_qso) + z_qso)
 flux_OII3727, _ = model_OII(wave_OII3727[:, np.newaxis, np.newaxis, np.newaxis], z, sigma, flux_OII_fit, r, plot=True)
@@ -148,11 +157,11 @@ flux_OII_sum = np.nansum(flux_OII_C, axis=1)
 # plt.plot(v_array, flux_OII_sum[:, 79, 67], '-g')
 # plt.show()
 
-plt.figure()
-plt.imshow(v50 - v[0, :, :], cmap='coolwarm', vmin=-50, vmax=50, origin='lower')
-plt.show()
+# plt.figure()
+# plt.imshow(v50 - v[0, :, :], cmap='coolwarm', vmin=-50, vmax=50, origin='lower')
+# plt.show()
 
-raise ValueError('Stop here')
+# raise ValueError('Stop here')
 
 # Generate random 2D map data and 1D velocity data
 v_rebin = v50
@@ -202,14 +211,18 @@ norm = mpl.colors.Normalize(vmin=-350, vmax=350)
 for j in x_range:
     for i in y_range:
         ax = axs[y_range[-1] - i, j - x_range[0]]
-        if mask_seg[i, j] != 0:
+        # if S_N_OII[i, j] > 20:
+        if S_N[i, j] > 10:
             # if mask_seg_OIII[i, j] != 0:
             #     ax.plot(wave_OIII_vac, flux_OIII_rebin[:, i, j], color='black', drawstyle='steps-mid')
             # else:
             ax.plot(v_array, flux_OII_sum[:, i, j], color='black', drawstyle='steps-mid')
+            # ax.plot(wave_OIII_vac, flux_OIII_rebin[:, i, j], color='black', drawstyle='steps-mid')
             ax.set_xticks([])
             ax.set_yticks([])
-            ax.spines[['right', 'top', 'left', 'bottom']].set_visible(False)
+            ax.spines[['right', 'top', 'left', 'bottom']].set_color('black')
+            ax.spines[['right', 'top', 'left', 'bottom']].set_alpha(0.3)
+            # ax.spines[['right', 'top', 'left', 'bottom']].set_visible(False)
 
             # Color the full panel according to its velocity
             ax.set_facecolor(plt.cm.coolwarm(norm(v_rebin[i, j])))
