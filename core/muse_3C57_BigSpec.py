@@ -216,7 +216,7 @@ for j in x_range:
             # if mask_seg_OIII[i, j] != 0:
             #     ax.plot(wave_OIII_vac, flux_OIII_rebin[:, i, j], color='black', drawstyle='steps-mid')
             # else:
-            ax.plot(v_array, flux_OII_sum[:, i, j], color='black', drawstyle='steps-mid')
+            ax.plot(v_array, flux_OII_sum[:, i, j], color='black')
             # ax.plot(wave_OIII_vac, flux_OIII_rebin[:, i, j], color='black', drawstyle='steps-mid')
             ax.set_xticks([])
             ax.set_yticks([])
