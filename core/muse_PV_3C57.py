@@ -53,44 +53,59 @@ def Bin(x, y, z, bins=20):
 # QSO information
 cubename = '3C57'
 str_zap = ''
-path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
+path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
 data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
 # V50W80
-path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
-path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
+path_v50 = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
+path_w80 = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
 hdul_v50 = fits.open(path_v50)
 hdul_w80 = fits.open(path_w80)
 v50, w80 = hdul_v50[1].data, hdul_w80[1].data
 
-# plot the velocity field
+#
+path_v50_NLR_OII = '../../MUSEQuBES+CUBS/fit_kin/3C57_NLR_V50_OII.fits'
+path_w80_NLR_OII = '../../MUSEQuBES+CUBS/fit_kin/3C57_NLR_W80_OII.fits'
+hdul_v50_NLR_OII = fits.open(path_v50_NLR_OII)
+hdul_w80_NLR_OII = fits.open(path_w80_NLR_OII)
+v50_NLR_OII, w80_NLR_OII = hdul_v50_NLR_OII[1].data, hdul_w80_NLR_OII[1].data
+
+path_v50_NLR_OIII = '../../MUSEQuBES+CUBS/fit_kin/3C57_NLR_V50_OIII.fits'
+path_w80_NLR_OIII = '../../MUSEQuBES+CUBS/fit_kin/3C57_NLR_W80_OIII.fits'
+hdul_v50_NLR_OIII = fits.open(path_v50_NLR_OIII)
+hdul_w80_NLR_OIII = fits.open(path_w80_NLR_OIII)
+v50_NLR_OIII, w80_NLR_OIII = hdul_v50_NLR_OIII[1].data, hdul_w80_NLR_OIII[1].data
+
+# Plot the velocity field
 x, y = np.meshgrid(np.arange(v50.shape[0]), np.arange(v50.shape[1]))
 x, y = x.flatten(), y.flatten()
 pixcoord = PixCoord(x=x, y=y)
+pixcoord_NLR = PixCoord(x=x, y=y)
+x_NLR, y_NLR = x, y
 
 # Hedaer information
-path_sub_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
+path_sub_white_gaia = '../../MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
 hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
 w = WCS(hdr_sub_gaia, naxis=2)
 center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
 c2 = w.world_to_pixel(center_qso)
 
-# mask the center
-circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=3)
+# Mask the center
+circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=2.5)
 center_mask_flatten = ~circle.contains(pixcoord)
 center_mask = center_mask_flatten.reshape(v50.shape)
 x, y = x[center_mask_flatten], y[center_mask_flatten]
 pixcoord = pixcoord[center_mask_flatten]
 
-# mask a slit
+# Mask a slit
 rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=5, angle=Angle(-30, 'deg'))
 mask = rectangle.contains(pixcoord)
-dis = np.sqrt((x - c2[0])**2 + (y - c2[1])**2) * 0.2 * 50 / 7
+dis = np.sqrt((x - c2[0]) ** 2 + (y - c2[1]) ** 2) * 0.2 * 50 / 7
 dis_mask = dis[mask]
 
-# mask each side
+# Mask each side
 red = ((x[mask] - c2[0]) < 0) * ((y[mask] - c2[1]) > 0)
 blue = ~red
 dis_red = dis_mask[red] * -1
@@ -98,14 +113,14 @@ dis_blue = dis_mask[blue]
 
 # Slit position
 # fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
-# plt.imshow(np.where(center_mask, v_N1[0, :, :], np.nan), origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+# plt.imshow(np.where(center_mask, v50, np.nan), origin='lower', cmap='coolwarm', vmin=-350, vmax=350)
 # patch = rectangle.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
 # plt.plot(c2[0], c2[1], '*', markersize=15)
-# fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox_inches='tight')
+# fig.savefig('../../MUSEQuBES+CUBS/fit_kin/3C57_sudo_slit.png', bbox_inches='tight')
 
 # Make a figure for the poster
 fig, ax = plt.subplots(2, 1, figsize=(10, 7), dpi=300, sharex=True)
-fig.subplots_adjust(hspace=0.05)
+fig.subplots_adjust(hspace=0.0)
 
 # ETG
 gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
@@ -114,11 +129,6 @@ gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC
 # gal_list = np.array(['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941',
 #                      'NGC3945', 'NGC4203', 'NGC4262', 'NGC5173', 'NGC5582', 'NGC5631', 'NGC6798',
 #                      'UGC06176', 'UGC09519'])
-
-# ax[0].plot(dis_red_gal_mean, v_red_gal_mean, '-k', lw=2)
-# ax[0].plot(dis_blue_gal_mean, v_blue_gal_mean, '-k', label='HI 21-cm around NGC 5582 \n from Serra et al. 2012')
-# ax[1].plot(dis_red_gal_mean, sigma_red_gal_mean, '-k', lw=2)
-# ax[1].plot(dis_blue_gal_mean, sigma_blue_gal_mean, '-k', lw=2)
 
 dis_red_all, v_red_all, sigma_red_all = np.array([]), np.array([]), np.array([])
 dis_blue_all, v_blue_all, sigma_blue_all = np.array([]), np.array([]), np.array([])
@@ -150,37 +160,68 @@ sort = np.argsort(dis_red_all)
 dis_red_all, v_red_all, sigma_red_all = dis_red_all[sort], v_red_all[sort], sigma_red_all[sort]
 sort = np.argsort(dis_blue_all)
 dis_blue_all, v_blue_all, sigma_blue_all = dis_blue_all[sort], v_blue_all[sort], sigma_blue_all[sort]
-dis_red_gal_mean, v_red_gal_mean, v_red_gal_max, \
-v_red_gal_min, sigma_red_gal_mean, sigma_red_gal_max, sigma_red_gal_min = Bin(dis_red_all, v_red_all, sigma_red_all, bins=20)
+dis_red_gal_mean, v_red_gal_mean, v_red_gal_max, v_red_gal_min, \
+sigma_red_gal_mean, sigma_red_gal_max, sigma_red_gal_min = Bin(dis_red_all, v_red_all, sigma_red_all, bins=20)
 dis_blue_gal_mean, v_blue_gal_mean, v_blue_gal_max, v_blue_gal_min, \
 sigma_blue_gal_mean, sigma_blue_gal_max, sigma_blue_gal_min = Bin(dis_blue_all, v_blue_all, sigma_blue_all, bins=20)
 #
-ax[0].plot(dis_red_gal_mean, v_red_gal_mean, '-', color='C1', lw=2, zorder=-100)
+ax[0].plot(dis_red_gal_mean, v_red_gal_mean, '-', color='C1', lw=2, zorder=-100, label='HI 21-cm from Serra et al. 2012')
 ax[0].plot(dis_blue_gal_mean, v_blue_gal_mean, '-', color='C1', lw=2, zorder=-100)
 ax[0].fill_between(dis_red_gal_mean, v_red_gal_min, v_red_gal_max, lw=2, color='C1', alpha=0.4, edgecolor=None)
 ax[0].fill_between(dis_blue_gal_mean, v_blue_gal_min, v_blue_gal_max, lw=2, color='C1', alpha=0.4, edgecolor=None)
 ax[1].plot(dis_red_gal_mean, 2.563 * sigma_red_gal_mean, '-', color='C1', lw=2, zorder=-100)
 ax[1].plot(dis_blue_gal_mean, 2.563 * sigma_blue_gal_mean, '-', color='C1', lw=2, zorder=-100)
-ax[1].fill_between(dis_red_gal_mean, 2.563 * sigma_red_gal_min, 2.563 * sigma_red_gal_max, lw=2,
-                   color='C1', alpha=0.4, edgecolor=None)
-ax[1].fill_between(dis_blue_gal_mean, 2.563 * sigma_blue_gal_min, 2.563 * sigma_blue_gal_max, lw=2,
-                   color='C1', alpha=0.4, edgecolor=None)
+ax[1].fill_between(dis_red_gal_mean, 2.563 * sigma_red_gal_min, 2.563 * sigma_red_gal_max, lw=2, color='C1', alpha=0.4,
+                   edgecolor=None)
+ax[1].fill_between(dis_blue_gal_mean, 2.563 * sigma_blue_gal_min, 2.563 * sigma_blue_gal_max, lw=2, color='C1',
+                   alpha=0.4, edgecolor=None)
 
 
 # 3C57
-# v50, w80
+# V50, W80
 v50_flatten = v50.flatten()[center_mask_flatten]
 w80_flatten = w80.flatten()[center_mask_flatten]
 v50_blue, v50_red = v50_flatten[mask][blue], v50_flatten[mask][red]
 w80_blue, w80_red = w80_flatten[mask][blue], w80_flatten[mask][red]
-
-#
 d5080_blue, v50_blue_mean, _, _, w80_blue_mean, _, _ = Bin(dis_blue, v50_blue, w80_blue, bins=20)
 d5080_red, v50_red_mean, _, _, w80_red_mean, _, _ = Bin(dis_red, v50_red, w80_red, bins=20)
-ax[0].scatter(d5080_blue, v50_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
-ax[0].scatter(d5080_red, v50_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(d5080_blue, w80_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+ax[0].scatter(d5080_red, v50_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',
+              label=r'$\rm 3C\,57 \, northeast$')
+ax[0].scatter(d5080_blue, v50_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue',
+              label=r'$\rm 3C\,57 \, southwest$')
 ax[1].scatter(d5080_red, w80_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w80_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+
+# Mask each side
+mask_NLR = rectangle.contains(pixcoord_NLR)
+dis_NLR = np.sqrt((x_NLR - c2[0]) ** 2 + (y_NLR - c2[1]) ** 2) * 0.2 * 50 / 7
+dis_mask_NLR = dis_NLR[mask_NLR]
+red_NLR = ((x_NLR[mask_NLR] - c2[0]) < 0) * ((y_NLR[mask_NLR] - c2[1]) > 0)
+blue_NLR = ~red_NLR
+dis_red_NLR = dis_mask_NLR[red_NLR] * -1
+dis_blue_NLR = dis_mask_NLR[blue_NLR]
+v50_NLR_OII_flatten = v50_NLR_OII.flatten()
+w80_NLR_OII_flatten = w80_NLR_OII.flatten()
+v50_blue_NLR_OII, v50_red_NLR_OII = v50_NLR_OII_flatten[mask_NLR][blue_NLR], v50_NLR_OII_flatten[mask_NLR][red_NLR]
+w80_blue_NLR_OII, w80_red_NLR_OII = w80_NLR_OII_flatten[mask_NLR][blue_NLR], w80_NLR_OII_flatten[mask_NLR][red_NLR]
+v50_NLR_OIII_flatten = v50_NLR_OIII.flatten()
+w80_NLR_OIII_flatten = w80_NLR_OIII.flatten()
+v50_blue_NLR_OIII, v50_red_NLR_OIII = v50_NLR_OIII_flatten[mask_NLR][blue_NLR], v50_NLR_OIII_flatten[mask_NLR][red_NLR]
+w80_blue_NLR_OIII, w80_red_NLR_OIII = w80_NLR_OIII_flatten[mask_NLR][blue_NLR], w80_NLR_OIII_flatten[mask_NLR][red_NLR]
+
+#
+d5080_blue_NLR, v50_blue_mean_NLR_OII, _, _, w80_blue_mean_NLR_OII, _, _ = Bin(dis_blue_NLR, v50_blue_NLR_OII, w80_blue_NLR_OII, bins=20)
+d5080_red_NLR, v50_red_mean_NLR_OII, _, _, w80_red_mean_NLR_OII, _, _ = Bin(dis_red_NLR, v50_red_NLR_OII, w80_red_NLR_OII, bins=20)
+d5080_blue_NLR, v50_blue_mean_NLR_OIII, _, _, w80_blue_mean_NLR_OIII, _, _ = Bin(dis_blue_NLR, v50_blue_NLR_OIII, w80_blue_NLR_OIII, bins=20)
+d5080_red_NLR, v50_red_mean_NLR_OIII, _, _, w80_red_mean_NLR_OIII, _, _ = Bin(dis_red_NLR, v50_red_NLR_OIII, w80_red_NLR_OIII, bins=20)
+ax[0].scatter(d5080_red_NLR, v50_red_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='purple')
+ax[0].scatter(d5080_blue_NLR, v50_blue_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='C0')
+ax[1].scatter(d5080_red_NLR, w80_red_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='purple')
+ax[1].scatter(d5080_blue_NLR, w80_blue_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='C0')
+ax[0].scatter(d5080_red_NLR, v50_red_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='violet')
+ax[0].scatter(d5080_blue_NLR, v50_blue_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='C2')
+ax[1].scatter(d5080_red_NLR, w80_red_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='violet')
+ax[1].scatter(d5080_blue_NLR, w80_blue_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='C2')
 ax[0].axhline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
 ax[0].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
 ax[1].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
@@ -190,5 +231,5 @@ ax[0].set_ylim(-450, 450)
 ax[0].set_ylabel(r'$\rm V_{50} \rm \, [km \, s^{-1}]$', size=25)
 ax[1].set_xlabel(r'$\rm Distance \, [kpc]$', size=25)
 ax[1].set_ylabel(r'$\rm W_{80} \rm \, [km \, s^{-1}]$', size=25)
-ax[0].legend(loc='best', fontsize=19)
-fig.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile_poster.png', bbox_inches='tight')
+ax[0].legend(loc='best', fontsize=15)
+fig.savefig('../../MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile_poster.png', bbox_inches='tight')

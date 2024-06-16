@@ -116,7 +116,7 @@ def MakeFieldImage(cubename=None):
 
 
     #
-    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
+    gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
 
     #
     gc.set_system_latex(True)
@@ -148,7 +148,7 @@ def MakeFieldImage(cubename=None):
     gc.scalebar.set_font_size(30)
 
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
-                    edgecolors='k', linewidths=0.5, s=600)
+                    edgecolors='k', linewidths=0.5, s=3000)
     gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
 
     # Draw contours
@@ -164,10 +164,17 @@ def MakeFieldImage(cubename=None):
     gc.add_label(0.58, 0.95, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=30, relative=True, horizontalalignment='left')
     gc.add_label(0.08, 0.08, '(a)', color='k', size=40, relative=True)
 
+    # NE
+    # xw, yw = gc.pixel2world(140, 140)
+    # gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
+    # gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
+    # gc.add_label(0.9778, 0.30, r'N', size=30, relative=True)
+    # gc.add_label(0.88, 0.10, r'E', size=30, relative=True)
+
     # Labels
     fig.savefig(path_savefig_mini, bbox_inches='tight')
 
-    # raise ValueError('STOP')
+    raise ValueError('STOP')
 
     # Figure
     fig = plt.figure(figsize=(8, 8), dpi=300)

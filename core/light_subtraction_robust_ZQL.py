@@ -99,10 +99,18 @@ def interpLine(wv, ratio, wv1, wv2, wv3, wv4):
 spec = cube_qso.sum(axis=(1, 2))
 flux_initial = spec.data
 # flux_initial = cube.data[:, 234, 226]
-# flux_initial = savgol_filter(flux_initial, window_length=7, polyorder=1)
-# wv1, wv2, wv3, wv4 = 7930, 7935, 7965, 7970
-# mask, interp = interpLine(wave, flux_initial, wv1, wv2, wv3, wv4)
-# flux_initial[mask] = interp
+
+# not subtract OII NLR
+flux_initial = savgol_filter(flux_initial, window_length=7, polyorder=1)
+wv1, wv2, wv3, wv4 = 6205, 6215, 6255, 6260
+mask, interp = interpLine(wave, flux_initial, wv1, wv2, wv3, wv4)
+flux_initial[mask] = interp
+
+# not subtract OIII NLR
+flux_initial = savgol_filter(flux_initial, window_length=7, polyorder=1)
+wv1, wv2, wv3, wv4 = 8310, 8325, 8390, 8410
+mask, interp = interpLine(wave, flux_initial, wv1, wv2, wv3, wv4)
+flux_initial[mask] = interp
 
 flux_initial_med = flux_initial / np.nanmedian(flux_initial)  # median normalize
 fig, ax = plt.subplots(4, figsize=(7, 7), sharex=True)
@@ -130,7 +138,6 @@ for x in xArray:
     for y in yArray:
         if mask[y, x] == 0:
             # extract the spectrum
-            print(x, y)
             sp = cube[:, y, x]
             thisFlux = sp.data
             mask_flux = thisFlux.mask
@@ -175,6 +182,6 @@ qso.write(args.f.replace('.fits', '_QSO.fits'), overwrite=True)
 # Subtract the model and write-out the result
 print('Writing...')
 cube.data -= fluxArray
-cube.write(args.f.replace('.fits', '_subtracted_ZQL.fits'))
+cube.write(args.f.replace('.fits', '_subtracted_NLR.fits'))
 
 print('Done')

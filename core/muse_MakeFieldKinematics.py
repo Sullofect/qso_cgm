@@ -1199,7 +1199,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                         smooth=5, kernel='box', hdu=1)
         APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
         gc.add_label(0.97, 0.92, r'$\rm [O\,II]$', color='black', size=30, relative=True, horizontalalignment='right')
-        # gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
+        gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
         fig.savefig(figurename_SB_OII, bbox_inches='tight')
 
         fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -1227,6 +1227,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         APLpyStyle(gc, type='NarrowBand', cubename=cubename_cor, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
         fig.savefig(figurename_SB, bbox_inches='tight')
 
+    raise ValueError('stop here')
     # LOS velocity
     path_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
     path_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
@@ -1772,9 +1773,9 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
 
 def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None):
     # only for TXS0206
-    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
+    gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
-                    linewidths=0.5, s=600, zorder=100)
+                    linewidths=0.5, s=3000, zorder=100)
     gc.set_system_latex(True)
 
     # Colorbar
@@ -1790,11 +1791,11 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
                                         r's^{-1} \; arcsec^{-2}]}$')
         gc.colorbar.set_axis_label_font(size=30)
-        # gc.add_scalebar(length=7 * u.arcsecond)
-        gc.add_scalebar(length=8 * u.arcsecond)
+        gc.add_scalebar(length=7 * u.arcsecond)
+        # gc.add_scalebar(length=8 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        # gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # 3C57
-        gc.scalebar.set_label(r"$8'' \approx 50 \mathrm{\; kpc}$")  # HE0226
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # 3C57
+        # gc.scalebar.set_label(r"$8'' \approx 50 \mathrm{\; kpc}$")  # HE0226
         gc.scalebar.set_font_size(30)
         # gc.add_label(0.98, 0.94, cubename, size=35, relative=True, horizontalalignment='right')
         # gc.add_label(0.98, 0.87, r'$z={}$'.format(z_qso), size=35, relative=True, horizontalalignment='right')
@@ -1916,9 +1917,9 @@ fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': False, 'r_max': 1.6,
              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None, kernel_1D=None,
 #          CheckGuess=[10, 10], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, CheckSpectra=[77, 71], v_min=-350, v_max=350,
-               width_OII=10, S_N_thr=1, sigma_max=300, contour_level=0.1, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-               FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
+# PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, CheckSpectra=[77, 71], v_min=-350, v_max=350,
+#                width_OII=10, S_N_thr=1, sigma_max=300, contour_level=0.1, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+#                FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
 
 # PKS0405-12
 # muse_MakeNBImageWith3DSeg.py -m PKS0405-12_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
@@ -2031,9 +2032,9 @@ fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
 #          width_OII=10, width_OIII=10, FitType='sequential')
-# PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_min=-350, v_max=350, width_OII=10,
-#                S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-#                FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
+PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_min=-350, v_max=350, width_OII=10,
+               S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+               FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
 
 # PKS0552-640
 # muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss

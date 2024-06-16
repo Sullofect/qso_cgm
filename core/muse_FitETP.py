@@ -33,10 +33,19 @@ rc('xtick', direction='in')
 rc('ytick', direction='in')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
+c_kms = 2.998e5
 
 def Gaussian(v, v_c, sigma, flux):
     peak = flux / np.sqrt(2 * sigma ** 2 * np.pi)
     gaussian = peak * np.exp(-(v - v_c) ** 2 / 2 / sigma ** 2)
+
+    return gaussian
+
+def Gaussian_cm(wave, v, sigma_kms, flux):
+    wave_obs = (1 + (v / c_kms)) * 21
+    sigma_cm = (sigma_kms / c_kms * wave_obs)
+    peak = flux / np.sqrt(2 * sigma_cm ** 2 * np.pi)
+    gaussian = peak * np.exp(-(wave - wave_obs) ** 2 / 2 / sigma_cm ** 2)
 
     return gaussian
 
@@ -77,51 +86,100 @@ hdr_ETG_cube = hdul_ETG_cube[0].header
 flux = hdul_ETG_cube[0].data
 flux = np.where(~np.isnan(v_ETG)[np.newaxis, :, :], flux, np.nan)
 v_array = np.arange(hdr_ETG_cube['CRVAL3'], hdr_ETG_cube['CRVAL3'] + flux.shape[0] * hdr_ETG_cube['CDELT3'],
-                    hdr_ETG_cube['CDELT3']) / 1e3 - v_sys_gal # Convert from m/s to km/s,
+                    hdr_ETG_cube['CDELT3']) / 1e3 # Convert from m/s to km/s,
+wave = (1 + v_array / c_kms) * 21
+nu = c_kms * 1e5 / wave
+v_array = v_array - v_sys_gal
 mask = ~np.isnan(v_ETG)
 size = np.shape(flux)[1:]
 
 # fitting starts
+# v_c_guess, sigma_guess, flux_guess = 0, 50, 0.5
+# parameters = lmfit.Parameters()
+# model = Gaussian
+# parameters.add_many(('v_c', v_c_guess, True, -300, 300, None),
+#                     ('sigma', sigma_guess, True, 0, 150, None),
+#                     ('flux', flux_guess, True, 0, None, None))
+# fit_success = np.zeros(size)
+# v_c_fit, dv_c_fit = np.zeros(size), np.zeros(size)
+# sigma_fit, dsigma_fit = np.zeros(size), np.zeros(size)
+# flux_fit, dflux_fit = np.zeros(size), np.zeros(size)
+
+flux_1 = flux[:, 167, 196]
+flux_1_cm = nu * flux_1 / wave
+
+#
+fig, ax = plt.subplots(1, 2, figsize=(5, 5))
+ax[0].plot(v_array, flux_1, '-')
+ax[1].plot(wave, flux_1_cm, '-')
+
+# Test fit
 v_c_guess, sigma_guess, flux_guess = 0, 50, 0.5
 parameters = lmfit.Parameters()
 model = Gaussian
-parameters.add_many(('v_c', v_c_guess, True, -300, 300, None),
+parameters.add_many(('v_c', v_ETG[167, 196], True, -700, 700, None),
                     ('sigma', sigma_guess, True, 0, 150, None),
                     ('flux', flux_guess, True, 0, None, None))
-fit_success = np.zeros(size)
-v_c_fit, dv_c_fit = np.zeros(size), np.zeros(size)
-sigma_fit, dsigma_fit = np.zeros(size), np.zeros(size)
-flux_fit, dflux_fit = np.zeros(size), np.zeros(size)
+spec_model = lmfit.Model(model, missing='drop')
+result = spec_model.fit(flux_1, v=v_array, params=parameters)
+v_c, dv_c = result.best_values['v_c'], result.params['v_c'].stderr
+sigma, dsigma = result.best_values['sigma'], result.params['sigma'].stderr
+flux_b, dflux_b = result.best_values['flux'], result.params['flux'].stderr
+ax[0].plot(v_array, Gaussian(v_array, v_c, sigma, flux_b))
 
-for i in range(size[0]):  # i = p (y), j = q (x)
-    for j in range(size[1]):
-        if mask[i, j]:
-            parameters['v_c'].value = v_ETG[i, j]
-            flux_ij = flux[:, i, j]
-            spec_model = lmfit.Model(model, missing='drop')
-            result = spec_model.fit(flux_ij, v=v_array, params=parameters)
-            fit_success[i, j] = result.success
 
-            v_c, dv_c = result.best_values['v_c'], result.params['v_c'].stderr
-            sigma, dsigma = result.best_values['sigma'], result.params['sigma'].stderr
-            flux_b, dflux_b = result.best_values['flux'], \
-                          result.params['flux'].stderr
+parameters = lmfit.Parameters()
+model = Gaussian_cm
+parameters.add_many(('v', int(v_sys_gal + v_ETG[167, 196]), True, -5000, 5000, None),
+                    ('sigma_kms', 10, True, 0, 150, None),
+                    ('flux', 100, True, 0, None, None))
+spec_model = lmfit.Model(model, missing='drop')
+result = spec_model.fit(flux_1_cm, wave=wave, params=parameters)
+v, dv = result.best_values['v'], result.params['v'].stderr
+sigma_kms, dsigma_kms = result.best_values['sigma_kms'], result.params['sigma_kms'].stderr
+flux_b, dflux_b = result.best_values['flux'], result.params['flux'].stderr
+ax[1].plot(wave, Gaussian_cm(wave, v, sigma_kms, flux_b))
 
-            # fill the value
-            v_c_fit[i, j], dv_c_fit[i, j] = v_c, dv_c
-            sigma_fit[i, j], dsigma_fit[i, j] = sigma, dsigma
-            flux_fit[i, j], dflux_fit[i, j] = flux_b, dflux_b
-        else:
-            pass
+print(v_c, v - v_sys_gal)
+print(sigma, sigma_kms)
+plt.show()
 
-# Save fitting results
-path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_fit.fits'.format(gal_name)
-hdul_fs = fits.PrimaryHDU(fit_success, header=hdr_ETG)
-hdul_v_c, hdul_dv_c = fits.ImageHDU(v_c_fit, header=hdr_ETG), fits.ImageHDU(dv_c_fit, header=hdr_ETG)
-hdul_sigma, hdul_dsigma = fits.ImageHDU(sigma_fit, header=hdr_ETG), fits.ImageHDU(dsigma_fit, header=hdr_ETG)
-hdul_flux, hdul_dflux = fits.ImageHDU(flux_fit, header=hdr_ETG), fits.ImageHDU(dflux_fit, header=hdr_ETG)
-hdul = fits.HDUList([hdul_fs, hdul_v_c, hdul_dv_c, hdul_sigma, hdul_dsigma, hdul_flux, hdul_dflux])
-hdul.writeto(path_fit, overwrite=True)
+
+
+
+
+
+raise ValueError('test')
+
+# for i in range(size[0]):  # i = p (y), j = q (x)
+#     for j in range(size[1]):
+#         if mask[i, j]:
+#             parameters['v_c'].value = v_ETG[i, j]
+#             flux_ij = flux[:, i, j]
+#             spec_model = lmfit.Model(model, missing='drop')
+#             result = spec_model.fit(flux_ij, v=v_array, params=parameters)
+#             fit_success[i, j] = result.success
+#
+#             v_c, dv_c = result.best_values['v_c'], result.params['v_c'].stderr
+#             sigma, dsigma = result.best_values['sigma'], result.params['sigma'].stderr
+#             flux_b, dflux_b = result.best_values['flux'], \
+#                           result.params['flux'].stderr
+#
+#             # fill the value
+#             v_c_fit[i, j], dv_c_fit[i, j] = v_c, dv_c
+#             sigma_fit[i, j], dsigma_fit[i, j] = sigma, dsigma
+#             flux_fit[i, j], dflux_fit[i, j] = flux_b, dflux_b
+#         else:
+#             pass
+
+# # Save fitting results
+# path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_fit.fits'.format(gal_name)
+# hdul_fs = fits.PrimaryHDU(fit_success, header=hdr_ETG)
+# hdul_v_c, hdul_dv_c = fits.ImageHDU(v_c_fit, header=hdr_ETG), fits.ImageHDU(dv_c_fit, header=hdr_ETG)
+# hdul_sigma, hdul_dsigma = fits.ImageHDU(sigma_fit, header=hdr_ETG), fits.ImageHDU(dsigma_fit, header=hdr_ETG)
+# hdul_flux, hdul_dflux = fits.ImageHDU(flux_fit, header=hdr_ETG), fits.ImageHDU(dflux_fit, header=hdr_ETG)
+# hdul = fits.HDUList([hdul_fs, hdul_v_c, hdul_dv_c, hdul_sigma, hdul_dsigma, hdul_flux, hdul_dflux])
+# hdul.writeto(path_fit, overwrite=True)
 
 
 

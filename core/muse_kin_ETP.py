@@ -72,24 +72,17 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'GasMap':
         gc.colorbar.set_ticks([-300, -200, -100, 0, 100, 200, 300])
         gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
-        # gc.colorbar.hide()
+        gc.colorbar.hide()
         gc.add_label(0.98, 0.94, name_gal, size=35, relative=True, horizontalalignment='right')
-        # gc.add_label(0.98, 0.87, r'$z={}$'.format(z_qso), size=35, relative=True, horizontalalignment='right')
     elif type == 'GasMap_sigma':
         # gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
         gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
-    else:
-        gc.colorbar.set_ticks([-0.5, 0.0, 0.5, 1.0, 1.5])
-        gc.colorbar.set_axis_label_text(r'$\rm log([O \, III]/[O \, II])$')
 
     # Scale bar
-    # gc.add_scalebar(length=3 * u.arcsecond)
     gc.add_scalebar(length=50 / scale * u.arcsecond)
-    # gc.scalebar.set_corner('top left')
-    # gc.scalebar.set_label(r"$450'' \approx \,$" + '{:.0f}'.format(450 * scale) + r"$\mathrm{\; pkpc}$")
-    # gc.scalebar.set_label(r"$3'' \approx 20 \mathrm{\; pkpc}$")
+    gc.scalebar.set_corner('top left')
     gc.scalebar.set_label('{:.0f}'.format(50 / scale) +  r"$'' \approx 50 \mathrm{\; pkpc}$")
-    # gc.scalebar.set_font_size(30)
+    gc.scalebar.set_font_size(30)
 
     # Hide
     gc.ticks.hide()
@@ -110,7 +103,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 
 # load
 # gal_name = 'NGC5582'
-path_table_gals = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
+path_table_gals = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
 table_gals = fits.open(path_table_gals)[1].data
 # gal_name_ = gal_name.replace('C', 'C ')
 # name_sort = table_gals['Object Name'] == gal_name_
@@ -118,13 +111,13 @@ table_gals = fits.open(path_table_gals)[1].data
 # v_sys_gal = table_gals[name_sort]['cz (Velocity)']
 
 # # NGC3945
-# path_ETG = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_name)
-# path_ETG_new = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1_new.fits'.format(gal_name)
-# path_ETG_mom2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom2.fits'.format(gal_name)
-# path_ETG_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/allcubes/{}_cube.fits'.format(gal_name)
-# path_figure_mom1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mom1.png'.format(gal_name)
-# path_figure_mom2 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mom2.png'.format(gal_name)
-# path_figure_spec = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_spec.png'.format(gal_name)
+# path_ETG = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_name)
+# path_ETG_new = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1_new.fits'.format(gal_name)
+# path_ETG_mom2 = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom2.fits'.format(gal_name)
+# path_ETG_cube = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/allcubes/{}_cube.fits'.format(gal_name)
+# path_figure_mom1 = '../../MUSEQuBES+CUBS/plots/{}_mom1.png'.format(gal_name)
+# path_figure_mom2 = '../../MUSEQuBES+CUBS/plots/{}_mom2.png'.format(gal_name)
+# path_figure_spec = '../../MUSEQuBES+CUBS/plots/{}_spec.png'.format(gal_name)
 #
 # # Load the kinematic map
 # hdul_ETG = fits.open(path_ETG)
@@ -209,7 +202,7 @@ table_gals = fits.open(path_table_gals)[1].data
 # v_rot = rotate(v_rot, 45)
 # v_rot = np.where(v_rot != -1, v_rot, np.nan)
 #
-# path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.format(gal_name)
+# path_fit = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.format(gal_name)
 # hdul_fit = fits.open(path_fit)
 # v_fit, sigma_fit = hdul_fit[1].data, hdul_fit[3].data
 #
@@ -253,46 +246,55 @@ table_gals = fits.open(path_table_gals)[1].data
 # plt.show()
 
 def PlotEachGal(gals, dis):
-    # path_table_gals = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
-    # table_gals = fits.open(path_table_gals)[1].data
-    for ind, i in enumerate(gals):
-        # fix missed name
-        if i == 'NGC2594':
-            i_cube = 'NGC2592'
-        elif i == 'NGC3619':
-            i_cube = 'NGC3613'
+    for ind, igal in enumerate(gals):
+        if igal == 'NGC2594':
+            igal_cube = 'NGC2592'
+        elif igal == 'NGC3619':
+            igal_cube = 'NGC3613'
         else:
-            i_cube = i
+            igal_cube = igal
+
+        # Load the distances and angles
+        dis_i = dis_list[gal_list == igal][0]
+        ang_i = ang_list[gal_list == igal][0]
 
         #
-        name_i = i.replace('C', 'C ')
+        name_i = igal.replace('C', 'C ')
         name_sort = table_gals['Object Name'] == name_i
-
 
         # Galaxy information
         ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
         v_sys_gal = table_gals[name_sort]['cz (Velocity)']
-        print(i, v_sys_gal)
+        print(igal, v_sys_gal)
 
-        path_ETG_i = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(i_cube)
-        path_ETG_new_i = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1_new.fits'.format(i_cube)
-        path_figure_mom1_i = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mom1_noframe.png'.format(i)
-        hdul_ETG = fits.open(path_ETG_i)
-        hdr_ETG = hdul_ETG[0].header
-        hdr_ETG['NAXIS'] = 2
-        hdr_ETG.remove('NAXIS3')
-        hdr_ETG.remove('CTYPE3')
-        hdr_ETG.remove('CDELT3')
-        hdr_ETG.remove('CRPIX3')
-        hdr_ETG.remove('CRVAL3')
-        v_ETG = hdul_ETG[0].data[0, :, :] - v_sys_gal
-        hdul_ETG_new = fits.ImageHDU(v_ETG, header=hdr_ETG)
-        hdul_ETG_new.writeto(path_ETG_new_i, overwrite=True)
+        path_Serra_i = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(igal_cube)
+        path_Serra_new_i = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1_new.fits'.format(igal_cube)
+        path_figure_mom1_i = '../../MUSEQuBES+CUBS/plots/{}_mom1_noframe.png'.format(igal)
+        hdul_Serra = fits.open(path_Serra_i)
+        hdr_Serra = hdul_Serra[0].header
+        hdr_Serra['NAXIS'] = 2
+        hdr_Serra.remove('NAXIS3')
+        hdr_Serra.remove('CTYPE3')
+        hdr_Serra.remove('CDELT3')
+        hdr_Serra.remove('CRPIX3')
+        hdr_Serra.remove('CRVAL3')
+        v_Serra = hdul_Serra[0].data[0, :, :] - v_sys_gal
+        hdul_Serra_new = fits.ImageHDU(v_Serra, header=hdr_Serra)
+        hdul_Serra_new.writeto(path_Serra_new_i, overwrite=True)
+
+        w = WCS(hdr_Serra, naxis=2)
+        center_gal = SkyCoord(ra_gal[0], dec_gal[0], unit='deg', frame='icrs')
+        c_gal = w.world_to_pixel(center_gal)
+        x_gal, y_gal = np.meshgrid(np.arange(v_Serra.shape[0]), np.arange(v_Serra.shape[1]))
+        x_gal, y_gal = x_gal.flatten(), y_gal.flatten()
+        rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=60, height=3,
+                                             angle=Angle(ang_i, 'deg'))
 
         fig = plt.figure(figsize=(8, 8), dpi=300)
-        gc = aplpy.FITSFigure(path_ETG_new_i, figure=fig, hdu=1)
+        gc = aplpy.FITSFigure(path_Serra_new_i, figure=fig, hdu=1)
         gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
-        gc.frame.set_color('white')
+        patch = rectangle_gal.plot(ax=gc.ax, facecolor='none', edgecolor='k', lw=1, linestyle='--', label='Rectangle')
+        # gc.frame.set_color('white')
         APLpyStyle(gc, type='GasMap', ra_qso=ra_gal, dec_qso=dec_gal, name_gal=name_i, dis_gal=dis[ind])
         fig.savefig(path_figure_mom1_i, bbox_inches='tight')
 
@@ -329,13 +331,13 @@ def PlaceSudoSlitOnEachGal(igal=None):
     v_sys_gal = table_gals[name_sort]['cz (Velocity)']
 
     # Load velocity
-    path_Serra = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(igal_cube)
+    path_Serra = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(igal_cube)
     hdul_Serra = fits.open(path_Serra)
     hdr_Serra = hdul_Serra[0].header
     v_Serra = hdul_Serra[0].data[0, :, :] - v_sys_gal
 
     # Load fitting results
-    path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.format(igal)
+    path_fit = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.format(igal)
     hdul_fit = fits.open(path_fit)
     v_fit, sigma_fit = hdul_fit[1].data, hdul_fit[3].data
     v_fit = np.where(~np.isnan(v_Serra), v_fit, np.nan)

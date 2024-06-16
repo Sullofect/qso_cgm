@@ -177,8 +177,9 @@ def model_OII_OIII(wave_vac, **params):
                           m_OIII5008 + params['a_OIII5008'] * wave_OIII_vac + params['b_OIII5008']))
 
 class PlotWindow(QMainWindow):
-    def __init__(self, cubename='3C57', zapped=False, UseDataSeg=(1.5, 'gauss', None, None),
-                 width_OII=50, width_OIII=50, UseSmoothedCubes=True, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss')):
+    def __init__(self, cubename='3C57', zapped=False, NLR='', UseDataSeg=(1.5, 'gauss', None, None),
+                 width_OII=50, width_OIII=50, UseSmoothedCubes=True, extend_over=False,
+                 UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss')):
         super().__init__()
 
         fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
@@ -203,28 +204,36 @@ class PlotWindow(QMainWindow):
         data_qso = data_qso[data_qso['name'] == cubename]
         self.ra_qso, self.dec_qso, self.z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
+        # Save V50 and W80
+        self.path_v50_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_V50_OII.fits'.format(cubename, NLR)
+        self.path_w80_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_W80_OII.fits'.format(cubename, NLR)
+        self.path_v50_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_V50_OIII.fits'.format(cubename, NLR)
+        self.path_w80_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_W80_OIII.fits'.format(cubename, NLR)
+        self.path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_V50.fits'.format(cubename, NLR)
+        self.path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_W80.fits'.format(cubename, NLR)
+
         # Load cubes
         if line == 'OII+OIII':
             line_OII, line_OIII = 'OII', 'OIII'
-            path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
-                format(cubename, str_zap, line_OII)
-            path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                                     '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDataSeg)
-            path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
-                format(cubename, str_zap, line_OIII)
-            path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                                      '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDataSeg)
+            path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}.fits'. \
+                format(cubename, str_zap, line_OII, NLR)
+            path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_{}_' \
+                                     '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, NLR, *UseDataSeg)
+            path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}.fits'. \
+                format(cubename, str_zap, line_OIII, NLR)
+            path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_{}_' \
+                                      '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, NLR, *UseDataSeg)
             if UseDetectionSeg is not None:
-                path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                    format(cubename, str_zap, line_OII, *UseDetectionSeg)
-                path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                    format(cubename, str_zap, line_OIII, *UseDetectionSeg)
+                path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
+                    format(cubename, str_zap, line_OII, NLR, *UseDetectionSeg)
+                path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
+                    format(cubename, str_zap, line_OIII, NLR, *UseDetectionSeg)
             else:
-                path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                    format(cubename, str_zap, line_OII, *UseDataSeg)
-                path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-                    format(cubename, str_zap, line_OIII, *UseDataSeg)
-            path_cube = path_cube_OII
+                path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
+                    format(cubename, str_zap, line_OII, NLR, *UseDataSeg)
+                path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
+                    format(cubename, str_zap, line_OIII, NLR, *UseDataSeg)
+            self.path_cube_OII = path_cube_OII
 
             # Load data and smoothing
             if UseSmoothedCubes:
@@ -236,31 +245,36 @@ class PlotWindow(QMainWindow):
             flux_OII, flux_err_OII = cube_OII.data * 1e-3, np.sqrt(cube_OII.var) * 1e-3
             flux_OIII, flux_err_OIII = cube_OIII.data * 1e-3, np.sqrt(cube_OIII.var) * 1e-3
             seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
-            seg_3D_ori = np.vstack((seg_3D_OII_ori, seg_3D_OIII_ori))
+            # seg_3D_ori = np.vstack((seg_3D_OII_ori, seg_3D_OIII_ori))
             mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
             flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
+            flux_err_seg_OII, flux_err_seg_OIII = flux_err_OII * seg_3D_OII_ori, flux_err_OIII * seg_3D_OIII_ori
+            S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
+            S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
+            S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
 
             # Extend over
-            start_OII = (seg_3D_OII_ori != 0).argmax(axis=0)
-            end_OII = start_OII + mask_seg_OII
-            start_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), start_OII, start_OII - width_OII)
-            end_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), end_OII, end_OII + width_OII)
-            idx_OII = np.zeros_like(seg_3D_OII_ori)
-            idx_OII[:] = np.arange(np.shape(seg_3D_OII_ori)[0])[:, np.newaxis, np.newaxis]
-            seg_3D_OII = np.where((idx_OII >= end_OII[np.newaxis, :, :]) | (idx_OII < start_OII[np.newaxis, :, :]),
-                                  seg_3D_OII_ori, 1)
+            if extend_over:
+                start_OII = (seg_3D_OII_ori != 0).argmax(axis=0)
+                end_OII = start_OII + mask_seg_OII
+                start_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), start_OII, start_OII - width_OII)
+                end_OII = np.where((mask_seg_OII > 20) | (mask_seg_OII < 1), end_OII, end_OII + width_OII)
+                idx_OII = np.zeros_like(seg_3D_OII_ori)
+                idx_OII[:] = np.arange(np.shape(seg_3D_OII_ori)[0])[:, np.newaxis, np.newaxis]
+                seg_3D_OII = np.where((idx_OII >= end_OII[np.newaxis, :, :]) | (idx_OII < start_OII[np.newaxis, :, :]),
+                                      seg_3D_OII_ori, 1)
 
-            # [O III]
-            start_OIII = (seg_3D_OIII_ori != 0).argmax(axis=0)
-            end_OIII = start_OIII + mask_seg_OIII
-            start_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), start_OIII, start_OIII - width_OIII)
-            end_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), end_OIII, end_OIII + width_OIII)
-            idx_OIII = np.zeros_like(seg_3D_OIII_ori)
-            idx_OIII[:] = np.arange(np.shape(seg_3D_OIII_ori)[0])[:, np.newaxis, np.newaxis]
-            seg_3D_OIII = np.where((idx_OIII >= end_OIII[np.newaxis, :, :]) | (idx_OIII < start_OIII[np.newaxis, :, :]),
-                                   seg_3D_OIII_ori, 1)
-            flux_OII, flux_err_OII = flux_OII * seg_3D_OII, flux_err_OII * seg_3D_OII
-            flux_OIII, flux_err_OIII = flux_OIII * seg_3D_OIII, flux_err_OIII * seg_3D_OIII
+                # [O III]
+                start_OIII = (seg_3D_OIII_ori != 0).argmax(axis=0)
+                end_OIII = start_OIII + mask_seg_OIII
+                start_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), start_OIII, start_OIII - width_OIII)
+                end_OIII = np.where((mask_seg_OIII > 20) | (mask_seg_OIII < 1), end_OIII, end_OIII + width_OIII)
+                idx_OIII = np.zeros_like(seg_3D_OIII_ori)
+                idx_OIII[:] = np.arange(np.shape(seg_3D_OIII_ori)[0])[:, np.newaxis, np.newaxis]
+                seg_3D_OIII = np.where((idx_OIII >= end_OIII[np.newaxis, :, :]) | (idx_OIII < start_OIII[np.newaxis, :, :]),
+                                       seg_3D_OIII_ori, 1)
+                flux_OII, flux_err_OII = flux_OII * seg_3D_OII, flux_err_OII * seg_3D_OII
+                flux_OIII, flux_err_OIII = flux_OIII * seg_3D_OIII, flux_err_OIII * seg_3D_OIII
 
 
             #
@@ -269,7 +283,7 @@ class PlotWindow(QMainWindow):
             self.flux_err_OII, self.flux_err_OIII = flux_err_OII, flux_err_OIII
 
 
-            #
+            # Choose a S/N cut
             mask_seg = mask_seg_OII + mask_seg_OIII
             self.wave_vac = np.array([wave_OII_vac, wave_OIII_vac], dtype=object)
             self.flux = np.vstack((flux_OII, flux_OIII))
@@ -318,14 +332,21 @@ class PlotWindow(QMainWindow):
 
 
         # Mask
+        S_N /= mask_seg
+        # self.mask_OII = np.where(S_N > 2, mask_seg_OII, 0)
+        # self.mask_OIII = np.where(S_N > 2, mask_seg_OIII, 0)
+        # self.mask = np.where(S_N > 2, mask_seg, 0)
+
+        #
         self.mask_OII = mask_seg_OII
         self.mask_OIII = mask_seg_OIII
         self.mask = mask_seg
+        self.size = self.mask.shape
 
 
         # Load the QSO field fit
-        self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
-            format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
+        self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}{}_{}_{}_{}_{}_{}_{}.fits'.\
+            format(cubename, str_zap, line, NLR, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
         redshift_guess, sigma_kms_guess, flux_guess, r_OII3729_3727_guess = self.z_qso, 200.0, 1.0, 1.0
         self.model = model_OII_OIII
         self.parameters = lmfit.Parameters()
@@ -355,17 +376,7 @@ class PlotWindow(QMainWindow):
                                  ('OII_center', fit_param['OII_center'], False, None, None, None))
         if os.path.exists(self.path_fit) is False:
             print('Fitting result file does not exist, start fitting from scratch.')
-
-            # if num_Gaussian == 1:
-            #
-            #     self.fit()
-            # elif num_Gaussian == 2:
-            #
-            # elif num_Gaussian == 3:
-            #
-            # else:
-            #
-            # self.fit()
+            self.fit()
         self.hdul_fit = fits.open(self.path_fit)
         pri, fs, v, z, dz, sigma, dsigma, flux_OII_fit, dflux_OII_fit, flux_OIII_fit, dflux_OIII_fit, r, dr, a_OII, \
         da_OII, b_OII, db_OII, a_OIII, da_OIII, b_OIII, db_OIII, chisqr, redchi = self.hdul_fit[:23]
@@ -375,7 +386,6 @@ class PlotWindow(QMainWindow):
                          flux_OII_fit.data, dflux_OII_fit.data, flux_OIII_fit.data, dflux_OIII_fit.data, r.data, \
                          dr.data, a_OII.data, da_OII.data, b_OII.data, db_OII.data, a_OIII.data, da_OIII.data, \
                          b_OIII.data, db_OIII.data, chisqr.data, redchi.data
-        self.size = fs.shape
 
         # Convert zeros to nan
         # v, z, dz = np.where(v != 0, v, np.nan), np.where(z != 0, z, np.nan), np.where(dz != 0, dz, np.nan)
@@ -449,8 +459,10 @@ class PlotWindow(QMainWindow):
                     pass
 
         z50_OII = (wave_50_OII - wave_OII3727_vac) / wave_OII3727_vac
+        v50_OII = c_kms * (z50_OII - self.z_qso) / (1 + self.z_qso)
         w80_OII = c_kms * (wave_90_OII - wave_10_OII) / (wave_OII3727_vac * (1 + z50_OII))
         z50_OIII = (wave_50_OIII - wave_OIII5008_vac) / wave_OIII5008_vac
+        v50_OIII = c_kms * (z50_OIII - self.z_qso) / (1 + self.z_qso)
         w80_OIII = c_kms * (wave_90_OIII - wave_10_OIII) / (wave_OIII5008_vac * (1 + z50_OIII))
 
         z50 = np.where(self.mask_OIII != 0, z50_OIII, z50_OII)
@@ -458,6 +470,10 @@ class PlotWindow(QMainWindow):
         w80 = np.where(self.mask_OIII > 0, w80_OIII, w80_OII)
         v50 = np.where(self.mask != 0, v50, np.nan)
         w80 = np.where(self.mask != 0, w80, np.nan)
+        self.v50_OII = np.where(self.mask_OII, v50_OII, np.nan)
+        self.w80_OII = np.where(self.mask_OII, w80_OII, np.nan)
+        self.v50_OIII = np.where(self.mask_OIII, v50_OIII, np.nan)
+        self.w80_OIII = np.where(self.mask_OIII, w80_OIII, np.nan)
         self.v50 = v50
         self.w80 = w80
 
@@ -570,7 +586,7 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.sigma_map.setLookupTable(lut)
-        self.sigma_map.updateImage(image=self.w80.T, levels=(0, 800))
+        self.sigma_map.updateImage(image=self.w80.T, levels=(0, 1500))
 
         # Plot the chi 2D map in the third plot
         self.chi_map = pg.ImageItem()
@@ -605,43 +621,181 @@ class PlotWindow(QMainWindow):
         self.widget2_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget3_plot.scene().sigMouseClicked.connect(self.update_plot)
 
-    def fit(self):
-        # fitting starts
-        fit_success = np.zeros(self.size)
-        v_fit, dv_fit = np.zeros(self.size), np.zeros(self.size)
-        sigma_fit, dsigma_fit = np.zeros(self.size), np.zeros(self.size)
-        flux_fit, dflux_fit = np.zeros(self.size), np.zeros(self.size)
+    def calculate_iniguess(self):
+        # Moments
+        wave_OII_vac_ = self.wave_OII_vac[:, np.newaxis, np.newaxis]
+        wave_OIII_vac_ = self.wave_OIII_vac[:, np.newaxis, np.newaxis]
+        flux_cumsum_OII = integrate.cumtrapz(self.flux_OII, wave_OII_vac_, initial=0, axis=0)
+        flux_cumsum_OIII = integrate.cumtrapz(self.flux_OIII, wave_OIII_vac_, initial=0, axis=0)
+        flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
+        flux_cumsum_OIII /= flux_cumsum_OIII.max(axis=0)
+        wave_array_OII = np.zeros_like(self.flux_OII)
+        wave_array_OII[:] = self.wave_OII_vac[:, np.newaxis, np.newaxis]
+        wave_array_OIII = np.zeros_like(self.flux_OIII)
+        wave_array_OIII[:] = self.wave_OIII_vac[:, np.newaxis, np.newaxis]
 
+        wave_10_OII = \
+            np.take_along_axis(wave_array_OII, np.argmin(np.abs(flux_cumsum_OII - 0.10), axis=0)[np.newaxis, :, :], axis=0)[0]
+        wave_50_OII = \
+            np.take_along_axis(wave_array_OII, np.argmin(np.abs(flux_cumsum_OII - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
+        wave_90_OII = \
+            np.take_along_axis(wave_array_OII, np.argmin(np.abs(flux_cumsum_OII - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
+        z_guess_array_OII = (wave_50_OII - wave_OII3728_vac) / wave_OII3728_vac
+        sigma_kms_guess_array_OII = c_kms * (wave_90_OII - wave_10_OII) / (wave_OII3728_vac * (1 + z_guess_array_OII))
+        sigma_kms_guess_array_OII /= 2.563  # W_80 = 2.563sigma
+
+        # Moments for OIII
+        wave_10_OIII = \
+            np.take_along_axis(wave_array_OIII, np.argmin(np.abs(flux_cumsum_OIII - 0.10), axis=0)[np.newaxis, :, :], axis=0)[0]
+        wave_50_OIII = \
+            np.take_along_axis(wave_array_OIII, np.argmin(np.abs(flux_cumsum_OIII - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
+        wave_90_OIII = \
+            np.take_along_axis(wave_array_OIII, np.argmin(np.abs(flux_cumsum_OIII - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
+        z_guess_array_OIII = (wave_50_OIII - wave_OIII5008_vac) / wave_OIII5008_vac
+        sigma_kms_guess_array_OIII = c_kms * (wave_90_OIII - wave_10_OIII) / (wave_OIII5008_vac * (1 + z_guess_array_OIII))
+        sigma_kms_guess_array_OIII /= 2.563  # W_80 = 2.563sigma
+
+        # Use [O III] if possible
+        z_guess_array = np.where(self.mask_OIII != 0, z_guess_array_OIII, z_guess_array_OII)
+        sigma_kms_guess_array = np.where(self.mask_OIII != 0, sigma_kms_guess_array_OIII, sigma_kms_guess_array_OII)
+
+        return z_guess_array, sigma_kms_guess_array
+
+    def fit(self):
+        # Make inital condition
+        self.parameters['OII'].value = 3
+        self.parameters['OIII'].value = 3
+        self.parameters['z_2'].value = self.z_qso
+        self.parameters['z_2'].vary = True
+        self.parameters['z_3'].value = self.z_qso
+        self.parameters['z_3'].vary = True
+        self.parameters['sigma_kms_2'].value = 200
+        self.parameters['sigma_kms_2'].vary = True
+        self.parameters['sigma_kms_3'].value = 200
+        self.parameters['sigma_kms_3'].vary = True
+        self.parameters['flux_OII_2'].value = 1
+        self.parameters['flux_OII_2'].vary = True
+        self.parameters['flux_OII_3'].value = 1
+        self.parameters['flux_OII_3'].vary = True
+        self.parameters['r_OII3729_3727_2'].value = 1
+        self.parameters['r_OII3729_3727_2'].vary = True
+        self.parameters['r_OII3729_3727_3'].value = 1
+        self.parameters['r_OII3729_3727_3'].vary = True
+        self.parameters['flux_OIII5008_2'].value = 1
+        self.parameters['flux_OIII5008_2'].vary = True
+        self.parameters['flux_OIII5008_3'].value = 1
+        self.parameters['flux_OIII5008_3'].vary = True
+
+        header = fits.open(self.path_cube_OII)[1].header
+        header['WCSAXES'] = 2
+        header.remove('CTYPE3')
+        header.remove('CUNIT3')
+        header.remove('CD3_3')
+        header.remove('CRPIX3')
+        header.remove('CRVAL3')
+        header.remove('CD1_3')
+        header.remove('CD2_3')
+        header.remove('CD3_1')
+        header.remove('CD3_2')
+        try:
+            header.remove('CRDER3')
+        except KeyError:
+            pass
+
+        # fitting starts
+        fs, v = np.full(self.size, np.nan), np.full((3, *self.size), np.nan)
+        z, dz, \
+        sigma, dsigma = np.full((3, *self.size), np.nan), np.full((3, *self.size), np.nan), \
+                        np.full((3, *self.size), np.nan), np.full((3, *self.size), np.nan)
+        flux_OII_fit, dflux_OII_fit, \
+        flux_OIII_fit, dflux_OIII_fit, \
+        r, dr = np.full((3, *self.size), np.nan), np.full((3, *self.size), np.nan), \
+                np.full((3, *self.size), np.nan), np.full((3, *self.size), np.nan), \
+                np.full((3, *self.size), np.nan), np.full((3, *self.size), np.nan)
+        a_OII_fit, da_OII_fit, b_OII_fit, \
+        db_OII_fit, a_OIII_fit, da_OIII_fit, \
+        b_OIII_fit, db_OIII_fit, \
+        chisqr, redchi = np.full(self.size, np.nan), np.full(self.size, np.nan), np.full(self.size, np.nan), \
+                         np.full(self.size, np.nan), np.full(self.size, np.nan), np.full(self.size, np.nan), \
+                         np.full(self.size, np.nan), np.full(self.size, np.nan), \
+                         np.full(self.size, np.nan), np.full(self.size, np.nan)
+
+        z_guess_array, sigma_kms_guess_array = self.calculate_iniguess()
         for i in range(self.size[0]):  # i = p (y), j = q (x)
             for j in range(self.size[1]):
                 if self.mask[i, j]:
-                    self.parameters['v'].value = self.v_Serra[i, j]
-                    flux_ij = self.flux[:, i, j]
-                    flux_err_ij = self.flux_err[:, 0, 0]
-                    spec_model = lmfit.Model(self.model, missing='drop')
-                    result = spec_model.fit(flux_ij, velocity=self.v_array, params=self.parameters,
-                                            weights=1 / flux_err_ij)
+                    self.parameters['z_1'].value = z_guess_array[i, j]
 
-                    # Access the fitting results
-                    fit_success[i, j] = result.success
-                    v, dv = result.best_values['v'], result.params['v'].stderr
-                    sigma, dsigma = result.best_values['sigma'], result.params['sigma'].stderr
-                    flux, dflux = result.best_values['flux'], \
-                                      result.params['flux'].stderr
+                    flux_ij = self.flux[:, i, j]
+                    flux_err_ij = self.flux_err[:, i, j]
+                    spec_model = lmfit.Model(self.model, missing='drop')
+                    result = spec_model.fit(flux_ij, wave_vac=self.wave_vac, params=self.parameters,
+                                            weights=1 / flux_err_ij)
+                    fs[i, j] = result.success
+                    chisqr[i, j], redchi[i, j] = result.chisqr, result.redchi
 
                     # fill the value
-                    v_fit[i, j], dv_fit[i, j] = v, dv
-                    sigma_fit[i, j], dsigma_fit[i, j] = sigma, dsigma
-                    flux_fit[i, j], dflux_fit[i, j] = flux, dflux
+                    a_OII, b_OII = result.best_values['a_OII'], result.best_values['b_OII']
+                    da_OII, db_OII = result.params['a_OII'].stderr, result.params['b_OII'].stderr
+                    a_OIII, b_OIII = result.best_values['a_OIII5008'], result.best_values['b_OIII5008']
+                    da_OIII, db_OIII = result.params['a_OIII5008'].stderr, result.params['b_OIII5008'].stderr
+                    a_OII_fit[i, j], da_OII_fit[i, j], b_OII_fit[i, j], db_OII_fit[i, j] = a_OII, da_OII, b_OII, db_OII
+                    a_OIII_fit[i, j], da_OIII_fit[i, j] = a_OIII, da_OIII
+                    b_OIII_fit[i, j], db_OIII_fit[i, j] = b_OIII, db_OIII
+
+                    z_1, dz_1 = result.best_values['z_1'], result.params['z_1'].stderr
+                    z_2, dz_2 = result.best_values['z_2'], result.params['z_2'].stderr
+                    z_3, dz_3 = result.best_values['z_3'], result.params['z_3'].stderr
+                    sigma_1, dsigma_1 = result.best_values['sigma_kms_1'], result.params['sigma_kms_1'].stderr
+                    sigma_2, dsigma_2 = result.best_values['sigma_kms_2'], result.params['sigma_kms_2'].stderr
+                    sigma_3, dsigma_3 = result.best_values['sigma_kms_3'], result.params['sigma_kms_3'].stderr
+                    z[:, i, j], sigma[:, i, j] = [z_1, z_2, z_3], [sigma_1, sigma_2, sigma_3]
+                    dz[:, i, j], dsigma[:, i, j] = [dz_1, dz_2, dz_3], [dsigma_1, dsigma_2, dsigma_3]
+                    v[:, i, j] = [c_kms * (z_1 - self.z_qso) / (1 + self.z_qso),
+                                  c_kms * (z_2 - self.z_qso) / (1 + self.z_qso),
+                                  c_kms * (z_3 - self.z_qso) / (1 + self.z_qso)]
+
+                    flux_OII_1, dflux_OII_1 = result.best_values['flux_OII_1'], result.params['flux_OII_1'].stderr
+                    flux_OII_2, dflux_OII_2 = result.best_values['flux_OII_2'], result.params['flux_OII_2'].stderr
+                    flux_OII_3, dflux_OII_3 = result.best_values['flux_OII_3'], result.params['flux_OII_3'].stderr
+                    r_1, dr_1 = result.best_values['r_OII3729_3727_1'], result.params['r_OII3729_3727_1'].stderr
+                    r_2, dr_2 = result.best_values['r_OII3729_3727_2'], result.params['r_OII3729_3727_2'].stderr
+                    r_3, dr_3 = result.best_values['r_OII3729_3727_3'], result.params['r_OII3729_3727_3'].stderr
+                    flux_OII_fit[:, i, j] = [flux_OII_1, flux_OII_2, flux_OII_3]
+                    dflux_OII_fit[:, i, j] = [dflux_OII_1, dflux_OII_2, dflux_OII_3]
+                    r[:, i, j] = [r_1, r_2, r_3]
+                    dr[:, i, j] = [dr_1, dr_2, dr_3]
+
+                    flux_OIII_1, dflux_OIII_1 = result.best_values['flux_OIII5008_1'], result.params[
+                        'flux_OIII5008_1'].stderr
+                    flux_OIII_2, dflux_OIII_2 = result.best_values['flux_OIII5008_2'], result.params[
+                        'flux_OIII5008_2'].stderr
+                    flux_OIII_3, dflux_OIII_3 = result.best_values['flux_OIII5008_3'], result.params[
+                        'flux_OIII5008_3'].stderr
+                    flux_OIII_fit[:, i, j] = [flux_OIII_1, flux_OIII_2, flux_OIII_3]
+                    dflux_OIII_fit[:, i, j] = [dflux_OIII_1, dflux_OIII_2, dflux_OIII_3]
                 else:
                     pass
 
-        # Save fitting results
-        hdul_fs = fits.PrimaryHDU(fit_success, header=self.hdr)
-        hdul_v, hdul_dv = fits.ImageHDU(v_fit, header=self.hdr), fits.ImageHDU(dv_fit, header=self.hdr)
-        hdul_sigma, hdul_dsigma = fits.ImageHDU(sigma_fit, header=self.hdr), fits.ImageHDU(dsigma_fit, header=self.hdr)
-        hdul_flux, hdul_dflux = fits.ImageHDU(flux_fit, header=self.hdr), fits.ImageHDU(dflux_fit, header=self.hdr)
-        hdul = fits.HDUList([hdul_fs, hdul_v, hdul_dv, hdul_sigma, hdul_dsigma, hdul_flux, hdul_dflux])
+        # Save results
+        hdul_pri = fits.PrimaryHDU()
+        hdul_fs, hdul_v = fits.ImageHDU(fs, header=header), fits.ImageHDU(v, header=header)
+        hdul_z, hdul_dz = fits.ImageHDU(z, header=header), fits.ImageHDU(dz, header=header)
+        hdul_sigma, hdul_dsigma = fits.ImageHDU(sigma, header=header), fits.ImageHDU(dsigma, header=header)
+        hdul_chisqr, hudl_redchi = fits.ImageHDU(chisqr, header=header), fits.ImageHDU(redchi, header=header)
+        hdul_flux_OII, hdul_dflux_OII = fits.ImageHDU(flux_OII_fit, header=header), \
+                                        fits.ImageHDU(dflux_OII_fit, header=header)
+        hdul_flux_OIII, hdul_dflux_OIII = fits.ImageHDU(flux_OIII_fit, header=header), \
+                                          fits.ImageHDU(dflux_OIII_fit, header=header)
+        hdul_r, hdul_dr = fits.ImageHDU(r, header=header), fits.ImageHDU(dr, header=header)
+        hdul_a_OII, hdul_da_OII = fits.ImageHDU(a_OII_fit, header=header), fits.ImageHDU(da_OII_fit, header=header)
+        hdul_b_OII, hdul_db_OII = fits.ImageHDU(b_OII_fit, header=header), fits.ImageHDU(db_OII_fit, header=header)
+        hdul_a_OIII, hdul_da_OIII = fits.ImageHDU(a_OIII_fit, header=header), fits.ImageHDU(da_OIII_fit, header=header)
+        hdul_b_OIII, hdul_db_OIII = fits.ImageHDU(b_OIII_fit, header=header), fits.ImageHDU(db_OIII_fit, header=header)
+        hdul = fits.HDUList([hdul_pri, hdul_fs, hdul_v, hdul_z, hdul_dz, hdul_sigma, hdul_dsigma, hdul_flux_OII,
+                             hdul_dflux_OII, hdul_flux_OIII, hdul_dflux_OIII, hdul_r, hdul_dr, hdul_a_OII,
+                             hdul_da_OII, hdul_b_OII, hdul_db_OII, hdul_a_OIII, hdul_da_OIII, hdul_b_OIII,
+                             hdul_db_OIII, hdul_chisqr, hudl_redchi])
         hdul.writeto(self.path_fit, overwrite=True)
 
     def update_plot(self, event):
@@ -748,7 +902,7 @@ class PlotWindow(QMainWindow):
         self.parameters['flux_OIII5008_3'].vary = False
 
     def N_2(self):
-        if self.parameters['OII'].value == 1:
+        if np.isnan(self.param['v_2=']):
             self.param['v_2='] = 0
             self.param['sigma_2='] = 0
             self.param['r_2='] = 0
@@ -776,6 +930,13 @@ class PlotWindow(QMainWindow):
         self.parameters['flux_OIII5008_3'].vary = False
 
     def N_3(self):
+        if np.isnan(self.param['v_3=']):
+            self.param['v_2='] = 0
+            self.param['sigma_2='] = 0
+            self.param['r_2='] = 0
+            self.param['v_3='] = 0
+            self.param['sigma_3='] = 0
+            self.param['r_3='] = 0
         self.parameters['OII'].value = 3
         self.parameters['OIII'].value = 3
         self.parameters['z_2'].value = self.z_qso
@@ -945,13 +1106,20 @@ class PlotWindow(QMainWindow):
         self.chi_map.updateImage(image=self.redchi.T)
 
     def save_v50w80(self):
-        path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
-        path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
-
         hdul_v50 = fits.ImageHDU(self.v50, header=self.hdul_fit[2].header)
-        hdul_v50.writeto(path_v50, overwrite=True)
+        hdul_v50.writeto(self.path_v50, overwrite=True)
         hdul_w80 = fits.ImageHDU(self.w80, header=self.hdul_fit[2].header)
-        hdul_w80.writeto(path_w80, overwrite=True)
+        hdul_w80.writeto(self.path_w80, overwrite=True)
+
+        hdul_v50 = fits.ImageHDU(self.v50_OII, header=self.hdul_fit[2].header)
+        hdul_v50.writeto(self.path_v50_OII, overwrite=True)
+        hdul_w80 = fits.ImageHDU(self.w80_OII, header=self.hdul_fit[2].header)
+        hdul_w80.writeto(self.path_w80_OII, overwrite=True)
+
+        hdul_v50 = fits.ImageHDU(self.v50_OIII, header=self.hdul_fit[2].header)
+        hdul_v50.writeto(self.path_v50_OIII, overwrite=True)
+        hdul_w80 = fits.ImageHDU(self.w80_OIII, header=self.hdul_fit[2].header)
+        hdul_w80.writeto(self.path_w80_OIII, overwrite=True)
 
     def clear_scatter(self):
         self.scatter_1.clear()
@@ -961,10 +1129,8 @@ class PlotWindow(QMainWindow):
 
 
 
-
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(cubename='3C57')
+    window = PlotWindow(cubename='3C57', NLR='')
     window.show()
     sys.exit(app.exec_())

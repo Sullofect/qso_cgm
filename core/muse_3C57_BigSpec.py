@@ -54,6 +54,15 @@ def expand_wave(wave, stack=True, times=3):
             wave_expand[i] = wave_i
     return wave_expand
 
+def Gaussian(wave_vac, z, sigma_kms, flux, wave_line_vac):
+    wave_obs = wave_line_vac * (1 + z)
+    sigma_A = np.sqrt((sigma_kms / c_kms * wave_obs) ** 2 + (getSigma_MUSE(wave_obs)) ** 2)
+
+    peak = flux / np.sqrt(2 * sigma_A ** 2 * np.pi)
+    gaussian = peak * np.exp(-(wave_vac - wave_obs) ** 2 / 2 / sigma_A ** 2)
+
+    return gaussian
+
 def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, plot=False):
     wave_OII3727_obs = wave_OII3727_vac * (1 + z)
     wave_OII3729_obs = wave_OII3729_vac * (1 + z)
@@ -75,8 +84,8 @@ def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, plot=False):
     else:
         return OII3727_gaussian + OII3729_gaussian
 
-cubename = '3C57'
 # QSO information
+cubename = '3C57'
 path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
 data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
@@ -84,12 +93,11 @@ ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_q
 
 #
 path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
-path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
-path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
+path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
+path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
 hdul_v50 = fits.open(path_v50)
 hdul_w80 = fits.open(path_w80)
 v50, w80 = hdul_v50[1].data, hdul_w80[1].data
-
 
 hdul = fits.open(path_fit)
 fs, hdr = hdul[1].data, hdul[2].header
@@ -131,15 +139,6 @@ mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII
 mask_seg = mask_seg_OII + mask_seg_OIII
 flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
 flux_err_seg_OII, flux_err_seg_OIII = flux_err_OII * seg_3D_OII_ori, flux_err_OIII * seg_3D_OIII_ori
-S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
-S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
-S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
-
-# plt.figure()
-# plt.imshow(S_N, origin='lower')
-# plt.show()
-# raise ValueError('stop')
-
 
 # Generate model data
 v_array = np.linspace(-800, 800, 500)
@@ -150,18 +149,89 @@ _, flux_OII3729 = model_OII(wave_OII3729[:, np.newaxis, np.newaxis, np.newaxis],
 flux_OII_C = flux_OII3727 + flux_OII3729
 flux_OII_sum = np.nansum(flux_OII_C, axis=1)
 
+# Make example plots
+coord = [(65, 81), (75, 88), (80, 75)]
+# fig, ax = plt.subplots(2, 1, figsize=(5, 10), dpi=300)
+# fig.subplots_adjust(hspace=0.0)
+#
+# # OII
+# flux_OII_model = model_OII(wave_OII_exp[:, np.newaxis, np.newaxis, np.newaxis], z, sigma, flux_OII_fit, r)[:, :, 81, 65]
+# # flux_OII3727_model, flux_OII3729_model = model_OII(wave_OII_exp[:, np.newaxis, np.newaxis, np.newaxis],
+# #                                                    z, sigma, flux_OII_fit, r, plot=True)
+# ax[0].plot(wave_OII_vac, flux_OII[:, 81, 65] - b_OII[81, 65], '-k', drawstyle='steps-mid')
+# ax[0].plot(wave_OII_vac, flux_err_OII[:, 81, 65], '-C0', drawstyle='steps-mid')
+# ax[0].plot(wave_OII_exp, np.nansum(flux_OII_model, axis=1), '-r')
+# ax[0].plot(wave_OII_exp, flux_OII_model[:, 0], '--r')
+# ax[0].plot(wave_OII_exp, flux_OII_model[:, 1], '--b')
+# ax[0].plot(wave_OII_exp, flux_OII_model[:, 2], '--C1')
+#
+# # OIII
+# flux_OIII_model = Gaussian(wave_OIII_exp[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
+#                             flux_OIII_fit, wave_OIII5008_vac)[:, :, 81, 65]
+# ax[1].plot(wave_OIII_vac, flux_OIII[:, 81, 65] - b_OIII[81, 65], '-k', drawstyle='steps-mid')
+# ax[1].plot(wave_OIII_vac, flux_err_OIII[:, 81, 65], '-C0', drawstyle='steps-mid')
+# ax[1].plot(wave_OIII_exp, np.nansum(flux_OIII_model, axis=1), '-r')
+# ax[1].plot(wave_OIII_exp, flux_OIII_model[:, 0], '--r')
+# ax[1].plot(wave_OIII_exp, flux_OIII_model[:, 1], '--b')
+# ax[1].plot(wave_OIII_exp, flux_OIII_model[:, 2], '--C1')
+#
+# #
+# ax[0].axvline(x=(1 + z_qso) * wave_OII3727_vac, color='grey', linestyle='--', zorder=-100)
+# ax[0].axvline(x=(1 + z_qso) * wave_OII3729_vac, color='grey', linestyle='--', zorder=-100)
+# ax[1].axvline(x=(1 + z_qso) * wave_OIII5008_vac, color='grey', linestyle='--', zorder=-100)
+# # ax[0].tick_params(axis='both', which='major', labelsize=40)
+# # ax[1].tick_params(axis='both', which='major', labelsize=40)
+# ax[0].set_title(r'$\mathrm{[O\,II]}$', x=0.2, y=0.85, size=40)
+# ax[1].set_title(r'$\mathrm{[O\,III]}$', x=0.2, y=0.85, size=40)
+# ax[1].set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=25)
+# fig.supylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$', size=25, x=-0.12)
+# figname_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_ShowFit.png'
+# fig.savefig(figname_OIII, bbox_inches='tight')
+
+# OII
+fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
+flux_OII_model = model_OII(wave_OII_exp[:, np.newaxis, np.newaxis, np.newaxis], z, sigma, flux_OII_fit, r)[:, :, 81, 65]
+ax.plot(wave_OII_vac, flux_OII[:, 81, 65] - b_OII[81, 65], '-k', drawstyle='steps-mid')
+ax.plot(wave_OII_vac, flux_err_OII[:, 81, 65], '-C0', drawstyle='steps-mid')
+ax.plot(wave_OII_exp, np.nansum(flux_OII_model, axis=1), '-r')
+ax.plot(wave_OII_exp, flux_OII_model[:, 0], '--r')
+ax.plot(wave_OII_exp, flux_OII_model[:, 1], '--b')
+ax.plot(wave_OII_exp, flux_OII_model[:, 2], '--C1')
+ax.axvline(x=(1 + z_qso) * wave_OII3727_vac, color='grey', linestyle='--', zorder=-100)
+ax.axvline(x=(1 + z_qso) * wave_OII3729_vac, color='grey', linestyle='--', zorder=-100)
+ax.set_title(r'$\mathrm{[O\,II]}$', x=0.2, y=0.85, size=40)
+ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=25)
+# ax.set_ylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$', size=25, x=-0.12)
+ax.set_ylabel(r'${f}_{\lambda}$', size=25, x=-0.12)
+ax.tick_params(axis='y', which='major', labelleft=False, left=False)
+figname_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_ShowFit_OII.png'
+fig.savefig(figname_OII, bbox_inches='tight')
+
+# OIII
+fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
+flux_OIII_model = Gaussian(wave_OIII_exp[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
+                            flux_OIII_fit, wave_OIII5008_vac)[:, :, 81, 65]
+ax.plot(wave_OIII_vac, flux_OIII[:, 81, 65] - b_OIII[81, 65], '-k', drawstyle='steps-mid')
+ax.plot(wave_OIII_vac, flux_err_OIII[:, 81, 65], '-C0', drawstyle='steps-mid')
+ax.plot(wave_OIII_exp, np.nansum(flux_OIII_model, axis=1), '-r')
+ax.plot(wave_OIII_exp, flux_OIII_model[:, 0], '--r')
+ax.plot(wave_OIII_exp, flux_OIII_model[:, 1], '--b')
+ax.plot(wave_OIII_exp, flux_OIII_model[:, 2], '--C1')
+ax.axvline(x=(1 + z_qso) * wave_OIII5008_vac, color='grey', linestyle='--', zorder=-100)
+ax.set_title(r'$\mathrm{[O\,III]}$', x=0.2, y=0.85, size=40)
+ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=25)
+ax.set_ylabel(r'${f}_{\lambda}$', size=25, x=-0.12)
+ax.tick_params(axis='y', which='major', labelleft=False, left=False)
+figname_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_ShowFit_OIII.png'
+fig.savefig(figname_OIII, bbox_inches='tight')
+
+raise ValueError('testing')
 # plt.figure()
 # plt.plot(v_array, flux_OII_C[:, 0, 79, 67], '-k')
 # plt.plot(v_array, flux_OII_C[:, 1, 79, 67], '-r')
 # plt.plot(v_array, flux_OII_C[:, 2, 79, 67], '-b')
 # plt.plot(v_array, flux_OII_sum[:, 79, 67], '-g')
 # plt.show()
-
-# plt.figure()
-# plt.imshow(v50 - v[0, :, :], cmap='coolwarm', vmin=-50, vmax=50, origin='lower')
-# plt.show()
-
-# raise ValueError('Stop here')
 
 # Generate random 2D map data and 1D velocity data
 v_rebin = v50
@@ -211,13 +281,9 @@ norm = mpl.colors.Normalize(vmin=-350, vmax=350)
 for j in x_range:
     for i in y_range:
         ax = axs[y_range[-1] - i, j - x_range[0]]
-        # if S_N_OII[i, j] > 20:
-        if S_N[i, j] > 10:
-            # if mask_seg_OIII[i, j] != 0:
-            #     ax.plot(wave_OIII_vac, flux_OIII_rebin[:, i, j], color='black', drawstyle='steps-mid')
-            # else:
+        if ~np.isnan(v50[i, j]):
             ax.plot(v_array, flux_OII_sum[:, i, j], color='black')
-            # ax.plot(wave_OIII_vac, flux_OIII_rebin[:, i, j], color='black', drawstyle='steps-mid')
+            ax.axvline(x=0, color='black', alpha=0.5, linestyle='--')
             ax.set_xticks([])
             ax.set_yticks([])
             ax.spines[['right', 'top', 'left', 'bottom']].set_color('black')

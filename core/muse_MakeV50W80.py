@@ -12,12 +12,17 @@ from matplotlib import rc
 from PyAstronomy import pyasl
 from mpdaf.obj import Cube, WaveCoord, Image
 from astropy.wcs import WCS
+from regions import PixCoord
+from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
 from astropy.coordinates import SkyCoord
+from astropy.coordinates import Angle
 from photutils.segmentation import detect_sources
 from photutils.segmentation import deblend_sources
 from palettable.scientific.sequential import Acton_6
 from palettable.cubehelix import red_16
 from palettable.cmocean.sequential import Dense_20_r
+import palettable.scientific.sequential as sequential_s
+import palettable
 from scipy import integrate
 from scipy import interpolate
 import time as tm
@@ -40,7 +45,6 @@ wave_OIII5008_vac = 5008.239
 def getSigma_MUSE(wave):
     return (5.866e-8 * wave ** 2 - 9.187e-4 * wave + 6.04) / 2.355
 
-
 def Gaussian(wave_vac, z, sigma_kms, flux, wave_line_vac):
     wave_obs = wave_line_vac * (1 + z)
     sigma_A = np.sqrt((sigma_kms / c_kms * wave_obs) ** 2 + (getSigma_MUSE(wave_obs)) ** 2)
@@ -49,7 +53,6 @@ def Gaussian(wave_vac, z, sigma_kms, flux, wave_line_vac):
     gaussian = peak * np.exp(-(wave_vac - wave_obs) ** 2 / 2 / sigma_A ** 2)
 
     return gaussian
-
 
 def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, plot=False):
     wave_OII3727_obs = wave_OII3727_vac * (1 + z)
@@ -71,7 +74,6 @@ def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, plot=False):
         return OII3727_gaussian, OII3729_gaussian
     else:
         return OII3727_gaussian + OII3729_gaussian
-
 
 def model_OII_OIII(wave_vac, **params):
     if params['OIII'] == 0:
@@ -134,7 +136,6 @@ def model_OII_OIII(wave_vac, **params):
         return np.hstack((m_OII + params['a_OII'] * wave_OII_vac + params['b_OII'],
                           m_OIII5008 + params['a_OIII5008'] * wave_OIII_vac + params['b_OIII5008']))
 
-
 def expand_wave(wave, stack=True, times=3):
     if stack is True:
         wave_expand = np.array([])
@@ -150,9 +151,9 @@ def expand_wave(wave, stack=True, times=3):
 
 def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None):
     # only for TXS0206
-    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
+    gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
-                    linewidths=0.5, s=600, zorder=100)
+                    linewidths=0.5, s=3000, zorder=100)
     gc.set_system_latex(True)
 
     # Colorbar
@@ -181,23 +182,47 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'GasMap':
         gc.add_scalebar(length=7 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # HE0226
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
         gc.scalebar.set_font_size(30)
 
         gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
         # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
         gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
+    elif type == 'GasMap_slit':
+        gc.add_scalebar(length=7 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_font_size(30)
+
+        gc.colorbar.hide()
+        gc.add_label(0.98, 0.94, r'$\rm 3C\,57$', size=35, relative=True, horizontalalignment='right')
+        # gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
+        # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
+        # gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
     elif type == 'GasMap_sigma':
         gc.add_scalebar(length=7 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # HE0226
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
         gc.scalebar.set_font_size(30)
 
         # gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
         gc.colorbar.set_axis_label_text(r'$\rm W_{80} \mathrm{\; [km \, s^{-1}]}$')
         # gc.colorbar.set_axis_label_text(r'$\mathrm{W}_{80} \mathrm{\; [km \, s^{-1}]}$')
+    elif type == 'N':
+        gc.add_scalebar(length=7 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_font_size(30)
+
+        gc.colorbar.set_ticks([0, 1, 2, 3])
+        gc.colorbar.set_axis_label_text(r'$\rm Number \, of \, Gaussians$')
     else:
-        gc.colorbar.set_ticks([-0.5, 0.0, 0.5, 1.0, 1.5])
+        gc.add_scalebar(length=7 * u.arcsecond)
+        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_font_size(30)
+
+        gc.colorbar.set_ticks([-1, -0.5, 0.0, 0.5, 1.0])
         gc.colorbar.set_axis_label_text(r'$\rm log([O \, III]/[O \, II])$')
 
     # Scale bar
@@ -263,7 +288,13 @@ path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted
     format(line_OIII, *UseSeg)
 figurename_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}.png'. \
     format(cubename, line, True, 3728, *UseDataSeg)
+figurename_V50_slit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}_slit.png'. \
+    format(cubename, line, True, 3728, *UseDataSeg)
 figurename_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_W80_{}_{}_{}_{}_{}_{}_{}.png'. \
+    format(cubename, line, True, 3728, *UseDataSeg)
+figurename_OIII_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_OIII_OII_{}_{}_{}_{}_{}_{}_{}.png'.\
+    format(cubename, line, True, 3728, *UseDataSeg)
+figurename_N = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_N_Com_{}_{}_{}_{}_{}_{}_{}.png'.\
     format(cubename, line, True, 3728, *UseDataSeg)
 
 # Load data and smoothing
@@ -282,12 +313,8 @@ flux_err_seg_OII, flux_err_seg_OIII = flux_err_OII * seg_3D_OII_ori, flux_err_OI
 S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
 S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
 S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
+OIII_OII = np.log10(np.nansum(flux_OIII_fit, axis=0) / np.nansum(flux_OII_fit, axis=0))
 
-#
-# plt.figure()
-# plt.imshow(S_N, origin='lower')
-# plt.show()
-# raise ValueError('testing')
 
 # flux components
 # flux_OII_C2 = np.nansum(model_OII(wave_OII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
@@ -352,6 +379,9 @@ except FileNotFoundError:
 # Replace coordinate
 path_sub_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_WCS_subcube.fits'.format(cubename)
 hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
+w = WCS(hdr_sub_gaia, naxis=2)
+center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
+c2 = w.world_to_pixel(center_qso)
 
 path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
 path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
@@ -370,15 +400,54 @@ hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
 #
 path_v50_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
 path_w80_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
+path_OIII_OII_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_OIII_OII_plot.fits'
+path_N_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_N_plot.fits'
 v50, w80 = hdul_v50[1].data, hdul_w80[1].data
+
+# Plot the velocity field
+x, y = np.meshgrid(np.arange(v50.shape[0]), np.arange(v50.shape[1]))
+x, y = x.flatten(), y.flatten()
+pixcoord = PixCoord(x=x, y=y)
+
+# Mask the center
+circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=2.5)
+center_mask_flatten = ~circle.contains(pixcoord)
+center_mask = center_mask_flatten.reshape(v50.shape)
+x, y = x[center_mask_flatten], y[center_mask_flatten]
+pixcoord = pixcoord[center_mask_flatten]
+
+# Mask a slit
+rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=5, angle=Angle(-30, 'deg'))
+mask = rectangle.contains(pixcoord)
+dis = np.sqrt((x - c2[0])**2 + (y - c2[1])**2) * 0.2 * 50 / 7
+dis_mask = dis[mask]
+
+# Mask each side
+red = ((x[mask] - c2[0]) < 0) * ((y[mask] - c2[1]) > 0)
+blue = ~red
+dis_red = dis_mask[red] * -1
+dis_blue = dis_mask[blue]
+
+hdul_v50[1].data = np.where(center_mask, hdul_v50[1].data, np.nan)
+hdul_w80[1].data = np.where(center_mask, hdul_w80[1].data, np.nan)
+OIII_OII = np.where(center_mask, OIII_OII, np.nan)
 hdul_v50[1].data = np.where(S_N > 10, hdul_v50[1].data, np.nan)
 hdul_w80[1].data = np.where(S_N > 10, hdul_w80[1].data, np.nan)
+OIII_OII = np.where(S_N > 10, OIII_OII, np.nan)
 hdul_v50[1].header = hdr
 hdul_w80[1].header = hdr
 hdul_v50.writeto(path_v50_plot, overwrite=True)
 hdul_w80.writeto(path_w80_plot, overwrite=True)
+hdul_OIII_OII = fits.ImageHDU(OIII_OII, header=hdul_v50[1].header)
+hdul_OIII_OII.writeto(path_OIII_OII_plot, overwrite=True)
 
-#
+N = np.where(np.isnan(v), v, 1)
+N = np.nansum(N, axis=0)
+N = np.where(N !=0, N, np.nan)
+hdul_N = fits.ImageHDU(N, header=hdul_v50[1].header)
+hdul_N.writeto(path_N_plot, overwrite=True)
+
+# V50
 fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_v50_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
@@ -386,11 +455,41 @@ APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
 gc.show_markers(ra_gal, dec_gal, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
 gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
 gc.show_markers(ra_gal, dec_gal, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-350, vmax=350, cmap='coolwarm')
+gc.add_label(0.08, 0.08, '(d)', color='k', size=40, relative=True)
 fig.savefig(figurename_V50, bbox_inches='tight')
 
-# W870 map
+# V50_slit
+fig = plt.figure(figsize=(8, 8), dpi=300)
+gc = aplpy.FITSFigure(path_v50_plot, figure=fig, hdu=1)
+gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
+patch = rectangle.plot(ax=gc.ax, facecolor='none', edgecolor='k', lw=1.0, linestyle='--', label='Rectangle')
+APLpyStyle(gc, type='GasMap_slit', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+fig.savefig(figurename_V50_slit, bbox_inches='tight')
+
+# W80 map
 fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_w80_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
 APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+gc.add_label(0.08, 0.08, '(e)', color='k', size=40, relative=True)
 fig.savefig(figurename_W80, bbox_inches='tight')
+
+# OIII/OII map
+fig = plt.figure(figsize=(8, 8), dpi=300)
+gc = aplpy.FITSFigure(path_OIII_OII_plot, figure=fig, hdu=1)
+gc.show_colorscale(vmin=-1, vmax=1, cmap=sequential_s.Buda_20.mpl_colormap)
+APLpyStyle(gc, type='else', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+gc.add_label(0.08, 0.08, '(f)', color='k', size=40, relative=True)
+fig.savefig(figurename_OIII_OII, bbox_inches='tight')
+
+# Number of components
+import cmasher as cmr
+# import palettable.scientific.sequential as Safe_3
+# cmap = cmr.get_sub_cmap('Pastel1', 0, 0.4)
+cmap = mpl.colors.ListedColormap(palettable.cmocean.sequential.Matter_3.mpl_colors)
+fig = plt.figure(figsize=(8, 8), dpi=300)
+gc = aplpy.FITSFigure(path_N_plot, figure=fig, hdu=1)
+gc.show_colorscale(vmin=0.5, vmax=3.5, cmap=cmap)
+APLpyStyle(gc, type='N', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+gc.add_label(0.08, 0.08, '(f)', color='k', size=40, relative=True)
+fig.savefig(figurename_N, bbox_inches='tight')
