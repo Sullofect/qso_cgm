@@ -1,6 +1,5 @@
 import os
 import aplpy
-import lmfit
 import numpy as np
 import matplotlib as mpl
 import gala.potential as gp

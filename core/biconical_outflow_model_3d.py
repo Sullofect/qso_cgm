@@ -32,7 +32,7 @@ matplotlib.rcParams['agg.path.chunksize'] = 100000
 # np.set_printoptions(threshold=sys.maxsize)
 
 # plt.style.use('dark_background')
-path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/'
+path_savefig = '../../MUSEQuBES+CUBS/fit_kin/'
 
 #####################################################################################
 def bicone_inclination(B1_deg, B2_deg):
