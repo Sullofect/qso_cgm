@@ -252,13 +252,13 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 
 # QSO information
 cubename = '3C57'
-path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
+path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
 data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
 # Load fitting
-path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
+path_fit = '../../MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
 hdul = fits.open(path_fit)
 fs, hdr = hdul[1].data, hdul[2].header
 v, z, dz = hdul[2].data, hdul[3].data, hdul[4].data
@@ -276,25 +276,25 @@ UseSeg = (1.5, 'gauss', 1.5, 'gauss')
 UseDataSeg=(1.5, 'gauss', None, None)
 line = 'OII+OIII'
 line_OII, line_OIII = 'OII', 'OIII'
-path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OII)
-path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OIII)
-path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_{}_{}_' \
+path_cube_OII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OII)
+path_cube_OIII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OIII)
+path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_{}_{}_' \
                          '{}_{}_{}.fits'.format(cubename, line_OII, *UseDataSeg)
-path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_{}_{}_' \
+path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_{}_{}_' \
                           '{}_{}_{}.fits'.format(cubename, line_OIII, *UseDataSeg)
-path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
     format(line_OII, *UseSeg)
-path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
     format(line_OIII, *UseSeg)
-figurename_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}.png'. \
+figurename_V50 = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}.png'. \
     format(cubename, line, True, 3728, *UseDataSeg)
-figurename_V50_slit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}_slit.png'. \
+figurename_V50_slit = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}_slit.png'. \
     format(cubename, line, True, 3728, *UseDataSeg)
-figurename_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_W80_{}_{}_{}_{}_{}_{}_{}.png'. \
+figurename_W80 = '../../MUSEQuBES+CUBS/fit_kin/{}_W80_{}_{}_{}_{}_{}_{}_{}.png'. \
     format(cubename, line, True, 3728, *UseDataSeg)
-figurename_OIII_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_OIII_OII_{}_{}_{}_{}_{}_{}_{}.png'.\
+figurename_OIII_OII = '../../MUSEQuBES+CUBS/fit_kin/{}_OIII_OII_{}_{}_{}_{}_{}_{}_{}.png'.\
     format(cubename, line, True, 3728, *UseDataSeg)
-figurename_N = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_N_Com_{}_{}_{}_{}_{}_{}_{}.png'.\
+figurename_N = '../../MUSEQuBES+CUBS/fit_kin/{}_N_Com_{}_{}_{}_{}_{}_{}_{}.png'.\
     format(cubename, line, True, 3728, *UseDataSeg)
 
 # Load data and smoothing
@@ -368,7 +368,7 @@ OIII_OII = np.log10(np.nansum(flux_OIII_fit, axis=0) / np.nansum(flux_OII_fit, a
 # plt.imshow(v_guess_array, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
 # plt.show()
 
-path_gal = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
 try:
     data_gal = fits.open(path_gal)[1].data
     ra_gal, dec_gal, v_gal = data_gal['ra'], data_gal['dec'], data_gal['v']
@@ -377,14 +377,14 @@ except FileNotFoundError:
     ra_gal, dec_gal, v_gal = [], [], []
 
 # Replace coordinate
-path_sub_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_WCS_subcube.fits'.format(cubename)
+path_sub_white_gaia = '../../MUSEQuBES+CUBS/fit_kin/{}_WCS_subcube.fits'.format(cubename)
 hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
 w = WCS(hdr_sub_gaia, naxis=2)
 center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
 c2 = w.world_to_pixel(center_qso)
 
-path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
-path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
+path_v50 = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
+path_w80 = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
 hdul_v50 = fits.open(path_v50)
 hdul_w80 = fits.open(path_w80)
 hdr = hdul_v50[1].header
@@ -398,10 +398,10 @@ hdr['CD1_2'] = hdr_sub_gaia['CD1_2']
 hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
 
 #
-path_v50_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
-path_w80_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
-path_OIII_OII_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_OIII_OII_plot.fits'
-path_N_plot = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_N_plot.fits'
+path_v50_plot = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
+path_w80_plot = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
+path_OIII_OII_plot = '../../MUSEQuBES+CUBS/fit_kin/3C57_OIII_OII_plot.fits'
+path_N_plot = '../../MUSEQuBES+CUBS/fit_kin/3C57_N_plot.fits'
 v50, w80 = hdul_v50[1].data, hdul_w80[1].data
 
 # Plot the velocity field

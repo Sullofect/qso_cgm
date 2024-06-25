@@ -46,7 +46,7 @@ wave_Hbeta_vac = 4862.721
 wave_OIII5008_vac = 5008.239
 
 # QSO table
-path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
+path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
 
 def getSigma_MUSE(wave):
     return (5.866e-8 * wave ** 2 - 9.187e-4 * wave + 6.04) / 2.355
@@ -205,33 +205,33 @@ class PlotWindow(QMainWindow):
         self.ra_qso, self.dec_qso, self.z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
         # Save V50 and W80
-        self.path_v50_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_V50_OII.fits'.format(cubename, NLR)
-        self.path_w80_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_W80_OII.fits'.format(cubename, NLR)
-        self.path_v50_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_V50_OIII.fits'.format(cubename, NLR)
-        self.path_w80_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_W80_OIII.fits'.format(cubename, NLR)
-        self.path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_V50.fits'.format(cubename, NLR)
-        self.path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_W80.fits'.format(cubename, NLR)
+        self.path_v50_OII = '../../MUSEQuBES+CUBS/fit_kin/{}{}_V50_OII.fits'.format(cubename, NLR)
+        self.path_w80_OII = '../../MUSEQuBES+CUBS/fit_kin/{}{}_W80_OII.fits'.format(cubename, NLR)
+        self.path_v50_OIII = '../../MUSEQuBES+CUBS/fit_kin/{}{}_V50_OIII.fits'.format(cubename, NLR)
+        self.path_w80_OIII = '../../MUSEQuBES+CUBS/fit_kin/{}{}_W80_OIII.fits'.format(cubename, NLR)
+        self.path_v50 = '../../MUSEQuBES+CUBS/fit_kin/{}{}_V50.fits'.format(cubename, NLR)
+        self.path_w80 = '../../MUSEQuBES+CUBS/fit_kin/{}{}_W80.fits'.format(cubename, NLR)
 
         # Load cubes
         if line == 'OII+OIII':
             line_OII, line_OIII = 'OII', 'OIII'
-            path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}.fits'. \
+            path_cube_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}.fits'. \
                 format(cubename, str_zap, line_OII, NLR)
-            path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_{}_' \
+            path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_{}_' \
                                      '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, NLR, *UseDataSeg)
-            path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}.fits'. \
+            path_cube_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}.fits'. \
                 format(cubename, str_zap, line_OIII, NLR)
-            path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_{}_' \
+            path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_{}_' \
                                       '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, NLR, *UseDataSeg)
             if UseDetectionSeg is not None:
-                path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
+                path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
                     format(cubename, str_zap, line_OII, NLR, *UseDetectionSeg)
-                path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
+                path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
                     format(cubename, str_zap, line_OIII, NLR, *UseDetectionSeg)
             else:
-                path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
+                path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
                     format(cubename, str_zap, line_OII, NLR, *UseDataSeg)
-                path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
+                path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
                     format(cubename, str_zap, line_OIII, NLR, *UseDataSeg)
             self.path_cube_OII = path_cube_OII
 
@@ -298,15 +298,15 @@ class PlotWindow(QMainWindow):
                 width = width_OII
             elif line == 'OIII':
                 width = width_OIII
-            path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+            path_cube = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line)
-            path_cube_smoothed = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
+            path_cube_smoothed = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
                                  '{}_{}.fits'.format(cubename, str_zap, line, *UseDataSeg)
             if UseDetectionSeg is not None:
-                path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+                path_3Dseg = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
                     format(cubename, str_zap, line, *UseDetectionSeg)
             else:
-                path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+                path_3Dseg = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
                     format(cubename, str_zap, line, *UseDataSeg)
 
             # Load data and smoothing
@@ -345,7 +345,7 @@ class PlotWindow(QMainWindow):
 
 
         # Load the QSO field fit
-        self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}{}_{}_{}_{}_{}_{}_{}.fits'.\
+        self.path_fit = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}{}_{}_{}_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line, NLR, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
         redshift_guess, sigma_kms_guess, flux_guess, r_OII3729_3727_guess = self.z_qso, 200.0, 1.0, 1.0
         self.model = model_OII_OIII

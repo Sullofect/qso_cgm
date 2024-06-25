@@ -228,7 +228,7 @@ def velocity_profile(bicone_grid, bicone_coords, D=1.0, vmax=1000.0, vtype='decr
     # print(bicone_grid[0:100])
 
     # Calculate the projected velocity along the LOS
-    # cos_i = (-yb / (xb ** 2 + yb ** 2 + zb ** 2) ** 0.5)
+    # cos_i = (-yb / (yb ** 2 + zb ** 2) ** 0.5)
     cos_i = (-yb / (xb ** 2 + yb ** 2 + zb ** 2) ** 0.5)
     cos_i[~np.isfinite(cos_i)] = 0
     vp = vgrid * cos_i
@@ -815,6 +815,7 @@ def emission_model(fgrid, vgrid, vmax, obs_res=68.9, nbins=25, sampling=100, plo
 
     losvd = [] # an array to hold the losvd at every non-zero pixel
     bins = np.linspace(-vmax, vmax, nbins)
+
     # t0 = time.time()
     for i in range(sampling):
         for j in range(sampling):
