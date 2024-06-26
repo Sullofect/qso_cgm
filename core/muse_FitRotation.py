@@ -528,7 +528,7 @@ fig.savefig('../../MUSEQuBES+CUBS/fit_kin/3C57_velocity_profile_poster.png', bbo
 
 
 
-raise ValueError('stop')
+# raise ValueError('stop')
 
 # Biconical outflow model
 # Model Parameters
@@ -611,7 +611,7 @@ coord_MUSE = (65, 80)
 
 # Plot the cone
 fig, ax = plt.subplots(1, 1, dpi=300, figsize=(8, 8))
-# ax.imshow(v_N1[0, :, :], origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+ax.imshow(v_N1[0, :, :], origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
 ax.imshow(np.flip(vmap, 1), cmap='coolwarm', extent=[c2[0] - 20, c2[0] + 20, c2[1] - 20, c2[1] + 20],
           vmin=-300, vmax=300, origin='lower')
 ax.plot(c2[0], c2[1], '*', markersize=15)
@@ -623,6 +623,8 @@ ax.set_xticklabels([])
 ax.set_yticklabels([])
 fig.savefig('../../MUSEQuBES+CUBS/fit_kin/3C57_sudo_cone.png', bbox_inches='tight')
 
+
+raise ValueError('Stop here')
 
 def emission_pixel(fgrid, vgrid, vmax, coord_MUSE=None, nbins=25, sampling=100, z=z_qso):
     global c2

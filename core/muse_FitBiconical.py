@@ -1,22 +1,13 @@
-import os
-import aplpy
-import lmfit
 import numpy as np
-import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
-from astropy import units as u
-from astropy import stats
+import biconical_outflow_model_3d as bicone
 from astropy.io import ascii
 from matplotlib import rc
 from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
-from regions import PixCoord
-from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
+from regions import PixCoord, RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
 from astropy.convolution import convolve, Kernel, Gaussian2DKernel
-from scipy.interpolate import interp1d
-from astropy.coordinates import Angle
-import biconical_outflow_model_3d as bicone
 from mpdaf.obj import Cube, WaveCoord, Image
 from PyAstronomy import pyasl
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
@@ -34,100 +25,11 @@ wave_OII3728_vac = (wave_OII3727_vac + wave_OII3729_vac) / 2
 wave_Hbeta_vac = 4862.721
 wave_OIII5008_vac = 5008.239
 
-# QSO information
-cubename = '3C57'
-str_zap = ''
-path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
-data_qso = ascii.read(path_qso, format='fixed_width')
-data_qso = data_qso[data_qso['name'] == cubename]
-ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
-
-# Measure kinematics
-path_fit = '../../MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
-hdul = fits.open(path_fit)
-fs, hdr = hdul[1].data, hdul[2].header
-# v, z, dz = hdul[2].data, hdul[3].data, hdul[4].data
-# sigma, dsigma = hdul[5].data, hdul[6].data
-# flux_OII_fit, dflux_OII_fit = hdul[7].data, hdul[8].data
-# flux_OIII_fit, dflux_OIII_fit = hdul[9].data, hdul[10].data
-# r, dr = hdul[11].data, hdul[12].data
-# a_OII, da_OII = hdul[13].data, hdul[14].data
-# a_OIII, da_OIII = hdul[17].data, hdul[18].data
-# b_OII, db_OII = hdul[15].data, hdul[16].data
-# b_OIII, db_OIII = hdul[19].data, hdul[20].data
-
-# Hedaer information
-path_sub_white_gaia = '../../MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
-hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
-hdr['CRVAL1'] = hdr_sub_gaia['CRVAL1']
-hdr['CRVAL2'] = hdr_sub_gaia['CRVAL2']
-hdr['CRPIX1'] = hdr_sub_gaia['CRPIX1']
-hdr['CRPIX2'] = hdr_sub_gaia['CRPIX2']
-hdr['CD1_1'] = hdr_sub_gaia['CD1_1']
-hdr['CD2_1'] = hdr_sub_gaia['CD2_1']
-hdr['CD1_2'] = hdr_sub_gaia['CD1_2']
-hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
-w = WCS(hdr, naxis=2)
-center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
-c2 = w.world_to_pixel(center_qso)
-
-# Path to the data
-UseDataSeg = (1.5, 'gauss', None, None)
-UseDetectionSeg = (1.5, 'gauss', 1.5, 'gauss')
-UseSmoothedCubes = True
-line_OII, line_OIII = 'OII', 'OIII'
-path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-    format(cubename, str_zap, line_OII, *UseDetectionSeg)
-path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-    format(cubename, str_zap, line_OIII, *UseDetectionSeg)
-path_cube_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
-    format(cubename, str_zap, line_OII)
-path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                         '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDataSeg)
-path_cube_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
-    format(cubename, str_zap, line_OIII)
-path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                          '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDataSeg)
-path_v50_plot = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
-path_w80_plot = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
-hdul_v50_plot = fits.open(path_v50_plot)
-hdul_w80_plot = fits.open(path_w80_plot)
-v50, w80 = hdul_v50_plot[1].data, hdul_w80_plot[1].data
-
-# Load data and smoothing
-if UseSmoothedCubes:
-    cube_OII, cube_OIII = Cube(path_cube_smoothed_OII), Cube(path_cube_smoothed_OIII)
-else:
-    cube_OII, cube_OIII = Cube(path_cube_OII), Cube(path_cube_OIII)
-wave_OII_vac, wave_OIII_vac = pyasl.airtovac2(cube_OII.wave.coord()), pyasl.airtovac2(cube_OIII.wave.coord())
-flux_OII, flux_err_OII = cube_OII.data * 1e-3, np.sqrt(cube_OII.var) * 1e-3
-flux_OIII, flux_err_OIII = cube_OIII.data * 1e-3, np.sqrt(cube_OIII.var) * 1e-3
-seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
-mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
-flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
-size = np.shape(flux_OIII)[1:]
-
-# Create a bin according to the MUSE data
-dlambda = wave_OIII_vac[1] - wave_OIII_vac[0]
-wave_OIII_ext = np.zeros(len(wave_OIII_vac) + 20)
-wave_OIII_ext[10:-10] = wave_OIII_vac
-wave_OIII_ext[:10] = wave_OIII_vac[0] - np.flip(np.arange(1, 11)) * dlambda
-wave_OIII_ext[-10:] = wave_OIII_vac[-1] + dlambda * np.arange(1, 11)
-
-#
-wave_bin = np.zeros(len(wave_OIII_ext) + 1)
-wave_bin[:-1] = wave_OIII_ext - dlambda / 2
-wave_bin[-1] = wave_OIII_ext[-1] + dlambda
-wave_OIII_obs = wave_OIII5008_vac * (1 + z_qso)
-bins = (wave_bin - wave_OIII_obs) / wave_OIII_obs * c_kms
-mask = np.zeros(size)
-mask[55:100, 54:100] = 1
-
 class DrawBiconeModel:
     def __init__(self, A=0.0, tau=5.00, D=1.0, fn=1.0e3, theta_in_deg=0.0, theta_out_deg=40.0, theta_B1_deg=90,
                  theta_B2_deg=60, theta_B3_deg=0, theta_D1_deg=0, theta_D2_deg=0, theta_D3_deg=0, vmax=300.0,
                  vtype='constant', sampling=100, azim=45, elev=45, map_interpolation='none', obs_res=100, nbins=60,
-                 bins=bins):
+                 bins=None):
         # Model Parameters
         self.A = A  # dust extinction level (0.0 - 1.0)
         self.tau = tau  # shape of flux profile
@@ -163,6 +65,9 @@ class DrawBiconeModel:
         self.obs_res = obs_res  # resolution of SDSS for emission line model
         self.nbins = nbins   # number of bins for emission line histogram
         self.bins = bins
+
+        self.GenerateBicone()
+
     def GenerateBicone(self):
         # Bicone coordinate, flux, and velocity grids
         xbgrid, ybgrid, zbgrid, fgrid, vgrid = bicone.generate_bicone(self.theta_in_deg, self.theta_out_deg,
@@ -238,9 +143,11 @@ class DrawBiconeModel:
 
         return wave_OIII_ext, v_hist / v_hist.max()
 
-    def emission_cube(self):
+    def emission_cube(self, pix_qso, size, mask):
         center_x, center_y = (self.sampling - 1) / 2, (self.sampling - 1) / 2
-        pixel_scale = 40 / (self.sampling - 1)
+        pixel_scale = 40 / (self.sampling - 1)  # rescale two pixels coordinate 40 pixel in MUSE = 100 pixel in model
+
+        #
         fgrid = self.fgrid.reshape(self.sampling, self.sampling, self.sampling)
         vgrid = self.vgrid.reshape(self.sampling, self.sampling, self.sampling)
         vgrid = np.flip(np.swapaxes(vgrid, 1, 2), 2)
@@ -249,12 +156,11 @@ class DrawBiconeModel:
 
         for i in range(size[0]):
             for j in range(size[1]):
-                # if ~np.isnan(v50[j, i]):
                 if mask[j, i]:
-                    i_1, i_2 = int((i - c2[0]) / pixel_scale + center_x), int((i + 1 - c2[0]) / pixel_scale + center_x)
-                    j_1, j_2 = int((j - c2[1]) / pixel_scale + center_y), int((j + 1 - c2[1]) / pixel_scale + center_y)
-                    print(i_1, i_2)
-                    print(j_1, j_2)
+                    i_1, i_2 = int((i - pix_qso[0]) / pixel_scale + center_x), \
+                               int((i + 1 - pix_qso[0]) / pixel_scale + center_x)
+                    j_1, j_2 = int((j - pix_qso[1]) / pixel_scale + center_y), \
+                               int((j + 1 - pix_qso[1]) / pixel_scale + center_y)
                     v_xy_ij = vgrid[:, j_1:j_2, i_1:i_2]
                     f_xy_ij = fgrid[:, j_1:j_2, i_1:i_2]
 
@@ -269,33 +175,36 @@ class DrawBiconeModel:
 
 
 
-# remap the vmap to the observed grid
-coord_MUSE = (67, 80)
 
-# Define the pixel coordinates
-func = DrawBiconeModel()
-func.GenerateBicone()
-func.Make2Dmap()
-# func.EmissionModel()
-lambda_mid, v_hist = func.emission_pixel(coord_MUSE=coord_MUSE)
-flux_model_cube = func.emission_cube()
-
-# Save the results
-path_test = '../../MUSEQuBES+CUBS/fit_kin/Biconical_cube_test.fits'
-hdul_test = fits.ImageHDU(flux_model_cube, header=None)
-hdul_test.writeto(path_test, overwrite=True)
-
-# plt.close('all')
-fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
-ax.plot(wave_OIII_vac, flux_OIII[:, coord_MUSE[1], coord_MUSE[0]] / flux_OIII[:, coord_MUSE[1], coord_MUSE[0]].max(),
-        '-k', drawstyle='steps-mid')
-ax.plot(wave_OIII_vac, flux_err_OIII[:, coord_MUSE[1], coord_MUSE[0]] / flux_OIII[:, coord_MUSE[1], coord_MUSE[0]].max()
-        , '-C0', drawstyle='steps-mid')
-ax.plot(lambda_mid, v_hist, '-r', drawstyle='steps-mid')
-ax.plot(lambda_mid, flux_model_cube[:, coord_MUSE[1], coord_MUSE[0]], '-b', drawstyle='steps-mid')
-ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
-ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size = 20)
-# ax.set_xlim(wave_OIII_vac.min(), wave_OIII_vac.max())
-fig.savefig('../../MUSEQuBES+CUBS/fit_kin/3C57_cone_flux.png', bbox_inches='tight')
-# plt.show()
-
+# # remap the vmap to the observed grid
+# coord_MUSE = (67, 80)
+#
+# # Define the pixel coordinates
+# func = DrawBiconeModel()
+# func.Make2Dmap()
+# # func.EmissionModel()
+# lambda_mid, v_hist = func.emission_pixel(coord_MUSE=coord_MUSE)
+# flux_model_cube = func.emission_cube()
+#
+# # Save the results
+# path_test = '../../MUSEQuBES+CUBS/fit_kin/Biconical_cube_test.fits'
+# hdul_test = fits.ImageHDU(flux_model_cube, header=None)
+# hdul_test.writeto(path_test, overwrite=True)
+#
+# # chi2, chi2_all = likelihood(flux_OIII, flux_err_OIII, flux_model_cube)
+# # print(chi2_all)
+#
+# # plt.close('all')
+# fig, ax = plt.subplots(1, 1, dpi=300, figsize=(5, 5))
+# ax.plot(wave_OIII_vac, flux_OIII[:, coord_MUSE[1], coord_MUSE[0]] / flux_OIII[:, coord_MUSE[1], coord_MUSE[0]].max(),
+#         '-k', drawstyle='steps-mid')
+# ax.plot(wave_OIII_vac, flux_err_OIII[:, coord_MUSE[1], coord_MUSE[0]] / flux_OIII[:, coord_MUSE[1], coord_MUSE[0]].max()
+#         , '-C0', drawstyle='steps-mid')
+# ax.plot(lambda_mid, v_hist, '-r', drawstyle='steps-mid')
+# ax.plot(lambda_mid, flux_model_cube[:, coord_MUSE[1], coord_MUSE[0]], '-b', drawstyle='steps-mid')
+# ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
+# ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size = 20)
+# # ax.set_xlim(wave_OIII_vac.min(), wave_OIII_vac.max())
+# fig.savefig('../../MUSEQuBES+CUBS/fit_kin/3C57_cone_flux.png', bbox_inches='tight')
+# # plt.show()
+#
