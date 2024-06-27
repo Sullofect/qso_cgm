@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import biconical_outflow_model_3d as bicone
 from astropy.io import ascii
 from matplotlib import rc
+from scipy.integrate import simps
 from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
 from regions import PixCoord, RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
@@ -143,7 +144,7 @@ class DrawBiconeModel:
 
         return wave_OIII_ext, v_hist / v_hist.max()
 
-    def emission_cube(self, pix_qso, size, mask):
+    def emission_cube(self, pix_qso=None, size_ext=None, size=None, mask=None):
         center_x, center_y = (self.sampling - 1) / 2, (self.sampling - 1) / 2
         pixel_scale = 40 / (self.sampling - 1)  # rescale two pixels coordinate 40 pixel in MUSE = 100 pixel in model
 
@@ -152,7 +153,9 @@ class DrawBiconeModel:
         vgrid = self.vgrid.reshape(self.sampling, self.sampling, self.sampling)
         vgrid = np.flip(np.swapaxes(vgrid, 1, 2), 2)
         fgrid = np.flip(np.swapaxes(fgrid, 1, 2), 2)
-        flux_model = np.zeros((len(wave_OIII_ext), *size))
+        flux_model = np.zeros((size_ext, *size))
+        # vmap_MUSE = np.zeros(size) * np.nan
+
 
         for i in range(size[0]):
             for j in range(size[1]):
@@ -164,17 +167,19 @@ class DrawBiconeModel:
                     v_xy_ij = vgrid[:, j_1:j_2, i_1:i_2]
                     f_xy_ij = fgrid[:, j_1:j_2, i_1:i_2]
 
+
                     # Remove NaNs
                     v_xy = v_xy_ij[f_xy_ij > 0]
                     f_xy = f_xy_ij[f_xy_ij > 0]
                     if (len(v_xy) > 0) and (len(f_xy) > 0):
+                        # vmap_MUSE[j, i] = simps(v_xy.flatten() * f_xy.flatten()) / simps(f_xy.flatten())
+
+
                         v_hist, v_edges = np.histogram(v_xy, bins=self.bins, weights=f_xy)
                         flux_model[:, j, i] = v_hist / v_hist.max()
 
+        # return flux_model, vmap_MUSE
         return flux_model
-
-
-
 
 # # remap the vmap to the observed grid
 # coord_MUSE = (67, 80)

@@ -38,14 +38,9 @@ def likelihood(flux_OIII, flux_OIII_err, flux_OIII_mod):
     #
     flux_OIII_mod = np.where(flux_OIII_mod[10:-10, :, :] == 0, flux_OIII_mod[10:-10, :, :], 1)
     # flux_OIII_mod = flux_OIII * flux_OIII_mod
-    # plt.close('all')
-    # plt.figure()
-    # plt.plot(wave_OIII_vac, flux_OIII_mod[:, 80, 65], '-r')
-    # plt.plot(wave_OIII_vac, flux_OIII[:, 80, 65], '-')
-    # plt.show()
 
     chi2 = np.nansum((flux_OIII - flux_OIII_mod) ** 2 / flux_OIII_err ** 2, axis=0)
-    chi2_all = np.nansum(chi2)
+    chi2_all = np.nansum(chi2) / np.nansum(mask_v50) / len(flux_OIII)
                # / len(flux_OIII) / np.nansum(mask_v50)
     return chi2, chi2_all
 
@@ -122,33 +117,65 @@ mask[55:100, 54:100] = 1
 ang_list = np.array([90, 80, 70, 60, 50, 40, 30, 20, 10, 0])
 vel_list = np.array([1400, 1200, 1000, 800, 600])
 
+# func = DrawBiconeModel(theta_B1_deg=30, vmax=1000, vtype='decreasing', bins=v_bins)
+# func.Make2Dmap()
+# flux_model_cube = func.emission_cube(pix_qso=c2, size_ext=size_ext, size=size, mask=mask)
+
+# fig, ax = plt.subplots(1, 1, dpi=300, figsize=(8, 8))
+# ax.imshow(v50, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+# # ax.imshow(vmap_MUSE, cmap='coolwarm', origin='lower', vmin=-300, vmax=300)
+# ax.imshow(np.flip(func.vmap, 1), cmap='coolwarm', extent=[c2[0] - 20, c2[0] + 20, c2[1] - 20, c2[1] + 20],
+#           vmin=-300, vmax=300, origin='lower')
+# ax.plot(c2[0], c2[1], '*', markersize=15)
+# ax.set_xlim(0, 150)
+# ax.set_ylim(0, 150)
+# ax.set_xticks([])
+# ax.set_yticks([])
+# ax.set_xticklabels([])
+# ax.set_yticklabels([])
+# fig.savefig('../../MUSEQuBES+CUBS/fit_bic/3C57_cone_{}_{}.png'.format(), bbox_inches='tight')
+
+
+# for i_ang in ang_list:
+#     for i_vel in vel_list:
+#         func = DrawBiconeModel(theta_B1_deg=i_ang, vmax=i_vel, vtype='decreasing', bins=v_bins)
+#         flux_model_cube = func.emission_cube(pix_qso=c2, size_ext=size_ext, size=size, mask=mask)
+#
+#         # Save the results
+#         path_test = '../../MUSEQuBES+CUBS/fit_bic/Biconical_cube_test_{}_{}.fits'.format(i_ang, i_vel)
+#         hdul_test = fits.ImageHDU(flux_model_cube, header=None)
+#         hdul_test.writeto(path_test, overwrite=True)
+
+fig, ax = plt.subplots(1, 1, dpi=300, figsize=(8, 8))
 for i_ang in ang_list:
     for i_vel in vel_list:
-        func = DrawBiconeModel(theta_B1_deg=i_ang, vmax=i_vel, vtype='decreasing', bins=v_bins)
-        flux_model_cube = func.emission_cube(c2, size, mask)
-
-        # Save the results
         path_test = '../../MUSEQuBES+CUBS/fit_bic/Biconical_cube_test_{}_{}.fits'.format(i_ang, i_vel)
-        hdul_test = fits.ImageHDU(flux_model_cube, header=None)
-        hdul_test.writeto(path_test, overwrite=True)
+        hdul_test = fits.open(path_test)
+        flux_model_cube = hdul_test[1].data
+        chi2, chi2_all = likelihood(flux_OIII, flux_err_OIII, flux_model_cube)
 
+        print(i_ang, i_vel, chi2_all)
+        plt.scatter(i_ang, i_vel, c=np.log10(chi2_all), vmin=4.4, vmax=5.2)
 
-    # func = DrawBiconeModel(theta_B1_deg=i, vmax=1000, vtype='decreasing')
-    # flux_model_cube = func.emission_cube()
-    #
-    # # Save the results
-    # path_test = '../../MUSEQuBES+CUBS/fit_bic/Biconical_cube_test_{}_{}.fits'.format(i, 1000)
-    # hdul_test = fits.ImageHDU(flux_model_cube, header=None)
-    # hdul_test.writeto(path_test, overwrite=True)
-
-
-for i in range(len(ang_list)):
-    path_test = '../../MUSEQuBES+CUBS/fit_bic/Biconical_cube_test_{}_{}.fits'.format(ang_list[i], 1000)
-    hdul_test = fits.open(path_test)
-    flux_model_cube = hdul_test[1].data
-    chi2, chi2_all = likelihood(flux_OIII, flux_err_OIII, flux_model_cube)
-    print(chi2_all)
-
+        # fig, ax = plt.subplots(1, 1, dpi=300, figsize=(8, 8))
+        # ax.imshow(v50, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
+        # # ax.imshow(vmap_MUSE, cmap='coolwarm', origin='lower', vmin=-300, vmax=300)
+        # ax.imshow(np.flip(func.vmap, 1), cmap='coolwarm', extent=[c2[0] - 20, c2[0] + 20, c2[1] - 20, c2[1] + 20],
+        #           vmin=-300, vmax=300, origin='lower')
+        # ax.plot(c2[0], c2[1], '*', markersize=15)
+        # ax.set_xlim(0, 150)
+        # ax.set_ylim(0, 150)
+        # ax.set_xticks([])
+        # ax.set_yticks([])
+        # ax.set_xticklabels([])
+        # ax.set_yticklabels([])
+        # fig.savefig('../../MUSEQuBES+CUBS/fit_bic/3C57_cone_{}_{}.png'.format(), bbox_inches='tight')
+        # print(chi2_all)
+ax.set_xlabel('rotation angle (deg)', size=20)
+ax.set_ylabel('Max velocity (km/s)', size=20)
+plt.colorbar()
+fig.savefig('../../MUSEQuBES+CUBS/fit_bic/3C57_cone_fit.png', bbox_inches='tight')
+# plt.show()
 
 # # Save the results
 # path_test = '../../MUSEQuBES+CUBS/fit_kin/Biconical_cube_test.fits'
