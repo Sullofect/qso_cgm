@@ -64,6 +64,18 @@ hdul_v50 = fits.open(path_v50)
 hdul_w80 = fits.open(path_w80)
 v50, w80 = hdul_v50[1].data, hdul_w80[1].data
 
+path_v50_OII = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50_OII.fits'
+path_w80_OII = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80_OII.fits'
+hdul_v50_OII = fits.open(path_v50_OII)
+hdul_w80_OII = fits.open(path_w80_OII)
+v50_OII, w80_OII = hdul_v50_OII[1].data, hdul_w80_OII[1].data
+
+path_v50_OIII = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50_OIII.fits'
+path_w80_OIII = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80_OIII.fits'
+hdul_v50_OIII = fits.open(path_v50_OIII)
+hdul_w80_OIII = fits.open(path_w80_OIII)
+v50_OIII, w80_OIII = hdul_v50_OIII[1].data, hdul_w80_OIII[1].data
+
 #
 path_v50_NLR_OII = '../../MUSEQuBES+CUBS/fit_kin/3C57_NLR_V50_OII.fits'
 path_w80_NLR_OII = '../../MUSEQuBES+CUBS/fit_kin/3C57_NLR_W80_OII.fits'
@@ -190,6 +202,34 @@ ax[0].scatter(d5080_blue, v50_blue_mean, s=50, marker='D', edgecolors='k', linew
               label=r'$\rm 3C\,57 \, southwest$')
 ax[1].scatter(d5080_red, w80_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
 ax[1].scatter(d5080_blue, w80_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+
+# OII
+v50_OII_flatten = v50_OII.flatten()[center_mask_flatten]
+w80_OII_flatten = w80_OII.flatten()[center_mask_flatten]
+v50_OII_blue, v50_OII_red = v50_OII_flatten[mask][blue], v50_OII_flatten[mask][red]
+w80_OII_blue, w80_OII_red = w80_OII_flatten[mask][blue], w80_OII_flatten[mask][red]
+d5080_blue, v50_OII_blue_mean, _, _, w80_OII_blue_mean, _, _ = Bin(dis_blue, v50_OII_blue, w80_OII_blue, bins=20)
+d5080_red, v50_OII_red_mean, _, _, w80_OII_red_mean, _, _ = Bin(dis_red, v50_OII_red, w80_OII_red, bins=20)
+ax[0].scatter(d5080_red, v50_OII_red_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red',
+              label=r'OII')
+ax[0].scatter(d5080_blue, v50_OII_blue_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue',
+              label=r'OII')
+ax[1].scatter(d5080_red, w80_OII_red_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w80_OII_blue_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue')
+
+# OIII
+v50_OIII_flatten = v50_OIII.flatten()[center_mask_flatten]
+w80_OIII_flatten = w80_OIII.flatten()[center_mask_flatten]
+v50_OIII_blue, v50_OIII_red = v50_OIII_flatten[mask][blue], v50_OIII_flatten[mask][red]
+w80_OIII_blue, w80_OIII_red = w80_OIII_flatten[mask][blue], w80_OIII_flatten[mask][red]
+d5080_blue, v50_OIII_blue_mean, _, _, w80_OIII_blue_mean, _, _ = Bin(dis_blue, v50_OIII_blue, w80_OIII_blue, bins=20)
+d5080_red, v50_OIII_red_mean, _, _, w80_OIII_red_mean, _, _ = Bin(dis_red, v50_OIII_red, w80_OIII_red, bins=20)
+ax[0].scatter(d5080_red, v50_OIII_red_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='red',
+              label=r'OIII')
+ax[0].scatter(d5080_blue, v50_OIII_blue_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='blue',
+              label=r'OIII')
+ax[1].scatter(d5080_red, w80_OIII_red_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w80_OIII_blue_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='blue')
 
 # Mask each side
 mask_NLR = rectangle.contains(pixcoord_NLR)

@@ -286,7 +286,12 @@ def PlotEachGal(gals, dis):
         c_gal = w.world_to_pixel(center_gal)
         x_gal, y_gal = np.meshgrid(np.arange(v_Serra.shape[0]), np.arange(v_Serra.shape[1]))
         x_gal, y_gal = x_gal.flatten(), y_gal.flatten()
-        rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=60, height=3,
+
+        #
+        scale = np.pi * dis_i * 1 / 3600 / 180 * 1e3  # how many kpc per arcsec
+        height = np.round(7 / scale / hdr_Serra['CDELT2'] / 3600, 0)  # 5 pix in MUSE = 1 arcsec = 7 kpc for 3C57
+        width = np.round(100 / scale / hdr_Serra['CDELT2'] / 3600, 0)
+        rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=width, height=height,
                                              angle=Angle(ang_i, 'deg'))
 
         fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -304,7 +309,7 @@ dis_list = np.array([35.1, 13.05, 37.40, 31.967, 17.755, 23.5, 11.816,
                      23.400, 18.836, 19.741, 38.000, 33.791, 23.933, 37.5,
                      40.1, 27.6])  # in Mpc
 ang_list = np.array([45, 180-53, 180 + 65, 180, -90, 180 + 50, -65,
-                     180 + 70, -60, -60, 0, 180-60, 90, 53,
+                     180 + 80, -60, -60, 0, 180-60, 90, 53,
                      -55, -55])
 
 # PlotEachGal(gal_list, dis_list)
@@ -351,7 +356,10 @@ def PlaceSudoSlitOnEachGal(igal=None):
     pixcoord_gal = PixCoord(x=x_gal, y=y_gal)
 
     # mask a slit
-    rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=60, height=3,
+    scale = np.pi * dis_i * 1 / 3600 / 180 * 1e3  # how many kpc per arcsec
+    height = np.round(7 / scale / hdr_Serra['CDELT2'] / 3600, 0)  # 5 pix in MUSE = 1 arcsec = 7 kpc for 3C57
+    width = np.round(100 / scale / hdr_Serra['CDELT2'] / 3600, 0)
+    rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=width, height=height,
                                          angle=Angle(ang_i, 'deg'))
     mask_gal = rectangle_gal.contains(pixcoord_gal)
 

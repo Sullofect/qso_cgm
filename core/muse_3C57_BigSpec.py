@@ -86,15 +86,15 @@ def model_OII(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, plot=False):
 
 # QSO information
 cubename = '3C57'
-path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
+path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
 data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
 #
-path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
-path_v50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
-path_w80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
+path_fit = '../../MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
+path_v50 = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
+path_w80 = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
 hdul_v50 = fits.open(path_v50)
 hdul_w80 = fits.open(path_w80)
 v50, w80 = hdul_v50[1].data, hdul_w80[1].data
@@ -115,15 +115,15 @@ b_OIII, db_OIII = hdul[19].data, hdul[20].data
 UseSeg = (1.5, 'gauss', 1.5, 'gauss')
 UseDataSeg = (1.5, 'gauss', None, None)
 line_OII, line_OIII = 'OII', 'OIII'
-path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OII)
-path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OIII)
-path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_{}_' \
+path_cube_OII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OII)
+path_cube_OIII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OIII)
+path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_{}_' \
                          '{}_{}_{}.fits'.format(line_OII, *UseDataSeg)
-path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_{}_' \
+path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_{}_' \
                           '{}_{}_{}.fits'.format(line_OIII, *UseDataSeg)
-path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
     format(line_OII, *UseSeg)
-path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
     format(line_OIII, *UseSeg)
 
 # Load data and smoothing
@@ -185,7 +185,7 @@ coord = [(65, 81), (75, 88), (80, 75)]
 # ax[1].set_title(r'$\mathrm{[O\,III]}$', x=0.2, y=0.85, size=40)
 # ax[1].set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=25)
 # fig.supylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$', size=25, x=-0.12)
-# figname_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_ShowFit.png'
+# figname_OIII = '../../MUSEQuBES+CUBS/fit_kin/3C57_ShowFit.png'
 # fig.savefig(figname_OIII, bbox_inches='tight')
 
 # OII
@@ -199,12 +199,14 @@ ax.plot(wave_OII_exp, flux_OII_model[:, 1], '--b')
 ax.plot(wave_OII_exp, flux_OII_model[:, 2], '--C1')
 ax.axvline(x=(1 + z_qso) * wave_OII3727_vac, color='grey', linestyle='--', zorder=-100)
 ax.axvline(x=(1 + z_qso) * wave_OII3729_vac, color='grey', linestyle='--', zorder=-100)
+ax.set_xticks([6230, 6250])
+ax.set_xlim(6225, 6255)
 ax.set_title(r'$\mathrm{[O\,II]}$', x=0.2, y=0.85, size=40)
 ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=25)
 # ax.set_ylabel(r'${f}_{\lambda} \; [10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$', size=25, x=-0.12)
 ax.set_ylabel(r'${f}_{\lambda}$', size=25, x=-0.12)
 ax.tick_params(axis='y', which='major', labelleft=False, left=False)
-figname_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_ShowFit_OII.png'
+figname_OII = '../../MUSEQuBES+CUBS/fit_kin/3C57_ShowFit_OII.png'
 fig.savefig(figname_OII, bbox_inches='tight')
 
 # OIII
@@ -218,14 +220,16 @@ ax.plot(wave_OIII_exp, flux_OIII_model[:, 0], '--r')
 ax.plot(wave_OIII_exp, flux_OIII_model[:, 1], '--b')
 ax.plot(wave_OIII_exp, flux_OIII_model[:, 2], '--C1')
 ax.axvline(x=(1 + z_qso) * wave_OIII5008_vac, color='grey', linestyle='--', zorder=-100)
+ax.set_xticks([8360, 8390])
+ax.set_xlim(8350, 8395)
 ax.set_title(r'$\mathrm{[O\,III]}$', x=0.2, y=0.85, size=40)
 ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=25)
 ax.set_ylabel(r'${f}_{\lambda}$', size=25, x=-0.12)
 ax.tick_params(axis='y', which='major', labelleft=False, left=False)
-figname_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_ShowFit_OIII.png'
+figname_OIII = '../../MUSEQuBES+CUBS/fit_kin/3C57_ShowFit_OIII.png'
 fig.savefig(figname_OIII, bbox_inches='tight')
 
-raise ValueError('testing')
+# raise ValueError('testing')
 # plt.figure()
 # plt.plot(v_array, flux_OII_C[:, 0, 79, 67], '-k')
 # plt.plot(v_array, flux_OII_C[:, 1, 79, 67], '-r')
@@ -284,6 +288,9 @@ for j in x_range:
         if ~np.isnan(v50[i, j]):
             ax.plot(v_array, flux_OII_sum[:, i, j], color='black')
             ax.axvline(x=0, color='black', alpha=0.5, linestyle='--')
+            # if j == 65 and i == 81:
+            #     ax.axhline(y=0, color='black', alpha=0.5, linestyle='--')
+            #     ax.set_title(r"$\star$", size=40, color='green')
             ax.set_xticks([])
             ax.set_yticks([])
             ax.spines[['right', 'top', 'left', 'bottom']].set_color('black')
@@ -294,4 +301,4 @@ for j in x_range:
             ax.set_facecolor(plt.cm.coolwarm(norm(v_rebin[i, j])))
         else:
             ax.axis('off')
-plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/spaxel_spectra.png', bbox_inches='tight')
+plt.savefig('../../MUSEQuBES+CUBS/fit_kin/spaxel_spectra.png', bbox_inches='tight')
