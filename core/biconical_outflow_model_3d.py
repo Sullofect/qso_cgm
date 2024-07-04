@@ -140,7 +140,7 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     # Perform coordinate rotation of bicone
     # print('\n      Performing bicone coordinate rotation...')
     # t0 = time.time()
-    R = coord_rotation((theta_B1_deg,theta_B2_deg,theta_B3_deg))
+    R = coord_rotation((theta_B1_deg, theta_B2_deg, theta_B3_deg))
     u = np.vstack((xbgrid, ybgrid, zbgrid))
     u_rot = np.dot(R, u)
     xb_rot, yb_rot, zb_rot = u_rot[0], u_rot[1], u_rot[2]

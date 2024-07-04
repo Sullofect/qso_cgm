@@ -30,7 +30,7 @@ class DrawBiconeModel:
     def __init__(self, A=0.0, tau=5.00, D=1.0, fn=1.0e3, theta_in_deg=0.0, theta_out_deg=40.0, theta_B1_deg=90,
                  theta_B2_deg=60, theta_B3_deg=0, theta_D1_deg=0, theta_D2_deg=0, theta_D3_deg=0, vmax=300.0,
                  vtype='constant', sampling=100, azim=45, elev=45, map_interpolation='none', obs_res=100, nbins=60,
-                 bins=None):
+                 bins=None, plot=True, save_fig=True):
         # Model Parameters
         self.A = A  # dust extinction level (0.0 - 1.0)
         self.tau = tau  # shape of flux profile
@@ -66,6 +66,8 @@ class DrawBiconeModel:
         self.obs_res = obs_res  # resolution of SDSS for emission line model
         self.nbins = nbins   # number of bins for emission line histogram
         self.bins = bins
+        self.plot = plot
+        self.save_fig = save_fig
 
         self.GenerateBicone()
 
@@ -77,9 +79,9 @@ class DrawBiconeModel:
                                                                       self.theta_D2_deg, self.theta_D3_deg,
                                                                       D=self.D, tau=self.tau, fn=self.fn, A=self.A,
                                                                       vmax=self.vmax, vtype=self.vtype,
-                                                                      sampling=self.sampling, plot=True,
+                                                                      sampling=self.sampling, plot=self.plot,
                                                                       orientation=(self.azim, self.elev),
-                                                                      save_fig=True)
+                                                                      save_fig=self.save_fig)
         self.xbgrid = xbgrid
         self.ybgrid = ybgrid
         self.zbgrid = zbgrid
@@ -90,7 +92,7 @@ class DrawBiconeModel:
         # 2d map
         fmap, vmap, dmap, v_int, d_int = bicone.map_2d(self.xbgrid, self.ybgrid, self.zbgrid, self.fgrid, self.vgrid,
                                                        D=self.D, sampling=self.sampling, interpolation=self.map_interpolation,
-                                                       plot=True, save_fig=True)
+                                                       plot=self.plot, save_fig=self.save_fig)
         self.fmap = fmap
         self.vmap = vmap
         self.dmap = dmap
@@ -101,7 +103,7 @@ class DrawBiconeModel:
         # Emission model
         emmap, emline = bicone.emission_model(self.fgrid, self.vgrid, vmax=self.vmax, obs_res=self.obs_res,
                                               nbins=self.nbins, sampling=self.sampling,
-                                              plot=True, save_fig=True)
+                                              plot=self.plot, save_fig=self.save_fig)
         self.emmap = emmap
         self.emline = emline
 
@@ -154,7 +156,7 @@ class DrawBiconeModel:
         vgrid = np.flip(np.swapaxes(vgrid, 1, 2), 2)
         fgrid = np.flip(np.swapaxes(fgrid, 1, 2), 2)
         flux_model = np.zeros((size_ext, *size))
-        # vmap_MUSE = np.zeros(size) * np.nan
+        vmap_MUSE = np.zeros(size) * np.nan
 
 
         for i in range(size[0]):
@@ -173,13 +175,14 @@ class DrawBiconeModel:
                     f_xy = f_xy_ij[f_xy_ij > 0]
                     if (len(v_xy) > 0) and (len(f_xy) > 0):
                         # vmap_MUSE[j, i] = simps(v_xy.flatten() * f_xy.flatten()) / simps(f_xy.flatten())
-
-
                         v_hist, v_edges = np.histogram(v_xy, bins=self.bins, weights=f_xy)
+                        cumsum = np.cumsum(v_hist) / np.sum(v_hist)
+                        vmap_MUSE[j, i] = self.bins[np.argmin(np.abs(cumsum- 0.5))]
                         flux_model[:, j, i] = v_hist / v_hist.max()
 
-        # return flux_model, vmap_MUSE
+        self.vmap_MUSE = vmap_MUSE
         return flux_model
+        # return flux_model
 
 # # remap the vmap to the observed grid
 # coord_MUSE = (67, 80)
