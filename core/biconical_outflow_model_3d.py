@@ -273,7 +273,7 @@ def coord_rotation(theta):
     if theta[0]==0.0: theta = [0.001,theta[1],theta[2]]
     if theta[1]==0.0: theta = [theta[0],0.001,theta[2]]
     if theta[2]==0.0: theta = [theta[0],theta[1],0.001]
-        
+
     if theta[0]==90.0: theta = [89.9,theta[1],theta[2]]
     if theta[1]==90.0: theta = [theta[0],89.9,theta[2]]
     if theta[2]==90.0: theta = [theta[0],theta[1],89.9]
@@ -300,9 +300,10 @@ def coord_rotation(theta):
                     [np.sin(theta_3),        np.cos(theta_3),        0],
                     [0,                      0,                      1]
                     ])             
-    R  = np.dot(R_z, np.dot( R_y, R_x )) #np.dot(R_z, np.dot( R_y, R_x ))
-#     RR = np.dot(R_x, np.dot( R_y, R_z ))
-    return R
+    # R  = np.dot(R_z, np.dot( R_y, R_x )) #np.dot(R_z, np.dot( R_y, R_x ))
+    RR = np.dot(R_x, np.dot( R_y, R_z ))
+#     R = np.dot(R_z, np.dot(R_x, R_y))
+    return RR
 
 #####################################################################################
 

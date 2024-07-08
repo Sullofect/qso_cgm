@@ -150,7 +150,8 @@ for i, i_B1 in enumerate(B1_array):
                 vmap, dmap = hdul_2D[1].data, hdul_2D[2].data
 
             else:
-                func = DrawBiconeModel(theta_B1_deg=i_B1, vmax=j_vmax, vtype='constant', bins=v_bins, theta_in_deg=0,
+                func = DrawBiconeModel(theta_B1_deg=i_B1, theta_B2_deg=60, theta_B3_deg=45,
+                                       vmax=j_vmax, vtype='constant', bins=v_bins, theta_in_deg=0,
                                        theta_out_deg=k_out, tau=1, plot=False, save_fig=False)
                 func.Make2Dmap()
                 vmap = func.vmap
@@ -239,9 +240,9 @@ w80_blue, w80_red = w80_flatten[mask_muse][blue_muse], w80_flatten[mask_muse][re
 # MCMC over it
 def log_prob(x, f_v_red, f_v_blue, f_d_red, f_d_blue, v50_red, v50_blue, w80_red, w80_blue, dis_red_muse, dis_blue_muse):
     beta_i, vmax_i, out_i = x[:]
-    if  beta_i < 5 or beta_i > 20:
+    if  beta_i < 5 or beta_i > 30:
         return -np.inf
-    elif vmax_i < 500 or vmax_i > 1000:
+    elif vmax_i < 500 or vmax_i > 800:
         return -np.inf
     elif out_i < 10 or out_i > 40:
         return -np.inf
@@ -290,7 +291,8 @@ fig.subplots_adjust(hspace=0.0)
 
 # Check
 var_check = (12, 835, 18.5)
-func = DrawBiconeModel(theta_B1_deg=var_check[0], vmax=var_check[1], vtype='constant', bins=v_bins, theta_in_deg=0,
+func = DrawBiconeModel(theta_B1_deg=var_check[0], theta_B2_deg=60, theta_B3_deg=45, vmax=var_check[1],
+                       vtype='constant', bins=v_bins, theta_in_deg=0,
                        theta_out_deg=var_check[2], tau=1, plot=True, save_fig=True)
 func.Make2Dmap()
 vmap = func.vmap
