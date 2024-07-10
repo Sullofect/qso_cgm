@@ -37,7 +37,7 @@ rc('ytick.major', size=8)
 
 
 def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None, name_gal='NGC 3945', dis_gal=None):
-    scale_phy_3C57 = 30 * 50 / 7
+    scale_phy_3C57 = 15 * 50 / 7
     scale = np.pi * dis_gal * 1 / 3600 / 180 * 1e3
     width_gal = np.round(scale_phy_3C57 / scale, 0)
     if np.isnan(dis_gal):
@@ -45,7 +45,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     else:
         gc.recenter(ra_qso, dec_qso, width=width_gal / 3600, height=width_gal / 3600)
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
-                    linewidths=0.5, s=600, zorder=100)
+                    linewidths=0.5, s=3000, zorder=100)
     gc.set_system_latex(True)
 
     # Colorbar
@@ -70,12 +70,15 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.colorbar.hide()
     elif type == 'GasMap':
         gc.colorbar.set_ticks([-300, -200, -100, 0, 100, 200, 300])
-        gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
+        # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
+        gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
         gc.colorbar.hide()
         gc.add_label(0.98, 0.94, name_gal, size=35, relative=True, horizontalalignment='right')
     elif type == 'GasMap_sigma':
         # gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
-        gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
+        # gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
+        gc.colorbar.set_axis_label_text(r'$\rm W_{80} \mathrm{\; [km \, s^{-1}]}$')
+        gc.colorbar.hide()
 
     # Scale bar
     gc.add_scalebar(length=50 / scale * u.arcsecond)
@@ -269,6 +272,7 @@ def PlotEachGal(gals, dis):
         path_Serra_i = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(igal_cube)
         path_Serra_new_i = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1_new.fits'.format(igal_cube)
         path_figure_mom1_i = '../../MUSEQuBES+CUBS/plots/{}_mom1_noframe.png'.format(igal)
+        path_figure_mom2_i = '../../MUSEQuBES+CUBS/plots/{}_mom2_noframe.png'.format(igal)
         hdul_Serra = fits.open(path_Serra_i)
         hdr_Serra = hdul_Serra[0].header
         hdr_Serra['NAXIS'] = 2
@@ -280,6 +284,16 @@ def PlotEachGal(gals, dis):
         v_Serra = hdul_Serra[0].data[0, :, :] - v_sys_gal
         hdul_Serra_new = fits.ImageHDU(v_Serra, header=hdr_Serra)
         hdul_Serra_new.writeto(path_Serra_new_i, overwrite=True)
+
+        # Load fitting results
+        path_fit_i = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.format(igal)
+        path_W80_i = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_W80.fits'.format(igal_cube)
+        hdul_fit = fits.open(path_fit_i)
+        v_fit, sigma_fit = hdul_fit[1].data, hdul_fit[3].data
+        v_fit = np.where(~np.isnan(v_Serra), v_fit, np.nan)
+        sigma_fit = np.where(~np.isnan(v_Serra), sigma_fit, np.nan)
+        hdul_W80 = fits.ImageHDU(sigma_fit * 2.563, header=hdr_Serra)
+        hdul_W80.writeto(path_W80_i, overwrite=True)
 
         w = WCS(hdr_Serra, naxis=2)
         center_gal = SkyCoord(ra_gal[0], dec_gal[0], unit='deg', frame='icrs')
@@ -294,6 +308,7 @@ def PlotEachGal(gals, dis):
         rectangle_gal = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=width, height=height,
                                              angle=Angle(ang_i, 'deg'))
 
+        # V50 map
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(path_Serra_new_i, figure=fig, hdu=1)
         gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
@@ -301,6 +316,13 @@ def PlotEachGal(gals, dis):
         # gc.frame.set_color('white')
         APLpyStyle(gc, type='GasMap', ra_qso=ra_gal, dec_qso=dec_gal, name_gal=name_i, dis_gal=dis[ind])
         fig.savefig(path_figure_mom1_i, bbox_inches='tight')
+
+        # W80 map
+        fig = plt.figure(figsize=(8, 8), dpi=300)
+        gc = aplpy.FITSFigure(path_W80_i, figure=fig, hdu=1)
+        gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
+        APLpyStyle(gc, type='GasMap_sigma', ra_qso=ra_gal, dec_qso=dec_gal, name_gal=name_i, dis_gal=dis[ind])
+        fig.savefig(path_figure_mom2_i, bbox_inches='tight')
 
 gal_list = np.array(['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941',
                      'NGC3945', 'NGC4203', 'NGC4262', 'NGC5173', 'NGC5582', 'NGC5631', 'NGC6798',
@@ -312,7 +334,7 @@ ang_list = np.array([45, 180-53, 180 + 65, 180, -90, 180 + 50, -65,
                      180 + 80, -60, -60, 0, 180-60, 90, 53,
                      -55, -55])
 
-# PlotEachGal(gal_list, dis_list)
+PlotEachGal(gal_list, dis_list)
 
 
 # Place sudo slit

@@ -108,7 +108,7 @@ pixcoord = PixCoord(x=x, y=y)
 
 rectangle = RectanglePixelRegion(center=PixCoord(x=50, y=50), width=80, height=5, angle=Angle(-30, 'deg'))
 mask = rectangle.contains(pixcoord)
-dis = np.sqrt((x - 50) ** 2 + (y - 50) ** 2) * 0.2 * 50 / 7 / 1.5
+dis = np.sqrt((x - 50) ** 2 + (y - 50) ** 2) * 0.2 * 50 / 7
 dis_mask = dis[mask]
 
 red = ((x[mask] - 50) < 0) * ((y[mask] - 50) > 0)
@@ -130,12 +130,12 @@ def Bin(x, y, bins=20):
     return x_mean, y_mean, y_std
 
 # Create a interpolated model
-bin_red = np.linspace(-35, -5, 26)
-bin_blue = np.linspace(5, 35, 26)
+bin_red = np.flip(-np.arange(5, 50))
+bin_blue = np.arange(5, 50)
 dis_mid_red = (bin_red[1:] + bin_red[:-1]) / 2
 dis_mid_blue = (bin_blue[1:] + bin_blue[:-1]) / 2
-B1_array = np.array([5, 10, 15, 20, 25, 30])
-vmax_array = np.array([500, 750, 1000, 1250, 1500])
+B1_array = np.array([5, 10, 15, 20, 25, 30, 35, 40, 45, 50])
+vmax_array = np.array([350, 500, 750, 1000, 1250, 1500])
 out_array = np.array([10, 20, 30, 40, 50])
 vmap_red_array, vmap_blue_array = np.zeros((len(dis_mid_red), len(B1_array), len(vmax_array), len(out_array))), \
                                   np.zeros((len(dis_mid_blue), len(B1_array), len(vmax_array), len(out_array)))
@@ -234,35 +234,56 @@ v50_flatten = v50.flatten()[center_mask_flatten]
 w80_flatten = w80.flatten()[center_mask_flatten]
 v50_blue, v50_red = v50_flatten[mask_muse][blue_muse], v50_flatten[mask_muse][red_muse]
 w80_blue, w80_red = w80_flatten[mask_muse][blue_muse], w80_flatten[mask_muse][red_muse]
-
+dis_red_mean, v50_red_mean, v50_red_mean_err = Bin(dis_red_muse, v50_red, bins=20)
+dis_blue_mean, v50_blue_mean, v50_blue_mean_err = Bin(dis_blue_muse, v50_blue, bins=20)
+_, w80_red_mean, w80_red_mean_err = Bin(dis_red_muse, w80_red, bins=20)
+_, w80_blue_mean, w80_blue_mean_err = Bin(dis_blue_muse, w80_blue, bins=20)
+v50_red_mean_err, v50_blue_mean_err = np.sqrt(v50_red_mean_err ** 2 + 30 ** 2), np.sqrt(
+    v50_blue_mean_err ** 2 + 30 ** 2)
+w80_red_mean_err, w80_blue_mean_err = np.sqrt(w80_red_mean_err ** 2 + 30 ** 2), np.sqrt(
+    w80_blue_mean_err ** 2 + 30 ** 2)
 
 # raise ValueError('Stop here')
 # MCMC over it
-def log_prob(x, f_v_red, f_v_blue, f_d_red, f_d_blue, v50_red, v50_blue, w80_red, w80_blue, dis_red_muse, dis_blue_muse):
+def log_prob(x, f_v_red, f_v_blue, f_d_red, f_d_blue, dis_red_muse, dis_blue_muse, v50_red, v50_blue, w80_red, w80_blue,
+             dis_red_mean, dis_blue_mean, v50_red_mean, v50_red_mean_err, v50_blue_mean, v50_blue_mean_err,
+             w80_red_mean, w80_red_mean_err, w80_blue_mean, w80_blue_mean_err):
+    # beta_i, vmax_i, out_i, scale = x[:]
     beta_i, vmax_i, out_i = x[:]
-    if  beta_i < 5 or beta_i > 30:
+    scale = 1.5
+    if  beta_i < 5 or beta_i > 50:
         return -np.inf
-    elif vmax_i < 500 or vmax_i > 800:
+    elif vmax_i < 350 or vmax_i > 1500:
         return -np.inf
     elif out_i < 10 or out_i > 40:
         return -np.inf
-    v_red, v_blue = f_v_red((dis_red_muse, *x)), f_v_blue((dis_blue_muse, *x))
-    d_red, d_blue = f_d_red((dis_red_muse, *x)) * 2.563, f_d_blue((dis_blue_muse, *x)) * 2.563
+    # elif scale < 0.9 or scale > 1.8:
+    #     return -np.inf
+    # v_red, v_blue = f_v_red((dis_red_muse * scale, *x[:3])), f_v_blue((dis_blue_muse * scale, *x[:3]))
+    # d_red, d_blue = f_d_red((dis_red_muse * scale, *x[:3])) * 2.563, f_d_blue((dis_blue_muse * scale, *x[:3])) * 2.563
+    v_red, v_blue = f_v_red((dis_red_mean * scale, *x[:3])), f_v_blue((dis_blue_mean * scale, *x[:3]))
+    d_red, d_blue = f_d_red((dis_red_mean * scale, *x[:3])) * 2.563, f_d_blue((dis_blue_mean * scale, *x[:3])) * 2.563
 
     # Compute chi square
-    chi2_red = ((v_red - v50_red) / 20) ** 2 + ((d_red - w80_red) / 40) ** 2
-    chi2_blue = ((v_blue - v50_blue) / 20) ** 2 + ((d_blue - w80_blue) / 40) ** 2
+    # chi2_red = ((v_red - v50_red) / 30) ** 2 + ((d_red - w80_red) / 30) ** 2
+    # chi2_blue = ((v_blue - v50_blue) / 30) ** 2 + ((d_blue - w80_blue) / 30) ** 2
+    chi2_red = ((v_red - v50_red_mean) / v50_red_mean_err) ** 2 + ((d_red - w80_red_mean) / w80_red_mean_err) ** 2
+    chi2_blue = ((v_blue - v50_blue_mean) / v50_blue_mean_err) ** 2 + ((d_blue - w80_blue_mean) / w80_blue_mean_err) ** 2
     chi2_array = np.hstack([chi2_red, chi2_blue])
     return - 0.5 * np.nansum(chi2_array)
 
 nums_chain, nums_disc = 5000, 1000
 nwalkers = 40
 ndim = 3
-p0 = np.array([10, 700, 30]) + 0.1 * np.random.randn(nwalkers, ndim)
+p0 = np.array([30, 700, 25]) + 0.1 * np.random.randn(nwalkers, ndim)
 labels = [r"$\beta_{1}$", r"$v_{\rm max}$", r"$\theta_{open}$"]
 
-filename = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit.h5'
-figname_MCMC = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit.pdf'
+# ndim = 4
+# p0 = np.array([30, 700, 25, 1.5]) + 0.1 * np.random.randn(nwalkers, ndim)
+# labels = [r"$\beta_{1}$", r"$v_{\rm max}$", r"$\theta_{open}$", r'scale']
+
+filename = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_mean.h5'
+figname_MCMC = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_mean.pdf'
 backend = emcee.backends.HDFBackend(filename)
 
 
@@ -272,17 +293,19 @@ if os.path.exists(filename):
 else:
     # Run the MCMC
     print('Running MCMC')
-    args = (f_v_red, f_v_blue, f_d_red, f_d_blue, v50_red, v50_blue, w80_red, w80_blue, dis_red_muse, dis_blue_muse)
+    args = (f_v_red, f_v_blue, f_d_red, f_d_blue, dis_red_muse, dis_blue_muse, v50_red, v50_blue, w80_red, w80_blue,
+            dis_red_mean, dis_blue_mean, v50_red_mean, v50_red_mean_err, v50_blue_mean, v50_blue_mean_err,
+            w80_red_mean, w80_red_mean_err, w80_blue_mean, w80_blue_mean_err)
     sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=args, backend=backend)
     state = sampler.run_mcmc(p0, nums_chain, progress=True)
     samples = sampler.get_chain(flat=True, discard=nums_disc)
     samples_corner = np.copy(samples)
 
+median_values = np.median(samples, axis=0)
+print('Median values:', median_values)
 figure = corner.corner(samples_corner, labels=labels, quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k',
                        title_kwargs={"fontsize": 13}, smooth=1., smooth1d=1., bins=25)
 figure.savefig(figname_MCMC, bbox_inches='tight')
-
-# raise ValueError('Stop here')
 
 
 plt.close('all')
@@ -290,7 +313,8 @@ fig, ax = plt.subplots(2, 1, figsize=(10, 7), dpi=300, sharex=True)
 fig.subplots_adjust(hspace=0.0)
 
 # Check
-var_check = (12, 835, 18.5)
+var_check = (*median_values, 1.5)
+# var_check = (40, 600, 29, 1.5)
 func = DrawBiconeModel(theta_B1_deg=var_check[0], theta_B2_deg=60, theta_B3_deg=45, vmax=var_check[1],
                        vtype='constant', bins=v_bins, theta_in_deg=0,
                        theta_out_deg=var_check[2], tau=1, plot=True, save_fig=True)
@@ -303,27 +327,41 @@ dmap_flatten = dmap.flatten()
 vmap_blue, vmap_red = vmap_flatten[mask][blue], vmap_flatten[mask][red]
 dmap_blue, dmap_red = dmap_flatten[mask][blue], dmap_flatten[mask][red]
 
-ax[0].scatter(dis_red, f_v_red((dis_red, *var_check)), s=80, marker='o', edgecolors='k', linewidths=0.5, color='black')
-ax[0].scatter(dis_blue, f_v_blue((dis_blue, *var_check)), s=80, marker='o', edgecolors='k', linewidths=0.5, color='black')
-ax[1].scatter(dis_red, f_d_red((dis_red, *var_check)) * 2.563, s=80, marker='o', edgecolors='k', linewidths=0.5, color='black')
-ax[1].scatter(dis_blue, f_d_blue((dis_blue, *var_check)) * 2.563, s=80, marker='o', edgecolors='k', linewidths=0.5, color='black')
-# ax[0].scatter(dis_red, vmap_red, s=100, marker='*', edgecolors='purple', linewidths=0.5, color='black',
-#               label=r'$\rm 3C\,57 \, northeast$')
+# MUSE
+# ax[0].scatter(dis_red_muse, v50_red, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red')
+# ax[0].scatter(dis_blue_muse, v50_blue, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue')
+# ax[1].scatter(dis_red_muse, w80_red, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red')
+# ax[1].scatter(dis_blue_muse, w80_blue, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue')
+ax[0].errorbar(dis_red_muse, v50_red, 30, fmt='o', color='g')
+ax[0].errorbar(dis_blue_muse, v50_blue, 30, fmt='o', color='g')
+ax[1].errorbar(dis_red_muse, w80_red, 30, fmt='o', color='g')
+ax[1].errorbar(dis_blue_muse, w80_blue, 30, fmt='o', color='g')
+ax[0].errorbar(dis_red_mean, v50_red_mean, yerr=v50_red_mean_err, fmt='o', color='red')
+ax[0].errorbar(dis_blue_mean, v50_blue_mean, yerr=v50_blue_mean_err, fmt='o', color='blue')
+ax[1].errorbar(dis_red_mean, w80_red_mean, yerr=w80_red_mean_err, fmt='o', color='red')
+ax[1].errorbar(dis_blue_mean, w80_blue_mean, yerr=w80_blue_mean_err, fmt='o', color='blue')
+
+# Interpolation
+dis_red_sort = np.sort(dis_red)
+dis_blue_sort = np.sort(dis_blue)
+ax[0].plot(dis_red_sort / var_check[3], f_v_red((dis_red_sort, *var_check[:3])), lw=2, color='black')
+ax[0].plot(dis_blue_sort / var_check[3], f_v_blue((dis_blue_sort, *var_check[:3])), lw=2, color='black')
+ax[1].plot(dis_red_sort / var_check[3], f_d_red((dis_red_sort, *var_check[:3])) * 2.563, lw=2, color='black')
+ax[1].plot(dis_blue_sort / var_check[3], f_d_blue((dis_blue_sort, *var_check[:3])) * 2.563, lw=2, color='black')
 # ax[0].scatter(dis_red, vmap_red_array[:, 1, 1, 1], s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',
 #               label=r'$\rm 3C\,57 \, northeast$')
 # ax[0].scatter(dis_blue, vmap_blue_array[:, 1, 1, 1], s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue',
 #               label=r'$\rm 3C\,57 \, southwest$')
 # ax[1].scatter(dis_red, dmap_red_array[:, 1, 1, 1] * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
 # ax[1].scatter(dis_blue, dmap_blue_array[:, 1, 1, 1] * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
-ax[0].scatter(dis_red, vmap_red, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',
-              label=r'$\rm 3C\,57 \, northeast$')
-ax[0].scatter(dis_blue, vmap_blue, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue',
-              label=r'$\rm 3C\,57 \, southwest$')
-ax[1].scatter(dis_red, dmap_red * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(dis_blue, dmap_blue * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
-ax[0].scatter(dis_red_muse, v50_red, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red')
-ax[0].scatter(dis_blue_muse, v50_blue, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue')
-ax[1].scatter(dis_red_muse, w80_red, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(dis_blue_muse, w80_blue, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue',
-              label=r'$\rm 3C\,57 \, southwest$')
+ax[0].scatter(dis_red / var_check[3], vmap_red, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
+ax[0].scatter(dis_blue / var_check[3], vmap_blue, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+ax[1].scatter(dis_red / var_check[3], dmap_red * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(dis_blue / var_check[3], dmap_blue * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+ax[0].set_xlim(-40, 40)
+ax[0].set_ylim(-450, 450)
+ax[1].set_ylim(0, 510)
+ax[0].set_ylabel(r'$\rm V_{50} \rm \, [km \, s^{-1}]$', size=25)
+ax[1].set_xlabel(r'$\rm Distance \, [kpc]$', size=25)
+ax[1].set_ylabel(r'$\rm W_{80} \rm \, [km \, s^{-1}]$', size=25)
 fig.savefig('../../MUSEQuBES+CUBS/fit_bic/PV_cone.png', bbox_inches='tight')
