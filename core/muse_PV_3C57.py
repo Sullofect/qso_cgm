@@ -135,6 +135,7 @@ fig.subplots_adjust(hspace=0.0)
 
 # ETG
 gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
+# gal_list = np.array(['NGC2685',])
 # gal_list = np.array(['NGC2685', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
 # gal_list = np.array(['NGC5582'])
 # gal_list = np.array(['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941',
@@ -210,12 +211,12 @@ v50_OII_blue, v50_OII_red = v50_OII_flatten[mask][blue], v50_OII_flatten[mask][r
 w80_OII_blue, w80_OII_red = w80_OII_flatten[mask][blue], w80_OII_flatten[mask][red]
 d5080_blue, v50_OII_blue_mean, _, _, w80_OII_blue_mean, _, _ = Bin(dis_blue, v50_OII_blue, w80_OII_blue, bins=20)
 d5080_red, v50_OII_red_mean, _, _, w80_OII_red_mean, _, _ = Bin(dis_red, v50_OII_red, w80_OII_red, bins=20)
-ax[0].scatter(d5080_red, v50_OII_red_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red',
-              label=r'OII')
-ax[0].scatter(d5080_blue, v50_OII_blue_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue',
-              label=r'OII')
-ax[1].scatter(d5080_red, w80_OII_red_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(d5080_blue, w80_OII_blue_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue')
+# ax[0].scatter(d5080_red, v50_OII_red_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red',
+#               label=r'OII')
+# ax[0].scatter(d5080_blue, v50_OII_blue_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue',
+#               label=r'OII')
+# ax[1].scatter(d5080_red, w80_OII_red_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red')
+# ax[1].scatter(d5080_blue, w80_OII_blue_mean, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue')
 
 # OIII
 v50_OIII_flatten = v50_OIII.flatten()[center_mask_flatten]
@@ -224,12 +225,12 @@ v50_OIII_blue, v50_OIII_red = v50_OIII_flatten[mask][blue], v50_OIII_flatten[mas
 w80_OIII_blue, w80_OIII_red = w80_OIII_flatten[mask][blue], w80_OIII_flatten[mask][red]
 d5080_blue, v50_OIII_blue_mean, _, _, w80_OIII_blue_mean, _, _ = Bin(dis_blue, v50_OIII_blue, w80_OIII_blue, bins=20)
 d5080_red, v50_OIII_red_mean, _, _, w80_OIII_red_mean, _, _ = Bin(dis_red, v50_OIII_red, w80_OIII_red, bins=20)
-ax[0].scatter(d5080_red, v50_OIII_red_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='red',
-              label=r'OIII')
-ax[0].scatter(d5080_blue, v50_OIII_blue_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='blue',
-              label=r'OIII')
-ax[1].scatter(d5080_red, w80_OIII_red_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(d5080_blue, w80_OIII_blue_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='blue')
+# ax[0].scatter(d5080_red, v50_OIII_red_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='red',
+#               label=r'OIII')
+# ax[0].scatter(d5080_blue, v50_OIII_blue_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='blue',
+#               label=r'OIII')
+# ax[1].scatter(d5080_red, w80_OIII_red_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='red')
+# ax[1].scatter(d5080_blue, w80_OIII_blue_mean, s=50, marker='o', edgecolors='k', linewidths=0.5, color='blue')
 
 # Mask each side
 mask_NLR = rectangle.contains(pixcoord_NLR)
@@ -253,14 +254,14 @@ d5080_blue_NLR, v50_blue_mean_NLR_OII, _, _, w80_blue_mean_NLR_OII, _, _ = Bin(d
 d5080_red_NLR, v50_red_mean_NLR_OII, _, _, w80_red_mean_NLR_OII, _, _ = Bin(dis_red_NLR, v50_red_NLR_OII, w80_red_NLR_OII, bins=20)
 d5080_blue_NLR, v50_blue_mean_NLR_OIII, _, _, w80_blue_mean_NLR_OIII, _, _ = Bin(dis_blue_NLR, v50_blue_NLR_OIII, w80_blue_NLR_OIII, bins=20)
 d5080_red_NLR, v50_red_mean_NLR_OIII, _, _, w80_red_mean_NLR_OIII, _, _ = Bin(dis_red_NLR, v50_red_NLR_OIII, w80_red_NLR_OIII, bins=20)
-ax[0].scatter(d5080_red_NLR, v50_red_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='purple')
-ax[0].scatter(d5080_blue_NLR, v50_blue_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='C0')
-ax[1].scatter(d5080_red_NLR, w80_red_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='purple')
-ax[1].scatter(d5080_blue_NLR, w80_blue_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='C0')
-ax[0].scatter(d5080_red_NLR, v50_red_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='violet')
-ax[0].scatter(d5080_blue_NLR, v50_blue_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='C2')
-ax[1].scatter(d5080_red_NLR, w80_red_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='violet')
-ax[1].scatter(d5080_blue_NLR, w80_blue_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='C2')
+# ax[0].scatter(d5080_red_NLR, v50_red_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='purple')
+# ax[0].scatter(d5080_blue_NLR, v50_blue_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='C0')
+# ax[1].scatter(d5080_red_NLR, w80_red_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='purple')
+# ax[1].scatter(d5080_blue_NLR, w80_blue_mean_NLR_OII, s=50, marker='^', edgecolors='k', linewidths=0.5, color='C0')
+# ax[0].scatter(d5080_red_NLR, v50_red_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='violet')
+# ax[0].scatter(d5080_blue_NLR, v50_blue_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='C2')
+# ax[1].scatter(d5080_red_NLR, w80_red_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='violet')
+# ax[1].scatter(d5080_blue_NLR, w80_blue_mean_NLR_OIII, s=50, marker='v', edgecolors='k', linewidths=0.5, color='C2')
 ax[0].axhline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
 ax[0].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
 ax[1].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)

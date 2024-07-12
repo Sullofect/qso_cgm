@@ -115,6 +115,8 @@ red = ((x[mask] - 50) < 0) * ((y[mask] - 50) > 0)
 blue = ~red
 dis_red = dis_mask[red] * -1
 dis_blue = dis_mask[blue]
+dis_red_sort = np.sort(dis_red)
+dis_blue_sort = np.sort(dis_blue)
 
 #
 def Bin(x, y, bins=20):
@@ -301,12 +303,14 @@ else:
     samples = sampler.get_chain(flat=True, discard=nums_disc)
     samples_corner = np.copy(samples)
 
+# print(np.shape(dis_red_sort[np.newaxis, :]))
+# raise ValueError('Stop')
+
 median_values = np.median(samples, axis=0)
 print('Median values:', median_values)
 figure = corner.corner(samples_corner, labels=labels, quantiles=[0.16, 0.5, 0.84], show_titles=True, color='k',
                        title_kwargs={"fontsize": 13}, smooth=1., smooth1d=1., bins=25)
 figure.savefig(figname_MCMC, bbox_inches='tight')
-
 
 plt.close('all')
 fig, ax = plt.subplots(2, 1, figsize=(10, 7), dpi=300, sharex=True)
@@ -342,22 +346,34 @@ ax[1].errorbar(dis_red_mean, w80_red_mean, yerr=w80_red_mean_err, fmt='o', color
 ax[1].errorbar(dis_blue_mean, w80_blue_mean, yerr=w80_blue_mean_err, fmt='o', color='blue')
 
 # Interpolation
-dis_red_sort = np.sort(dis_red)
-dis_blue_sort = np.sort(dis_blue)
 ax[0].plot(dis_red_sort / var_check[3], f_v_red((dis_red_sort, *var_check[:3])), lw=2, color='black')
 ax[0].plot(dis_blue_sort / var_check[3], f_v_blue((dis_blue_sort, *var_check[:3])), lw=2, color='black')
 ax[1].plot(dis_red_sort / var_check[3], f_d_red((dis_red_sort, *var_check[:3])) * 2.563, lw=2, color='black')
 ax[1].plot(dis_blue_sort / var_check[3], f_d_blue((dis_blue_sort, *var_check[:3])) * 2.563, lw=2, color='black')
+
+# Make a group of points
+draw = np.random.choice(len(samples), size=4000, replace=False)
+samples_draw = samples[draw]
+v_all_red = f_v_red((dis_red_sort[:, np.newaxis], samples_draw[:, 0], samples_draw[:, 1], samples_draw[:, 2]))
+
+ax[0].plot(dis_red_sort / var_check[3], np.max(v_all_red, axis=1), lw=2, color='purple')
+ax[0].plot(dis_red_sort / var_check[3], np.min(v_all_red, axis=1), lw=2, color='purple')
+# ax[0].plot(dis_blue_sort / var_check[3], f_v_blue((dis_blue_sort, *var_check[:3])), lw=2, color='black')
+# ax[1].plot(dis_red_sort / var_check[3], f_d_red((dis_red_sort, *var_check[:3])) * 2.563, lw=2, color='black')
+# ax[1].plot(dis_blue_sort / var_check[3], f_d_blue((dis_blue_sort, *var_check[:3])) * 2.563, lw=2, color='black')
+# print(np.shape(f_v_red((dis_red_sort[:, np.newaxis], samples[:, 0], samples[:, 1], samples[:, 2]))))
+
+
 # ax[0].scatter(dis_red, vmap_red_array[:, 1, 1, 1], s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',
 #               label=r'$\rm 3C\,57 \, northeast$')
 # ax[0].scatter(dis_blue, vmap_blue_array[:, 1, 1, 1], s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue',
 #               label=r'$\rm 3C\,57 \, southwest$')
 # ax[1].scatter(dis_red, dmap_red_array[:, 1, 1, 1] * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
 # ax[1].scatter(dis_blue, dmap_blue_array[:, 1, 1, 1] * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
-ax[0].scatter(dis_red / var_check[3], vmap_red, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
-ax[0].scatter(dis_blue / var_check[3], vmap_blue, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
-ax[1].scatter(dis_red / var_check[3], dmap_red * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(dis_blue / var_check[3], dmap_blue * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+# ax[0].scatter(dis_red / var_check[3], vmap_red, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
+# ax[0].scatter(dis_blue / var_check[3], vmap_blue, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+# ax[1].scatter(dis_red / var_check[3], dmap_red * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
+# ax[1].scatter(dis_blue / var_check[3], dmap_blue * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
 ax[0].set_xlim(-40, 40)
 ax[0].set_ylim(-450, 450)
 ax[1].set_ylim(0, 510)
