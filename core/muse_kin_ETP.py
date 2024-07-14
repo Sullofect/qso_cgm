@@ -73,7 +73,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
         gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
         gc.colorbar.hide()
-        gc.add_label(0.98, 0.94, name_gal, size=35, relative=True, horizontalalignment='right')
+        gc.add_label(0.98, 0.90, name_gal, size=60, relative=True, horizontalalignment='right')
     elif type == 'GasMap_sigma':
         # gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
         # gc.colorbar.set_axis_label_text(r'$\sigma \mathrm{\; [km \, s^{-1}]}$')
@@ -82,7 +82,8 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 
     # Scale bar
     gc.add_scalebar(length=50 / scale * u.arcsecond)
-    gc.scalebar.set_corner('top left')
+    # gc.scalebar.set_corner('top left')
+    gc.scalebar.set_corner('bottom left')
     gc.scalebar.set_label('{:.0f}'.format(50 / scale) +  r"$'' \approx 50 \mathrm{\; pkpc}$")
     gc.scalebar.set_font_size(30)
 
@@ -315,6 +316,7 @@ def PlotEachGal(gals, dis):
         patch = rectangle_gal.plot(ax=gc.ax, facecolor='none', edgecolor='k', lw=1, linestyle='--', label='Rectangle')
         # gc.frame.set_color('white')
         APLpyStyle(gc, type='GasMap', ra_qso=ra_gal, dec_qso=dec_gal, name_gal=name_i, dis_gal=dis[ind])
+        gc.scalebar.set_font_size(50)
         fig.savefig(path_figure_mom1_i, bbox_inches='tight')
 
         # W80 map
@@ -322,6 +324,8 @@ def PlotEachGal(gals, dis):
         gc = aplpy.FITSFigure(path_W80_i, figure=fig, hdu=1)
         gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
         APLpyStyle(gc, type='GasMap_sigma', ra_qso=ra_gal, dec_qso=dec_gal, name_gal=name_i, dis_gal=dis[ind])
+        # gc.scalebar.set_font_size(50)
+        gc.scalebar.hide()
         fig.savefig(path_figure_mom2_i, bbox_inches='tight')
 
 gal_list = np.array(['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941',
@@ -334,7 +338,7 @@ ang_list = np.array([45, 180-53, 180 + 65, 180, -90, 180 + 50, -65,
                      180 + 80, -60, -60, 0, 180-60, 90, 53,
                      -55, -55])
 
-# PlotEachGal(gal_list, dis_list)
+PlotEachGal(gal_list, dis_list)
 
 
 # Place sudo slit

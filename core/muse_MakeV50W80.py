@@ -150,7 +150,6 @@ def expand_wave(wave, stack=True, times=3):
     return wave_expand
 
 def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None):
-    # only for TXS0206
     gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=3000, zorder=100)
@@ -190,12 +189,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
     elif type == 'GasMap_slit':
         gc.add_scalebar(length=7 * u.arcsecond)
-        gc.scalebar.set_corner('top left')
+        gc.scalebar.set_corner('bottom left')
         gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
         gc.scalebar.set_font_size(30)
-
         gc.colorbar.hide()
-        gc.add_label(0.98, 0.94, r'$\rm 3C\,57$', size=35, relative=True, horizontalalignment='right')
+        # gc.add_label(0.98, 0.94, r'$\rm 3C\,57$', size=35, relative=True, horizontalalignment='right')
+        gc.add_label(0.98, 0.90, r'$\rm 3C\,57$', size=60, relative=True, horizontalalignment='right')
         # gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
         # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
         # gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
@@ -463,6 +462,7 @@ gc = aplpy.FITSFigure(path_v50_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
 patch = rectangle.plot(ax=gc.ax, facecolor='none', edgecolor='k', lw=1.0, linestyle='--', label='Rectangle')
 APLpyStyle(gc, type='GasMap_slit', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+gc.scalebar.set_font_size(50)
 fig.savefig(figurename_V50_slit, bbox_inches='tight')
 
 # W80 map
@@ -472,6 +472,8 @@ gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
 APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
 # gc.add_label(0.08, 0.08, '(e)', color='k', size=40, relative=True)
 gc.colorbar.hide()
+gc.scalebar.set_font_size(50)
+gc.scalebar.hide()
 fig.savefig(figurename_W80, bbox_inches='tight')
 
 # OIII/OII map
