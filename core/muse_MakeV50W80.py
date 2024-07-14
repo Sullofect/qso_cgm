@@ -213,7 +213,6 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.scalebar.set_corner('top left')
         gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
         gc.scalebar.set_font_size(30)
-
         gc.colorbar.set_ticks([0, 1, 2, 3])
         gc.colorbar.set_axis_label_text(r'$\rm Number \, of \, Gaussians$')
     else:
