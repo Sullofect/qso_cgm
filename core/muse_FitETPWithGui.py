@@ -44,7 +44,7 @@ def Gaussian(velocity, v, sigma, flux):
     return gaussian
 
 #
-path_table_gals = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
+path_table_gals = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/table_gals.fits'
 
 
 class PlotWindow(QMainWindow):
@@ -67,8 +67,8 @@ class PlotWindow(QMainWindow):
         v_sys_gal = table_gals[name_sort]['cz (Velocity)']
 
         # Load data
-        path_Serra = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_cube)
-        path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/allcubes/{}_cube.fits'.format(gal_cube)
+        path_Serra = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(gal_cube)
+        path_cube = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/allcubes/{}_cube.fits'.format(gal_cube)
         hdul_Serra = fits.open(path_Serra)
         self.v_Serra = hdul_Serra[0].data[0, :, :] - v_sys_gal
 
@@ -86,7 +86,7 @@ class PlotWindow(QMainWindow):
 
 
         # Load ETG fit
-        self.path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.\
+        self.path_fit = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_fit/{}_fit.fits'.\
             format(gal_name)
         v_guess, sigma_guess, flux_guess = 0, 50, 0.5
         self.model = Gaussian

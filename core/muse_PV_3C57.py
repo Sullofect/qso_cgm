@@ -135,9 +135,8 @@ fig.subplots_adjust(hspace=0.0)
 
 # ETG
 gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
-# gal_list = np.array(['NGC2685',])
-# gal_list = np.array(['NGC2685', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
-# gal_list = np.array(['NGC5582'])
+# gal_list = np.array(['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC3941', 'NGC3945',
+#                      'NGC4203', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176', 'UGC09519'])
 # gal_list = np.array(['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941',
 #                      'NGC3945', 'NGC4203', 'NGC4262', 'NGC5173', 'NGC5582', 'NGC5631', 'NGC6798',
 #                      'UGC06176', 'UGC09519'])

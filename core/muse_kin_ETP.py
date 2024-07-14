@@ -369,6 +369,7 @@ def PlaceSudoSlitOnEachGal(igal=None):
     v_fit = np.where(~np.isnan(v_Serra), v_fit, np.nan)
     sigma_fit = np.where(~np.isnan(v_Serra), sigma_fit, np.nan)
 
+
     #
     w = WCS(hdr_Serra, naxis=2)
     center_gal = SkyCoord(ra_gal[0], dec_gal[0], unit='deg', frame='icrs')

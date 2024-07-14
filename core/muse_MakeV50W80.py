@@ -463,7 +463,7 @@ fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_v50_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=-350, vmax=350, cmap='coolwarm')
 patch = rectangle.plot(ax=gc.ax, facecolor='none', edgecolor='k', lw=1.0, linestyle='--', label='Rectangle')
-APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+APLpyStyle(gc, type='GasMap_slit', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
 fig.savefig(figurename_V50_slit, bbox_inches='tight')
 
 # W80 map
@@ -472,6 +472,7 @@ gc = aplpy.FITSFigure(path_w80_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
 APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
 # gc.add_label(0.08, 0.08, '(e)', color='k', size=40, relative=True)
+gc.colorbar.hide()
 fig.savefig(figurename_W80, bbox_inches='tight')
 
 # OIII/OII map
