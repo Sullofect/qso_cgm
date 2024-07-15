@@ -42,11 +42,6 @@ data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
-# Measure kinematics
-path_fit = '../../MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
-hdul = fits.open(path_fit)
-fs, hdr = hdul[1].data, hdul[2].header
-
 # Hedaer information
 path_sub_white_gaia = '../../MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
 hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
@@ -55,51 +50,11 @@ center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
 c2 = w.world_to_pixel(center_qso)
 
 # Path to the data
-UseDataSeg = (1.5, 'gauss', None, None)
-UseDetectionSeg = (1.5, 'gauss', 1.5, 'gauss')
-line_OII, line_OIII = 'OII', 'OIII'
-path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-    format(cubename, str_zap, line_OII, *UseDetectionSeg)
-path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-    format(cubename, str_zap, line_OIII, *UseDetectionSeg)
-path_cube_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.format(cubename, str_zap, line_OII)
-path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                         '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDataSeg)
-path_cube_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.format(cubename, str_zap, line_OIII)
-path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
-                          '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDataSeg)
 path_v50_plot = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50_plot.fits'
 path_w80_plot = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80_plot.fits'
 hdul_v50_plot = fits.open(path_v50_plot)
 hdul_w80_plot = fits.open(path_w80_plot)
 v50, w80 = hdul_v50_plot[1].data, hdul_w80_plot[1].data
-
-# Load data and smoothing
-cube_OII, cube_OIII = Cube(path_cube_smoothed_OII), Cube(path_cube_smoothed_OIII)
-wave_OII_vac, wave_OIII_vac = pyasl.airtovac2(cube_OII.wave.coord()), pyasl.airtovac2(cube_OIII.wave.coord())
-flux_OII, flux_err_OII = cube_OII.data * 1e-3, np.sqrt(cube_OII.var) * 1e-3
-flux_OIII, flux_err_OIII = cube_OIII.data * 1e-3, np.sqrt(cube_OIII.var) * 1e-3
-seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
-mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
-flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
-size = np.shape(flux_OIII)[1:]
-
-# Create a bin according to the MUSE data
-dlambda = wave_OIII_vac[1] - wave_OIII_vac[0]
-wave_OIII_ext = np.zeros(len(wave_OIII_vac) + 20)
-wave_OIII_ext[10:-10] = wave_OIII_vac
-wave_OIII_ext[:10] = wave_OIII_vac[0] - np.flip(np.arange(1, 11)) * dlambda
-wave_OIII_ext[-10:] = wave_OIII_vac[-1] + dlambda * np.arange(1, 11)
-size_ext = len(wave_OIII_ext)
-
-#
-wave_bin = np.zeros(len(wave_OIII_ext) + 1)
-wave_bin[:-1] = wave_OIII_ext - dlambda / 2
-wave_bin[-1] = wave_OIII_ext[-1] + dlambda
-wave_OIII_obs = wave_OIII5008_vac * (1 + z_qso)
-v_bins = (wave_bin - wave_OIII_obs) / wave_OIII_obs * c_kms
-mask = np.zeros(size)
-mask[55:100, 54:100] = 1
 
 # Mask a slit
 x, y = np.meshgrid(np.arange(101), np.arange(101))
@@ -121,15 +76,16 @@ dis_blue_sort = np.sort(dis_blue)
 #
 def Bin(x, y, bins=20):
     n, edges = np.histogram(x, bins=bins)
-    y_mean, y_std = np.zeros(len(n)), np.zeros(len(n))
+    y_mean, y_std, y_err = np.zeros(len(n)), np.zeros(len(n)), np.ones_like(y)
     x_mean = (edges[:-1] + edges[1:]) / 2
     for i, i_val in enumerate(n):
         if n[i] == 0:
             y_mean[i], y_std[i] = np.nan, np.nan
         else:
-            mask = (x > edges[i]) * (x < edges[i + 1])
+            mask = (x > edges[i]) * (x <= edges[i + 1])
             y_mean[i], y_std[i] = np.nanmean(y[mask]), np.nanstd(y[mask])
-    return x_mean, y_mean, y_std
+            y_err[mask] = y_std[i]
+    return x_mean, y_mean, y_std, y_err
 
 # Create a interpolated model
 bin_red = np.flip(-np.arange(5, 50))
@@ -177,26 +133,6 @@ for i, i_B1 in enumerate(B1_array):
             dmap_red_array[:, i, j, k] = Bin(dis_red, dmap_red, bins=bin_red)[1]
             dmap_blue_array[:, i, j, k] = Bin(dis_blue, dmap_blue, bins=bin_blue)[1]
 
-            # vmap_red_array[:, i, j, k] = vmap_red
-            # vmap_blue_array[:, i, j, k] = vmap_blue
-            # dmap_red_array[:, i, j, k] = dmap_red
-            # dmap_blue_array[:, i, j, k] = dmap_blue
-
-
-# Interpolate the model
-# X_r, Y_r, Z_r, W_r = np.meshgrid(dis_red, B1_array, vmax_array, out_array, indexing='ij')
-# X_r, Y_r, Z_r, W_r = X_r.ravel(), Y_r.ravel(), Z_r.ravel(), W_r.ravel()
-# var_array_red = list(zip(X_r, Y_r, Z_r, W_r))
-# X_b, Y_b, Z_b, W_b = np.meshgrid(dis_blue, B1_array, vmax_array, out_array, indexing='ij')
-# X_b, Y_b, Z_b, W_b = X_b.ravel(), Y_b.ravel(), Z_b.ravel(), W_b.ravel()
-# var_array_blue = list(zip(X_b, Y_b, Z_b, W_b))
-#
-# # Interpolate the model
-# f_v_red = interpolate.LinearNDInterpolator(var_array_red, vmap_red_array.ravel(), fill_value=np.nan)
-# f_v_blue = interpolate.LinearNDInterpolator(var_array_blue, vmap_blue_array.ravel(), fill_value=np.nan)
-# f_d_red = interpolate.LinearNDInterpolator(var_array_red, dmap_red_array.ravel(), fill_value=np.nan)
-# f_d_blue = interpolate.LinearNDInterpolator(var_array_blue, dmap_blue_array.ravel(), fill_value=np.nan)
-
 # Interpolate the model
 var_array_red = (dis_mid_red, B1_array, vmax_array, out_array)
 var_array_blue = (dis_mid_blue, B1_array, vmax_array, out_array)
@@ -232,14 +168,17 @@ blue_muse = ~red_muse
 dis_red_muse = dis_mask[red_muse] * -1
 dis_blue_muse = dis_mask[blue_muse]
 
+
 v50_flatten = v50.flatten()[center_mask_flatten]
 w80_flatten = w80.flatten()[center_mask_flatten]
 v50_blue, v50_red = v50_flatten[mask_muse][blue_muse], v50_flatten[mask_muse][red_muse]
 w80_blue, w80_red = w80_flatten[mask_muse][blue_muse], w80_flatten[mask_muse][red_muse]
-dis_red_mean, v50_red_mean, v50_red_mean_err = Bin(dis_red_muse, v50_red, bins=20)
-dis_blue_mean, v50_blue_mean, v50_blue_mean_err = Bin(dis_blue_muse, v50_blue, bins=20)
-_, w80_red_mean, w80_red_mean_err = Bin(dis_red_muse, w80_red, bins=20)
-_, w80_blue_mean, w80_blue_mean_err = Bin(dis_blue_muse, w80_blue, bins=20)
+
+# Mean
+dis_red_mean, v50_red_mean, v50_red_mean_err, v50_red_err = Bin(dis_red_muse, v50_red, bins=20)
+dis_blue_mean, v50_blue_mean, v50_blue_mean_err, v50_blue_err = Bin(dis_blue_muse, v50_blue, bins=20)
+_, w80_red_mean, w80_red_mean_err, w80_red_err = Bin(dis_red_muse, w80_red, bins=20)
+_, w80_blue_mean, w80_blue_mean_err, w80_blue_err = Bin(dis_blue_muse, w80_blue, bins=20)
 v50_red_mean_err, v50_blue_mean_err = np.sqrt(v50_red_mean_err ** 2 + 30 ** 2), np.sqrt(
     v50_blue_mean_err ** 2 + 30 ** 2)
 w80_red_mean_err, w80_blue_mean_err = np.sqrt(w80_red_mean_err ** 2 + 30 ** 2), np.sqrt(
@@ -248,44 +187,50 @@ w80_red_mean_err, w80_blue_mean_err = np.sqrt(w80_red_mean_err ** 2 + 30 ** 2), 
 # raise ValueError('Stop here')
 # MCMC over it
 def log_prob(x, f_v_red, f_v_blue, f_d_red, f_d_blue, dis_red_muse, dis_blue_muse, v50_red, v50_blue, w80_red, w80_blue,
+             v50_red_err, v50_blue_err, w80_red_err, w80_blue_err,
              dis_red_mean, dis_blue_mean, v50_red_mean, v50_red_mean_err, v50_blue_mean, v50_blue_mean_err,
              w80_red_mean, w80_red_mean_err, w80_blue_mean, w80_blue_mean_err):
+    # beta_i, vmax_i, out_i = x[:]
     # beta_i, vmax_i, out_i, scale = x[:]
-    beta_i, vmax_i, out_i = x[:]
-    scale = 1.5
+    # beta_i, vmax_i, out_i, offset_i = x[:]
+    # scale_i = 1.5
+    beta_i, vmax_i, out_i, offset_i, scale_i = x[:]
     if  beta_i < 5 or beta_i > 50:
         return -np.inf
     elif vmax_i < 350 or vmax_i > 1500:
         return -np.inf
     elif out_i < 10 or out_i > 40:
         return -np.inf
-    # elif scale < 0.9 or scale > 1.8:
-    #     return -np.inf
-    # v_red, v_blue = f_v_red((dis_red_muse * scale, *x[:3])), f_v_blue((dis_blue_muse * scale, *x[:3]))
-    # d_red, d_blue = f_d_red((dis_red_muse * scale, *x[:3])) * 2.563, f_d_blue((dis_blue_muse * scale, *x[:3])) * 2.563
-    v_red, v_blue = f_v_red((dis_red_mean * scale, *x[:3])), f_v_blue((dis_blue_mean * scale, *x[:3]))
-    d_red, d_blue = f_d_red((dis_red_mean * scale, *x[:3])) * 2.563, f_d_blue((dis_blue_mean * scale, *x[:3])) * 2.563
+    elif scale_i < 0.5 or scale_i > 2.5:
+        return -np.inf
+    v_red, v_blue = f_v_red((dis_red_muse * scale_i, *x[:3])), f_v_blue((dis_blue_muse * scale_i, *x[:3]))
+    d_red, d_blue = f_d_red((dis_red_muse * scale_i, *x[:3])) * 2.563, f_d_blue((dis_blue_muse * scale_i, *x[:3])) * 2.563
+    v_red[np.isnan(v_red)], v_blue[np.isnan(v_blue)] = 1000, -1000
+    d_red[np.isnan(d_red)], d_blue[np.isnan(d_blue)] = 5000, 5000
+    # v_red, v_blue = f_v_red((dis_red_mean * scale, *x[:3])), f_v_blue((dis_blue_mean * scale, *x[:3]))
+    # d_red, d_blue = f_d_red((dis_red_mean * scale, *x[:3])) * 2.563, f_d_blue((dis_blue_mean * scale, *x[:3])) * 2.563
 
     # Compute chi square
-    # chi2_red = ((v_red - v50_red) / 30) ** 2 + ((d_red - w80_red) / 30) ** 2
-    # chi2_blue = ((v_blue - v50_blue) / 30) ** 2 + ((d_blue - w80_blue) / 30) ** 2
-    chi2_red = ((v_red - v50_red_mean) / v50_red_mean_err) ** 2 + ((d_red - w80_red_mean) / w80_red_mean_err) ** 2
-    chi2_blue = ((v_blue - v50_blue_mean) / v50_blue_mean_err) ** 2 + ((d_blue - w80_blue_mean) / w80_blue_mean_err) ** 2
+    v_red, v_blue = v_red + offset_i, v_blue + offset_i  # Offset it
+    chi2_red = ((v_red - v50_red) / v50_red_err) ** 2 + ((d_red - w80_red) / w80_red_err) ** 2
+    chi2_blue = ((v_blue - v50_blue) / v50_blue_err) ** 2 + ((d_blue - w80_blue) / w80_blue_err) ** 2
+    # chi2_red = ((v_red - v50_red_mean) / v50_red_mean_err) ** 2 + ((d_red - w80_red_mean) / w80_red_mean_err) ** 2
+    # chi2_blue = ((v_blue - v50_blue_mean) / v50_blue_mean_err) ** 2 + ((d_blue - w80_blue_mean) / w80_blue_mean_err) ** 2
     chi2_array = np.hstack([chi2_red, chi2_blue])
     return - 0.5 * np.nansum(chi2_array)
 
-nums_chain, nums_disc = 5000, 1000
+nums_chain, nums_disc = 1000, 100
 nwalkers = 40
-ndim = 3
-p0 = np.array([30, 700, 25]) + 0.1 * np.random.randn(nwalkers, ndim)
-labels = [r"$\beta_{1}$", r"$v_{\rm max}$", r"$\theta_{open}$"]
+ndim = 5
+p0 = np.array([30, 700, 25, 30, 1.5]) + 0.1 * np.random.randn(nwalkers, ndim)
+labels = [r"$\beta_{1}$", r"$v_{\rm max}$", r"$\theta_{open}$", r'offset', r'scale']
 
 # ndim = 4
 # p0 = np.array([30, 700, 25, 1.5]) + 0.1 * np.random.randn(nwalkers, ndim)
 # labels = [r"$\beta_{1}$", r"$v_{\rm max}$", r"$\theta_{open}$", r'scale']
 
-filename = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_mean.h5'
-figname_MCMC = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_mean.pdf'
+filename = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_para=5.h5'
+figname_MCMC = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_para=5.pdf'
 backend = emcee.backends.HDFBackend(filename)
 
 
@@ -296,15 +241,13 @@ else:
     # Run the MCMC
     print('Running MCMC')
     args = (f_v_red, f_v_blue, f_d_red, f_d_blue, dis_red_muse, dis_blue_muse, v50_red, v50_blue, w80_red, w80_blue,
+            v50_red_err, v50_blue_err, w80_red_err, w80_blue_err,
             dis_red_mean, dis_blue_mean, v50_red_mean, v50_red_mean_err, v50_blue_mean, v50_blue_mean_err,
             w80_red_mean, w80_red_mean_err, w80_blue_mean, w80_blue_mean_err)
     sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=args, backend=backend)
     state = sampler.run_mcmc(p0, nums_chain, progress=True)
     samples = sampler.get_chain(flat=True, discard=nums_disc)
     samples_corner = np.copy(samples)
-
-# print(np.shape(dis_red_sort[np.newaxis, :]))
-# raise ValueError('Stop')
 
 median_values = np.median(samples, axis=0)
 print('Median values:', median_values)
@@ -320,7 +263,7 @@ fig.subplots_adjust(hspace=0.0)
 var_check = (*median_values, 1.5)
 # var_check = (40, 600, 29, 1.5)
 func = DrawBiconeModel(theta_B1_deg=var_check[0], theta_B2_deg=60, theta_B3_deg=45, vmax=var_check[1],
-                       vtype='constant', bins=v_bins, theta_in_deg=0,
+                       vtype='constant', bins=None, theta_in_deg=0,
                        theta_out_deg=var_check[2], tau=1, plot=True, save_fig=True)
 func.Make2Dmap()
 vmap = func.vmap
@@ -346,18 +289,19 @@ ax[1].errorbar(dis_red_mean, w80_red_mean, yerr=w80_red_mean_err, fmt='o', color
 ax[1].errorbar(dis_blue_mean, w80_blue_mean, yerr=w80_blue_mean_err, fmt='o', color='blue')
 
 # Interpolation
-ax[0].plot(dis_red_sort / var_check[3], f_v_red((dis_red_sort, *var_check[:3])), lw=2, color='black')
-ax[0].plot(dis_blue_sort / var_check[3], f_v_blue((dis_blue_sort, *var_check[:3])), lw=2, color='black')
-ax[1].plot(dis_red_sort / var_check[3], f_d_red((dis_red_sort, *var_check[:3])) * 2.563, lw=2, color='black')
-ax[1].plot(dis_blue_sort / var_check[3], f_d_blue((dis_blue_sort, *var_check[:3])) * 2.563, lw=2, color='black')
+ax[0].plot(dis_red_sort / var_check[4], f_v_red((dis_red_sort, *var_check[:3])) + var_check[3], lw=2, color='purple')
+ax[0].plot(dis_blue_sort / var_check[4], f_v_blue((dis_blue_sort, *var_check[:3])) + var_check[3], lw=2, color='purple')
+ax[1].plot(dis_red_sort / var_check[4], f_d_red((dis_red_sort, *var_check[:3])) * 2.563, lw=2, color='purple')
+ax[1].plot(dis_blue_sort / var_check[4], f_d_blue((dis_blue_sort, *var_check[:3])) * 2.563, lw=2, color='purple')
 
 # Make a group of points
 draw = np.random.choice(len(samples), size=4000, replace=False)
 samples_draw = samples[draw]
 v_all_red = f_v_red((dis_red_sort[:, np.newaxis], samples_draw[:, 0], samples_draw[:, 1], samples_draw[:, 2]))
 
-ax[0].plot(dis_red_sort / var_check[3], np.max(v_all_red, axis=1), lw=2, color='purple')
-ax[0].plot(dis_red_sort / var_check[3], np.min(v_all_red, axis=1), lw=2, color='purple')
+ax[0].fill_between(dis_red_sort / var_check[4], np.min(v_all_red, axis=1) + var_check[3], np.max(v_all_red, axis=1) + var_check[3], color='purple', alpha=0.5)
+ax[0].plot(dis_red_sort / var_check[4], np.max(v_all_red, axis=1) + var_check[3], lw=2, color='purple')
+ax[0].plot(dis_red_sort / var_check[4], np.min(v_all_red, axis=1) + var_check[3], lw=2, color='purple')
 # ax[0].plot(dis_blue_sort / var_check[3], f_v_blue((dis_blue_sort, *var_check[:3])), lw=2, color='black')
 # ax[1].plot(dis_red_sort / var_check[3], f_d_red((dis_red_sort, *var_check[:3])) * 2.563, lw=2, color='black')
 # ax[1].plot(dis_blue_sort / var_check[3], f_d_blue((dis_blue_sort, *var_check[:3])) * 2.563, lw=2, color='black')
@@ -374,6 +318,9 @@ ax[0].plot(dis_red_sort / var_check[3], np.min(v_all_red, axis=1), lw=2, color='
 # ax[0].scatter(dis_blue / var_check[3], vmap_blue, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
 # ax[1].scatter(dis_red / var_check[3], dmap_red * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
 # ax[1].scatter(dis_blue / var_check[3], dmap_blue * 2.563, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+ax[0].axhline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
+ax[0].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
+ax[1].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
 ax[0].set_xlim(-40, 40)
 ax[0].set_ylim(-450, 450)
 ax[1].set_ylim(0, 510)
