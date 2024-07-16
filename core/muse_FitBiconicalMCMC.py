@@ -19,6 +19,7 @@ from scipy.interpolate import interp1d
 from mpdaf.obj import Cube, WaveCoord, Image
 from PyAstronomy import pyasl
 from muse_FitBiconical import DrawBiconeModel
+from palettable.cmocean.sequential import Dense_20_r
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick.minor', size=5, visible=True)
@@ -61,7 +62,7 @@ x, y = np.meshgrid(np.arange(101), np.arange(101))
 x, y = x.flatten(), y.flatten()
 pixcoord = PixCoord(x=x, y=y)
 
-rectangle = RectanglePixelRegion(center=PixCoord(x=50, y=50), width=80, height=5, angle=Angle(-30, 'deg'))
+rectangle = RectanglePixelRegion(center=PixCoord(x=50, y=50), width=100, height=5, angle=Angle(-30, 'deg'))
 mask = rectangle.contains(pixcoord)
 dis = np.sqrt((x - 50) ** 2 + (y - 50) ** 2) * 0.2 * 50 / 7
 dis_mask = dis[mask]
@@ -109,7 +110,7 @@ for i, i_B1 in enumerate(B1_array):
 
             else:
                 func = DrawBiconeModel(theta_B1_deg=i_B1, theta_B2_deg=60, theta_B3_deg=45,
-                                       vmax=j_vmax, vtype='constant', bins=v_bins, theta_in_deg=0,
+                                       vmax=j_vmax, vtype='constant', bins=None, theta_in_deg=0,
                                        theta_out_deg=k_out, tau=1, plot=False, save_fig=False)
                 func.Make2Dmap()
                 vmap = func.vmap
@@ -157,8 +158,8 @@ x, y = x[center_mask_flatten], y[center_mask_flatten]
 pixcoord = pixcoord[center_mask_flatten]
 
 # Mask a slit
-rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=5, angle=Angle(-30, 'deg'))
-mask_muse = rectangle.contains(pixcoord)
+rectangle_muse = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=5, angle=Angle(-30, 'deg'))
+mask_muse = rectangle_muse.contains(pixcoord)
 dis = np.sqrt((x - c2[0]) ** 2 + (y - c2[1]) ** 2) * 0.2 * 50 / 7
 dis_mask = dis[mask_muse]
 
@@ -183,6 +184,8 @@ v50_red_mean_err, v50_blue_mean_err = np.sqrt(v50_red_mean_err ** 2 + 30 ** 2), 
     v50_blue_mean_err ** 2 + 30 ** 2)
 w80_red_mean_err, w80_blue_mean_err = np.sqrt(w80_red_mean_err ** 2 + 30 ** 2), np.sqrt(
     w80_blue_mean_err ** 2 + 30 ** 2)
+v50_red_err, v50_blue_err = np.sqrt(v50_red_err ** 2 + 30 ** 2), np.sqrt(v50_blue_err ** 2 + 30 ** 2)
+w80_red_err, w80_blue_err = np.sqrt(w80_red_err ** 2 + 30 ** 2), np.sqrt(w80_blue_err ** 2 + 30 ** 2)
 
 # raise ValueError('Stop here')
 # MCMC over it
@@ -219,10 +222,10 @@ def log_prob(x, f_v_red, f_v_blue, f_d_red, f_d_blue, dis_red_muse, dis_blue_mus
     chi2_array = np.hstack([chi2_red, chi2_blue])
     return - 0.5 * np.nansum(chi2_array)
 
-nums_chain, nums_disc = 1000, 100
+nums_chain, nums_disc = 10000, 5000
 nwalkers = 40
 ndim = 5
-p0 = np.array([30, 700, 25, 30, 1.5]) + 0.1 * np.random.randn(nwalkers, ndim)
+p0 = np.array([30, 700, 25, 50, 1.5]) + 0.1 * np.random.randn(nwalkers, ndim)
 labels = [r"$\beta_{1}$", r"$v_{\rm max}$", r"$\theta_{open}$", r'offset', r'scale']
 
 # ndim = 4
@@ -255,53 +258,99 @@ figure = corner.corner(samples_corner, labels=labels, quantiles=[0.16, 0.5, 0.84
                        title_kwargs={"fontsize": 13}, smooth=1., smooth1d=1., bins=25)
 figure.savefig(figname_MCMC, bbox_inches='tight')
 
-plt.close('all')
-fig, ax = plt.subplots(2, 1, figsize=(10, 7), dpi=300, sharex=True)
-fig.subplots_adjust(hspace=0.0)
-
 # Check
-var_check = (*median_values, 1.5)
+# var_check = (*median_values, 1.5)
 # var_check = (40, 600, 29, 1.5)
+var_check = (median_values[:])
 func = DrawBiconeModel(theta_B1_deg=var_check[0], theta_B2_deg=60, theta_B3_deg=45, vmax=var_check[1],
-                       vtype='constant', bins=None, theta_in_deg=0,
-                       theta_out_deg=var_check[2], tau=1, plot=True, save_fig=True)
+                       vtype='constant', bins=None, theta_in_deg=0, theta_out_deg=var_check[2], tau=1,
+                       plot=False, save_fig=False)
 func.Make2Dmap()
 vmap = func.vmap
 dmap = func.dmap
-vmap, dmap = (np.flip(vmap, 1), np.flip(dmap, 1))
+vmap, dmap = np.flip(vmap, 1), np.flip(dmap, 1)
 vmap_flatten = vmap.flatten()
 dmap_flatten = dmap.flatten()
 vmap_blue, vmap_red = vmap_flatten[mask][blue], vmap_flatten[mask][red]
 dmap_blue, dmap_red = dmap_flatten[mask][blue], dmap_flatten[mask][red]
 
+# Save cone result
+extent = [0, 100, 0, 100]
+
+fig, ax = plt.subplots(1, 1, figsize=(8, 8), dpi=300)
+ax.imshow(vmap, origin='lower', cmap='coolwarm', vmin=-350, vmax=350, extent=extent)
+patch = rectangle.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
+# ax.set_xticks([])
+# ax.set_yticks([])
+# ax.set_xticklabels([])
+# ax.set_yticklabels([])
+plt.savefig('../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_vmap.png', bbox_inches='tight')
+
+fig, ax = plt.subplots(1, 1, figsize=(8, 8), dpi=300)
+ax.imshow(dmap * 2.563, origin='lower', vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap, extent=extent)
+patch = rectangle.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_xticklabels([])
+ax.set_yticklabels([])
+plt.savefig('../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_dmap.png', bbox_inches='tight')
+
+# path_vmap_MCMC = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_vmap.fits'
+# path_dmap_MCMC = '../../MUSEQuBES+CUBS/fit_bic/PV_MCMC_fit_dmap.fits'
+# hdul_vmap_MCMC = fits.ImageHDU(vmap, header=None)
+# hdul_vmap_MCMC.writeto(path_vmap_MCMC, overwrite=True)
+# hdul_dmap_MCMC = fits.ImageHDU(dmap * 2.563, header=None)
+# hdul_dmap_MCMC.writeto(path_dmap_MCMC, overwrite=True)
+
+
+plt.close('all')
+fig, ax = plt.subplots(2, 1, figsize=(10, 7), dpi=300, sharex=True)
+fig.subplots_adjust(hspace=0.0)
 # MUSE
 # ax[0].scatter(dis_red_muse, v50_red, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red')
 # ax[0].scatter(dis_blue_muse, v50_blue, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue')
 # ax[1].scatter(dis_red_muse, w80_red, s=50, marker='*', edgecolors='k', linewidths=0.5, color='red')
 # ax[1].scatter(dis_blue_muse, w80_blue, s=50, marker='*', edgecolors='k', linewidths=0.5, color='blue')
-ax[0].errorbar(dis_red_muse, v50_red, 30, fmt='o', color='g')
-ax[0].errorbar(dis_blue_muse, v50_blue, 30, fmt='o', color='g')
-ax[1].errorbar(dis_red_muse, w80_red, 30, fmt='o', color='g')
-ax[1].errorbar(dis_blue_muse, w80_blue, 30, fmt='o', color='g')
-ax[0].errorbar(dis_red_mean, v50_red_mean, yerr=v50_red_mean_err, fmt='o', color='red')
-ax[0].errorbar(dis_blue_mean, v50_blue_mean, yerr=v50_blue_mean_err, fmt='o', color='blue')
-ax[1].errorbar(dis_red_mean, w80_red_mean, yerr=w80_red_mean_err, fmt='o', color='red')
-ax[1].errorbar(dis_blue_mean, w80_blue_mean, yerr=w80_blue_mean_err, fmt='o', color='blue')
+# ax[0].errorbar(dis_red_mean, v50_red_mean, yerr=v50_red_mean_err, fmt='o', color='red')
+# ax[0].errorbar(dis_blue_mean, v50_blue_mean, yerr=v50_blue_mean_err, fmt='o', color='blue')
+# ax[1].errorbar(dis_red_mean, w80_red_mean, yerr=w80_red_mean_err, fmt='o', color='red')
+# ax[1].errorbar(dis_blue_mean, w80_blue_mean, yerr=w80_blue_mean_err, fmt='o', color='blue')
+ax[0].scatter(dis_red_mean, v50_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',
+              label=r'$\rm 3C\,57 \, northeast$', zorder=100)
+ax[0].scatter(dis_blue_mean, v50_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue',
+              label=r'$\rm 3C\,57 \, southwest$', zorder=100)
+ax[1].scatter(dis_red_mean, w80_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red', zorder=100)
+ax[1].scatter(dis_blue_mean, w80_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue', zorder=100)
+ax[0].errorbar(dis_red_muse, v50_red, v50_red_err, fmt='.r', capsize=0, capthick=1, mfc=None, ms=10, zorder=-100, alpha=0.2)
+ax[0].errorbar(dis_blue_muse, v50_blue, v50_blue_err, fmt='.b', capsize=0, capthick=1, mfc=None, ms=10, zorder=-100, alpha=0.2)
+ax[1].errorbar(dis_red_muse, w80_red, w80_red_err, fmt='.r', capsize=0, capthick=1, mfc=None, ms=10, zorder=-100, alpha=0.2)
+ax[1].errorbar(dis_blue_muse, w80_blue, w80_blue_err, fmt='.b', capsize=0, capthick=1, mfc=None, ms=10, zorder=-100, alpha=0.2)
 
 # Interpolation
-ax[0].plot(dis_red_sort / var_check[4], f_v_red((dis_red_sort, *var_check[:3])) + var_check[3], lw=2, color='purple')
-ax[0].plot(dis_blue_sort / var_check[4], f_v_blue((dis_blue_sort, *var_check[:3])) + var_check[3], lw=2, color='purple')
-ax[1].plot(dis_red_sort / var_check[4], f_d_red((dis_red_sort, *var_check[:3])) * 2.563, lw=2, color='purple')
-ax[1].plot(dis_blue_sort / var_check[4], f_d_blue((dis_blue_sort, *var_check[:3])) * 2.563, lw=2, color='purple')
+ax[0].plot(dis_red_sort / var_check[4], f_v_red((dis_red_sort, *var_check[:3])) + var_check[3], lw=2, color='purple', alpha=0.8,
+           label='Biconical model')
+ax[0].plot(dis_blue_sort / var_check[4], f_v_blue((dis_blue_sort, *var_check[:3])) + var_check[3], lw=2, color='purple', alpha=0.8)
+ax[1].plot(dis_red_sort / var_check[4], f_d_red((dis_red_sort, *var_check[:3])) * 2.563, lw=2, color='purple', alpha=0.8)
+ax[1].plot(dis_blue_sort / var_check[4], f_d_blue((dis_blue_sort, *var_check[:3])) * 2.563, lw=2, color='purple', alpha=0.8)
 
 # Make a group of points
 draw = np.random.choice(len(samples), size=4000, replace=False)
 samples_draw = samples[draw]
 v_all_red = f_v_red((dis_red_sort[:, np.newaxis], samples_draw[:, 0], samples_draw[:, 1], samples_draw[:, 2]))
+v_all_blue = f_v_blue((dis_blue_sort[:, np.newaxis], samples_draw[:, 0], samples_draw[:, 1], samples_draw[:, 2]))
+d_all_red = f_d_red((dis_red_sort[:, np.newaxis], samples_draw[:, 0], samples_draw[:, 1], samples_draw[:, 2])) * 2.563
+d_all_blue = f_d_blue((dis_blue_sort[:, np.newaxis], samples_draw[:, 0], samples_draw[:, 1], samples_draw[:, 2])) * 2.563
 
-ax[0].fill_between(dis_red_sort / var_check[4], np.min(v_all_red, axis=1) + var_check[3], np.max(v_all_red, axis=1) + var_check[3], color='purple', alpha=0.5)
-ax[0].plot(dis_red_sort / var_check[4], np.max(v_all_red, axis=1) + var_check[3], lw=2, color='purple')
-ax[0].plot(dis_red_sort / var_check[4], np.min(v_all_red, axis=1) + var_check[3], lw=2, color='purple')
+ax[0].fill_between(dis_red_sort / var_check[4], np.min(v_all_red, axis=1) + var_check[3],
+                   np.max(v_all_red, axis=1) + var_check[3], color='purple', alpha=0.3)
+ax[0].fill_between(dis_blue_sort / var_check[4], np.min(v_all_blue, axis=1) + var_check[3],
+                   np.max(v_all_blue, axis=1) + var_check[3], color='purple', alpha=0.3)
+ax[1].fill_between(dis_red_sort / var_check[4], np.min(d_all_red, axis=1), np.max(d_all_red, axis=1),
+                   color='purple', alpha=0.3)
+ax[1].fill_between(dis_blue_sort / var_check[4], np.min(d_all_blue, axis=1), np.max(d_all_blue, axis=1),
+                   color='purple', alpha=0.3)
+# ax[0].plot(dis_red_sort / var_check[4], np.max(v_all_red, axis=1) + var_check[3], lw=2, color='purple')
+# ax[0].plot(dis_red_sort / var_check[4], np.min(v_all_red, axis=1) + var_check[3], lw=2, color='purple')
 # ax[0].plot(dis_blue_sort / var_check[3], f_v_blue((dis_blue_sort, *var_check[:3])), lw=2, color='black')
 # ax[1].plot(dis_red_sort / var_check[3], f_d_red((dis_red_sort, *var_check[:3])) * 2.563, lw=2, color='black')
 # ax[1].plot(dis_blue_sort / var_check[3], f_d_blue((dis_blue_sort, *var_check[:3])) * 2.563, lw=2, color='black')
@@ -323,8 +372,9 @@ ax[0].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
 ax[1].axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
 ax[0].set_xlim(-40, 40)
 ax[0].set_ylim(-450, 450)
-ax[1].set_ylim(0, 510)
+ax[1].set_ylim(0, 520)
 ax[0].set_ylabel(r'$\rm V_{50} \rm \, [km \, s^{-1}]$', size=25)
 ax[1].set_xlabel(r'$\rm Distance \, [kpc]$', size=25)
 ax[1].set_ylabel(r'$\rm W_{80} \rm \, [km \, s^{-1}]$', size=25)
+ax[0].legend(loc='best', fontsize=15)
 fig.savefig('../../MUSEQuBES+CUBS/fit_bic/PV_cone.png', bbox_inches='tight')

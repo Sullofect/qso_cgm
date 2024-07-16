@@ -34,33 +34,6 @@ matplotlib.rcParams['agg.path.chunksize'] = 100000
 # plt.style.use('dark_background')
 path_savefig = '../../MUSEQuBES+CUBS/fit_bic/'
 
-#####################################################################################
-def bicone_inclination(B1_deg, B2_deg):
-    # Convert angles to radians
-    # NOTE: PA_bicone = 0.0 => theta_B2 = 0.0 (bicone oriented N-S; no rotation along line of sight)
-    B1_rad = B1_deg * np.pi / 180.0
-    B2_rad = B2_deg * np.pi / 180.0
-    if (np.sin(B1_rad) * np.cos(B1_rad) >= 0.0): S = 1.0
-    elif (np.sin(B1_rad) * np.cos(B1_rad) < 0.0): S = -1.0
-    i_bicone = S * np.arccos(np.sqrt(np.sin(B2_rad) ** 2 + (np.cos(B1_rad) * np.cos(B2_rad)) ** 2))
-    i_bicone_deg = i_bicone * 180.0 / np.pi
-    return i_bicone_deg
-
-#####################################################################################
-
-def dust_inclination(D1_deg,D3_deg=0.0):
-    # Convert angles to radian
-    # NOTE: PA_dust = 0.0 => theta_D3 = 0.0 (dust plane oriented N-S; no tilt along line of sight)
-    D1_rad = D1_deg * np.pi/180.0
-    D3_rad = D3_deg * np.pi/180.0
-    if (np.sin(D1_rad) * np.cos(D1_rad)>=0.0): S = 1.0
-    elif (np.sin(D1_rad)*np.cos(D1_rad)<0.0): S = -1.0
-    i_dust = S*np.arccos( np.cos(D1_rad)*np.cos(D3_rad) )
-    i_dust_deg = i_dust * 180.0/np.pi
-    return i_dust
-
-#####################################################################################
-
 def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, theta_B3_deg, theta_D1_deg, theta_D2_deg,
                     theta_D3_deg, D=1.0, tau=5.0, fn=1.0, A=0.90, vmax=1000.0, vtype='decreasing', sampling=100,
                     plot=True,orientation=(15,45),save_fig=True):
@@ -81,9 +54,9 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     # ------
     #         theta_in_deg  : inner bicone angle measured from reflected on z-axis
     #         theta_out_deg : outer bicone angle measured from reflected on z-axis
-    #         theta_B1_deg  : ccw rotation of bicone about x-axis in degrees
-    #         theta_B2_deg  : ccw rotation of bicone about y-axis in degrees
-    #         theta_B3_deg  : ccw rotation of bicone about z-axis in degrees
+    #         theta_B1_deg  : inclination
+    #         theta_B2_deg  : postion angle
+    #         theta_B3_deg  : rotate around z axis
     #         theta_D1_Deg  : ccw rotation of dust plane about x-axis in degrees  
     #         theta_D2_Deg  : ccw rotation of dust plane about y-axis in degrees
     #         theta_D3_Deg  : ccw rotation of dust plane about z-axis in degrees
@@ -99,34 +72,34 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     #         fgrid : an (N,3) grid of flux values at each location on the grid
     #         vgrid : an (N,3) grid of LOS velocities at each location on the grid
 
-    #         
-    # NOTES:
-    # ----- 
-    #         
-
     #################################################################################
     if int(sampling) % 2 == 0:
         # Having an odd sampling ensures that there is a value at (0,0,0)
         sampling = int(sampling)+1
-    # print('\n Bicone grid sampling = %d' % sampling)
-    # Generate a uniform meshgrid in Cartesian coordinates 
-    # print('\n Generating bicone...')
-    Xg, Yg, Zg = np.meshgrid(np.linspace(-D, D, sampling), np.linspace(-D, D, sampling), np.linspace(-D, D, sampling))
+
+    # Generate grid of x,y,z values
+    Xg, Yg, Zg = np.meshgrid(np.linspace(-D, D, sampling), np.linspace(-D, D, sampling), np.linspace(-D, D, sampling),
+                             indexing='ij')
     xbgrid, ybgrid, zbgrid = Xg.ravel(), Yg.ravel(), Zg.ravel()
+
     # Calculate d
     d = (xbgrid ** 2 + ybgrid ** 2 + zbgrid ** 2) ** 0.5
-    ind = np.where(d<=D)[0] # indices within a spere of radius D
+
+
     # Generate grid of zeros which we will occupy for valid values of the bicone
     # 1 for valid entries, 0 for none; this will be used for flux and velocity grids
     bicone_grid = np.zeros(len(d))
+
     # Calculate r_in,r_out
     theta_in_rad = theta_in_deg * np.pi/180.
     theta_out_rad = theta_out_deg * np.pi/180.
-    r_in = (xbgrid**2+ybgrid**2)**0.5/np.cos(np.pi/2.0 - theta_in_rad)
-    r_out = (xbgrid**2+ybgrid**2)**0.5/np.cos(np.pi/2.0 - theta_out_rad)
+    r_in = (xbgrid**2 + ybgrid**2)**0.5/np.cos(np.pi/2.0 - theta_in_rad)
+    r_out = (xbgrid**2 + ybgrid**2)**0.5/np.cos(np.pi/2.0 - theta_out_rad)
+
     # Calculate min and max z at (x,y)
     z_min = r_out * np.cos(theta_out_rad)
     z_max = r_in * np.cos(theta_in_rad)
+
     # For all entries with (d<=D), if the absolute value of a z value of the grid
     # lies between the minimum and maximum z, that point on the grid is a valid entry.
     # t0 = time.time()
@@ -134,22 +107,12 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     #     if (z_min[i]<=np.abs(zbgrid[i])<=z_max[i]):
     #         bicone_grid[i]=1.0
 
-    ind = np.where((d<=D) & (np.abs(zbgrid)<=z_max) & (np.abs(zbgrid)>=z_min))
+    ind = np.where((d<=D) & (np.abs(zbgrid) <= z_max) & (np.abs(zbgrid) >= z_min))
     bicone_grid[ind]=1.0
-    # print('\n      %0.2f seconds' % float(time.time()-t0))
-    # Perform coordinate rotation of bicone
-    # print('\n      Performing bicone coordinate rotation...')
-    # t0 = time.time()
     R = coord_rotation((theta_B1_deg, theta_B2_deg, theta_B3_deg))
     u = np.vstack((xbgrid, ybgrid, zbgrid))
     u_rot = np.dot(R, u)
     xb_rot, yb_rot, zb_rot = u_rot[0], u_rot[1], u_rot[2]
-    # print('\n      %0.2f seconds' % float(time.time()-t0))
-    # Interpolate onto a new Cartesian grid of the same dimension
-    # t0 = time.time()
-
-
-    # print('\n      Performing bicone interpolation back onto normal grid...')
 
     # scipy.interpolate.griddata uses Delauney triangulation for irregular grids which 
     # makes this method very slow.
@@ -161,7 +124,6 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     # new_bicone_grid = griddata(np.array(points), np.array(values), np.array(zip(xbgrid, ybgrid, zbgrid)), method='nearest')#,fill_value=0) # works version 1.1.0
     f_bicone_grid = NearestNDInterpolator(list(points), np.array(values))
     new_bicone_grid = f_bicone_grid(xbgrid, ybgrid, zbgrid)
-    print(np.shape(new_bicone_grid))
 
     # new_bicone_grid = griddata(np.array((xb_rot,yb_rot,zb_rot)).T,np.array(values),np.array((xbgrid,ybgrid,zbgrid)).T,method='nearest')#,fill_value=0) # 
 
@@ -180,14 +142,15 @@ def generate_bicone(theta_in_deg, theta_out_deg, theta_B1_deg, theta_B2_deg, the
     # print('\n      Performing dust plane coordinate rotation...')
     u = np.vstack((xdg, ydg, zdg))
     R = coord_rotation((theta_D1_deg,theta_D2_deg,theta_D3_deg))
-    u_rot = np.dot(R,u)
+    u_rot = np.dot(R, u)
     xd_rot,yd_rot,zd_rot = u_rot[0],u_rot[1],u_rot[2]
 
     bicone_coords = (xbgrid, ybgrid, zbgrid)
     dust_coords = (xd_rot,yd_rot,zd_rot)
+
     # Generate flux grid
-    fgrid = flux_profile(new_bicone_grid,bicone_coords,dust_coords,tau=tau,D=D,fn=fn,A=A)
-    vgrid = velocity_profile(new_bicone_grid,bicone_coords,D=D,vmax=vmax,vtype=vtype)
+    fgrid = flux_profile(new_bicone_grid, bicone_coords, dust_coords, tau=tau, D=D, fn=fn, A=A)
+    vgrid = velocity_profile(new_bicone_grid, bicone_coords, D=D, vmax=vmax, vtype=vtype)
     
     # Plot model of the bicone and dust plane in 3d for visualization purposes
     if plot == True:
@@ -223,9 +186,6 @@ def velocity_profile(bicone_grid, bicone_coords, D=1.0, vmax=1000.0, vtype='decr
 
     # Calculate velocity on the bicone grid
     vgrid = bicone_grid * vd
-    # vgrid = vd
-    # print(bicone_grid.shape)
-    # print(bicone_grid[0:100])
 
     # Calculate the projected velocity along the LOS
     # cos_i = (-yb / (yb ** 2 + zb ** 2) ** 0.5)
@@ -239,11 +199,11 @@ def velocity_profile(bicone_grid, bicone_coords, D=1.0, vmax=1000.0, vtype='decr
 
 def flux_profile(bicone_grid,bicone_coords,dust_coords,tau=5.0,D=1.0,fn=1.0,A=0.90):
     # print('\n Generating flux profile...\n')
-    xb,yb,zb = bicone_coords
-    xd,yd,zd = dust_coords
+    xb, yb, zb = bicone_coords
+    xd, yd, zd = dust_coords
     d = ((xb)**2 + (yb)**2 + (zb)**2)**0.5
     
-    points = (xd,zd)
+    points = (xd, zd)
     values = yd
     # Get the y-coordinate of the dust plane at the locations 
     # of the bicone at the x-z coordinates
@@ -251,17 +211,9 @@ def flux_profile(bicone_grid,bicone_coords,dust_coords,tau=5.0,D=1.0,fn=1.0,A=0.
 
     fd_ext = fn*np.exp(-tau*(d/D))
     fd_ext = fd_ext*bicone_grid
-    # t0 = time.time()
-    # for i in range(0,len(fd_ext),1):
-    #     if yb[i]<(yc[i]):
-    #         # If dust plane is in front of bicone, extinguish the flux by factor of 1-A
-    #         fd_ext[i]=fd_ext[i]*(1.0-A)
-    # print('\n      %0.2f seconds' % float(time.time()-t0))
 
-    # t0 = time.time()
     ind = np.where((yb<=yc))[0]
     fd_ext[ind]*=(1.0-A)
-    # print('\n      %0.2f seconds' % float(time.time()-t0))
     flux = fd_ext
 
     return np.array(flux)
@@ -290,19 +242,17 @@ def coord_rotation(theta):
     theta_1, theta_2, theta_3 = theta_1_rad, theta_2_rad, theta_3_rad
     R_x = np.array([[1,         0,                  0                 ],
                     [0,         np.cos(theta_1),   -np.sin(theta_1)   ],
-                    [0,         np.sin(theta_1),    np.cos(theta_1)   ]
-                    ])
+                    [0,         np.sin(theta_1),    np.cos(theta_1)   ]])
     R_y = np.array([[ np.cos(theta_2),     0,        np.sin(theta_2)    ],
                     [ 0,                   1,        0                  ],
-                    [-np.sin(theta_2),     0,        np.cos(theta_2)    ]
-                    ])
+                    [-np.sin(theta_2),     0,        np.cos(theta_2)    ]])
     R_z = np.array([[np.cos(theta_3),       -np.sin(theta_3),        0],
                     [np.sin(theta_3),        np.cos(theta_3),        0],
-                    [0,                      0,                      1]
-                    ])             
+                    [0,                      0,                      1]])
     # R  = np.dot(R_z, np.dot( R_y, R_x )) #np.dot(R_z, np.dot( R_y, R_x ))
-    RR = np.dot(R_x, np.dot( R_y, R_z ))
-#     R = np.dot(R_z, np.dot(R_x, R_y))
+    # RR = np.dot(R_x, np.dot( R_y, R_z ))
+    # R = np.dot(R_z, np.dot(R_x, R_y))
+    RR = np.dot(R_y, np.dot(R_x, R_z))  # Extrinsic rotation
     return RR
 
 #####################################################################################
@@ -359,7 +309,7 @@ def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',p
     vgrid = vgrid.reshape(sampling, sampling, sampling)
 
     #### Flux map ###
-    fmap = simps(fgrid, axis=0)
+    fmap = simps(fgrid, axis=1)
     fmap[fmap<=0]=1
     fmap = np.log10(fmap)
     fmap[fmap<=0] = np.nan
@@ -367,15 +317,15 @@ def map_2d(xb, yb, zb, fgrid, vgrid, D=1.0, sampling=100, interpolation='none',p
     
     #### Velocity map ###
 
-    vmap = simps(np.multiply(fgrid, vgrid), axis=0) / simps(fgrid, axis=0)
+    vmap = simps(np.multiply(fgrid, vgrid), axis=1) / simps(fgrid, axis=1)
 
 
     ### Dispersion map ###
 
-    dmap = (simps(np.multiply(fgrid, vgrid**2), axis=0) / simps(fgrid, axis=0) - vmap**2)**0.5
+    dmap = (simps(np.multiply(fgrid, vgrid**2), axis=1) / simps(fgrid, axis=1) - vmap**2)**0.5
 
     # Integrated velocity along LOS
-    F = simps(simps(simps(fgrid,axis=2),axis=1),axis=0)
+    F = simps(simps(simps(fgrid,axis=2),axis=1), axis=0)
     v_int = simps(simps(simps(vgrid*fgrid,axis=2), axis=1), axis=0) / F
     d_int = (simps(simps(simps(vgrid**2*fgrid,axis=2),axis=1),axis=0)/F - v_int**2 )**0.5
 
@@ -890,67 +840,4 @@ def time_convert(seconds):
     seconds %= 60.
       
     return "%d:%02d:%02d" % (hour, minutes, seconds)
-
-##################################################################################
-
-### Least Squares function #############################################################
-
-# def likelihood(params,param_names, x, y, yerr):
-#     pdict = {}
-#     for k in range(0,len(param_names),1):
-#         pdict[param_names[k]] = params[k]
-#     A             = pdict['A']
-#     tau           = pdict['tau']
-#     theta_in_deg  = pdict['theta_in_deg']
-#     theta_out_deg = pdict['theta_out_deg']
-#     theta_B1_deg  = pdict['theta_B1_deg']
-#     theta_D1_deg  = pdict['theta_D1_deg']
-#     vmax          = pdict['vmax']
-#
-#     model = bicone_model(x, A, tau, theta_in_deg, theta_out_deg,
-#                          theta_B1_deg,
-#                          theta_D1_deg,
-#                          vmax)
-#
-# #     return np.sum((y-model)**2)
-#     return np.sum(-np.log(yerr*np.sqrt(2*np.pi))-0.5*(y-model)**2/yerr**2)
-#
-#
-# ### Make model #######################################################################
-#
-# def bicone_model(wave, A, tau, theta_in_deg, theta_out_deg,
-#                  theta_B1_deg,
-#                  theta_D1_deg,
-#                  vmax):
-#     # Constant parameters
-#     D             = 1.0  # length of bicone (arbitrary units)
-#     fn            = 1.0e3 # initial flux value at center
-#     theta_B2_deg  = 0.0 # Lock-out LOS y-axis rotation (symmetry)
-#     theta_B3_deg  = 0.0 # Lock-out the z-axis rotation (symmetry)
-# #     theta_D1_deg  = 90.0 # Lock-out the x-axis rotation (type 1 AGN)
-#     theta_D2_deg  = 0.0 # Lock-out the y-axis rotation (symmetry)
-#     theta_D3_deg  = 0.0 # Lock-out the z-axis rotation (symmetry)
-#     vtype='decreasing' # 'increasing','decreasing', or 'constant'
-#     # Sampling paramters
-#     sampling = 50 # minimum point sampling
-#     map_interpolation = 'none'
-#     obs_res = 68.9 # resolution of SDSS for emission line model
-#     nbins= 40
-#     # Bicone coordinate, flux, and velocity grids
-#     xbgrid,ybgrid,zbgrid,fgrid,vgrid = generate_bicone(theta_in_deg, theta_out_deg,
-#                                                        theta_B1_deg, theta_B2_deg, theta_B3_deg,
-#                                                        theta_D1_deg, theta_D2_deg, theta_D3_deg,
-#                                                        D=D, tau=tau, fn=fn, A=A,
-#                                                        vmax=vmax, vtype=vtype,
-#                                                        sampling=sampling,plot=False,save_fig=False)
-#     # Get emission line model
-#     x,emline = emission_model(fgrid,vgrid,vmax=vmax,obs_res=obs_res,nbins=nbins,sampling=sampling,
-#                               plot=False,save_fig=False)
-#     # Interpolate emission line model onto wavelength grid
-#     interp = interp1d(x,emline,bounds_error=False,fill_value=0.001)
-#     model = interp(wave)
-#
-#     return model
-
-##################################################################################
 
