@@ -43,7 +43,7 @@ def Bin(x, y, z, bins=20):
             y_mean[i], y_max[i], y_min[i] = np.nan, np.nan, np.nan
             z_mean[i], z_max[i], z_min[i] = np.nan, np.nan, np.nan
         else:
-            mask = (x > edges[i]) * (x < edges[i + 1])
+            mask = (x > edges[i]) * (x <= edges[i + 1])
             y_mean[i], y_max[i], y_min[i] = np.nanmean(y[mask]), np.nanmax(y[mask]), np.nanmin(y[mask])
             z_mean[i], z_max[i], z_min[i] = np.nanmean(z[mask]), np.nanmax(z[mask]), np.nanmin(z[mask])
     return x_mean, y_mean, y_max, y_min, z_mean, z_max, z_min
@@ -194,6 +194,9 @@ v50_flatten = v50.flatten()[center_mask_flatten]
 w80_flatten = w80.flatten()[center_mask_flatten]
 v50_blue, v50_red = v50_flatten[mask][blue], v50_flatten[mask][red]
 w80_blue, w80_red = w80_flatten[mask][blue], w80_flatten[mask][red]
+# dis_red, dis_blue = dis_red[~np.isnan(v50_red)], dis_blue[~np.isnan(v50_blue)]
+# v50_blue, v50_red = v50_blue[~np.isnan(v50_blue)], v50_red[~np.isnan(v50_red)]
+# w80_blue, w80_red = w80_blue[~np.isnan(w80_blue)], w80_red[~np.isnan(w80_red)]
 d5080_blue, v50_blue_mean, _, _, w80_blue_mean, _, _ = Bin(dis_blue, v50_blue, w80_blue, bins=20)
 d5080_red, v50_red_mean, _, _, w80_red_mean, _, _ = Bin(dis_red, v50_red, w80_red, bins=20)
 ax[0].scatter(d5080_red, v50_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',

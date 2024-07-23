@@ -338,7 +338,7 @@ ang_list = np.array([45, 180-53, 180 + 65, 180, -90, 180 + 50, -65,
                      180 + 80, -60, -60, 0, 180-60, 90, 53,
                      -55, -55])
 
-PlotEachGal(gal_list, dis_list)
+# PlotEachGal(gal_list, dis_list)
 
 
 # Place sudo slit

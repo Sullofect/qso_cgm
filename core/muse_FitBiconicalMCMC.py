@@ -242,6 +242,12 @@ w80_flatten = w80.flatten()[center_mask_flatten]
 v50_blue, v50_red = v50_flatten[mask_muse][blue_muse], v50_flatten[mask_muse][red_muse]
 w80_blue, w80_red = w80_flatten[mask_muse][blue_muse], w80_flatten[mask_muse][red_muse]
 
+# Plot
+dis_red_mean_plot, v50_red_mean_plot, _, _ = Bin(dis_red_muse, v50_red, bins=20)
+dis_blue_mean_plot, v50_blue_mean_plot, _, _ = Bin(dis_blue_muse, v50_blue, bins=20)
+_, w80_red_mean_plot, _, _ = Bin(dis_red_muse, w80_red, bins=20)
+_, w80_blue_mean_plot, _, _ = Bin(dis_blue_muse, w80_blue, bins=20)
+
 # Remove nan
 dis_red_muse, dis_blue_muse = dis_red_muse[~np.isnan(v50_red)], dis_blue_muse[~np.isnan(v50_blue)]
 v50_blue, v50_red = v50_blue[~np.isnan(v50_blue)], v50_red[~np.isnan(v50_red)]
@@ -446,12 +452,12 @@ ax[1].fill_between(dis_blue_res_mean, w_blue_min, w_blue_max, color='purple', al
 # ax[0].errorbar(dis_blue_mean, v50_blue_mean, yerr=v50_blue_mean_err, fmt='o', color='blue')
 # ax[1].errorbar(dis_red_mean, w80_red_mean, yerr=w80_red_mean_err, fmt='o', color='red')
 # ax[1].errorbar(dis_blue_mean, w80_blue_mean, yerr=w80_blue_mean_err, fmt='o', color='blue')
-ax[0].scatter(dis_red_mean, v50_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',
+ax[0].scatter(dis_red_mean_plot, v50_red_mean_plot, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',
               label=r'$\rm 3C\,57 \, northeast$', zorder=100)
-ax[0].scatter(dis_blue_mean, v50_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue',
+ax[0].scatter(dis_blue_mean_plot, v50_blue_mean_plot, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue',
               label=r'$\rm 3C\,57 \, southwest$', zorder=100)
-ax[1].scatter(dis_red_mean, w80_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red', zorder=100)
-ax[1].scatter(dis_blue_mean, w80_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue', zorder=100)
+ax[1].scatter(dis_red_mean_plot, w80_red_mean_plot, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red', zorder=100)
+ax[1].scatter(dis_blue_mean_plot, w80_blue_mean_plot, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue', zorder=100)
 # ax[0].errorbar(dis_red_muse, v50_red, v50_red_err, fmt='.r', capsize=0, capthick=1, mfc=None, ms=10, zorder=-100, alpha=0.2)
 # ax[0].errorbar(dis_blue_muse, v50_blue, v50_blue_err, fmt='.b', capsize=0, capthick=1, mfc=None, ms=10, zorder=-100, alpha=0.2)
 # ax[1].errorbar(dis_red_muse, w80_red, w80_red_err, fmt='.r', capsize=0, capthick=1, mfc=None, ms=10, zorder=-100, alpha=0.2)
