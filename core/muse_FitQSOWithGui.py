@@ -333,9 +333,9 @@ class PlotWindow(QMainWindow):
 
         # Mask
         S_N /= mask_seg
-        # self.mask_OII = np.where(S_N > 2, mask_seg_OII, 0)
-        # self.mask_OIII = np.where(S_N > 2, mask_seg_OIII, 0)
-        # self.mask = np.where(S_N > 2, mask_seg, 0)
+        # self.mask_OII = np.where(S_N > 1, mask_seg_OII, 0)
+        # self.mask_OIII = np.where(S_N > 1, mask_seg_OIII, 0)
+        # self.mask = np.where(S_N > 1, mask_seg, 0)
 
         #
         self.mask_OII = mask_seg_OII
@@ -663,28 +663,29 @@ class PlotWindow(QMainWindow):
 
     def fit(self):
         # Make inital condition
-        self.parameters['OII'].value = 3
-        self.parameters['OIII'].value = 3
-        self.parameters['z_2'].value = self.z_qso
-        self.parameters['z_2'].vary = True
-        self.parameters['z_3'].value = self.z_qso
-        self.parameters['z_3'].vary = True
-        self.parameters['sigma_kms_2'].value = 200
-        self.parameters['sigma_kms_2'].vary = True
-        self.parameters['sigma_kms_3'].value = 200
-        self.parameters['sigma_kms_3'].vary = True
-        self.parameters['flux_OII_2'].value = 1
-        self.parameters['flux_OII_2'].vary = True
-        self.parameters['flux_OII_3'].value = 1
-        self.parameters['flux_OII_3'].vary = True
-        self.parameters['r_OII3729_3727_2'].value = 1
-        self.parameters['r_OII3729_3727_2'].vary = True
-        self.parameters['r_OII3729_3727_3'].value = 1
-        self.parameters['r_OII3729_3727_3'].vary = True
-        self.parameters['flux_OIII5008_2'].value = 1
-        self.parameters['flux_OIII5008_2'].vary = True
-        self.parameters['flux_OIII5008_3'].value = 1
-        self.parameters['flux_OIII5008_3'].vary = True
+        # self.parameters['OII'].value = 3
+        # self.parameters['OIII'].value = 3
+        # self.parameters['z_2'].value = self.z_qso
+        # self.parameters['z_2'].vary = True
+        # self.parameters['z_3'].value = self.z_qso
+        # self.parameters['z_3'].vary = True
+        # self.parameters['sigma_kms_2'].value = 200
+        # self.parameters['sigma_kms_2'].vary = True
+        # self.parameters['sigma_kms_3'].value = 200
+        # self.parameters['sigma_kms_3'].vary = True
+        # self.parameters['flux_OII_2'].value = 1
+        # self.parameters['flux_OII_2'].vary = True
+        # self.parameters['flux_OII_3'].value = 1
+        # self.parameters['flux_OII_3'].vary = True
+        # self.parameters['r_OII3729_3727_2'].value = 1
+        # self.parameters['r_OII3729_3727_2'].vary = True
+        # self.parameters['r_OII3729_3727_3'].value = 1
+        # self.parameters['r_OII3729_3727_3'].vary = True
+        # self.parameters['flux_OIII5008_2'].value = 1
+        # self.parameters['flux_OIII5008_2'].vary = True
+        # self.parameters['flux_OIII5008_3'].value = 1
+        # self.parameters['flux_OIII5008_3'].vary = True
+        self.N_1()
 
         header = fits.open(self.path_cube_OII)[1].header
         header['WCSAXES'] = 2
@@ -723,7 +724,8 @@ class PlotWindow(QMainWindow):
         z_guess_array, sigma_kms_guess_array = self.calculate_iniguess()
         for i in range(self.size[0]):  # i = p (y), j = q (x)
             for j in range(self.size[1]):
-                if self.mask[i, j]:
+                if self.mask[i, j] != 0:
+                    print('Runing')
                     self.parameters['z_1'].value = z_guess_array[i, j]
 
                     flux_ij = self.flux[:, i, j]
@@ -1131,6 +1133,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(cubename='3C57', NLR='')
+    window = PlotWindow(cubename='HE0435-5304', NLR='')
     window.show()
     sys.exit(app.exec_())

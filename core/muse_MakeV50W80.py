@@ -312,8 +312,14 @@ S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
 S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
 S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
 OIII_OII = np.log10(np.nansum(flux_OIII_fit, axis=0) / np.nansum(flux_OII_fit, axis=0))
-
-
+# OIII_OII_upper = np.log10(1.25 * np.sum(flux_seg_OIII, axis=0) / np.nansum(flux_OII_fit, axis=0))
+# print(OIII_OII_upper.ravel())
+# plt.figure()
+# plt.imshow(OIII_OII_upper, origin='lower')
+# plt.show()
+# OIII_OII = np.where(mask_seg_OIII > 0, OIII_OII, OIII_OII_upper)
+# print(np.nansum(flux_seg_OIII, axis=0)[71, 88], np.nansum(flux_OII_fit, axis=0)[71, 88])
+# print(OIII_OII_upper.ravel())
 # flux components
 # flux_OII_C2 = np.nansum(model_OII(wave_OII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
 #                                   flux_OII_fit, r, plot=True)[0] * (1 + r), axis=1)
