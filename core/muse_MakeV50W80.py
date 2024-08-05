@@ -312,6 +312,10 @@ S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
 S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
 S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
 OIII_OII = np.log10(np.nansum(flux_OIII_fit, axis=0) / np.nansum(flux_OII_fit, axis=0))
+
+win_OII_vel = (mask_seg_OII * 1.25) / (wave_OII3728_vac * (1 + z_qso)) * c_kms  # They have the same velocity
+win_OIII = win_OII_vel / c_kms * (wave_OII3728_vac * (1 + z_qso))
+OIII_3sigma = win_OIII *
 # OIII_OII_upper = np.log10(1.25 * np.sum(flux_seg_OIII, axis=0) / np.nansum(flux_OII_fit, axis=0))
 # print(OIII_OII_upper.ravel())
 # plt.figure()

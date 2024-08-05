@@ -15,7 +15,7 @@ cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 
 def MakeCatalog(qso=None, filename=None, z_qso=None, ra_qso=None, dec_qso=None, priority_cut=None):
-    path = '/Users/lzq/Dropbox/MaskDesign/{}_mask/DES+LS+GAIA_{}.fits'.format(filename, qso)
+    path = '../../MaskDesign/{}_mask/DES+LS+GAIA_{}.fits'.format(filename, qso)
     data = fits.getdata(path, 1, ignore_missing_end=True)
 
     # Give ID
@@ -146,13 +146,13 @@ def MakeCatalog(qso=None, filename=None, z_qso=None, ra_qso=None, dec_qso=None, 
     ra_string = np.asarray(c_object.ra.to_string(unit=u.hour, sep=':', precision=2, pad=True))
     dec_string = np.asarray(c_object.dec.to_string(unit=u.degree, sep=':', precision=2, pad=True))
 
-    path_gal_dat = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}_@.dat'.format(filename, filename)
-    path_gal_reg = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}_@.reg'.format(filename, filename)
-    path_star_dat = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}_*.dat'.format(filename, filename)
-    path_star_reg = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}_*.reg'.format(filename, filename)
+    path_gal_dat = '../../MaskDesign/{}_mask/{}_@.dat'.format(filename, filename)
+    path_gal_reg = '../../MaskDesign/{}_mask/{}_@.reg'.format(filename, filename)
+    path_star_dat = '../../MaskDesign/{}_mask/{}_*.dat'.format(filename, filename)
+    path_star_reg = '../../MaskDesign/{}_mask/{}_*.reg'.format(filename, filename)
 
     # Save tiles
-    path_tile_info = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}_tiles.dat'.format(filename, filename)
+    path_tile_info = '../../MaskDesign/{}_mask/{}_tiles.dat'.format(filename, filename)
     np.savetxt(path_tile_info, np.unique(data['brickname']), fmt="%s")
 
     # Select galaxies
@@ -176,7 +176,7 @@ def MakeCatalog(qso=None, filename=None, z_qso=None, ra_qso=None, dec_qso=None, 
 
     # For debugging
     # ID_gal_all = list(map(''.join, zip(np.full_like(targets, '@', dtype=str), np.asarray(ID, dtype=str))))
-    # path_gal_reg_all = '/Users/lzq/Dropbox/Data/CGM/MaskDesign/{}_galaxies_all.reg'.format(qso)
+    # path_gal_reg_all = '../../Data/CGM/MaskDesign/{}_galaxies_all.reg'.format(qso)
     # gal_reg_all = list(map(''.join, zip(np.full_like(ra_object, 'fk5; circle(', dtype='<U15'),
     #                                 ra_string, np.full_like(ra_object, ', ', dtype=str),
     #                                 dec_string, np.full_like(ra_object, ', ', dtype=str),
@@ -211,26 +211,26 @@ def MakeCatalog(qso=None, filename=None, z_qso=None, ra_qso=None, dec_qso=None, 
 
 # def RefineCatalog(filename=None, priority_cut=None):
 #     # Visually inspected catalog (.reg)
-#     path_ac = '/Users/lzq/Dropbox/MaskDesign/{}/{}_@_ac.reg'.format(filename, filename)
+#     path_ac = '../../MaskDesign/{}/{}_@_ac.reg'.format(filename, filename)
 #     regions_ac = np.loadtxt(path_ac, dtype=str, skiprows=3, comments='%')
 #
 #     # Full catalog
-#     path = '/Users/lzq/Dropbox/MaskDesign/{}/{}_@.reg'.format(filename, filename)
+#     path = '../../MaskDesign/{}/{}_@.reg'.format(filename, filename)
 #     regions = np.loadtxt(path, dtype=str, skiprows=3, comments='%')
 #
 #     idx = np.in1d(regions[:, 2], regions_ac[:, 2])
 #     print("find {} number of objects in the refinement".format(len(idx[idx == True])))
 #
-#     path_gal_dat = '/Users/lzq/Dropbox/MaskDesign/{}/{}_@.dat'.format(filename, filename)
+#     path_gal_dat = '../../MaskDesign/{}/{}_@.dat'.format(filename, filename)
 #     data_gal_dat = np.loadtxt(path_gal_dat, dtype=str)[idx]
 #
 #     if priority_cut is not None:
 #         priority = np.asarray(data_gal_dat[:, 3], dtype=float)
 #         select_priority = np.where((priority > priority_cut[0]) * (priority < priority_cut[1]))
 #         data_gal_dat = data_gal_dat[select_priority]
-#         path_gal_check_dat = '/Users/lzq/Dropbox/MaskDesign/{}/{}_@_ac_hp.dat'.format(filename, filename)
+#         path_gal_check_dat = '../../MaskDesign/{}/{}_@_ac_hp.dat'.format(filename, filename)
 #     else:
-#         path_gal_check_dat = '/Users/lzq/Dropbox/MaskDesign/{}/{}_@_ac.dat'.format(filename, filename)
+#         path_gal_check_dat = '../../MaskDesign/{}/{}_@_ac.dat'.format(filename, filename)
 #
 #     # Remove object that are observed already
 #     np.savetxt(path_gal_check_dat, data_gal_dat, fmt="%s")
@@ -239,25 +239,25 @@ def MakeCatalog(qso=None, filename=None, z_qso=None, ra_qso=None, dec_qso=None, 
 # Select Star
 def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_type=None, priority_cut=None, mode='keep_same'):
     # Visually inspected catalog (.reg)
-    path_p = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}.reg'.format(dir, filename_p)
+    path_p = '../../MaskDesign/{}_mask/{}.reg'.format(dir, filename_p)
     if p_type == 'Sean':
         regions_p = np.loadtxt(path_p, dtype=str, comments='%')
         regions_p_ID = regions_p[:, 8]
     else:
         regions_p = np.loadtxt(path_p, dtype=str, skiprows=3, comments='%')
-        regions_p_ID = regions_p[:, 2]
-    print(regions_p)
+        regions_p_ID = regions_p[:, 2]  # Make sure there is no color column in ds9 reg file
+    print(regions_p_ID)
 
     # Full catalog
-    path_f = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}.reg'.format(dir, filename_f)
-    path_f_dat = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}.dat'.format(dir, filename_f)
+    path_f = '../../MaskDesign/{}_mask/{}.reg'.format(dir, filename_f)
+    path_f_dat = '../../MaskDesign/{}_mask/{}.dat'.format(dir, filename_f)
     if f_type == 'Sean':
         regions_f = np.loadtxt(path_f, dtype=str, comments='%')
         regions_f_ID = regions_f[:, 8]
     else:
         regions_f = np.loadtxt(path_f, dtype=str, skiprows=3, comments='%')
         regions_f_ID = regions_f[:, 2]
-    print(len(regions_f))
+    print(regions_f_ID)
 
     idx = np.in1d(regions_f_ID, regions_p_ID)
     if mode == 'keep_same':
@@ -266,7 +266,7 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
     elif mode == 'find_diff':
         idx = ~idx
         filename_p += '_d'
-        path_p_d = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}.reg'.format(dir, filename_p)
+        path_p_d = '../../MaskDesign/{}_mask/{}.reg'.format(dir, filename_p)
         regions_p_d = regions_f[idx]
         print("find {} number of different objects".format(len(idx[idx == True])))
 
@@ -276,15 +276,15 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
         priority = np.asarray(data_p_dat[:, 3], dtype=float)
         select_priority = np.where((priority > priority_cut[0]) * (priority < priority_cut[1]))
         data_p_dat = data_p_dat[select_priority]
-        path_p_dat = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}_hp.dat'.format(dir, filename_p)
+        path_p_dat = '../../MaskDesign/{}_mask/{}_hp.dat'.format(dir, filename_p)
         if mode == 'find_diff':
             regions_p_d = regions_p_d[select_priority]
     else:
-        path_p_dat = '/Users/lzq/Dropbox/MaskDesign/{}_mask/{}.dat'.format(dir, filename_p)
+        path_p_dat = '../../MaskDesign/{}_mask/{}.dat'.format(dir, filename_p)
 
     # Remove object that are observed already
     np.savetxt(path_p_dat, data_p_dat, fmt="%s")
-
+    print(regions_p_d[:, 0])
     if mode == 'find_diff':
         if f_type != 'Sean':
             rows3 = np.array(['# Region file format: DS9 version 4.1',
@@ -330,4 +330,29 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
 #                priority_cut=[0, 40])
 # ConvertReg2Dat(dir='HE0439', filename_f='HE0439_@_ac', filename_p='HE0439i1', mode='find_diff', p_type='Sean',
 #                priority_cut=None)
-ConvertReg2Dat(dir='HE0439', filename_f='HE0439_*', filename_p='HE0439i2_*', mode='keep_same', p_type=None, priority_cut=None)
+# ConvertReg2Dat(dir='HE0439', filename_f='HE0439_*', filename_p='HE0439i2_*', mode='keep_same', p_type=None, priority_cut=None)
+
+# 3C57
+# i1 48 hp objects, 121 total objects
+# MakeCatalog(qso='3C57', filename='3C57', z_qso=0.6718, ra_qso=30.488247, dec_qso=-11.542621, priority_cut=None)
+# ConvertReg2Dat(dir='3C57', filename_f='3C57_@', filename_p='3C57_@_ac', priority_cut=[0, 40])
+# ConvertReg2Dat(dir='3C57', filename_f='3C57_@', filename_p='3C57_@_ac', priority_cut=None)
+# ConvertReg2Dat(dir='3C57', filename_f='3C57_*', filename_p='3C57i1_*', mode='keep_same', p_type=None, priority_cut=None)
+
+# i2 38 hp objects, 140 total objects
+# ConvertReg2Dat(dir='3C57', filename_f='3C57_@_ac', filename_p='3C57i1', mode='find_diff', p_type='Sean',
+#                priority_cut=[0, 40])
+# ConvertReg2Dat(dir='3C57', filename_f='3C57_@_ac', filename_p='3C57i1', mode='find_diff', p_type='Sean',
+#                priority_cut=None)
+# ConvertReg2Dat(dir='3C57', filename_f='3C57_*', filename_p='3C57i2_*', mode='keep_same', p_type=None, priority_cut=None)
+
+# i3 28 hp objects, 147 total objects
+# ConvertReg2Dat(dir='3C57', filename_f='3C57i1_d', filename_p='3C57i2', mode='find_diff', p_type='Sean',
+#                priority_cut=[0, 40])
+# ConvertReg2Dat(dir='3C57', filename_f='3C57i1_d', filename_p='3C57i2', mode='find_diff', p_type='Sean',
+#                priority_cut=None)
+# ConvertReg2Dat(dir='3C57', filename_f='3C57_*', filename_p='3C57i3_*', mode='keep_same', p_type=None, priority_cut=None)
+
+# Test
+ConvertReg2Dat(dir='3C57', filename_f='3C57i2_d', filename_p='3C57i3', mode='find_diff', p_type='Sean',
+               priority_cut=[0, 40])
