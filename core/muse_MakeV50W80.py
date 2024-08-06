@@ -204,7 +204,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
         gc.scalebar.set_font_size(30)
 
-        # gc.colorbar.set_ticks([25, 50, 75, 100, 125, 150, 175])
+        gc.colorbar.set_ticks([0, 150, 300, 450, 600, 750])
         gc.colorbar.set_axis_label_text(r'$\rm W_{80} \mathrm{\; [km \, s^{-1}]}$')
         # gc.colorbar.set_axis_label_text(r'$\mathrm{W}_{80} \mathrm{\; [km \, s^{-1}]}$')
     elif type == 'N':
@@ -300,9 +300,9 @@ cube_OII, cube_OIII = Cube(path_cube_smoothed_OII), Cube(path_cube_smoothed_OIII
 wave_OII_vac, wave_OIII_vac = pyasl.airtovac2(cube_OII.wave.coord()), pyasl.airtovac2(cube_OIII.wave.coord())
 flux_OII, flux_err_OII = cube_OII.data * 1e-3, np.sqrt(cube_OII.var) * 1e-3
 flux_OIII, flux_err_OIII = cube_OIII.data * 1e-3, np.sqrt(cube_OIII.var) * 1e-3
-wave_OII_vac = expand_wave([wave_OII_vac], stack=True)
-wave_OIII_vac = expand_wave([wave_OIII_vac], stack=True)
-wave_OII_exp, wave_OIII_exp = wave_OII_vac[:, np.newaxis, np.newaxis], wave_OIII_vac[:, np.newaxis, np.newaxis]
+# wave_OII_vac = expand_wave([wave_OII_vac], stack=True)
+# wave_OIII_vac = expand_wave([wave_OIII_vac], stack=True)
+# wave_OII_exp, wave_OIII_exp = wave_OII_vac[:, np.newaxis, np.newaxis], wave_OIII_vac[:, np.newaxis, np.newaxis]
 seg_3D_OII_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OIII)[0].data
 mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
 mask_seg = mask_seg_OII + mask_seg_OIII
@@ -312,15 +312,23 @@ S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
 S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
 S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
 OIII_OII = np.log10(np.nansum(flux_OIII_fit, axis=0) / np.nansum(flux_OII_fit, axis=0))
+# Compute 3sigma limit
+wave_array_OII, wave_array_OIII = np.zeros_like(flux_OII), np.zeros_like(flux_OIII)
+wave_array_OII[:], wave_array_OIII[:] = wave_OII_vac[:, np.newaxis, np.newaxis], wave_OIII_vac[:, np.newaxis, np.newaxis]
+win_OII_vel = (mask_seg_OII * 1.25) / (wave_OII3728_vac * (1 + z_qso)) * c_kms  # They have the same velocity window
+win_OIII = win_OII_vel / c_kms * (wave_OIII5008_vac * (1 + z_qso))
+OII_start = np.take_along_axis(wave_array_OII,
+                               np.argmin(np.abs(np.cumsum(seg_3D_OII_ori, axis=0) - 1), axis=0)[np.newaxis, :, :], axis=0)[0]
+OIII_start = wave_OIII5008_vac * OII_start / wave_OII3727_vac
+OIII_end = OIII_start + win_OIII
+flux_OIII_3sig = np.where((wave_array_OIII >= OIII_start) * (wave_array_OIII <= OIII_end), 3 * flux_err_OIII, np.nan)
+OIII_OII_3sig = np.log10(np.nansum(flux_OIII_3sig, axis=0) * 1.25 / np.nansum(flux_OII_fit, axis=0))
+OIII_OII = np.where(mask_seg_OIII != 0, OIII_OII, OIII_OII_3sig)
 
-win_OII_vel = (mask_seg_OII * 1.25) / (wave_OII3728_vac * (1 + z_qso)) * c_kms  # They have the same velocity
-win_OIII = win_OII_vel / c_kms * (wave_OII3728_vac * (1 + z_qso))
-OIII_3sigma = win_OIII *
-# OIII_OII_upper = np.log10(1.25 * np.sum(flux_seg_OIII, axis=0) / np.nansum(flux_OII_fit, axis=0))
-# print(OIII_OII_upper.ravel())
 # plt.figure()
-# plt.imshow(OIII_OII_upper, origin='lower')
+# plt.imshow(OIII_OII - OIII_OII_ori, origin='lower')
 # plt.show()
+# raise ValueError('Stop')
 # OIII_OII = np.where(mask_seg_OIII > 0, OIII_OII, OIII_OII_upper)
 # print(np.nansum(flux_seg_OIII, axis=0)[71, 88], np.nansum(flux_OII_fit, axis=0)[71, 88])
 # print(OIII_OII_upper.ravel())
@@ -463,7 +471,7 @@ APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
 gc.show_markers(ra_gal, dec_gal, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
 gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
 gc.show_markers(ra_gal, dec_gal, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-350, vmax=350, cmap='coolwarm')
-gc.add_label(0.08, 0.08, '(d)', color='k', size=40, relative=True)
+gc.add_label(0.08, 0.08, '(e)', color='k', size=40, relative=True)
 fig.savefig(figurename_V50, bbox_inches='tight')
 
 # V50_slit
@@ -476,14 +484,15 @@ gc.scalebar.set_font_size(50)
 fig.savefig(figurename_V50_slit, bbox_inches='tight')
 
 # W80 map
+print(np.nanmedian(w80))
 fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_w80_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
 APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
-# gc.add_label(0.08, 0.08, '(e)', color='k', size=40, relative=True)
-gc.colorbar.hide()
-gc.scalebar.set_font_size(50)
-gc.scalebar.hide()
+gc.add_label(0.08, 0.08, '(f)', color='k', size=40, relative=True)
+# gc.colorbar.hide()
+# gc.scalebar.set_font_size(50)
+# gc.scalebar.hide()
 fig.savefig(figurename_W80, bbox_inches='tight')
 
 # OIII/OII map
@@ -491,7 +500,7 @@ fig = plt.figure(figsize=(8, 8), dpi=300)
 gc = aplpy.FITSFigure(path_OIII_OII_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=-1, vmax=1, cmap=sequential_s.Buda_20.mpl_colormap)
 APLpyStyle(gc, type='else', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
-gc.add_label(0.08, 0.08, '(f)', color='k', size=40, relative=True)
+gc.add_label(0.08, 0.08, '(d)', color='k', size=40, relative=True)
 fig.savefig(figurename_OIII_OII, bbox_inches='tight')
 
 # Number of components
