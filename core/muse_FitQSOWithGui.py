@@ -169,9 +169,9 @@ def model_OII_OIII(wave_vac, **params):
         m_OIII5008 = m_OIII5008_1 + m_OIII5008_2 + m_OIII5008_3
 
     if params['OIII'] == 0:
-        return m_OII + params['a'] * wave_vac + params['b']
+        return m_OII + params['a_OII'] * wave_vac + params['b_OII']
     elif params['OII'] == 0:
-        return m_OIII5008 + params['a'] * wave_vac + params['b']
+        return m_OIII5008 + params['a_OIII5008'] * wave_vac + params['b_OIII5008']
     else:
         return np.hstack((m_OII + params['a_OII'] * wave_OII_vac + params['b_OII'],
                           m_OIII5008 + params['a_OIII5008'] * wave_OIII_vac + params['b_OIII5008']))
@@ -185,7 +185,6 @@ class PlotWindow(QMainWindow):
         # Define parameters
         fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
                      'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
-        self.fit_param = fit_param
 
         # if zapped
         if zapped:
@@ -212,6 +211,7 @@ class PlotWindow(QMainWindow):
             line = 'OIII'
         else:
             line = 'OII+OIII'
+        self.line = line
 
         # Save V50 and W80
         self.path_v50_OII = '../../MUSEQuBES+CUBS/fit_kin/{}{}_V50_OII.fits'.format(cubename, NLR)
@@ -327,16 +327,8 @@ class PlotWindow(QMainWindow):
             flux_seg, flux_err_seg = flux * seg_3D_ori, flux_err * seg_3D_ori
             self.S_N = np.sum(flux_seg / flux_err_seg, axis=0)
 
-            if line == 'OII':
-                width = width_OII
-                mask_seg_OII = mask_seg
-                mask_seg_OIII = np.zeros_like(mask_seg)
-            elif line == 'OIII':
-                width = width_OIII
-                mask_seg_OII = np.zeros_like(mask_seg)
-                mask_seg_OIII = mask_seg
-
             if extend_over:
+                width = width_OII if line == 'OII' else width_OIII
                 start = (seg_3D_ori != 0).argmax(axis=0)
                 end = start + mask_seg
                 start = np.where((mask_seg > 20) | (mask_seg < 1), start, start - width)
@@ -349,6 +341,20 @@ class PlotWindow(QMainWindow):
                 flux_err = np.where(flux_err != 0, flux_err, np.inf)
 
             self.flux, self.flux_err = flux, flux_err
+
+            if line == 'OII':
+                mask_seg_OII = mask_seg
+                mask_seg_OIII = np.zeros_like(mask_seg)
+                self.wave_OII_vac, self.wave_OIII_vac = self.wave_vac, np.zeros_like(self.wave_vac)
+                self.flux_OII, self.flux_OIII = flux, np.zeros_like(flux)
+                self.flux_err_OII, self.flux_err_OIII = flux_err, np.zeros_like(flux_err)
+            elif line == 'OIII':
+                mask_seg_OII = np.zeros_like(mask_seg)
+                mask_seg_OIII = mask_seg
+                self.wave_OII_vac, self.wave_OIII_vac = np.zeros_like(self.wave_vac), self.wave_vac
+                self.flux_OII, self.flux_OIII = np.zeros_like(flux), flux
+                self.flux_err_OII, self.flux_err_OIII = np.zeros_like(flux_err), flux_err,
+
 
         # Mask
         self.mask_OII, self.mask_OII_ori = mask_seg_OII, mask_seg_OII
@@ -762,11 +768,11 @@ class PlotWindow(QMainWindow):
                          np.full(self.size, np.nan), np.full(self.size, np.nan), np.full(self.size, np.nan), \
                          np.full(self.size, np.nan), np.full(self.size, np.nan), \
                          np.full(self.size, np.nan), np.full(self.size, np.nan)
-        if self.fit_param['OIII'] == 0:
-            z_guess_array, sigma_kms_guess_array = self.calculate_iniguess_OII()
-            self.only_OII()
-        else:
-            z_guess_array, sigma_kms_guess_array = self.calculate_iniguess()
+        # if self.fit_param['OIII'] == 0:
+        #     z_guess_array, sigma_kms_guess_array = self.calculate_iniguess_OII()
+        #     self.only_OII()
+        # else:
+        z_guess_array, sigma_kms_guess_array = self.calculate_iniguess()
         for i in range(self.size[0]):  # i = p (y), j = q (x)
             for j in range(self.size[1]):
                 if self.mask[i, j] != 0:
@@ -978,6 +984,10 @@ class PlotWindow(QMainWindow):
         self.parameters['flux_OIII5008_3'].value = np.nan
         self.parameters['flux_OIII5008_3'].vary = False
 
+        # Remove OIII if OIII is not present
+        if self.line == 'OII':
+            self.only_OII()
+
     def N_2(self):
         if np.isnan(self.param['v_2=']):
             self.param['v_2='] = 0
@@ -1005,6 +1015,10 @@ class PlotWindow(QMainWindow):
         self.parameters['flux_OIII5008_2'].vary = True
         self.parameters['flux_OIII5008_3'].value = np.nan
         self.parameters['flux_OIII5008_3'].vary = False
+
+        # Remove OIII if OIII is not present
+        if self.line == 'OII':
+            self.only_OII()
 
     def N_3(self):
         if np.isnan(self.param['v_3=']):
@@ -1036,6 +1050,10 @@ class PlotWindow(QMainWindow):
         self.parameters['flux_OIII5008_2'].vary = True
         self.parameters['flux_OIII5008_3'].value = 1
         self.parameters['flux_OIII5008_3'].vary = True
+
+        # Remove OIII if OIII is not present
+        if self.line == 'OII':
+            self.only_OII()
 
     def only_OII(self):
         self.parameters['OIII'].value = 0
@@ -1238,6 +1256,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(cubename='PKS0232-04', NLR='')
+    window = PlotWindow(cubename='J0154-0712', NLR='')
     window.show()
     sys.exit(app.exec_())
