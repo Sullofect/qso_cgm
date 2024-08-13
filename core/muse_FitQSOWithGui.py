@@ -182,16 +182,10 @@ class PlotWindow(QMainWindow):
                  UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss')):
         super().__init__()
 
+        # Define parameters
         fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
                      'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
-
-        # Define lines
-        if fit_param['OII'] >= 1 and fit_param['OIII'] == 0:
-            line = 'OII'
-        elif fit_param['OII'] == 0 and fit_param['OIII'] >= 1:
-            line = 'OIII'
-        else:
-            line = 'OII+OIII'
+        self.fit_param = fit_param
 
         # if zapped
         if zapped:
@@ -203,6 +197,21 @@ class PlotWindow(QMainWindow):
         data_qso = ascii.read(path_qso, format='fixed_width')
         data_qso = data_qso[data_qso['name'] == cubename]
         self.ra_qso, self.dec_qso, self.z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
+
+        # Check OIII coverage
+        if (1 + self.z_qso) * wave_OIII5008_vac >= 9350:
+            print('OIII is not covered')
+            fit_param['OIII'] = 0
+        else:
+            print('OIII coverage is covered')
+
+        # Define lines
+        if fit_param['OII'] >= 1 and fit_param['OIII'] == 0:
+            line = 'OII'
+        elif fit_param['OII'] == 0 and fit_param['OIII'] >= 1:
+            line = 'OIII'
+        else:
+            line = 'OII+OIII'
 
         # Save V50 and W80
         self.path_v50_OII = '../../MUSEQuBES+CUBS/fit_kin/{}{}_V50_OII.fits'.format(cubename, NLR)
@@ -233,7 +242,7 @@ class PlotWindow(QMainWindow):
                     format(cubename, str_zap, line_OII, NLR, *UseDataSeg)
                 path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}{}_3DSeg_{}_{}_{}_{}.fits'. \
                     format(cubename, str_zap, line_OIII, NLR, *UseDataSeg)
-            self.path_cube_OII = path_cube_OII
+            self.path_cube_hdr = path_cube_OII
 
             # Load data and smoothing
             if UseSmoothedCubes:
@@ -251,7 +260,7 @@ class PlotWindow(QMainWindow):
             flux_err_seg_OII, flux_err_seg_OIII = flux_err_OII * seg_3D_OII_ori, flux_err_OIII * seg_3D_OIII_ori
             S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
             S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
-            S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
+            self.S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
 
             # Extend over
             if extend_over:
@@ -294,10 +303,6 @@ class PlotWindow(QMainWindow):
             # flux = np.where(flux_err != 0, flux, np.nan)
             # flux_err = np.where(flux_err != 0, flux_err, np.nan)
         else:
-            if line == 'OII':
-                width = width_OII
-            elif line == 'OIII':
-                width = width_OIII
             path_cube = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line)
             path_cube_smoothed = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
@@ -308,31 +313,44 @@ class PlotWindow(QMainWindow):
             else:
                 path_3Dseg = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
                     format(cubename, str_zap, line, *UseDataSeg)
+            self.path_cube_hdr = path_cube
 
             # Load data and smoothing
             if UseSmoothedCubes:
                 cube = Cube(path_cube_smoothed)
             else:
                 cube = Cube(path_cube)
-            wave_vac = pyasl.airtovac2(cube.wave.coord())
+            self.wave_vac = pyasl.airtovac2(cube.wave.coord())
             flux, flux_err = cube.data * 1e-3, np.sqrt(cube.var) * 1e-3
             seg_3D_ori = fits.open(path_3Dseg)[0].data
             mask_seg = np.sum(seg_3D_ori, axis=0)
-            flux_seg = flux * seg_3D_ori
-            start = (seg_3D_ori != 0).argmax(axis=0)
-            end = start + mask_seg
-            start = np.where((mask_seg > 20) | (mask_seg < 1), start, start - width)
-            end = np.where((mask_seg > 20) | (mask_seg < 1), end, end + width)
-            idx = np.zeros_like(seg_3D_ori)
-            idx[:] = np.arange(np.shape(seg_3D_ori)[0])[:, np.newaxis, np.newaxis]
-            seg_3D = np.where((idx >= end[np.newaxis, :, :]) | (idx < start[np.newaxis, :, :]), seg_3D_ori, 1)
-            flux *= seg_3D
-            flux_err *= seg_3D
-            flux_err = np.where(flux_err != 0, flux_err, np.inf)
+            flux_seg, flux_err_seg = flux * seg_3D_ori, flux_err * seg_3D_ori
+            self.S_N = np.sum(flux_seg / flux_err_seg, axis=0)
 
+            if line == 'OII':
+                width = width_OII
+                mask_seg_OII = mask_seg
+                mask_seg_OIII = np.zeros_like(mask_seg)
+            elif line == 'OIII':
+                width = width_OIII
+                mask_seg_OII = np.zeros_like(mask_seg)
+                mask_seg_OIII = mask_seg
+
+            if extend_over:
+                start = (seg_3D_ori != 0).argmax(axis=0)
+                end = start + mask_seg
+                start = np.where((mask_seg > 20) | (mask_seg < 1), start, start - width)
+                end = np.where((mask_seg > 20) | (mask_seg < 1), end, end + width)
+                idx = np.zeros_like(seg_3D_ori)
+                idx[:] = np.arange(np.shape(seg_3D_ori)[0])[:, np.newaxis, np.newaxis]
+                seg_3D = np.where((idx >= end[np.newaxis, :, :]) | (idx < start[np.newaxis, :, :]), seg_3D_ori, 1)
+                flux *= seg_3D
+                flux_err *= seg_3D
+                flux_err = np.where(flux_err != 0, flux_err, np.inf)
+
+            self.flux, self.flux_err = flux, flux_err
 
         # Mask
-        self.S_N = S_N
         self.mask_OII, self.mask_OII_ori = mask_seg_OII, mask_seg_OII
         self.mask_OIII, self.mask_OIII_ori = mask_seg_OIII, mask_seg_OIII
         self.mask, self.mask_ori = mask_seg, mask_seg
@@ -416,7 +434,7 @@ class PlotWindow(QMainWindow):
         self.db_OIII, self.chisqr, self.redchi = pri, fs, v, z, dz, sigma, dsigma, flux_OII_fit, dflux_OII_fit, \
                                                  flux_OIII_fit, dflux_OIII_fit, r, dr, a_OII, da_OII, b_OII, db_OII, \
                                                  a_OIII, da_OIII, b_OIII, db_OIII, chisqr, redchi
-        self.redchi_ori = redchi
+        self.redchi_show = redchi
 
         # Calculae flux of each component
         self.wave_OII_exp = expand_wave([self.wave_OII_vac], stack=True)
@@ -466,6 +484,7 @@ class PlotWindow(QMainWindow):
         w80 = np.where(self.mask_OIII > 0, w80_OIII, w80_OII)
         v50 = np.where(self.mask != 0, v50, np.nan)
         w80 = np.where(self.mask != 0, w80, np.nan)
+        self.redchi_show = np.where(self.mask != 0, self.redchi_show, np.nan)
         self.v50_OII = np.where(self.mask_OII, v50_OII, np.nan)
         self.w80_OII = np.where(self.mask_OII, w80_OII, np.nan)
         self.v50_OIII = np.where(self.mask_OIII, v50_OIII, np.nan)
@@ -474,7 +493,6 @@ class PlotWindow(QMainWindow):
         self.w80_ori = w80
         self.v50 = v50
         self.w80 = w80
-        self.redchi = np.where(self.mask != 0, self.redchi, np.nan)
 
         # Define a top-level widget
         self.widget = QWidget()
@@ -514,7 +532,7 @@ class PlotWindow(QMainWindow):
         self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
 
         # Set param
-        self.paramSpec = [dict(name='S_N=', type='float', value=0, dec=False, readonly=False),
+        self.paramSpec = [dict(name='S_N=', type='float', value=10, dec=False, readonly=False),
                           dict(name='chi=', type='float', value=0, dec=False, readonly=False),
                           dict(name='v_1=', type='float', value=0, dec=False, readonly=False),
                           dict(name='sigma_1=', type='float', value=0, readonly=False),
@@ -571,7 +589,7 @@ class PlotWindow(QMainWindow):
         layout_btn_r2.addWidget(btn_23)
         layout_btn_r3.addWidget(btn_31)
         layout_btn_r3.addWidget(btn_32)
-        layout_btn_r2.addWidget(btn_33)
+        layout_btn_r3.addWidget(btn_33)
         layout_btn.addLayout(layout_btn_r1)
         layout_btn.addLayout(layout_btn_r2)
         layout_btn.addLayout(layout_btn_r3)
@@ -586,7 +604,6 @@ class PlotWindow(QMainWindow):
         self.layout.addWidget(self.widget5, 1, 1, 1, 1)
         self.layout.addLayout(layout_RHS, 1, 2, 1, 1)
         # self.layout.addWidget(self.tree, 1, 2, 1, 1)
-
 
         # Plot the 2D map in the first plot
         self.v_map = pg.ImageItem()
@@ -613,7 +630,7 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.chi_map.setLookupTable(lut)
-        self.chi_map.updateImage(image=self.redchi.T, levels=(0, 2))
+        self.chi_map.updateImage(image=self.redchi_show.T, levels=(0, 2))
 
         # Mark the locations
         self.scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
@@ -639,9 +656,14 @@ class PlotWindow(QMainWindow):
         self.widget2_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget3_plot.scene().sigMouseClicked.connect(self.update_plot)
 
-        # # Connect key press event to update fit
-        # self.widget4_plot.keyPressEvent = self.update_fit
-        # self.widget5_plot.keyPressEvent = self.update_fit
+        # Initiate region fit
+        self.current_roi = None
+        self.x1, self.y1 = None, None
+        self.x2, self.y2 = None, None
+
+        # Default to S_N = 10 and gaussian componenet = 1
+        self.re_mask()
+        self.N_1()
 
     def calculate_iniguess(self):
         # Moments
@@ -683,33 +705,31 @@ class PlotWindow(QMainWindow):
 
         return z_guess_array, sigma_kms_guess_array
 
+    def calculate_iniguess_OII(self):
+        # Moments for only OII or OIII
+        wave_OII_vac_ = self.wave_vac[:, np.newaxis, np.newaxis]
+        flux_cumsum_OII = integrate.cumtrapz(self.flux, wave_OII_vac_, initial=0, axis=0)
+        flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
+        wave_array_OII = np.zeros_like(self.flux)
+        wave_array_OII[:] = self.wave_vac[:, np.newaxis, np.newaxis]
+
+        wave_10_OII = \
+            np.take_along_axis(wave_array_OII, np.argmin(np.abs(flux_cumsum_OII - 0.10), axis=0)[np.newaxis, :, :], axis=0)[0]
+        wave_50_OII = \
+            np.take_along_axis(wave_array_OII, np.argmin(np.abs(flux_cumsum_OII - 0.50), axis=0)[np.newaxis, :, :], axis=0)[0]
+        wave_90_OII = \
+            np.take_along_axis(wave_array_OII, np.argmin(np.abs(flux_cumsum_OII - 0.90), axis=0)[np.newaxis, :, :], axis=0)[0]
+        z_guess_array_OII = (wave_50_OII - wave_OII3728_vac) / wave_OII3728_vac
+        sigma_kms_guess_array_OII = c_kms * (wave_90_OII - wave_10_OII) / (wave_OII3728_vac * (1 + z_guess_array_OII))
+        sigma_kms_guess_array_OII /= 2.563  # W_80 = 2.563sigma
+
+        return z_guess_array_OII, sigma_kms_guess_array_OII
+
     def fit(self):
         # Make inital condition
-        # self.parameters['OII'].value = 3
-        # self.parameters['OIII'].value = 3
-        # self.parameters['z_2'].value = self.z_qso
-        # self.parameters['z_2'].vary = True
-        # self.parameters['z_3'].value = self.z_qso
-        # self.parameters['z_3'].vary = True
-        # self.parameters['sigma_kms_2'].value = 200
-        # self.parameters['sigma_kms_2'].vary = True
-        # self.parameters['sigma_kms_3'].value = 200
-        # self.parameters['sigma_kms_3'].vary = True
-        # self.parameters['flux_OII_2'].value = 1
-        # self.parameters['flux_OII_2'].vary = True
-        # self.parameters['flux_OII_3'].value = 1
-        # self.parameters['flux_OII_3'].vary = True
-        # self.parameters['r_OII3729_3727_2'].value = 1
-        # self.parameters['r_OII3729_3727_2'].vary = True
-        # self.parameters['r_OII3729_3727_3'].value = 1
-        # self.parameters['r_OII3729_3727_3'].vary = True
-        # self.parameters['flux_OIII5008_2'].value = 1
-        # self.parameters['flux_OIII5008_2'].vary = True
-        # self.parameters['flux_OIII5008_3'].value = 1
-        # self.parameters['flux_OIII5008_3'].vary = True
         self.N_1()
 
-        header = fits.open(self.path_cube_OII)[1].header
+        header = fits.open(self.path_cube_hdr)[1].header
         header['WCSAXES'] = 2
         header.remove('CTYPE3')
         header.remove('CUNIT3')
@@ -742,12 +762,15 @@ class PlotWindow(QMainWindow):
                          np.full(self.size, np.nan), np.full(self.size, np.nan), np.full(self.size, np.nan), \
                          np.full(self.size, np.nan), np.full(self.size, np.nan), \
                          np.full(self.size, np.nan), np.full(self.size, np.nan)
-
-        z_guess_array, sigma_kms_guess_array = self.calculate_iniguess()
+        if self.fit_param['OIII'] == 0:
+            z_guess_array, sigma_kms_guess_array = self.calculate_iniguess_OII()
+            self.only_OII()
+        else:
+            z_guess_array, sigma_kms_guess_array = self.calculate_iniguess()
         for i in range(self.size[0]):  # i = p (y), j = q (x)
             for j in range(self.size[1]):
                 if self.mask[i, j] != 0:
-                    print('Runing')
+                    print('Running')
                     self.parameters['z_1'].value = z_guess_array[i, j]
 
                     flux_ij = self.flux[:, i, j]
@@ -824,6 +847,8 @@ class PlotWindow(QMainWindow):
 
     def draw_region(self):
         # Initially, ROI is inactive
+        if self.current_roi is not None:
+            self.widget1_plot.removeItem(self.current_roi)
         self.current_roi = pg.RectROI([75, 75], [10, 10], pen='r')
         self.widget1_plot.addItem(self.current_roi)
 
@@ -845,8 +870,9 @@ class PlotWindow(QMainWindow):
         if event.text() == 'f':
             for i in range(self.y1, self.y2):
                 for j in range(self.x1, self.x2):
-                    self.ypixel, self.xpixel = i, j
-                    self.update_fit()
+                    if self.mask[i, j] != 0:
+                        self.ypixel, self.xpixel = i, j
+                        self.update_fit()
 
     def update_plot(self, event):
         if event.double():
@@ -1012,8 +1038,18 @@ class PlotWindow(QMainWindow):
         self.parameters['flux_OIII5008_3'].vary = True
 
     def only_OII(self):
-        ###
-        print('to be written')
+        self.parameters['OIII'].value = 0
+        self.parameters['flux_OIII5008_1'].value = np.nan
+        self.parameters['flux_OIII5008_1'].vary = False
+        self.parameters['flux_OIII5008_2'].value = np.nan
+        self.parameters['flux_OIII5008_2'].vary = False
+        self.parameters['flux_OIII5008_3'].value = np.nan
+        self.parameters['flux_OIII5008_3'].vary = False
+        self.parameters['a_OIII5008'].value = 0
+        self.parameters['a_OIII5008'].vary = False
+        self.parameters['b_OIII5008'].value = 0
+        self.parameters['b_OIII5008'].vary = False
+
     def only_OIII(self):
         ###
         print('to be written')
@@ -1094,6 +1130,7 @@ class PlotWindow(QMainWindow):
         result = spec_model.fit(flux_ij, wave_vac=self.wave_vac, params=self.parameters, weights=1 / flux_err_ij)
         self.fs[i, j] = result.success
         self.chisqr[i, j], self.redchi[i, j] = result.chisqr, result.redchi
+        self.redchi_show[i, j] = result.redchi
 
         # fill the value
         a_OII, b_OII = result.best_values['a_OII'], result.best_values['b_OII']
@@ -1161,7 +1198,7 @@ class PlotWindow(QMainWindow):
         self.plot_OIII()
         self.v_map.updateImage(image=self.v50.T)
         self.sigma_map.updateImage(image=self.w80.T)
-        self.chi_map.updateImage(image=self.redchi.T)
+        self.chi_map.updateImage(image=self.redchi_show.T)
 
     def save_v50w80(self):
         hdul_v50 = fits.ImageHDU(self.v50, header=self.hdul_fit[2].header)
@@ -1186,22 +1223,21 @@ class PlotWindow(QMainWindow):
         self.mask = np.where(self.S_N > S_N_thr, self.mask_ori, 0)
         self.v50 = np.where(self.mask, self.v50_ori, np.nan)
         self.w80 = np.where(self.mask, self.w80_ori, np.nan)
-        self.redchi = np.where(self.mask, self.redchi_ori, np.nan)
+        self.redchi_show = np.where(self.mask, self.redchi, np.nan)
 
         self.v_map.updateImage(image=self.v50.T)
         self.sigma_map.updateImage(image=self.w80.T)
-        self.chi_map.updateImage(image=self.redchi.T)
+        self.chi_map.updateImage(image=self.redchi_show.T)
 
     def clear_scatter(self):
         self.scatter_1.clear()
         self.scatter_2.clear()
         self.scatter_3.clear()
-
-
+        self.widget1_plot.removeItem(self.current_roi)
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(cubename='HE0435-5304', NLR='')
+    window = PlotWindow(cubename='PKS0232-04', NLR='')
     window.show()
     sys.exit(app.exec_())
