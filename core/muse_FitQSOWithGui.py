@@ -332,15 +332,10 @@ class PlotWindow(QMainWindow):
 
 
         # Mask
-        S_N /= mask_seg
-        # self.mask_OII = np.where(S_N > 1, mask_seg_OII, 0)
-        # self.mask_OIII = np.where(S_N > 1, mask_seg_OIII, 0)
-        # self.mask = np.where(S_N > 1, mask_seg, 0)
-
-        #
-        self.mask_OII = mask_seg_OII
-        self.mask_OIII = mask_seg_OIII
-        self.mask = mask_seg
+        self.S_N = S_N
+        self.mask_OII, self.mask_OII_ori = mask_seg_OII, mask_seg_OII
+        self.mask_OIII, self.mask_OIII_ori = mask_seg_OIII, mask_seg_OIII
+        self.mask, self.mask_ori = mask_seg, mask_seg
         self.size = self.mask.shape
 
 
@@ -421,6 +416,7 @@ class PlotWindow(QMainWindow):
         self.db_OIII, self.chisqr, self.redchi = pri, fs, v, z, dz, sigma, dsigma, flux_OII_fit, dflux_OII_fit, \
                                                  flux_OIII_fit, dflux_OIII_fit, r, dr, a_OII, da_OII, b_OII, db_OII, \
                                                  a_OIII, da_OIII, b_OIII, db_OIII, chisqr, redchi
+        self.redchi_ori = redchi
 
         # Calculae flux of each component
         self.wave_OII_exp = expand_wave([self.wave_OII_vac], stack=True)
@@ -474,8 +470,11 @@ class PlotWindow(QMainWindow):
         self.w80_OII = np.where(self.mask_OII, w80_OII, np.nan)
         self.v50_OIII = np.where(self.mask_OIII, v50_OIII, np.nan)
         self.w80_OIII = np.where(self.mask_OIII, w80_OIII, np.nan)
+        self.v50_ori = v50
+        self.w80_ori = w80
         self.v50 = v50
         self.w80 = w80
+        self.redchi = np.where(self.mask != 0, self.redchi, np.nan)
 
         # Define a top-level widget
         self.widget = QWidget()
@@ -515,7 +514,8 @@ class PlotWindow(QMainWindow):
         self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
 
         # Set param
-        self.paramSpec = [dict(name='chi=', type='float', value=0, dec=False, readonly=False),
+        self.paramSpec = [dict(name='S_N=', type='float', value=0, dec=False, readonly=False),
+                          dict(name='chi=', type='float', value=0, dec=False, readonly=False),
                           dict(name='v_1=', type='float', value=0, dec=False, readonly=False),
                           dict(name='sigma_1=', type='float', value=0, readonly=False),
                           dict(name='OII_1=', type='float', value=0, readonly=False),
@@ -536,27 +536,45 @@ class PlotWindow(QMainWindow):
         self.tree.setParameters(self.param)
 
         # Buttons
-        btn_1 = QPushButton("Refit")
-        btn_2 = QPushButton("1 Gauss")
-        btn_3 = QPushButton("2 Gauss")
-        btn_4 = QPushButton("3 Gauss")
-        btn_5 = QPushButton("Save v50w80")
-        btn_6 = QPushButton("Clear")
-        btn_1.clicked.connect(self.update_fit)
-        btn_2.clicked.connect(self.N_1)
-        btn_3.clicked.connect(self.N_2)
-        btn_4.clicked.connect(self.N_3)
-        btn_5.clicked.connect(self.save_v50w80)
-        btn_6.clicked.connect(self.clear_scatter)
+        btn_11 = QPushButton("Refit")
+        btn_12 = QPushButton("Fit region")
+        btn_13 = QPushButton("only OII")
+        btn_14 = QPushButton("only OIII")
+        btn_21 = QPushButton("1 Gauss")
+        btn_22 = QPushButton("2 Gauss")
+        btn_23 = QPushButton("3 Gauss")
+        btn_31 = QPushButton("Save v50w80")
+        btn_32 = QPushButton("Clear")
+        btn_33 = QPushButton("Remask")
+        btn_11.clicked.connect(self.update_fit)
+        btn_12.clicked.connect(self.draw_region)
+        btn_13.clicked.connect(self.only_OII)
+        btn_14.clicked.connect(self.only_OIII)
+        btn_21.clicked.connect(self.N_1)
+        btn_22.clicked.connect(self.N_2)
+        btn_23.clicked.connect(self.N_3)
+        btn_31.clicked.connect(self.save_v50w80)
+        btn_32.clicked.connect(self.clear_scatter)
+        btn_33.clicked.connect(self.re_mask)
 
         layout_RHS = QVBoxLayout()
-        layout_btn = QHBoxLayout()
-        layout_btn.addWidget(btn_1)
-        layout_btn.addWidget(btn_2)
-        layout_btn.addWidget(btn_3)
-        layout_btn.addWidget(btn_4)
-        layout_btn.addWidget(btn_5)
-        layout_btn.addWidget(btn_6)
+        layout_btn = QVBoxLayout()
+        layout_btn_r1 = QHBoxLayout()
+        layout_btn_r2 = QHBoxLayout()
+        layout_btn_r3 = QHBoxLayout()
+        layout_btn_r1.addWidget(btn_11)
+        layout_btn_r1.addWidget(btn_12)
+        layout_btn_r1.addWidget(btn_13)
+        layout_btn_r1.addWidget(btn_14)
+        layout_btn_r2.addWidget(btn_21)
+        layout_btn_r2.addWidget(btn_22)
+        layout_btn_r2.addWidget(btn_23)
+        layout_btn_r3.addWidget(btn_31)
+        layout_btn_r3.addWidget(btn_32)
+        layout_btn_r2.addWidget(btn_33)
+        layout_btn.addLayout(layout_btn_r1)
+        layout_btn.addLayout(layout_btn_r2)
+        layout_btn.addLayout(layout_btn_r3)
         layout_RHS.addLayout(layout_btn)
         layout_RHS.addWidget(self.tree)
 
@@ -620,6 +638,10 @@ class PlotWindow(QMainWindow):
         self.widget1_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget2_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget3_plot.scene().sigMouseClicked.connect(self.update_plot)
+
+        # # Connect key press event to update fit
+        # self.widget4_plot.keyPressEvent = self.update_fit
+        # self.widget5_plot.keyPressEvent = self.update_fit
 
     def calculate_iniguess(self):
         # Moments
@@ -800,6 +822,32 @@ class PlotWindow(QMainWindow):
                              hdul_db_OIII, hdul_chisqr, hudl_redchi])
         hdul.writeto(self.path_fit, overwrite=True)
 
+    def draw_region(self):
+        # Initially, ROI is inactive
+        self.current_roi = pg.RectROI([75, 75], [10, 10], pen='r')
+        self.widget1_plot.addItem(self.current_roi)
+
+        # Connect ROI updated signal to the function
+        self.current_roi.sigRegionChanged.connect(self.get_region)
+        self.widget1_plot.keyPressEvent = self.fit_region
+
+    def get_region(self):
+        # Get the bounding box of the ROI
+        pos = self.current_roi.pos()  # (x, y) of the top-left corner
+        size = self.current_roi.size()  # (width, height)
+
+        # Calculate the coordinates of the selected region
+        self.x1, self.y1 = int(pos[0]), int(pos[1])
+        self.x2, self.y2 = int(pos[0] + size[0]), int(pos[1] + size[1])
+
+    def fit_region(self, event):
+        print(f"Selected Region: ({self.x1}, {self.y1}) to ({self.x2}, {self.y2})")
+        if event.text() == 'f':
+            for i in range(self.y1, self.y2):
+                for j in range(self.x1, self.x2):
+                    self.ypixel, self.xpixel = i, j
+                    self.update_fit()
+
     def update_plot(self, event):
         if event.double():
             # Get pixel coordinates
@@ -815,6 +863,7 @@ class PlotWindow(QMainWindow):
 
     def show_fit(self):
         i, j = self.ypixel, self.xpixel
+
         # Get the fitting results
         if self.mask[i, j]:
             # Show the fitting results
@@ -836,9 +885,9 @@ class PlotWindow(QMainWindow):
             self.param['r_3='] = '{:.4f}'.format(self.r[2, i, j])
 
             # Draw points
-            self.scatter_1.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
-            self.scatter_2.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
-            self.scatter_3.addPoints([self.xpixel + 0.5], [self.ypixel + 0.5])
+            self.scatter_1.addPoints([j + 0.5], [i + 0.5])
+            self.scatter_2.addPoints([j + 0.5], [i + 0.5])
+            self.scatter_3.addPoints([j + 0.5], [i + 0.5])
             self.widget1_plot.addItem(self.scatter_1)
             self.widget2_plot.addItem(self.scatter_2)
             self.widget3_plot.addItem(self.scatter_3)
@@ -962,6 +1011,12 @@ class PlotWindow(QMainWindow):
         self.parameters['flux_OIII5008_3'].value = 1
         self.parameters['flux_OIII5008_3'].vary = True
 
+    def only_OII(self):
+        ###
+        print('to be written')
+    def only_OIII(self):
+        ###
+        print('to be written')
     def compute_v50w80(self, i, j):
         flux_OII_ij = model_OII(self.wave_OII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
                                 self.flux_OII_fit[:, i, j], self.r[:, i, j], plot=True)[0] * (1 + self.r[:, i, j])
@@ -1092,6 +1147,7 @@ class PlotWindow(QMainWindow):
 
         # Re initiolize
         self.v50[i, j], self.w80[i, j] = self.compute_v50w80(i, j)
+        self.v50_ori[i, j], self.w80_ori[i, j] = self.v50[i, j], self.w80[i, j]
 
         # Update fit
         self.flux_OII_array[:, :, i, j] = model_OII(self.wave_OII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
@@ -1122,6 +1178,19 @@ class PlotWindow(QMainWindow):
         hdul_v50.writeto(self.path_v50_OIII, overwrite=True)
         hdul_w80 = fits.ImageHDU(self.w80_OIII, header=self.hdul_fit[2].header)
         hdul_w80.writeto(self.path_w80_OIII, overwrite=True)
+
+    def re_mask(self):
+        S_N_thr = self.param['S_N=']
+        self.mask_OII = np.where(self.S_N > S_N_thr, self.mask_OII_ori, 0)
+        self.mask_OIII = np.where(self.S_N > S_N_thr, self.mask_OIII_ori, 0)
+        self.mask = np.where(self.S_N > S_N_thr, self.mask_ori, 0)
+        self.v50 = np.where(self.mask, self.v50_ori, np.nan)
+        self.w80 = np.where(self.mask, self.w80_ori, np.nan)
+        self.redchi = np.where(self.mask, self.redchi_ori, np.nan)
+
+        self.v_map.updateImage(image=self.v50.T)
+        self.sigma_map.updateImage(image=self.w80.T)
+        self.chi_map.updateImage(image=self.redchi.T)
 
     def clear_scatter(self):
         self.scatter_1.clear()
