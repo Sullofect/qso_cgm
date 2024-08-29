@@ -22,7 +22,7 @@ mpl.rcParams['ytick.major.size'] = 12
 
 # Preliminary
 def LoadFieldGals(cubename=None, z_qso=None, ):
-    path = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia' \
+    path = '../../MUSEQuBES+CUBS/datacubes_gaia' \
            '/{}_ESO-DEEP_ZAP_gaia_spec1D/{}_ESO-DEEP_ZAP_gaia_objects.fits'.format(cubename, cubename)
     data = fits.getdata(path, 1, ignore_missing_end=True)
 
@@ -60,7 +60,7 @@ def LoadFieldGals(cubename=None, z_qso=None, ):
     output = np.array([bins_ggp, row_ggp, ID_ggp, z_ggp, v_ggp, name_ggp, ql_ggp, ra_ggp, dec_ggp], dtype=object)
 
     #
-    filename = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+    filename = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
     # if os.path.isfile(filename) is not True:
     t = Table()
     t['row'] = row_ggp
@@ -79,17 +79,17 @@ def LoadFieldGals(cubename=None, z_qso=None, ):
 def MakeFieldImage(cubename=None):
     str_zap, UseSeg = '', (1.5, 'gauss', 1.5, 'gauss')
     line_OII, line_OIII = 'OII', 'OIII'
-    path_savefig_mini = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_mini_gaia.png'.format(cubename)
-    path_savefig = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/plots/{}_gaia.png'.format(cubename)
-    path_dat = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia.dat'.format(cubename)
-    path_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_OII_SB_3DSeg_1.5_gauss_1.5_gauss.fits'.format(cubename)
-    path_SB_OII_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+    path_savefig_mini = '../../MUSEQuBES+CUBS/plots/{}_mini_gaia.png'.format(cubename)
+    path_savefig = '../../MUSEQuBES+CUBS/plots/{}_gaia.png'.format(cubename)
+    path_dat = '../../MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia.dat'.format(cubename)
+    path_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_OII_SB_3DSeg_1.5_gauss_1.5_gauss.fits'.format(cubename)
+    path_SB_OII_kin = '../../MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
         format(cubename, str_zap, line_OII, *UseSeg)
-    path_SB_OIII_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+    path_SB_OIII_kin = '../../MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
         format(cubename, str_zap, line_OIII, *UseSeg)
 
     # Load info
-    path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
+    path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
@@ -104,7 +104,7 @@ def MakeFieldImage(cubename=None):
                                                                                                z_qso=z_qso)
     print(ra_gal)
     # Load the image
-    path_hb = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_drc_offset_gaia.fits'.format(cubename)
+    path_hb = '../../MUSEQuBES+CUBS/datacubes_gaia/{}_drc_offset_gaia.fits'.format(cubename)
     # data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
 
 

@@ -1,6 +1,5 @@
 import os
 import sys
-import aplpy
 import lmfit
 import numpy as np
 import pyqtgraph as pg
@@ -9,27 +8,19 @@ import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 import pyqtgraph.parametertree as pt
 from astropy import units as u
-from astropy import stats
 from astropy.io import ascii
-from matplotlib import rc
+from matplotlib import rc, cm
 from astropy.wcs import WCS
-from astropy.coordinates import SkyCoord
-from regions import PixCoord
-from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
 from astropy.convolution import convolve, Kernel, Gaussian2DKernel
 from scipy.interpolate import interp1d
-from astropy.coordinates import Angle
 from mpdaf.obj import Cube, WaveCoord, Image
 from PyAstronomy import pyasl
-from palettable.scientific.sequential import Acton_6
-from palettable.cubehelix import red_16
 from palettable.cmocean.sequential import Dense_20_r
-from scipy.ndimage import rotate
-from astropy.table import Table
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QPushButton, QVBoxLayout
-from matplotlib import cm
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QHBoxLayout, QWidget, QPushButton, QVBoxLayout
 from scipy import integrate, interpolate
+import warnings
+warnings.filterwarnings("ignore")
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -183,7 +174,7 @@ class PlotWindow(QMainWindow):
         super().__init__()
 
         # Define parameters
-        fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
+        fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.5,
                      'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
 
         # if zapped
@@ -378,9 +369,9 @@ class PlotWindow(QMainWindow):
                                  ('flux_OII_1', flux_guess, True, 0.0, None, None),
                                  ('flux_OII_2', flux_guess, True, 0.0, None, None),
                                  ('flux_OII_3', flux_guess, True, 0.0, None, None),
-                                 ('r_OII3729_3727_1', r_OII3729_3727_guess, True, 0.3, fit_param['r_max'], None),
-                                 ('r_OII3729_3727_2', r_OII3729_3727_guess, True, 0.3, fit_param['r_max'], None),
-                                 ('r_OII3729_3727_3', r_OII3729_3727_guess, True, 0.3, fit_param['r_max'], None),
+                                 ('r_OII3729_3727_1', r_OII3729_3727_guess, True, 0.35, fit_param['r_max'], None),
+                                 ('r_OII3729_3727_2', r_OII3729_3727_guess, True, 0.35, fit_param['r_max'], None),
+                                 ('r_OII3729_3727_3', r_OII3729_3727_guess, True, 0.35, fit_param['r_max'], None),
                                  ('flux_OIII5008_1', flux_guess, True, 0, None, None),
                                  ('flux_OIII5008_2', flux_guess, True, 0, None, None),
                                  ('flux_OIII5008_3', flux_guess, True, 0, None, None),
@@ -504,7 +495,7 @@ class PlotWindow(QMainWindow):
         self.widget = QWidget()
         self.widget.resize(2000, 2000)
         self.setCentralWidget(self.widget)
-        self.layout = QtGui.QGridLayout()
+        self.layout = QGridLayout()
         self.widget.setLayout(self.layout)
 
         # Set title
@@ -567,6 +558,7 @@ class PlotWindow(QMainWindow):
         btn_21 = QPushButton("1 Gauss")
         btn_22 = QPushButton("2 Gauss")
         btn_23 = QPushButton("3 Gauss")
+        btn_24 = QPushButton("Fix ratio")
         btn_31 = QPushButton("Save v50w80")
         btn_32 = QPushButton("Clear")
         btn_33 = QPushButton("Remask")
@@ -593,6 +585,7 @@ class PlotWindow(QMainWindow):
         layout_btn_r2.addWidget(btn_21)
         layout_btn_r2.addWidget(btn_22)
         layout_btn_r2.addWidget(btn_23)
+        layout_btn_r2.addWidget(btn_24)
         layout_btn_r3.addWidget(btn_31)
         layout_btn_r3.addWidget(btn_32)
         layout_btn_r3.addWidget(btn_33)
@@ -618,7 +611,11 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.v_map.setLookupTable(lut)
-        self.v_map.updateImage(image=self.v50.T, levels=(-350, 350))
+        bar = pg.ColorBarItem(values=(-350, 350), colorMap=pg.ColorMap(np.linspace(0, 1, len(lut)), lut),
+                              orientation='horizontal', limits=(-1500, 1500))
+        self.v_map.updateImage(image=self.v50.T)
+        bar.setImageItem(self.v_map, insert_in=self.widget1_plot)
+        # bar.setLevels(low=-350, high=350)
 
         # Plot the 2D map in the second plot
         self.sigma_map = pg.ImageItem()
@@ -627,7 +624,10 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.sigma_map.setLookupTable(lut)
-        self.sigma_map.updateImage(image=self.w80.T, levels=(0, 1500))
+        bar = pg.ColorBarItem(values=(0, 1500), colorMap=pg.ColorMap(np.linspace(0, 1, len(lut)), lut),
+                              orientation='horizontal', limits=(0, 3000))
+        self.sigma_map.updateImage(image=self.w80.T)
+        bar.setImageItem(self.sigma_map, insert_in=self.widget2_plot)
 
         # Plot the chi 2D map in the third plot
         self.chi_map = pg.ImageItem()
@@ -636,7 +636,10 @@ class PlotWindow(QMainWindow):
         colormap._init()
         lut = (colormap._lut * 255).view(np.ndarray)
         self.chi_map.setLookupTable(lut)
-        self.chi_map.updateImage(image=self.redchi_show.T, levels=(0, 2))
+        bar = pg.ColorBarItem(values=(0, 2), colorMap=pg.ColorMap(np.linspace(0, 1, len(lut)), lut),
+                              orientation='horizontal', limits=(0, 5))
+        self.chi_map.updateImage(image=self.redchi_show.T)
+        bar.setImageItem(self.chi_map, insert_in=self.widget3_plot)
 
         # Mark the locations
         self.scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
@@ -768,15 +771,12 @@ class PlotWindow(QMainWindow):
                          np.full(self.size, np.nan), np.full(self.size, np.nan), np.full(self.size, np.nan), \
                          np.full(self.size, np.nan), np.full(self.size, np.nan), \
                          np.full(self.size, np.nan), np.full(self.size, np.nan)
-        # if self.fit_param['OIII'] == 0:
-        #     z_guess_array, sigma_kms_guess_array = self.calculate_iniguess_OII()
-        #     self.only_OII()
-        # else:
+
         z_guess_array, sigma_kms_guess_array = self.calculate_iniguess()
+        print('Fitting starts')
         for i in range(self.size[0]):  # i = p (y), j = q (x)
             for j in range(self.size[1]):
                 if self.mask[i, j] != 0:
-                    print('Running')
                     self.parameters['z_1'].value = z_guess_array[i, j]
 
                     flux_ij = self.flux[:, i, j]
@@ -868,7 +868,7 @@ class PlotWindow(QMainWindow):
         size = self.current_roi.size()  # (width, height)
 
         # Calculate the coordinates of the selected region
-        self.x1, self.y1 = int(pos[0]), int(pos[1])
+        self.x1, self.y1 = int(pos[0]) + 1, int(pos[1]) + 1
         self.x2, self.y2 = int(pos[0] + size[0]), int(pos[1] + size[1])
 
     def fit_region(self, event):
@@ -1071,6 +1071,15 @@ class PlotWindow(QMainWindow):
     def only_OIII(self):
         ###
         print('to be written')
+
+    def toggle_OII_ratio(self):
+        self.parameters['r_OII3729_3727_1'].value = 1.5
+        self.parameters['r_OII3729_3727_1'].vary = False
+        self.parameters['r_OII3729_3727_2'].value = 1.5
+        self.parameters['r_OII3729_3727_2'].vary = False
+        self.parameters['r_OII3729_3727_3'].value = 1.5
+        self.parameters['r_OII3729_3727_3'].vary = False
+
     def compute_v50w80(self, i, j):
         flux_OII_ij = model_OII(self.wave_OII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
                                 self.flux_OII_fit[:, i, j], self.r[:, i, j], plot=True)[0] * (1 + self.r[:, i, j])
@@ -1114,8 +1123,8 @@ class PlotWindow(QMainWindow):
         # Refit that specific pixel
         z_1 = (self.param['v_1='] / c_kms * (1 + self.z_qso)) + self.z_qso
         self.parameters['z_1'].value = z_1
-        self.parameters['z_1'].max = z_1 + (100 / c_kms * (1 + self.z_qso))
-        self.parameters['z_1'].min = z_1 - (100 / c_kms * (1 + self.z_qso))
+        self.parameters['z_1'].max = z_1 + (100 / c_kms * (1 + z_1))
+        self.parameters['z_1'].min = z_1 - (100 / c_kms * (1 + z_1))
         self.parameters['sigma_kms_1'].value = self.param['sigma_1=']
         self.parameters['sigma_kms_1'].max = self.param['sigma_1='] + 100
         self.parameters['sigma_kms_1'].min = 30
@@ -1124,8 +1133,8 @@ class PlotWindow(QMainWindow):
         if self.parameters['OII'].value == 2:
             z_2 = (self.param['v_2='] / c_kms * (1 + self.z_qso)) + self.z_qso
             self.parameters['z_2'].value = z_2
-            self.parameters['z_2'].max = z_2 + (100 / c_kms * (1 + self.z_qso))
-            self.parameters['z_2'].min = z_2 - (100 / c_kms * (1 + self.z_qso))
+            self.parameters['z_2'].max = z_2 + (100 / c_kms * (1 + z_2))
+            self.parameters['z_2'].min = z_2 - (100 / c_kms * (1 + z_2))
             self.parameters['sigma_kms_2'].value = self.param['sigma_2=']
             self.parameters['sigma_kms_2'].max = self.param['sigma_2='] + 100
             self.parameters['sigma_kms_2'].min = 30
@@ -1134,8 +1143,8 @@ class PlotWindow(QMainWindow):
         elif self.parameters['OII'].value == 3:
             z_3 = (self.param['v_3='] / c_kms * (1 + self.z_qso)) + self.z_qso
             self.parameters['z_3'].value = z_3
-            self.parameters['z_3'].max = z_3 + (100 / c_kms * (1 + self.z_qso))
-            self.parameters['z_3'].min = z_3 - (100 / c_kms * (1 + self.z_qso))
+            self.parameters['z_3'].max = z_3 + (100 / c_kms * (1 + z_3))
+            self.parameters['z_3'].min = z_3 - (100 / c_kms * (1 + z_3))
             self.parameters['sigma_kms_3'].value = self.param['sigma_3=']
             self.parameters['sigma_kms_3'].max = self.param['sigma_3='] + 100
             self.parameters['sigma_kms_3'].min = 30
@@ -1256,6 +1265,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(cubename='J0154-0712', NLR='')
+    window = PlotWindow(cubename='PKS2242-498', NLR='')
     window.show()
     sys.exit(app.exec_())
