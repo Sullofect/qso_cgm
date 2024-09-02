@@ -1265,6 +1265,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(cubename='PKS2242-498', NLR='')
+    window = PlotWindow(cubename='HE0419-5657', NLR='')
     window.show()
     sys.exit(app.exec_())

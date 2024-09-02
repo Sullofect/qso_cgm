@@ -2258,9 +2258,9 @@ PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_mi
 # -s_spe 1.5 -k_spe gauss -ssf False -l 0.3 -n 5 -sl 7250 7300
 # os.chdir(path_SB)
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0419-5657_ESO-DEEP_subtracted_OII -t 2.5 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.3 -n 5 -sl 7250 7300')
+#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.3 -n 5 -sl 7240 7300')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0419-5657_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
-#           '-ssf False -l 0.3 -n 5 -sl 7250 7300')
+#           '-ssf False -l 0.3 -n 5 -sl 7240 7300')
 # fit_param = {"OII": 1, 'ResolveOII': False, 'r_max': 1.6,
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
 # FitLines(cubename='HE0419-5657', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
@@ -2277,13 +2277,13 @@ PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_mi
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # Q0107-025
-# muse_MakeNBImageWith3DSeg.py -m QPB6291_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
-# -s_spe 1.5 -k_spe gauss -ssf False -l 0.2 -sl 7282 7320 -n 7
+# muse_MakeNBImageWith3DSeg.py -m PB6291_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
+# -s_spe 1.5 -k_spe gauss -ssf False -l 0.2 -sl 7278 7320 -n 7
 # os.chdir(path_SB)
 # os.system('muse_MakeNBImageWith3DSeg.py -m PB6291_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.2 -sl 7282 7320 -n 7')
+#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.2 -sl 7278 7320 -n 7')
 # os.system('muse_MakeNBImageWith3DSeg.py -m PB6291_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
-#           '-ssf False -l 0.2 -sl 7282 7320 -n 7')
+#           '-ssf False -l 0.2 -sl 7278 7320 -n 7')
 # fit_param = {"OII": 1, 'ResolveOII': False, 'r_max': 1.6,
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
 # FitLines(cubename='PB6291', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
@@ -2301,12 +2301,12 @@ PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_mi
 
 # Q0107-0235
 # muse_MakeNBImageWith3DSeg.py -m Q0107-0235_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
-# -s_spe 1.5 -k_spe gauss -ssf False -l 0.2 -sl 7282 7320 -n 7
+# -s_spe 1.5 -k_spe gauss -ssf False -l 0.2 -sl 7278 7320 -n 7
 # os.chdir(path_SB)
 # os.system('muse_MakeNBImageWith3DSeg.py -m Q0107-0235_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.2 -sl 7282 7320 -n 7')
+#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.2 -sl 7278 7320 -n 7')
 # os.system('muse_MakeNBImageWith3DSeg.py -m Q0107-0235_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
-#           '-ssf False -l 0.2 -sl 7282 7320 -n 7')
+#           '-ssf False -l 0.2 -sl 7278 7320 -n 7')
 # fit_param = {"OII": 1, 'ResolveOII': False, 'r_max': 1.6,
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
 # FitLines(cubename='Q0107-0235', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
