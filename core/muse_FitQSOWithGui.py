@@ -1,6 +1,9 @@
+#!/usr/bin/env python
 import os
 import sys
 import lmfit
+import warnings
+import argparse
 import numpy as np
 import pyqtgraph as pg
 import matplotlib as mpl
@@ -19,7 +22,6 @@ from palettable.cmocean.sequential import Dense_20_r
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QHBoxLayout, QWidget, QPushButton, QVBoxLayout
 from scipy import integrate, interpolate
-import warnings
 warnings.filterwarnings("ignore")
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -35,6 +37,11 @@ wave_OII3729_vac = 3729.875
 wave_OII3728_vac = (wave_OII3727_vac + wave_OII3729_vac) / 2
 wave_Hbeta_vac = 4862.721
 wave_OIII5008_vac = 5008.239
+
+# Set up the parser
+parser = argparse.ArgumentParser(description='2D kinematics fitting Gui')
+parser.add_argument('-m', metavar='cubename', help='MUSE cube name (without .fits), required', required=True, type=str)
+args = parser.parse_args()  # parse the arguments
 
 # QSO table
 path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
@@ -293,6 +300,11 @@ class PlotWindow(QMainWindow):
             #
             # flux = np.where(flux_err != 0, flux, np.nan)
             # flux_err = np.where(flux_err != 0, flux_err, np.nan)
+
+            wave_OII_min, wave_OII_max = np.min(wave_OII_vac), np.max(wave_OII_vac)
+            wave_OIII_min, wave_OIII_max = np.min(wave_OIII_vac), np.max(wave_OIII_vac)
+            z_lb, z_ub = np.max([wave_OII_min / wave_OII3728_vac - 1, wave_OIII_min / wave_OIII5008_vac - 1]), \
+                         np.min([wave_OII_max / wave_OII3728_vac - 1, wave_OIII_max / wave_OIII5008_vac - 1])
         else:
             path_cube = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line)
@@ -339,12 +351,20 @@ class PlotWindow(QMainWindow):
                 self.wave_OII_vac, self.wave_OIII_vac = self.wave_vac, np.zeros_like(self.wave_vac)
                 self.flux_OII, self.flux_OIII = flux, np.zeros_like(flux)
                 self.flux_err_OII, self.flux_err_OIII = flux_err, np.zeros_like(flux_err)
+
+                wave_OII_min, wave_OII_max = np.min(self.wave_OII_vac), np.max(self.wave_OII_vac)
+                z_lb, z_ub = wave_OII_min / wave_OII3728_vac - 1, wave_OII_max / wave_OII3728_vac - 1
+
             elif line == 'OIII':
                 mask_seg_OII = np.zeros_like(mask_seg)
                 mask_seg_OIII = mask_seg
                 self.wave_OII_vac, self.wave_OIII_vac = np.zeros_like(self.wave_vac), self.wave_vac
                 self.flux_OII, self.flux_OIII = np.zeros_like(flux), flux
                 self.flux_err_OII, self.flux_err_OIII = np.zeros_like(flux_err), flux_err,
+
+                wave_OIII_min, wave_OIII_max = np.min(self.wave_OIII_vac), np.max(self.wave_OIII_vac)
+                z_lb, z_ub = wave_OIII_min / wave_OIII5008_vac - 1, wave_OIII_max / wave_OIII5008_vac - 1
+
 
 
         # Mask
@@ -360,9 +380,9 @@ class PlotWindow(QMainWindow):
         redshift_guess, sigma_kms_guess, flux_guess, r_OII3729_3727_guess = self.z_qso, 200.0, 1.0, 1.0
         self.model = model_OII_OIII
         self.parameters = lmfit.Parameters()
-        self.parameters.add_many(('z_1', redshift_guess, True, redshift_guess - 0.02, redshift_guess + 0.02, None),
-                                 ('z_2', redshift_guess, True, redshift_guess - 0.02, redshift_guess + 0.02, None),
-                                 ('z_3', redshift_guess, True, redshift_guess - 0.02, redshift_guess + 0.02, None),
+        self.parameters.add_many(('z_1', redshift_guess, True, z_lb, z_ub, None),
+                                 ('z_2', redshift_guess, True, z_lb, z_ub, None),
+                                 ('z_3', redshift_guess, True, z_lb, z_ub, None),
                                  ('sigma_kms_1', sigma_kms_guess, True, 50, 2000.0, None),
                                  ('sigma_kms_2', sigma_kms_guess, True, 50, 2000.0, None),
                                  ('sigma_kms_3', sigma_kms_guess, True, 50, 2000.0, None),
@@ -1265,6 +1285,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(cubename='HE0419-5657', NLR='')
+    window = PlotWindow(cubename=args.m, NLR='')
     window.show()
     sys.exit(app.exec_())
