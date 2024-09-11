@@ -312,6 +312,7 @@ S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
 S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
 S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
 OIII_OII = np.log10(np.nansum(flux_OIII_fit, axis=0) / np.nansum(flux_OII_fit, axis=0))
+
 # Compute 3sigma limit
 wave_array_OII, wave_array_OIII = np.zeros_like(flux_OII), np.zeros_like(flux_OIII)
 wave_array_OII[:], wave_array_OIII[:] = wave_OII_vac[:, np.newaxis, np.newaxis], wave_OIII_vac[:, np.newaxis, np.newaxis]
@@ -324,7 +325,6 @@ OIII_end = OIII_start + win_OIII
 flux_OIII_3sig = np.where((wave_array_OIII >= OIII_start) * (wave_array_OIII <= OIII_end), 3 * flux_err_OIII, np.nan)
 OIII_OII_3sig = np.log10(np.nansum(flux_OIII_3sig, axis=0) * 1.25 / np.nansum(flux_OII_fit, axis=0))
 OIII_OII = np.where(mask_seg_OIII != 0, OIII_OII, OIII_OII_3sig)
-
 # plt.figure()
 # plt.imshow(OIII_OII - OIII_OII_ori, origin='lower')
 # plt.show()
@@ -450,6 +450,8 @@ OIII_OII = np.where(center_mask, OIII_OII, np.nan)
 hdul_v50[1].data = np.where(S_N > 10, hdul_v50[1].data, np.nan)
 hdul_w80[1].data = np.where(S_N > 10, hdul_w80[1].data, np.nan)
 OIII_OII = np.where(S_N > 10, OIII_OII, np.nan)
+print('Median O32', np.nanmean(np.where(mask_seg_OIII != 0, OIII_OII, np.nan)))
+
 hdul_v50[1].header = hdr
 hdul_w80[1].header = hdr
 hdul_v50.writeto(path_v50_plot, overwrite=True)
