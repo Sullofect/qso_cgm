@@ -571,6 +571,7 @@ class PlotWindow(QMainWindow):
         self.tree.setParameters(self.param)
 
         # Buttons
+        self.state = 0
         btn_11 = QPushButton("Refit")
         btn_12 = QPushButton("Fit region")
         btn_13 = QPushButton("only OII")
@@ -589,6 +590,7 @@ class PlotWindow(QMainWindow):
         btn_21.clicked.connect(self.N_1)
         btn_22.clicked.connect(self.N_2)
         btn_23.clicked.connect(self.N_3)
+        btn_24.clicked.connect(self.toggle_OII_ratio)
         btn_31.clicked.connect(self.save_v50w80)
         btn_32.clicked.connect(self.clear_scatter)
         btn_33.clicked.connect(self.re_mask)
@@ -1093,12 +1095,21 @@ class PlotWindow(QMainWindow):
         print('to be written')
 
     def toggle_OII_ratio(self):
-        self.parameters['r_OII3729_3727_1'].value = 1.5
-        self.parameters['r_OII3729_3727_1'].vary = False
-        self.parameters['r_OII3729_3727_2'].value = 1.5
-        self.parameters['r_OII3729_3727_2'].vary = False
-        self.parameters['r_OII3729_3727_3'].value = 1.5
-        self.parameters['r_OII3729_3727_3'].vary = False
+        if self.state == 0:
+            print('OII ratio is fixed')
+            self.parameters['r_OII3729_3727_1'].vary = False
+            self.parameters['r_OII3729_3727_2'].vary = False
+            self.parameters['r_OII3729_3727_3'].vary = False
+            self.state += 1
+        elif self.state == 1:
+            print('OII ratio is unfixed')
+            self.parameters['r_OII3729_3727_1'].vary = True
+            if self.parameters['OII'].value == 2:
+                self.parameters['r_OII3729_3727_2'].vary = True
+            elif self.parameters['OII'].value == 3:
+                self.parameters['r_OII3729_3727_2'].vary = True
+                self.parameters['r_OII3729_3727_3'].vary = True
+            self.state -= 1
 
     def compute_v50w80(self, i, j):
         flux_OII_ij = model_OII(self.wave_OII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],

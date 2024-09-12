@@ -150,9 +150,9 @@ def expand_wave(wave, stack=True, times=3):
     return wave_expand
 
 def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None):
-    gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
+    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
-                    linewidths=0.5, s=3000, zorder=100)
+                    linewidths=0.5, s=1200, zorder=100)
     gc.set_system_latex(True)
 
     # Colorbar
@@ -185,8 +185,9 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.scalebar.set_font_size(30)
 
         gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
-        # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
-        gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
+        gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
+        gc.add_label(0.98, 0.90, '{}'.format(cubename), size=60, relative=True, horizontalalignment='right')
+        # gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
     elif type == 'GasMap_slit':
         gc.add_scalebar(length=7 * u.arcsecond)
         gc.scalebar.set_corner('bottom left')
