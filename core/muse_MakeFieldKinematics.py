@@ -2452,13 +2452,13 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='HE1003+0149', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+             'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='HE1003+0149', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='HE1003+0149', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
-#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
+PlotKinematics(cubename='HE1003+0149', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+               FixAstrometry=True,
+               sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # HE0331-4112
 # muse_MakeNBImageWith3DSeg.py -m HE0331-4112_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
