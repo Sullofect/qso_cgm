@@ -187,6 +187,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300):
     # Replace coordinate to Gaia
     path_sub_white_gaia = '../../MUSEQuBES+CUBS/fit_kin/{}_WCS_subcube.fits'.format(cubename)
     if os.path.exists(path_sub_white_gaia):
+        print('correcting to gaia')
         hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
         w = WCS(hdr_sub_gaia, naxis=2)
 
@@ -200,7 +201,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300):
         hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
     else:
         w = WCS(hdr, naxis=2)
-        print('CUBS quasar')
+        print('No gaia correction info')
 
     center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
     c2 = w.world_to_pixel(center_qso)
@@ -251,10 +252,10 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300):
 
 # MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
 
-MakeV50W80(cubename='TEX0206-048', v_max=400, sigma_max=300)
+# MakeV50W80(cubename='TEX0206-048', v_max=600, sigma_max=400)
 # MakeV50W80(cubename='Q1354+048', v_max=400, sigma_max=300)
 # MakeV50W80(cubename='J0154-0712', v_max=300, sigma_max=300)
-# MakeV50W80(cubename='LBQS1435-0134', v_max=300, sigma_max=300)
+MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400)
 # MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300)
 
 # MakeV50W80(cubename='PKS0232-04', v_max=300, sigma_max=300)
