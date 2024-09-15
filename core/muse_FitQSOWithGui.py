@@ -185,6 +185,9 @@ class PlotWindow(QMainWindow):
                      'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
 
         # if zapped
+        if cubename == 'TEX0206-048':
+            zapped = True
+
         if zapped:
             str_zap = '_zapped'
         else:

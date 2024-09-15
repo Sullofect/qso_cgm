@@ -26,7 +26,7 @@ rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 
 #
-path_SB = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB'
+path_SB = '../../MUSEQuBES+CUBS/SB'
 
 # Constants
 c_kms = 2.998e5
@@ -166,7 +166,7 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
         str_zap = ''
 
     # Load qso information
-    path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
+    path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
@@ -174,25 +174,25 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
     # Load cubes and calculate initial conditions
     if line == 'OII+OIII':
         line_OII, line_OIII = 'OII', 'OIII'
-        path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
+        path_cube_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
             format(cubename, str_zap, line_OII)
-        path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+        path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                  '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDataSeg)
-        path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
+        path_cube_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
             format(cubename, str_zap, line_OIII)
-        path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+        path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                   '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDataSeg)
         if UseDetectionSeg is not None:
-            path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+            path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
                 format(cubename, str_zap, line_OII, *UseDetectionSeg)
-            path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+            path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
                 format(cubename, str_zap, line_OIII, *UseDetectionSeg)
         else:
-            path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+            path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
                 format(cubename, str_zap, line_OII, *UseDataSeg)
-            path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+            path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
                 format(cubename, str_zap, line_OIII, *UseDataSeg)
-        path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
+        path_fit = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
         path_cube = path_cube_OII
 
@@ -295,17 +295,17 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
             width = width_OII
         elif line == 'OIII':
             width = width_OIII
-        path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
+        path_cube = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'.\
             format(cubename, str_zap, line)
-        path_cube_smoothed = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
+        path_cube_smoothed = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
                              '{}_{}.fits'.format(cubename, str_zap, line, *UseDataSeg)
         if UseDetectionSeg is not None:
-            path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
+            path_3Dseg = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
                 format(cubename, str_zap, line, *UseDetectionSeg)
         else:
-            path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
+            path_3Dseg = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
                 format(cubename, str_zap, line, *UseDataSeg)
-        path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
+        path_fit = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
 
         # Load data and smoothing
@@ -564,7 +564,7 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
 
             # Fitting start
             # write
-            path_fit_ini = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
+            path_fit_ini = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
                 format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
             hdul = fits.open(path_fit_ini)
             v_guess_fit, z_guess_fit, dz_guess_fit = hdul[2].data, hdul[3].data, hdul[4].data
@@ -674,7 +674,7 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
     elif FitType == 'find_best':
         # Fitting start
         # write
-        path_fit_ini = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
+        path_fit_ini = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
             format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
         hdul = fits.open(path_fit_ini)
         v_guess_fit, z_guess_fit, dz_guess_fit = hdul[2].data, hdul[3].data, hdul[4].data
@@ -795,11 +795,11 @@ def FitLines(cubename=None, fit_param=None, zapped=False, UseDataSeg=(1.5, 'gaus
     elif FitType == 'specific':
         parameters['OII'].value = max_line
         parameters['OIII'].value = max_line
-        path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N_com={}.fits'.\
+        path_fit = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N_com={}.fits'.\
             format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']),
                    *UseDataSeg, max_line)
 
-        path_fit_ini = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
+        path_fit_ini = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_inigus.fits'.\
             format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
         hdul = fits.open(path_fit_ini)
         v_guess_fit, z_guess_fit, dz_guess_fit = hdul[2].data, hdul[3].data, hdul[4].data
@@ -967,13 +967,13 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         line = 'OII+OIII'
 
     # QSO information
-    path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
+    path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
     # Galaxies infomation
-    path_gal = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info.fits'.format(cubename)
+    path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info.fits'.format(cubename)
     try:
         data_gal = fits.open(path_gal)[1].data
         ra_gal, dec_gal, v_gal = data_gal['ra'], data_gal['dec'], data_gal['v']
@@ -987,19 +987,19 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
     else:
         str_zap = ''
 
-    path_fit = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
+    path_fit = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-    path_fit_N1 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N1.fits'.\
+    path_fit_N1 = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}_{}_{}_{}_{}_{}_{}_N1.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-    path_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.fits'.\
+    path_v = '../../MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-    figurename_v = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.png'.\
+    figurename_v = '../../MUSEQuBES+CUBS/fit_kin/{}{}_v_{}_{}_{}_{}_{}_{}_{}.png'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-    path_sigma = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.fits'.\
+    path_sigma = '../../MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.fits'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-    figurename_sigma = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.png'.\
+    figurename_sigma = '../../MUSEQuBES+CUBS/fit_kin/{}{}_sigma_{}_{}_{}_{}_{}_{}_{}.png'.\
         format(cubename, str_zap, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
-    figurename = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_{}_{}_{}_{}_{}_checkspectra.png'.\
+    figurename = '../../MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_{}_{}_{}_{}_{}_checkspectra.png'.\
         format(cubename, line, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
 
     hdul = fits.open(path_fit)
@@ -1059,21 +1059,21 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
 
     if line == 'OII+OIII':
         line_OII, line_OIII = 'OII', 'OIII'
-        path_3Dseg_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+        path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
             format(cubename, str_zap, line_OII, *UseSeg)
-        path_3Dseg_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+        path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
             format(cubename, str_zap, line_OIII, *UseSeg)
-        path_SB_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+        path_SB_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
             format(cubename, str_zap, line_OII, *UseSeg)
-        path_SB_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
+        path_SB_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'. \
             format(cubename, str_zap, line_OIII, *UseSeg)
-        path_SB_OII_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
+        path_SB_OII_kin = '../../MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line_OII, *UseSeg)
-        figurename_SB_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_SB_{}_{}_{}_{}_{}.png'.\
+        figurename_SB_OII = '../../MUSEQuBES+CUBS/fit_kin/{}{}_SB_{}_{}_{}_{}_{}.png'.\
             format(cubename, str_zap, line_OII, *UseSeg)
-        path_SB_OIII_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
+        path_SB_OIII_kin = '../../MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line_OIII, *UseSeg)
-        figurename_SB_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_SB_{}_{}_{}_{}_{}.png'.\
+        figurename_SB_OIII = '../../MUSEQuBES+CUBS/fit_kin/{}{}_SB_{}_{}_{}_{}_{}.png'.\
             format(cubename, str_zap, line_OIII, *UseSeg)
 
 
@@ -1091,13 +1091,13 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         S_N = flux_OIII_fit / dflux_OIII_fit
 
     else:
-        path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
+        path_3Dseg = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line, *UseSeg)
-        path_SB = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
+        path_SB = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line, *UseSeg)
-        path_SB_kin = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
+        path_SB_kin = '../../MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line, *UseSeg)
-        figurename_SB = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_SB_{}_{}_{}_{}_{}.png'.\
+        figurename_SB = '../../MUSEQuBES+CUBS/fit_kin/{}{}_SB_{}_{}_{}_{}_{}.png'.\
             format(cubename, str_zap, line, *UseSeg)
 
         # 3D seg
@@ -1126,7 +1126,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
 
     # Fix Astrometry
     if FixAstrometry:
-        path_gal = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+        path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
         try:
             data_gal = fits.open(path_gal)[1].data
             ra_gal, dec_gal, v_gal = data_gal['ra'], data_gal['dec'], data_gal['v']
@@ -1135,14 +1135,14 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
             ra_gal, dec_gal, v_gal = [], [], []
 
         # Will be replaced by a table
-        path_subcube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/subcubes.dat'
+        path_subcube = '../../MUSEQuBES+CUBS/gal_info/subcubes.dat'
         data_subcube = ascii.read(path_subcube, format='fixed_width')
         data_subcube = data_subcube[data_subcube['name'] == cubename]
         ra_muse, dec_muse, radius = data_subcube['ra_center'][0], data_subcube['dec_center'][0], data_subcube['radius'][0]
         c_muse = SkyCoord(ra=ra_muse * u.degree, dec=dec_muse * u.degree, frame='icrs')
-        path_muse_white = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_WHITE.fits'.\
+        path_muse_white = '../../MUSEQuBES+CUBS/datacubes/{}_ESO-DEEP_ZAP_WHITE.fits'.\
             format(cubename)
-        path_muse_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia_WHITE.fits'.\
+        path_muse_white_gaia = '../../MUSEQuBES+CUBS/datacubes_gaia/{}_ESO-DEEP_ZAP_gaia_WHITE.fits'.\
             format(cubename)
         hdul_muse_white = fits.open(path_muse_white)
         hdul_muse_white_gaia = fits.open(path_muse_white_gaia)
@@ -1155,7 +1155,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         c_muse_gaia = w_gaia.pixel_to_world(x, y)
         muse_white_gaia = Image(path_muse_white_gaia)
         sub_muse_white_gaia = muse_white_gaia.subimage(center=(c_muse_gaia.dec.value, c_muse_gaia.ra.value), size=30)
-        path_sub_white_gaia = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
+        path_sub_white_gaia = '../../MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
         sub_muse_white_gaia.write(path_sub_white_gaia)
         hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
         hdr['CRVAL1'] = hdr_sub_gaia['CRVAL1']
@@ -1188,7 +1188,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
 
         if cubename == 'HE0238-1904':
             ra_qso, dec_qso = 40.13564948691202, -18.864301804042814
-            path_SB_OII_kin = '/Users/lzq/Dropbox/Data/CGM/cube_narrow/cube_OII_line_offset_SB_3DSeg_1.5_gauss_1.5_gauss.fits'
+            path_SB_OII_kin = '../../Data/CGM/cube_narrow/cube_OII_line_offset_SB_3DSeg_1.5_gauss_1.5_gauss.fits'
 
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(path_SB_OII_kin, figure=fig, hdu=1)
@@ -1229,8 +1229,8 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
 
     raise ValueError('stop here')
     # LOS velocity
-    path_V50 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
-    path_W80 = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
+    path_V50 = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
+    path_W80 = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
     fig = plt.figure(figsize=(8, 8), dpi=300)
     # plt.imshow(fits.open(path_v)[1].data, vmin=v_min, vmax=v_max, cmap=plt.get_cmap('coolwarm'), origin='lower')
     gc = aplpy.FITSFigure(path_v, figure=fig, hdu=1)
@@ -1262,13 +1262,13 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         if line == 'OII+OIII':
             #
             line_OII, line_OIII = 'OII', 'OIII'
-            path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+            path_cube_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line_OII)
-            path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+            path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                      '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDataSeg)
-            path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+            path_cube_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line_OIII)
-            path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+            path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                       '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDataSeg)
 
             # Load data and smoothing
@@ -1418,19 +1418,19 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                     ax_2[ax_i, ax_j].set_title('x={}, y={}'.format(j_j_idx, i_j_idx)
                                              + '\n' + 'v=' + str(np.round(v[0, i_j, j_j], 2)) +
                                                '\n' + 'sigma=' + str(np.round(sigma[0, i_j, j_j], 2)), y=0.7, x=0.2)
-            figname_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_checkspectra.png'.format(cubename,
+            figname_OII = '../../MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_checkspectra.png'.format(cubename,
                                                                                                            line, line_OII)
-            figname_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_checkspectra.png'.format(cubename,
+            figname_OIII = '../../MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_checkspectra.png'.format(cubename,
                                                                                                             line, line_OIII)
             fig_1.savefig(figname_OII, bbox_inches='tight')
             fig_2.savefig(figname_OIII, bbox_inches='tight')
 
         else:
-            path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+            path_cube = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line)
-            path_cube_smoothed = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
+            path_cube_smoothed = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
                                  '{}_{}.fits'.format(cubename, str_zap, line, *UseDataSeg)
-            path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+            path_3Dseg = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
                 format(cubename, str_zap, line, *UseDataSeg)
 
             # Load data and smoothing
@@ -1492,13 +1492,13 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         if line == 'OII+OIII':
             #
             line_OII, line_OIII = 'OII', 'OIII'
-            path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+            path_cube_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line_OII)
-            path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+            path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                      '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDataSeg)
-            path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+            path_cube_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line_OIII)
-            path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+            path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                       '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDataSeg)
 
             # Load data and smoothing
@@ -1572,16 +1572,16 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                 ax_i.tick_params(axis='both', which='major', labelsize=40)
                 # ax_i.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
                 #                 size=20, x=0.03)
-                figname_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_thesis_{}.png'.\
+                figname_OIII = '../../MUSEQuBES+CUBS/fit_kin/{}_fit_{}_{}_thesis_{}.png'.\
                     format(cubename, line, line_OIII, i_ax)
                 fig_i.savefig(figname_OIII, bbox_inches='tight')
 
         else:
-            path_cube = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+            path_cube = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line)
-            path_cube_smoothed = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
+            path_cube_smoothed = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_' \
                                  '{}_{}.fits'.format(cubename, str_zap, line, *UseDataSeg)
-            path_3Dseg = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+            path_3Dseg = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
                 format(cubename, str_zap, line, *UseDataSeg)
 
             # Load data and smoothing
@@ -1645,13 +1645,13 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         if line == 'OII+OIII':
             #
             line_OII, line_OIII = 'OII', 'OIII'
-            path_cube_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+            path_cube_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line_OII)
-            path_cube_smoothed_OII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+            path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                      '{}_{}_{}.fits'.format(cubename, str_zap, line_OII, *UseDataSeg)
-            path_cube_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
+            path_cube_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}.fits'. \
                 format(cubename, str_zap, line_OIII)
-            path_cube_smoothed_OIII = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
+            path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_' \
                                       '{}_{}_{}.fits'.format(cubename, str_zap, line_OIII, *UseDataSeg)
 
             # Load data and smoothing
@@ -1766,7 +1766,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
                 ax_iax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20, y=-0.12)
                 ax_iax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$',
                                   size=20, x=0.03)
-                figname_OIII_iax = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/fit_kin/{}_{}_{}_{}_checkspectra.png'.\
+                figname_OIII_iax = '../../MUSEQuBES+CUBS/fit_kin/{}_{}_{}_{}_checkspectra.png'.\
                     format(cubename, line, line_OIII, iax + 1)
                 fig_iax.savefig(figname_OIII_iax, bbox_inches='tight')
 
@@ -1913,8 +1913,8 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 #                kernel_1D=None, CheckSpectra=[10, 10], v_min=-350, v_max=350, width_OII=10, S_N_thr=1,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
 #                offset_gaia=True, FixAstrometry=True)
-fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': False, 'r_max': 1.6,
-             'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 0}
+# fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': False, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='HE0226-4110', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None, kernel_1D=None,
 #          CheckGuess=[10, 10], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 # PlotKinematics(cubename='HE0226-4110', fit_param=fit_param, CheckSpectra=[77, 71], v_min=-350, v_max=350,
@@ -1972,13 +1972,13 @@ fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': False, 'r_max': 1.6,
 #                sigma_max=200, contour_level=0.3, offset_gaia=True)
 # os.chdir(path_SB)
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False')
+#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 6050 6090')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
-#           '-ssf False')
+#           '-ssf False -sl 6050 6090')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False')
+#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8130 8170')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss '
-#           '-ssf False')
+#           '-ssf False -sl 8130 8170')
 # fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='HE0238-1904', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
@@ -2028,13 +2028,13 @@ fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': False, 'r_max': 1.6,
 # PlotKinematics(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5,
 #                kernel_1D='gauss', CheckSpectra=[70, 80], v_min=-300, v_max=300,
 #                sigma_max=300, contour_level=0.25)
-fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
-             'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
+# fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': wave_OII3728_vac, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='3C57', fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'), CheckGuess=[10, 10],
 #          width_OII=10, width_OIII=10, FitType='sequential')
-PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_min=-350, v_max=350, width_OII=10,
-               S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-               FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
+# PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_min=-350, v_max=350, width_OII=10,
+#                S_N_thr=1, sigma_max=300, contour_level=0.20, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+#                FixAstrometry=True, CheckSpectraSeg=False, CheckSpectra_2=False)
 
 # PKS0552-640
 # muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
@@ -2486,6 +2486,8 @@ PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_mi
 # TEX0206-048
 # muse_MakeNBImageWith3DSeg.py -m TEX0206-048_ESO-DEEP_zapped_subtracted_OII -t 1.8 -s 1.5 -k gauss
 # -s_spe 1.5 -k_spe gauss -ssf False -sl 7910 7975 -n 1000 -npixels 10
+# muse_MakeNBImageWith3DSeg.py -m TEX0206-048_ESO-DEEP_zapped_subtracted_OII -t 1.8 -s 1.5 -k gauss
+# -ssf False -sl 7910 7975 -npixels 10
 # FitLines(cubename='TEX0206-048', zapped=True, line='OII', smooth_2D=2.0,
 #          kernel_2D='gauss', smooth_1D=None, kernel_1D=None)
 # PlotKinematics(cubename='TEX0206-048', zapped=True, line='OII', smooth_2D=2.0, kernel_2D='gauss', smooth_1D=None,
@@ -2494,10 +2496,10 @@ PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_mi
 #          kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
 fit_param = {"OII": 1, 'OII_2nd':0, 'ResolveOII': False, 'r_max': 1.6,
              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd':0}
-# PlotKinematics(cubename='TEX0206-048', zapped=True, fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-#                S_N_thr=-np.inf, CheckSpectra=[81, 174], UseDataSeg=(1.5, 'gauss', 1.5, 'gauss'), contour_level=0.17,
-#                SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
-#                               26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552], FixAstrometry=False)
+PlotKinematics(cubename='TEX0206-048', zapped=True, fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+               S_N_thr=-np.inf, CheckSpectra=[81, 174], UseDataSeg=(1.5, 'gauss', 1.5, 'gauss'), contour_level=0.17,
+               SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
+                              26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552], FixAstrometry=True)
 
 # Q1354+048
 # muse_MakeNBImageWith3DSeg.py -m Q1354+048_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
@@ -2509,12 +2511,11 @@ fit_param = {"OII": 1, 'OII_2nd':0, 'ResolveOII': False, 'r_max': 1.6,
 # PlotKinematics(cubename='Q1354+048', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 1, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='Q1354+048', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10)
-# PlotKinematics(cubename='Q1354+048', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='Q1354+048', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10, FixAstrometry=True,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # J0154-0712
@@ -2545,12 +2546,12 @@ fit_param = {"OII": 1, 'OII_2nd':0, 'ResolveOII': False, 'r_max': 1.6,
 # PlotKinematics(cubename='LBQS1435-0134', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 1, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='LBQS1435-0134', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10)
-# PlotKinematics(cubename='LBQS1435-0134', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='LBQS1435-0134', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300,
+#                width_OII=10, FixAstrometry=True,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # PG1522+101
@@ -2564,13 +2565,12 @@ fit_param = {"OII": 1, 'OII_2nd':0, 'ResolveOII': False, 'r_max': 1.6,
 # PlotKinematics(cubename='PG1522+101', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 1, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='PG1522+101', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10)
-# PlotKinematics(cubename='PG1522+101', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
-#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
+# PlotKinematics(cubename='PG1522+101', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+#                FixAstrometry=True, sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # HE2336-5540
 # muse_MakeNBImageWith3DSeg.py -m HE2336-5540_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
@@ -2599,10 +2599,10 @@ fit_param = {"OII": 1, 'OII_2nd':0, 'ResolveOII': False, 'r_max': 1.6,
 # PlotKinematics(cubename='PKS0232-04', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[76, 72], v_min=-300, v_max=300,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 1, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='PKS0232-04', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10)
-# PlotKinematics(cubename='PKS0232-04', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='PKS0232-04', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300,
+#                width_OII=10, FixAstrometry=True,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))

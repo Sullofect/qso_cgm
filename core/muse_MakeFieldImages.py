@@ -103,157 +103,159 @@ def MakeFieldImage(cubename=None):
     bins_gal, row_gal, ID_gal, z_gal, v_gal, name_gal, ql_gal, ra_gal, dec_gal = LoadFieldGals(cubename=cubename,
                                                                                                z_qso=z_qso)
     print(ra_gal)
-    # Load the image
-    path_hb = '../../MUSEQuBES+CUBS/datacubes_gaia/{}_drc_offset_gaia.fits'.format(cubename)
-    # data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
 
 
-    # Figure
-    fig = plt.figure(figsize=(8, 8), dpi=300)
-    gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
-    gc.set_xaxis_coord_type('scalar')
-    gc.set_yaxis_coord_type('scalar')
-
-
+    # # Load the image
+    # path_hb = '../../MUSEQuBES+CUBS/datacubes_gaia/{}_drc_offset_gaia.fits'.format(cubename)
+    # # data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
     #
-    gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
-
     #
-    gc.set_system_latex(True)
-    # gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
-    gc.show_colorscale(cmap='Greys', vmin=-0.005, vmax=1, vmid=-0.001, stretch='arcsinh')
-    gc.add_colorbar()
-    # gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
-    gc.colorbar.set_location('bottom')
-    gc.colorbar.set_pad(0.0)
-    gc.colorbar.set_font(size=30)
-    gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
-                                    r's^{-1} \; arcsec^{-2}]}$')
-    gc.colorbar.set_axis_label_font(size=30)
-    gc.colorbar.hide()
-
-
-    # Hide ticks
-    gc.ticks.set_length(30)
-    gc.ticks.hide()
-    gc.tick_labels.hide()
-    gc.axis_labels.hide()
-
-    # Markers
-    gc.add_scalebar(length=7 * u.arcsecond)
-    # gc.add_scalebar(length=15 * u.arcsecond)
-    gc.scalebar.set_corner('top left')
-    # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
-    gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
-    gc.scalebar.set_font_size(30)
-
-    gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
-                    edgecolors='k', linewidths=0.5, s=3000)
-    gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
-
-    # Draw contours
-    contour_level = 0.20
-    gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='blue', linewidths=2,
-                    smooth=5, kernel='box', hdu=1)
-    gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='red', linewidths=2,
-                    smooth=5, kernel='box', hdu=1)
-
-    # labels
-    gc.add_label(0.58, 0.88, r'$\rm MUSE \, [O\,II]$', color='blue', size=30, relative=True, horizontalalignment='left')
-    gc.add_label(0.58, 0.80, r'$\rm MUSE \, [O\,III]$', color='red', size=30, relative=True, horizontalalignment='left')
-    gc.add_label(0.58, 0.95, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=30, relative=True, horizontalalignment='left')
-    gc.add_label(0.08, 0.08, '(a)', color='k', size=40, relative=True)
-
-    # NE
-    # xw, yw = gc.pixel2world(140, 140)
-    # gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
-    # gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
-    # gc.add_label(0.9778, 0.30, r'N', size=30, relative=True)
-    # gc.add_label(0.88, 0.10, r'E', size=30, relative=True)
-
-    # Labels
-    fig.savefig(path_savefig_mini, bbox_inches='tight')
-
-    raise ValueError('STOP')
-
-    # Figure
-    fig = plt.figure(figsize=(8, 8), dpi=300)
-    gc1 = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
-    gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
-    gc.set_xaxis_coord_type('scalar')
-    gc.set_yaxis_coord_type('scalar')
-    gc1.set_xaxis_coord_type('scalar')
-    gc1.set_yaxis_coord_type('scalar')
-
-
+    # # Figure
+    # fig = plt.figure(figsize=(8, 8), dpi=300)
+    # gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
+    # gc.set_xaxis_coord_type('scalar')
+    # gc.set_yaxis_coord_type('scalar')
     #
-    gc.recenter(ra_qso, dec_qso, width=90 / 3600, height=90 / 3600)
-    gc1.recenter(ra_qso, dec_qso, width=90 / 3600, height=90 / 3600)  # 0.02 / 0.01 40''
-
     #
-    gc.set_system_latex(True)
-    gc1.set_system_latex(True)
-    gc1.show_colorscale(cmap='coolwarm', vmin=-1000, vmax=1000)
-    gc1.hide_colorscale()
-    gc1.add_colorbar()
-    gc1.colorbar.set_box([0.15, 0.145, 0.38, 0.02], box_orientation='horizontal')
-    gc1.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
-    gc1.colorbar.set_axis_label_font(size=12)
-    gc1.colorbar.set_axis_label_pad(-40)
-    gc1.colorbar.set_location('bottom')
-    # gc1.colorbar.hide()
-    # gc.show_colorscale(cmap='Greys', vmin=0, vmax=0.005, stretch='linear', smooth=3, kernel='gauss')
-    gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
-    # gc.show_colorscale(cmap='Greys')
-
-    gc.add_colorbar()
-    gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
-    gc.colorbar.hide()
-
-    # Scale bar
-    # gc.add_scalebar(length=15 * u.arcsecond)
+    # #
+    # gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
+    #
+    # #
+    # gc.set_system_latex(True)
+    # # gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+    # gc.show_colorscale(cmap='Greys', vmin=-0.005, vmax=1, vmid=-0.001, stretch='arcsinh')
+    # gc.add_colorbar()
+    # # gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
+    # gc.colorbar.set_location('bottom')
+    # gc.colorbar.set_pad(0.0)
+    # gc.colorbar.set_font(size=30)
+    # gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
+    #                                 r's^{-1} \; arcsec^{-2}]}$')
+    # gc.colorbar.set_axis_label_font(size=30)
+    # gc.colorbar.hide()
+    #
+    #
+    # # Hide ticks
+    # gc.ticks.set_length(30)
+    # gc.ticks.hide()
+    # gc.tick_labels.hide()
+    # gc.axis_labels.hide()
+    #
+    # # Markers
+    # gc.add_scalebar(length=7 * u.arcsecond)
+    # # gc.add_scalebar(length=15 * u.arcsecond)
     # gc.scalebar.set_corner('top left')
-    # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
-    # gc.scalebar.set_font_size(15)
-
-    # Hide ticks
-    gc.ticks.set_length(30)
-    gc1.ticks.set_length(30)
-    gc.ticks.hide()
-    gc.tick_labels.hide()
-    gc.axis_labels.hide()
-    gc1.ticks.hide()
-    gc1.tick_labels.hide()
-    gc1.axis_labels.hide()
-    norm = mpl.colors.Normalize(vmin=-1000, vmax=1000)
-
-    # Markers
-    gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
-                    edgecolors='k', linewidths=0.5, s=400)
-    # gc.add_label(ra_qso - 0.0015, dec_qso, 'QSO', size=10)
-    gc.show_markers(ra_gal, dec_gal, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
-                    linewidths=1.2, s=80)
-    gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
-    # gc.show_markers(ra_gal_all, dec_gal_all, facecolor='none', marker='o', c='none', edgecolors='red',
-    #                 linewidths=0.8, s=120)
-    gc.show_contour(path_OII, hdu=1, levels=[0.1], color='black', linewidths=1, smooth=5, kernel='box')
-
-    # Labels
-    # xw, yw = 40.1231559, -18.8580071
-    # gc.show_arrows(xw, yw, -0.0001 * yw, 0, color='k')
-    # gc.show_arrows(xw, yw, 0, -0.0001 * yw, color='k')
-    # gc.add_label(0.985, 0.85, r'N', size=15, relative=True)
-    # gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
-    gc.add_label(0.87, 0.97, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=15, relative=True)
-    # gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
-    # gc.add_label(0.47, 0.30, r"$\rm 30'' \times 30''$", size=15, relative=True)
-    fig.savefig(path_savefig, bbox_inches='tight')
+    # # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+    # gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
+    # gc.scalebar.set_font_size(30)
+    #
+    # gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
+    #                 edgecolors='k', linewidths=0.5, s=3000)
+    # gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
+    #
+    # # Draw contours
+    # contour_level = 0.20
+    # gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='blue', linewidths=2,
+    #                 smooth=5, kernel='box', hdu=1)
+    # gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='red', linewidths=2,
+    #                 smooth=5, kernel='box', hdu=1)
+    #
+    # # labels
+    # gc.add_label(0.58, 0.88, r'$\rm MUSE \, [O\,II]$', color='blue', size=30, relative=True, horizontalalignment='left')
+    # gc.add_label(0.58, 0.80, r'$\rm MUSE \, [O\,III]$', color='red', size=30, relative=True, horizontalalignment='left')
+    # gc.add_label(0.58, 0.95, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=30, relative=True, horizontalalignment='left')
+    # gc.add_label(0.08, 0.08, '(a)', color='k', size=40, relative=True)
+    #
+    # # NE
+    # # xw, yw = gc.pixel2world(140, 140)
+    # # gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
+    # # gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
+    # # gc.add_label(0.9778, 0.30, r'N', size=30, relative=True)
+    # # gc.add_label(0.88, 0.10, r'E', size=30, relative=True)
+    #
+    # # Labels
+    # fig.savefig(path_savefig_mini, bbox_inches='tight')
+    #
+    # raise ValueError('STOP')
+    #
+    # # Figure
+    # fig = plt.figure(figsize=(8, 8), dpi=300)
+    # gc1 = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
+    # gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
+    # gc.set_xaxis_coord_type('scalar')
+    # gc.set_yaxis_coord_type('scalar')
+    # gc1.set_xaxis_coord_type('scalar')
+    # gc1.set_yaxis_coord_type('scalar')
+    #
+    #
+    # #
+    # gc.recenter(ra_qso, dec_qso, width=90 / 3600, height=90 / 3600)
+    # gc1.recenter(ra_qso, dec_qso, width=90 / 3600, height=90 / 3600)  # 0.02 / 0.01 40''
+    #
+    # #
+    # gc.set_system_latex(True)
+    # gc1.set_system_latex(True)
+    # gc1.show_colorscale(cmap='coolwarm', vmin=-1000, vmax=1000)
+    # gc1.hide_colorscale()
+    # gc1.add_colorbar()
+    # gc1.colorbar.set_box([0.15, 0.145, 0.38, 0.02], box_orientation='horizontal')
+    # gc1.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
+    # gc1.colorbar.set_axis_label_font(size=12)
+    # gc1.colorbar.set_axis_label_pad(-40)
+    # gc1.colorbar.set_location('bottom')
+    # # gc1.colorbar.hide()
+    # # gc.show_colorscale(cmap='Greys', vmin=0, vmax=0.005, stretch='linear', smooth=3, kernel='gauss')
+    # gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+    # # gc.show_colorscale(cmap='Greys')
+    #
+    # gc.add_colorbar()
+    # gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
+    # gc.colorbar.hide()
+    #
+    # # Scale bar
+    # # gc.add_scalebar(length=15 * u.arcsecond)
+    # # gc.scalebar.set_corner('top left')
+    # # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+    # # gc.scalebar.set_font_size(15)
+    #
+    # # Hide ticks
+    # gc.ticks.set_length(30)
+    # gc1.ticks.set_length(30)
+    # gc.ticks.hide()
+    # gc.tick_labels.hide()
+    # gc.axis_labels.hide()
+    # gc1.ticks.hide()
+    # gc1.tick_labels.hide()
+    # gc1.axis_labels.hide()
+    # norm = mpl.colors.Normalize(vmin=-1000, vmax=1000)
+    #
+    # # Markers
+    # gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
+    #                 edgecolors='k', linewidths=0.5, s=400)
+    # # gc.add_label(ra_qso - 0.0015, dec_qso, 'QSO', size=10)
+    # gc.show_markers(ra_gal, dec_gal, marker='o', facecolor='none', c='none', edgecolors=plt.cm.coolwarm(norm(v_gal)),
+    #                 linewidths=1.2, s=80)
+    # gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
+    # # gc.show_markers(ra_gal_all, dec_gal_all, facecolor='none', marker='o', c='none', edgecolors='red',
+    # #                 linewidths=0.8, s=120)
+    # gc.show_contour(path_OII, hdu=1, levels=[0.1], color='black', linewidths=1, smooth=5, kernel='box')
+    #
+    # # Labels
+    # # xw, yw = 40.1231559, -18.8580071
+    # # gc.show_arrows(xw, yw, -0.0001 * yw, 0, color='k')
+    # # gc.show_arrows(xw, yw, 0, -0.0001 * yw, color='k')
+    # # gc.add_label(0.985, 0.85, r'N', size=15, relative=True)
+    # # gc.add_label(0.89, 0.748, r'E', size=15, relative=True)
+    # gc.add_label(0.87, 0.97, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=15, relative=True)
+    # # gc.add_label(0.27, 0.86, r"$\rm MUSE \, 1'\times 1' \, FoV$", size=15, relative=True, rotation=60)
+    # # gc.add_label(0.47, 0.30, r"$\rm 30'' \times 30''$", size=15, relative=True)
+    # fig.savefig(path_savefig, bbox_inches='tight')
 
 
 # MakeFieldImage(cubename='Q0107-0235')
 # MakeFieldImage(cubename='PB6291')
 # MakeFieldImage(cubename='HE0153-4520')
-MakeFieldImage(cubename='3C57')
+# MakeFieldImage(cubename='3C57')
 # MakeFieldImage(cubename='TEX0206-048')
 # MakeFieldImage(cubename='HE0226-4110')
 # MakeFieldImage(cubename='PKS0232-04')
@@ -265,4 +267,4 @@ MakeFieldImage(cubename='3C57')
 # MakeFieldImage(cubename='PG1522+101')
 # MakeFieldImage(cubename='HE1003+0149')
 # MakeFieldImage(cubename='PKS0405-123')
-# MakeFieldImage(cubename='HE0238-1904')
+MakeFieldImage(cubename='HE0238-1904')  # Might need to double check
