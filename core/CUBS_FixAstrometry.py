@@ -114,10 +114,29 @@ def FixGalaxyCatalog(cubename=None):
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
     c_kms = 2.998e5
 
+
+
     try:
         name_1, name_2 = cubename.split('-')
     except ValueError:
         name_1, name_2 = cubename.split('+')
+
+    if name_1 == 'HE0112':
+        name_1 = 'J0114'
+    elif name_1 == 'HE0246':
+        name_1 = 'J0248'
+    elif name_1 == 'HE0331':
+        name_1 = 'J0333'
+    elif name_1 == 'PKS0355':
+        name_1 = 'J0357'
+    elif name_1 == 'HE0419':
+        name_1 = 'J0420'
+    elif name_1 == 'PKS2242':
+        name_1 = 'J2245'
+    elif name_1 == 'HE2305':
+        name_1 = 'J2308'
+    elif name_1 == 'HE2336':
+        name_1 = 'J2339'
 
     path_group = '../../MUSEQuBES+CUBS/group/{}_group.txt'.format(name_1)
     data_group = ascii.read(path_group)
@@ -185,3 +204,17 @@ def FixGalaxyCatalog(cubename=None):
 
 # Get galaxy catalog
 # FixGalaxyCatalog(cubename='J0110-1648')
+# FixGalaxyCatalog(cubename='J2135-5316')
+# FixGalaxyCatalog(cubename='J0119-2010')
+# FixGalaxyCatalog(cubename='HE0246-4101')
+# FixGalaxyCatalog(cubename='J0028-3305')
+# FixGalaxyCatalog(cubename='HE0419-5657')
+# FixGalaxyCatalog(cubename='PKS2242-498')
+# FixGalaxyCatalog(cubename='PKS0355-483')
+# FixGalaxyCatalog(cubename='HE0112-4145')
+# FixGalaxyCatalog(cubename='J0111-0316')
+# FixGalaxyCatalog(cubename='HE2336-5540')
+# FixGalaxyCatalog(cubename='HE2305-5315')
+# FixGalaxyCatalog(cubename='J0454-6116')
+# FixGalaxyCatalog(cubename='J0154-0712')
+# FixGalaxyCatalog(cubename='HE0331-4112')
