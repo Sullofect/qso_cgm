@@ -1065,6 +1065,8 @@ def CopyHeader(f1=None, f2=None):
 #                   deblend_hst=False, deblend_muse=True)  # Done!
 # FixWithAstrometry(cubename='PKS0405-123', FixHST=False, thr_muse=25, CheckHST=False, CheckMUSE=True,
 #                   deblend_hst=False, deblend_muse=True)  # Done!
+# FixWithAstrometry(cubename='HE0238-1904', FixHST=False, thr_muse=5, CheckHST=False, CheckMUSE=True,
+#                   deblend_hst=False, deblend_muse=True)  # Done!
 
 
 # Fix Dat
@@ -1083,6 +1085,7 @@ def CopyHeader(f1=None, f2=None):
 # FixDatWithAstrometry(cubename='PG1522+101')
 # FixDatWithAstrometry(cubename='HE1003+0149')
 # FixDatWithAstrometry(cubename='PKS0405-123')
+FixDatWithAstrometry(cubename='HE0238-1904')
 
 # Copy Current Obj
 # CopyCurrentObjWithAstrometry(cubename='Q0107-0235')
@@ -1100,3 +1103,4 @@ def CopyHeader(f1=None, f2=None):
 # CopyCurrentObjWithAstrometry(cubename='PG1522+101')
 # CopyCurrentObjWithAstrometry(cubename='HE1003+0149')
 # CopyCurrentObjWithAstrometry(cubename='PKS0405-123')
+CopyCurrentObjWithAstrometry(cubename='HE0238-1904')
