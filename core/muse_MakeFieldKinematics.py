@@ -1887,8 +1887,10 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # HE0153-4520 done! no nebulae detected
 # muse_MakeNBImageWith3DSeg.py -m HE0153-4520_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
 # -s_spe 1.5 -k_spe gauss -ssf False -n 1
+# muse_MakeNBImageWith3DSeg.py -m HE0153-4520_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss -ssf False -n 1
 # muse_MakeNBImageWith3DSeg.py -m HE0153-4520_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss
 # -s_spe 1.5 -k_spe gauss -ssf False -n 1
+# muse_MakeNBImageWith3DSeg.py -m HE0153-4520_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss -ssf False -n 1
 # FitLines(cubename='HE0153-4520', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
 # PlotKinematics(cubename='HE0153-4520', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=1.5, S_N_thr=50,
 #                kernel_1D='gauss', CheckFit=True, CheckSpectra=[70, 80], v_min=-100, v_max=100,
