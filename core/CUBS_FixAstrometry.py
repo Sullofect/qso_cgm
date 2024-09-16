@@ -107,16 +107,43 @@ def FixAstrometry(cubename, str_zap=''):
 
 
 def FixGalaxyCatalog(cubename=None):
+    # QSO information
+    path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
+    data_qso = ascii.read(path_qso, format='fixed_width')
+    data_qso = data_qso[data_qso['name'] == cubename]
+    ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
+    c_kms = 2.998e5
+
     try:
         name_1, name_2 = cubename.split('-')
     except ValueError:
         name_1, name_2 = cubename.split('+')
 
-    path_group = '../../MUSEQuBES+CUBS/group/{}_group.txt'.format(name1)
+    path_group = '../../MUSEQuBES+CUBS/group/{}_group.txt'.format(name_1)
+    data_group = ascii.read(path_group)
+    ra, dec, z = data_group['col2'], data_group['col3'], data_group['col4']
+    v = c_kms * (z - z_qso) / (1 + z_qso)
+
+    filename = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+    # if os.path.isfile(filename) is not True:
+    t = Table()
+    # t['row'] = row_ggp
+    t['ra'] = ra
+    t['dec'] = dec
+    # t['ID'] = ID_ggp
+    t['z'] = z
+    t['v'] = v
+    # t['name'] = name_ggp
+    # t['ql'] = ql_ggp
+    t.write(filename, format='fits', overwrite=True)
 
 
-    if cubename == 'HE0238-1904':
-        path_group = ''
+
+
+
+
+    # if cubename == 'HE0238-1904':
+    #     path_group = ''
 
 
 
@@ -155,3 +182,6 @@ def FixGalaxyCatalog(cubename=None):
 # FixAstrometry(cubename='J0454-6116')  # need to generate from cube
 # FixAstrometry(cubename='J0154-0712')
 # FixAstrometry(cubename='HE0331-4112')
+
+# Get galaxy catalog
+# FixGalaxyCatalog(cubename='J0110-1648')

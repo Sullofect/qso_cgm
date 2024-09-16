@@ -985,7 +985,7 @@ def CopyHeader(f1=None, f2=None):
 
 
 # Update HE0238-1904 unlikely to use again!!!!
-# UpdateHE0238()
+# UpdateHE0238() Done! by copying and pasting the previous one.
 
 
 #
@@ -1010,7 +1010,7 @@ def CopyHeader(f1=None, f2=None):
 # FixAstrometry(cubename='PG1522+101', deblend_hst=True, checkMUSE=True, checkHST=True) # HST good
 # FixAstrometry(cubename='HE1003+0149', checkMUSE=True, checkHST=True) # HST good
 # FixAstrometry(cubename='PKS0405-123', checkMUSE=True, checkHST=True) # HST good
-# FixAstrometry(cubename='HE0238-1904', checkMUSE=True, checkHST=True) # needs to be fixed
+# FixAstrometry(cubename='HE0238-1904', checkMUSE=True, checkHST=True) # HST good
 
 
 # Fix Dat
@@ -1029,6 +1029,7 @@ def CopyHeader(f1=None, f2=None):
 # FixDat(cubename='PG1522+101')
 # FixDat(cubename='HE1003+0149')
 # FixDat(cubename='PKS0405-123')
+# FixDat(cubename='HE0238-1904')
 
 # Copy
 # CopyCurrentObj(cubename='Q0107-0235')
