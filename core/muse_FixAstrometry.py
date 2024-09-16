@@ -1085,7 +1085,7 @@ def CopyHeader(f1=None, f2=None):
 # FixDatWithAstrometry(cubename='PG1522+101')
 # FixDatWithAstrometry(cubename='HE1003+0149')
 # FixDatWithAstrometry(cubename='PKS0405-123')
-FixDatWithAstrometry(cubename='HE0238-1904')
+# FixDatWithAstrometry(cubename='HE0238-1904')
 
 # Copy Current Obj
 # CopyCurrentObjWithAstrometry(cubename='Q0107-0235')
@@ -1103,4 +1103,4 @@ FixDatWithAstrometry(cubename='HE0238-1904')
 # CopyCurrentObjWithAstrometry(cubename='PG1522+101')
 # CopyCurrentObjWithAstrometry(cubename='HE1003+0149')
 # CopyCurrentObjWithAstrometry(cubename='PKS0405-123')
-CopyCurrentObjWithAstrometry(cubename='HE0238-1904')
+# CopyCurrentObjWithAstrometry(cubename='HE0238-1904')

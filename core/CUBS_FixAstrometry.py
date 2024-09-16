@@ -106,6 +106,21 @@ def FixAstrometry(cubename, str_zap=''):
     sub_muse_white_gaia.write(path_sub_white_gaia)
 
 
+def FixGalaxyCatalog(cubename=None):
+    try:
+        name_1, name_2 = cubename.split('-')
+    except ValueError:
+        name_1, name_2 = cubename.split('+')
+
+    path_group = '../../MUSEQuBES+CUBS/group/{}_group.txt'.format(name1)
+
+
+    if cubename == 'HE0238-1904':
+        path_group = ''
+
+
+
+
 
 # CUBS
 # FixCubeHeader(cubename='J0110-1648')
