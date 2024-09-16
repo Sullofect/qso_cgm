@@ -128,21 +128,27 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         cubename = 'Q1435-0134'
     elif cubename == 'TEX0206-048':
         cubename = 'TXS0206-048'
+    elif cubename == 'PB6291':
+        cubename = 'Q0107-025'
 
-    try:
-        name_1, name_2 = cubename.split('-')
-    except ValueError:
-        name_1, name_2 = cubename.split('+')
-
-    for i in range(len(cubename)):
-        if not cubename[i].isalpha():
-            break
-
-    if i == 1:
-        cubename_label = name_1 + r'$-$' + name_2
+    if cubename == '3C57':
+        gc.add_label(0.98, 0.95, r'$\rm 3C\,57$', size=35, relative=True, horizontalalignment='right')
     else:
-        cubename_label = cubename[:i] + r'$\,$' + name_1[i:] + r'$-$' + name_2
-    gc.add_label(0.98, 0.95, cubename_label, size=35, relative=True, horizontalalignment='right')
+        try:
+            name_1, name_2 = cubename.split('-')
+        except ValueError:
+            name_1, name_2 = cubename.split('+')
+
+
+        for i in range(len(cubename)):
+            if not cubename[i].isalpha():
+                break
+
+        if i == 1:
+            cubename_label = name_1 + r'$-$' + name_2
+        else:
+            cubename_label = cubename[:i] + r'$\,$' + name_1[i:] + r'$-$' + name_2
+        gc.add_label(0.98, 0.95, cubename_label, size=35, relative=True, horizontalalignment='right')
     gc.add_label(0.98, 0.87, r'$z=$' + ' {:.4f}'.format(z_qso), size=35, relative=True, horizontalalignment='right')
 
     # Hide
@@ -251,13 +257,32 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300):
 
 
 # MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
-
-MakeV50W80(cubename='HE1003+0149', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300)
+# MakeV50W80(cubename='HE0238-1904', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='3C57', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='PKS0552-640', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='J0110-1648', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='J0454-6116', v_max=500, sigma_max=400)
+# MakeV50W80(cubename='J2135-5316', v_max=300, sigma_max=300) # Double component
+# MakeV50W80(cubename='J0119-2010', v_max=500, sigma_max=300)  # Double component
+# MakeV50W80(cubename='HE0246-4101', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='J0028-3305', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='HE0419-5657', v_max=400, sigma_max=300)
+# MakeV50W80(cubename='PB6291', v_max=400, sigma_max=300)
+# MakeV50W80(cubename='Q0107-0235', v_max=400, sigma_max=300)
+# MakeV50W80(cubename='PKS2242-498', v_max=400, sigma_max=300)
+# MakeV50W80(cubename='PKS0355-483', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='HE0112-4145', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='HE0439-5254', v_max=500, sigma_max=300)
+# MakeV50W80(cubename='HE2305-5315', v_max=500, sigma_max=300)
+# MakeV50W80(cubename='HE1003+0149', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='HE0331-4112', v_max=500, sigma_max=300)
-# MakeV50W80(cubename='TEX0206-048', v_max=600, sigma_max=400)
+MakeV50W80(cubename='TEX0206-048', v_max=600, sigma_max=400)
 # MakeV50W80(cubename='Q1354+048', v_max=400, sigma_max=300)
 # MakeV50W80(cubename='J0154-0712', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400)
 # MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300)
-
+# MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='PKS0232-04', v_max=400, sigma_max=300)

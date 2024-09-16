@@ -1154,7 +1154,11 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         x, y = w.world_to_pixel(c_muse)
         c_muse_gaia = w_gaia.pixel_to_world(x, y)
         muse_white_gaia = Image(path_muse_white_gaia)
-        sub_muse_white_gaia = muse_white_gaia.subimage(center=(c_muse_gaia.dec.value, c_muse_gaia.ra.value), size=30)
+        if cubename == 'TEX0206-048':
+            radius = 40
+        else:
+            radius = 30
+        sub_muse_white_gaia = muse_white_gaia.subimage(center=(c_muse_gaia.dec.value, c_muse_gaia.ra.value), size=radius)
         path_sub_white_gaia = '../../MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
         sub_muse_white_gaia.write(path_sub_white_gaia)
         hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
@@ -1167,6 +1171,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         hdr['CD1_2'] = hdr_sub_gaia['CD1_2']
         hdr['CD2_2'] = hdr_sub_gaia['CD2_2']
         # hdr.remove('BUNIT')
+
 
     #
     hdul_v = fits.ImageHDU(v_plot[0], header=hdr)
@@ -1227,7 +1232,6 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         APLpyStyle(gc, type='NarrowBand', cubename=cubename_cor, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
         fig.savefig(figurename_SB, bbox_inches='tight')
 
-    raise ValueError('stop here')
     # LOS velocity
     path_V50 = '../../MUSEQuBES+CUBS/fit_kin/3C57_V50.fits'
     path_W80 = '../../MUSEQuBES+CUBS/fit_kin/3C57_W80.fits'
@@ -1946,12 +1950,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='PKS0405-123', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[84, 14], v_min=-1200, v_max=1200, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, 'OIII_2nd': 0}
 # FitLines(cubename='PKS0405-123', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[84, 14], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='PKS0405-123', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[84, 14], v_min=-1200, v_max=1200, width_OII=10,
+# PlotKinematics(cubename='PKS0405-123', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[84, 14], v_min=-1200, v_max=1200, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 
@@ -2075,8 +2079,8 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 #              'OII_center': wave_OII3728_vac, "OIII": 0, "OIII_2nd": 0}
 # FitLines(cubename='PKS0552-640', fit_param=fit_param, CheckGuess=[58, 73], width_OII=10,
 #          UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='PKS0552-640', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
-#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+# PlotKinematics(cubename='PKS0552-640', fit_param=fit_param, CheckSpectra=[65, 52], FixAstrometry=True,
+#                contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
 #                FixAstrometry=True, offset_gaia=True, S_N_thr=1)
 
 
@@ -2110,8 +2114,8 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1}
 # FitLines(cubename='J0110-1648', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='J0110-1648', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='J0110-1648', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # J0454-6116
@@ -2139,8 +2143,8 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1}
 # FitLines(cubename='J0454-6116', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='J0454-6116', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='J0454-6116', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # J2135-5316
@@ -2164,12 +2168,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='J2135-5316', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-400, v_max=400, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, 'OIII_2nd': 0}
 # FitLines(cubename='J2135-5316', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='J2135-5316', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-400, v_max=400, width_OII=10,
+# PlotKinematics(cubename='J2135-5316', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[65, 52], v_min=-400, v_max=400, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 
@@ -2199,12 +2203,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='J0119-2010', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-500, v_max=500, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, 'OIII_2nd': 0}
 # FitLines(cubename='J0119-2010', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='J0119-2010', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-500, v_max=500, width_OII=10,
+# PlotKinematics(cubename='J0119-2010', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[65, 52], v_min=-500, v_max=500, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # HE0246-4101
@@ -2222,12 +2226,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='HE0246-4101', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='HE0246-4101', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='HE0246-4101', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='HE0246-4101', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # J0028-3305
@@ -2245,12 +2249,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='J0028-3305', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='J0028-3305', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='J0028-3305', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='J0028-3305', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # HE0419-5657
@@ -2268,12 +2272,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='HE0419-5657', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='HE0419-5657', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='HE0419-5657', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='HE0419-5657', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # Q0107-025
@@ -2291,12 +2295,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='PB6291', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='PB6291', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='PB6291', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='PB6291', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # Q0107-0235
@@ -2314,12 +2318,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='Q0107-0235', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='Q0107-0235', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='Q0107-0235', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='Q0107-0235', fit_param=fit_param, FixAstrometry=True,
+#             CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # PKS2242-498
@@ -2337,12 +2341,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='PKS2242-498', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='PKS2242-498', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='PKS2242-498', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='PKS2242-498', fit_param=fit_param, FixAstrometry=True, CheckSpectra=[65, 52],
+#                v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # PKS0355-483
@@ -2360,12 +2364,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='PKS0355-483', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='PKS0355-483', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='PKS0355-483', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='PKS0355-483', fit_param=fit_param, FixAstrometry=True,
+#                CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # HE0112-4145
@@ -2383,12 +2387,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='HE0112-4145', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='HE0112-4145', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='HE0112-4145', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='HE0112-4145', fit_param=fit_param, FixAstrometry=True, CheckSpectra=[65, 52],
+#                v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # HE0439-5254
@@ -2406,13 +2410,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='HE0439-5254', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='HE0439-5254', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='HE0439-5254', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
-#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
+# PlotKinematics(cubename='HE0439-5254', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+#                FixAstrometry=True, sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # HE2305-5315
 # muse_MakeNBImageWith3DSeg.py -m HE2305-5315_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
@@ -2429,12 +2432,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='HE2305-5315', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# fit_param = {"OII": 1, 'ResolveOII': True, 'r_max': 1.6,
-#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='HE2305-5315', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-# PlotKinematics(cubename='HE2305-5315', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
-#                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+# PlotKinematics(cubename='HE2305-5315', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+#                FixAstrometry=True,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # HE1003+0149
@@ -2452,13 +2455,13 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # PlotKinematics(cubename='HE1003+0149', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None,
 #                kernel_1D=None, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
 #                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
-             'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
+# fit_param = {"OII": 1, 'OII_2nd': 0, 'ResolveOII': True, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd': 0}
 # FitLines(cubename='HE1003+0149', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
 #          smooth_1D=None, kernel_1D=None, CheckGuess=[58, 73], width_OII=10, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
-PlotKinematics(cubename='HE1003+0149', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
-               FixAstrometry=True,
-               sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
+# PlotKinematics(cubename='HE1003+0149', fit_param=fit_param, CheckSpectra=[65, 52], v_min=-300, v_max=300, width_OII=10,
+#                FixAstrometry=True,
+#                sigma_max=300, contour_level=0.25, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'))
 
 # HE0331-4112
 # muse_MakeNBImageWith3DSeg.py -m HE0331-4112_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
