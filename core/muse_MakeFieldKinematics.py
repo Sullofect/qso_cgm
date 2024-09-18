@@ -2379,9 +2379,9 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # -s_spe 1.5 -k_spe gauss -ssf False -l 0.3 -n 5
 # os.chdir(path_SB)
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0112-4145_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.3 -n 5')
+#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.3 -n 5 -sl 7510 7600')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0112-4145_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
-#           '-ssf False -l 0.3 -n 5')
+#           '-ssf False -l 0.3 -n 5 -sl 7510 7600')
 # fit_param = {"OII": 1, 'ResolveOII': False, 'r_max': 1.6,
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0}
 # FitLines(cubename='HE0112-4145', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
