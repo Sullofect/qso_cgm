@@ -274,7 +274,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300):
 # MakeV50W80(cubename='Q0107-0235', v_max=400, sigma_max=300)
 # MakeV50W80(cubename='PKS2242-498', v_max=400, sigma_max=300)
 # MakeV50W80(cubename='PKS0355-483', v_max=300, sigma_max=300)
-MakeV50W80(cubename='HE0112-4145', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='HE0112-4145', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='HE0439-5254', v_max=500, sigma_max=300)
 # MakeV50W80(cubename='HE2305-5315', v_max=500, sigma_max=300)
 # MakeV50W80(cubename='HE1003+0149', v_max=300, sigma_max=300)
