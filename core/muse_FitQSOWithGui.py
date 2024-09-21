@@ -670,6 +670,9 @@ class PlotWindow(QMainWindow):
         self.scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
         self.scatter_2 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
         self.scatter_3 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
+        self.scatter_1_mask = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255, 255, 35, 255))
+        self.scatter_2_mask = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255, 255, 35, 255))
+        self.scatter_3_mask = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255, 255, 35, 255))
 
         # Link the axis of the plots
         self.widget1_plot.setXLink(self.widget2_plot)
@@ -948,42 +951,49 @@ class PlotWindow(QMainWindow):
             self.widget1_plot.addItem(self.scatter_1)
             self.widget2_plot.addItem(self.scatter_2)
             self.widget3_plot.addItem(self.scatter_3)
+        else:
+            self.scatter_1_mask.addPoints([j + 0.5], [i + 0.5])
+            self.scatter_2_mask.addPoints([j + 0.5], [i + 0.5])
+            self.scatter_3_mask.addPoints([j + 0.5], [i + 0.5])
+            self.widget1_plot.addItem(self.scatter_1_mask)
+            self.widget2_plot.addItem(self.scatter_2_mask)
+            self.widget3_plot.addItem(self.scatter_3_mask)
 
     def plot_OII(self):
         i, j = self.ypixel, self.xpixel
         self.widget4_plot.clear()
-        if self.mask_OII[i, j]:
-            # Plot the data
-            self.widget4_plot.plot(self.wave_OII_vac, self.flux_OII[:, i, j], pen='k')
-            self.widget4_plot.plot(self.wave_OII_vac, self.flux_err_OII[:, i, j], pen='g')
+        # if self.mask_OII[i, j]:
+        # Plot the data
+        self.widget4_plot.plot(self.wave_OII_vac, self.flux_OII[:, i, j], pen='k')
+        self.widget4_plot.plot(self.wave_OII_vac, self.flux_err_OII[:, i, j], pen='g')
 
-            # Plot each individual component
-            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 0, i, j],
-                                   pen=pg.mkPen(color=(91, 28, 237), width=5, style=QtCore.Qt.DashLine))
-            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 1, i, j],
-                                   pen=pg.mkPen(color=(119, 73, 227), width=3, style=QtCore.Qt.DashLine))
-            self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 2, i, j],
-                                   pen=pg.mkPen(color=(151, 116, 232), width=2, style=QtCore.Qt.DashLine))
-            self.widget4_plot.plot(self.wave_OII_exp, np.nansum(self.flux_OII_array[:, :, i, j], axis=1)
-                                   + self.b_OII[i, j] + self.a_OII[i, j] * self.wave_OII_exp, pen='r')
+        # Plot each individual component
+        self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 0, i, j],
+                               pen=pg.mkPen(color=(91, 28, 237), width=5, style=QtCore.Qt.DashLine))
+        self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 1, i, j],
+                               pen=pg.mkPen(color=(119, 73, 227), width=3, style=QtCore.Qt.DashLine))
+        self.widget4_plot.plot(self.wave_OII_exp, self.flux_OII_array[:, 2, i, j],
+                               pen=pg.mkPen(color=(151, 116, 232), width=2, style=QtCore.Qt.DashLine))
+        self.widget4_plot.plot(self.wave_OII_exp, np.nansum(self.flux_OII_array[:, :, i, j], axis=1)
+                               + self.b_OII[i, j] + self.a_OII[i, j] * self.wave_OII_exp, pen='r')
 
     def plot_OIII(self):
         i, j = self.ypixel, self.xpixel
         self.widget5_plot.clear()
-        if self.mask_OIII[i, j]:
-            # Plot the data and the fit
-            self.widget5_plot.plot(self.wave_OIII_vac, self.flux_OIII[:, i, j], pen='k')
-            self.widget5_plot.plot(self.wave_OIII_vac, self.flux_err_OIII[:, i, j], pen='g')
+        # if self.mask_OIII[i, j]:
+        # Plot the data and the fit
+        self.widget5_plot.plot(self.wave_OIII_vac, self.flux_OIII[:, i, j], pen='k')
+        self.widget5_plot.plot(self.wave_OIII_vac, self.flux_err_OIII[:, i, j], pen='g')
 
-            # Plot each individual component
-            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 0, i, j],
-                                   pen=pg.mkPen(color=(91, 28, 237), width=5, style=QtCore.Qt.DashLine))
-            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 1, i, j],
-                                   pen=pg.mkPen(color=(119, 73, 227), width=3, style=QtCore.Qt.DashLine))
-            self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 2, i, j],
-                                   pen=pg.mkPen(color=(151, 116, 232), width=2, style=QtCore.Qt.DashLine))
-            self.widget5_plot.plot(self.wave_OIII_exp, np.nansum(self.flux_OIII_array[:, :, i, j], axis=1)
-                                   + self.b_OIII[i, j] + self.a_OIII[i, j] * self.wave_OIII_exp, pen='r')
+        # Plot each individual component
+        self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 0, i, j],
+                               pen=pg.mkPen(color=(91, 28, 237), width=5, style=QtCore.Qt.DashLine))
+        self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 1, i, j],
+                               pen=pg.mkPen(color=(119, 73, 227), width=3, style=QtCore.Qt.DashLine))
+        self.widget5_plot.plot(self.wave_OIII_exp, self.flux_OIII_array[:, 2, i, j],
+                               pen=pg.mkPen(color=(151, 116, 232), width=2, style=QtCore.Qt.DashLine))
+        self.widget5_plot.plot(self.wave_OIII_exp, np.nansum(self.flux_OIII_array[:, :, i, j], axis=1)
+                               + self.b_OIII[i, j] + self.a_OIII[i, j] * self.wave_OIII_exp, pen='r')
 
     def N_1(self):
         self.parameters['OII'].value = 1
@@ -1294,6 +1304,9 @@ class PlotWindow(QMainWindow):
         self.scatter_1.clear()
         self.scatter_2.clear()
         self.scatter_3.clear()
+        self.scatter_1_mask.clear()
+        self.scatter_2_mask.clear()
+        self.scatter_3_mask.clear()
         self.widget1_plot.removeItem(self.current_roi)
 
 

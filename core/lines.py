@@ -29,10 +29,17 @@ wave_SII6732_vac = 6732.67
 
 line_list = np.array([wave_Halpha_vac, wave_Hbeta_vac, wave_NII6549_vac, wave_NII6585_vac,
                       wave_OIII4960_vac, wave_OIII5008_vac, wave_SII6718_vac, wave_SII6732_vac])
-cubename = 'PKS0405-123'
+cubename = 'Q0107-0235'
 path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
 data_qso = ascii.read(path_qso, format='fixed_width')
 data_qso = data_qso[data_qso['name'] == cubename]
 ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 print('wavelength in um', line_list * (1 + z_qso) / 1e4)
+
+# Unit is in 10^-17
+OII_flux = 1.0
+lines_flux = OII_flux * np.asarray([1.0, 0.3, 0.16, 0.5, 0.8, 2.33, 0.5, 0.5])
+print('OII flux', OII_flux)
+print('line fluxes are', lines_flux)
+
 
