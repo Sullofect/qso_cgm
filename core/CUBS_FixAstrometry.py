@@ -114,8 +114,9 @@ def FixGalaxyCatalog(cubename=None):
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
     c_kms = 2.998e5
 
-    path_muse = '../../MUSEQuBES+CUBS/CUBS/{}_ESO-DEEP_WHITE.fits'.format(cubename)
-
+    path_muse = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac.fits'.format(cubename)
+    # Q0119 - 2010
+    # _COMBINED_CUBE_MED_FINAL_vac.fits
 
 
     try:
