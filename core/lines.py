@@ -43,3 +43,13 @@ print('OII flux', OII_flux)
 print('line fluxes are', lines_flux)
 
 
+#
+data = np.loadtxt('../../Proposal/HST+JWST/mktrans_zm_10_10.dat.txt')
+
+plt.figure(figsize=(10, 10), dpi=300)
+plt.plot(data[::2, 0], data[::2, 1], '-k', lw=1)
+plt.vlines(line_list * (1 + z_qso) / 1e4, ymin=0, ymax=1, color='r', linestyle='--', lw=1)
+plt.savefig('../../Proposal/HST+JWST/transmission.png')
+
+# write a line do vertical lines
+

@@ -6,16 +6,10 @@ import warnings
 import argparse
 import numpy as np
 import pyqtgraph as pg
-import matplotlib as mpl
 import astropy.io.fits as fits
-import matplotlib.pyplot as plt
 import pyqtgraph.parametertree as pt
-from astropy import units as u
 from astropy.io import ascii
 from matplotlib import rc, cm
-from astropy.wcs import WCS
-from astropy.convolution import convolve, Kernel, Gaussian2DKernel
-from scipy.interpolate import interp1d
 from mpdaf.obj import Cube, WaveCoord, Image
 from PyAstronomy import pyasl
 from palettable.cmocean.sequential import Dense_20_r
