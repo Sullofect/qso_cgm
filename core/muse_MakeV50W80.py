@@ -194,7 +194,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.scalebar.set_font_size(30)
         gc.colorbar.hide()
         # gc.add_label(0.98, 0.94, r'$\rm 3C\,57$', size=35, relative=True, horizontalalignment='right')
-        gc.add_label(0.98, 0.90, r'$\rm 3C\,57$', size=60, relative=True, horizontalalignment='right')
+        # gc.add_label(0.98, 0.90, r'$\rm 3C\,57$', size=60, relative=True, horizontalalignment='right')
         # gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
         # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
         # gc.colorbar.set_axis_label_text(r'$\rm V_{50} \mathrm{\; [km \, s^{-1}]}$')
@@ -289,6 +289,8 @@ figurename_V50 = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}.png'.
 figurename_V50_slit = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}_slit.png'. \
     format(cubename, line, True, 3728, *UseDataSeg)
 figurename_W80 = '../../MUSEQuBES+CUBS/fit_kin/{}_W80_{}_{}_{}_{}_{}_{}_{}.png'. \
+    format(cubename, line, True, 3728, *UseDataSeg)
+figurename_W80_slit = '../../MUSEQuBES+CUBS/fit_kin/{}_W80_{}_{}_{}_{}_{}_{}_{}_slit.png'. \
     format(cubename, line, True, 3728, *UseDataSeg)
 figurename_OIII_OII = '../../MUSEQuBES+CUBS/fit_kin/{}_OIII_OII_{}_{}_{}_{}_{}_{}_{}.png'.\
     format(cubename, line, True, 3728, *UseDataSeg)
@@ -450,7 +452,7 @@ OIII_OII = np.where(center_mask, OIII_OII, np.nan)
 hdul_v50[1].data = np.where(S_N > 10, hdul_v50[1].data, np.nan)
 hdul_w80[1].data = np.where(S_N > 10, hdul_w80[1].data, np.nan)
 OIII_OII = np.where(S_N > 10, OIII_OII, np.nan)
-print('Median O32', np.nanmean(np.where(mask_seg_OIII != 0, OIII_OII, np.nan)))
+print('Median O32', np.nanmedian(OIII_OII))
 
 hdul_v50[1].header = hdr
 hdul_w80[1].header = hdr
@@ -492,10 +494,17 @@ gc = aplpy.FITSFigure(path_w80_plot, figure=fig, hdu=1)
 gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
 APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
 gc.add_label(0.08, 0.08, '(f)', color='k', size=40, relative=True)
-# gc.colorbar.hide()
-# gc.scalebar.set_font_size(50)
-# gc.scalebar.hide()
 fig.savefig(figurename_W80, bbox_inches='tight')
+
+# W80 map
+fig = plt.figure(figsize=(8, 8), dpi=300)
+gc = aplpy.FITSFigure(path_w80_plot, figure=fig, hdu=1)
+gc.show_colorscale(vmin=0, vmax=800, cmap=Dense_20_r.mpl_colormap)
+APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso)
+gc.colorbar.hide()
+gc.scalebar.set_font_size(50)
+gc.scalebar.hide()
+fig.savefig(figurename_W80_slit, bbox_inches='tight')
 
 # OIII/OII map
 fig = plt.figure(figsize=(8, 8), dpi=300)

@@ -21,18 +21,25 @@ from photutils.segmentation import detect_sources, SourceCatalog, deblend_source
 from astropy.convolution import Kernel, convolve, Gaussian2DKernel
 
 # IMACS object files
-obj_3C57i1 = fits.open('../../MUSEQuBES+CUBS/IMACS/3C57/3C57i1_objects.fits')
-obj_3C57i2 = fits.open('../../MUSEQuBES+CUBS/IMACS/3C57/3C57i2_objects.fits')
-obj_3C57i3 = fits.open('../../MUSEQuBES+CUBS/IMACS/3C57/3C57i3_objects.fits')
+obj_3C57i1 = fits.open('../../MUSEQuBES+CUBS/IMACS+LDSS3/3C57/3C57i1_objects.fits')
+obj_3C57i2 = fits.open('../../MUSEQuBES+CUBS/IMACS+LDSS3/3C57/3C57i2_objects.fits')
+obj_3C57i3 = fits.open('../../MUSEQuBES+CUBS/IMACS+LDSS3/3C57/3C57i3_objects.fits')
 dat_3C57 = ascii.read('../../MaskDesign/3C57_mask/3C57_@_ac.dat')
-# obj_3C57i3 = fits.open('../../MUSEQuBES+CUBS/IMACS/3C57/3C57i3_objects.fits')
+obj_3C57_LDSS = fits.open('../../MUSEQuBES+CUBS/IMACS+LDSS3/3C57/3C57_DES_redshifts.fits')
 
-#
+# IMACS
 z_i1, z_i2, z_i3 = obj_3C57i1[1].data['redshift'], obj_3C57i2[1].data['redshift'], obj_3C57i3[1].data['redshift']
 id_z1, id_z2, id_z3 = obj_3C57i1[1].data['id'], obj_3C57i2[1].data['id'], obj_3C57i3[1].data['id']
 z_total = np.hstack((z_i1, z_i2, z_i3))
 id_total = np.hstack((id_z1, id_z2, id_z3))
 v_total = 3e5 * (z_total - 0.6718) / (1 + 0.6718)
+
+# LDSS3
+ra_LDSS, dec_LDSS, z_LDSS = obj_3C57_LDSS[1].data['RA'], obj_3C57_LDSS[1].data['DEC'], obj_3C57_LDSS[1].data['REDSHIFT']
+v_LDSS = 3e5 * (z_LDSS - 0.6718) / (1 + 0.6718)
+mask = (v_LDSS < 2000) * (v_LDSS > -2000)
+ra_group, dec_group, z_group = ra_LDSS[mask], dec_LDSS[mask], z_LDSS[mask]
+
 
 #
 id, ra, dec = dat_3C57['col1'], np.asarray(dat_3C57['col2']), np.asarray(dat_3C57['col3'])
@@ -83,9 +90,15 @@ gc.ticks.hide()
 gc.tick_labels.hide()
 gc.axis_labels.hide()
 
+# scalebar
+gc.add_scalebar(length=70 * u.arcsecond)
+gc.scalebar.set_corner('top left')
+gc.scalebar.set_label(r"$70'' \approx 500 \mathrm{\; pkpc}$")
+
 # Markers
 gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
 gc.show_markers(t['ra'], t['dec'], facecolor='none', marker='o', c='none',
                 edgecolors='r', linewidths=0.8, s=150)
+gc.show_markers(ra_group, dec_group, facecolor='none', marker='o', c='none', edgecolors='g', linewidths=0.8, s=160)
 path_savefig = '../../MUSEQuBES+CUBS/plots/{}_IMACS.png'.format(cubename)
 fig.savefig(path_savefig, bbox_inches='tight')

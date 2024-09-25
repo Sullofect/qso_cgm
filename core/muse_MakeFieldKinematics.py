@@ -2011,7 +2011,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
 #           '-ssf False -n 3 -sl 6205 6270')
 # os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8350 8390 -n 2')   # change it to 3
+#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8350 8390 -n 5')   # change it to 5
 # os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss '
 #           '-ssf False -sl 8350 8390 -n 2')
 # FitLines(cubename='3C57', line='OII', smooth_2D=1.5, kernel_2D='gauss', smooth_1D=None, kernel_1D=None)
@@ -2499,12 +2499,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 #                kernel_1D=None, CheckFit=True, CheckSpectra=[89, 113])
 # FitLines(cubename='TEX0206-048', zapped=True, line='OII', smooth_2D=1.5,
 #          kernel_2D='gauss', smooth_1D=1.5, kernel_1D='gauss')
-fit_param = {"OII": 1, 'OII_2nd':0, 'ResolveOII': False, 'r_max': 1.6,
-             'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd':0}
-PlotKinematics(cubename='TEX0206-048', zapped=True, fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
-               S_N_thr=-np.inf, CheckSpectra=[81, 174], UseDataSeg=(1.5, 'gauss', 1.5, 'gauss'), contour_level=0.17,
-               SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
-                              26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552], FixAstrometry=True)
+# fit_param = {"OII": 1, 'OII_2nd':0, 'ResolveOII': False, 'r_max': 1.6,
+#              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 0, 'OIII_2nd':0}
+# PlotKinematics(cubename='TEX0206-048', zapped=True, fit_param=fit_param, UseDetectionSeg=(1.5, 'gauss', 1.5, 'gauss'),
+#                S_N_thr=-np.inf, CheckSpectra=[81, 174], UseDataSeg=(1.5, 'gauss', 1.5, 'gauss'), contour_level=0.17,
+#                SelectNebulae=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 22, 23,
+#                               26, 27, 28, 34, 57, 60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552], FixAstrometry=True)
 
 # Q1354+048
 # muse_MakeNBImageWith3DSeg.py -m Q1354+048_ESO-DEEP_subtracted_OII -t 2.0 -s 1.5 -k gauss
