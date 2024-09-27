@@ -1,3 +1,3 @@
-# QSO_CGM
+# qso_cgm
 
-QSO_CGM is developed to conduct analysis mainly for MUSE data. 
+qso_cgm is developed to conduct analysis for MUSE and HST data. 
