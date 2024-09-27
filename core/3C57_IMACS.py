@@ -66,7 +66,6 @@ print(z_overlap, sep.arcsec)
 # plt.figure()
 # plt.hist(z_total[mask])
 # plt.show()
-#
 
 filename = '../../MUSEQuBES+CUBS/gal_info/3C57_gal_IMACS.fits'
 t = Table()
