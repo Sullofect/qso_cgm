@@ -107,3 +107,15 @@ print(np.log10(M_200))
 M_200_test = (370 / 1100) ** 3 * 1e15 / h_z
 print('Halo mass is', np.format_float_scientific(M_200))
 print('Halo mass test is', np.format_float_scientific(M_200_test))
+
+#
+sys_Li = [7, 3, 3, 9, 8, 7, 6, 8, 23, 4, 19, 3, 9, 5, 13, 7]
+sys_loud = [3, 9, 23, 13, 7]
+mass_Li = [13.2, 13.6, 13.9, 13.7, 12.1, 13.3, 14.1, 13.3, 13.1, 14.6, 13.5]
+mass_loud = [13.6, 14.1, 14.6, 13.5]
+
+print('N group', np.mean(sys_Li), np.std(sys_Li))
+print('N group loud', np.mean(sys_loud), np.std(sys_loud))
+print('halo mass', np.mean(mass_Li), np.std(mass_Li))
+print('halo mass loud', np.mean(mass_loud), np.std(mass_loud))
+

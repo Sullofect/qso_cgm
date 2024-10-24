@@ -237,9 +237,9 @@ def MakeCatalog(qso=None, filename=None, z_qso=None, ra_qso=None, dec_qso=None, 
 
 
 # Select Star
-def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_type=None, priority_cut=None, mode='keep_same'):
+def ConvertReg2Dat(dir=None, dir2='', filename_p=None, p_type=None, filename_f=None, f_type=None, priority_cut=None, mode='keep_same'):
     # Visually inspected catalog (.reg)
-    path_p = '../../MaskDesign/{}_mask/{}.reg'.format(dir, filename_p)
+    path_p = '../../MaskDesign/{}_mask{}/{}.reg'.format(dir, dir2, filename_p)
     if p_type == 'Sean':
         regions_p = np.loadtxt(path_p, dtype=str, comments='%')
         regions_p_ID = regions_p[:, 8]
@@ -249,8 +249,8 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
     print(regions_p_ID)
 
     # Full catalog
-    path_f = '../../MaskDesign/{}_mask/{}.reg'.format(dir, filename_f)
-    path_f_dat = '../../MaskDesign/{}_mask/{}.dat'.format(dir, filename_f)
+    path_f = '../../MaskDesign/{}_mask{}/{}.reg'.format(dir, dir2, filename_f)
+    path_f_dat = '../../MaskDesign/{}_mask{}/{}.dat'.format(dir, dir2, filename_f)
     if f_type == 'Sean':
         regions_f = np.loadtxt(path_f, dtype=str, comments='%')
         regions_f_ID = regions_f[:, 8]
@@ -266,7 +266,7 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
     elif mode == 'find_diff':
         idx = ~idx
         filename_p += '_d'
-        path_p_d = '../../MaskDesign/{}_mask/{}.reg'.format(dir, filename_p)
+        path_p_d = '../../MaskDesign/{}_mask{}/{}.reg'.format(dir, dir2, filename_p)
         regions_p_d = regions_f[idx]
         print("find {} number of different objects".format(len(idx[idx == True])))
 
@@ -276,15 +276,14 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
         priority = np.asarray(data_p_dat[:, 3], dtype=float)
         select_priority = np.where((priority > priority_cut[0]) * (priority < priority_cut[1]))
         data_p_dat = data_p_dat[select_priority]
-        path_p_dat = '../../MaskDesign/{}_mask/{}_hp.dat'.format(dir, filename_p)
+        path_p_dat = '../../MaskDesign/{}_mask{}/{}_hp.dat'.format(dir, dir2, filename_p)
         if mode == 'find_diff':
             regions_p_d = regions_p_d[select_priority]
     else:
-        path_p_dat = '../../MaskDesign/{}_mask/{}.dat'.format(dir, filename_p)
+        path_p_dat = '../../MaskDesign/{}_mask{}/{}.dat'.format(dir, dir2, filename_p)
 
     # Remove object that are observed already
     np.savetxt(path_p_dat, data_p_dat, fmt="%s")
-    print(regions_p_d[:, 0])
     if mode == 'find_diff':
         if f_type != 'Sean':
             rows3 = np.array(['# Region file format: DS9 version 4.1',
@@ -294,6 +293,44 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
             regions_p_d = list(map(' '.join, zip(regions_p_d[:, 0], regions_p_d[:, 1], regions_p_d[:, 2])))
             regions_p_d = np.hstack((rows3, regions_p_d))
         np.savetxt(path_p_d, regions_p_d, fmt="%s")
+
+
+
+def RemoveObsObj(dir=None, file_obs='HE0439i123_objects.fits', field='HE0439'):
+    # Load object files from observation
+    cat_obs = '../../MaskDesign/{}/{}'.format(dir, file_obs)
+    data_obs = fits.open(cat_obs)[1].data
+    id, quality = data_obs['id'], data_obs['quality']
+    id_q12 = id[(quality == 2)]
+    id_q12 = list(map(''.join, zip(np.full_like(id_q12, '@'), id_q12)))
+
+    # Load object files from mask design
+    cat = '../../MaskDesign/{}/{}_@_ac.dat'.format(dir, field)
+    cat_hp = '../../MaskDesign/{}/{}_@_ac_hp.dat'.format(dir, field)
+    data = np.loadtxt(cat, dtype=str)
+    data_hp = np.loadtxt(cat_hp, dtype=str)
+    id, id_hp = data[:, 0], data_hp[:, 0]
+    idx = ~np.in1d(id, id_q12)
+    idx_hp = ~np.in1d(id_hp, id_q12)
+
+    # Save results
+    cat_ro = '../../MaskDesign/{}/{}_@_ro.dat'.format(dir, field)
+    cat_hp_ro = '../../MaskDesign/{}/{}_@_ro_hp.dat'.format(dir, field)
+    np.savetxt(cat_ro, data[idx], fmt="%s")
+    np.savetxt(cat_hp_ro, data_hp[idx_hp], fmt="%s")
+
+    # Save the region files
+    cat_ro_reg = '../../MaskDesign/{}/{}_@_ro.reg'.format(dir, field)
+    cat_reg = '../../MaskDesign/{}/{}_@_ac.reg'.format(dir, field)
+    regs = np.loadtxt(cat_reg, dtype=str, skiprows=3, comments='%')[idx]
+    rows3 = np.array(['# Region file format: DS9 version 4.1',
+                      'global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 '
+                      'highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1',
+                      'fk5'])
+    regs = list(map(' '.join, zip(regs[:, 0], regs[:, 1], regs[:, 2])))
+    regs = np.hstack((rows3, regs))
+    np.savetxt(cat_ro_reg, regs, fmt="%s")
+
 
 
 
@@ -354,5 +391,34 @@ def ConvertReg2Dat(dir=None, filename_p=None, p_type=None, filename_f=None, f_ty
 # ConvertReg2Dat(dir='3C57', filename_f='3C57_*', filename_p='3C57i3_*', mode='keep_same', p_type=None, priority_cut=None)
 
 # Test
-ConvertReg2Dat(dir='3C57', filename_f='3C57i2_d', filename_p='3C57i3', mode='find_diff', p_type='Sean',
+# ConvertReg2Dat(dir='3C57', filename_f='3C57i2_d', filename_p='3C57i3', mode='find_diff', p_type='Sean',
+#                priority_cut=[0, 40])
+
+
+
+# HE0439i4 i5 i6 i7
+# RemoveObsObj(dir='HE0439_mask2')
+
+# i4 20 hp
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439_*', filename_p='HE0439i4_*', mode='keep_same', p_type=None, priority_cut=None)
+
+# i5 19 hp
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439_@_ro', filename_p='HE0439i4', mode='find_diff', p_type='Sean',
+#                priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439_@_ro', filename_p='HE0439i4', mode='find_diff', p_type='Sean',
+#                priority_cut=None)
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439_*', filename_p='HE0439i5_*', mode='keep_same', p_type=None, priority_cut=None)
+
+# i6 16 hp
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439i4_d', filename_p='HE0439i5', mode='find_diff', p_type='Sean',
+#                priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439i4_d', filename_p='HE0439i5', mode='find_diff', p_type='Sean',
+#                priority_cut=None)
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439_*', filename_p='HE0439i6_*', mode='keep_same', p_type=None, priority_cut=None)
+
+# i7 15 hp
+ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439i5_d', filename_p='HE0439i6', mode='find_diff', p_type='Sean',
                priority_cut=[0, 40])
+ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439i5_d', filename_p='HE0439i6', mode='find_diff', p_type='Sean',
+               priority_cut=None)
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439_*', filename_p='HE0439i7_*', mode='keep_same', p_type=None, priority_cut=None)

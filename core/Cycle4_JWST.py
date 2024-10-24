@@ -1,4 +1,7 @@
+#!/usr/bin/env python
 import os
+import webbpsf
+import time as tm
 import numpy as np
 import matplotlib as mpl
 import astropy.io.fits as fits
@@ -9,13 +12,24 @@ from astropy.io import ascii
 from matplotlib import rc
 from PyAstronomy import pyasl
 from astropy.wcs import WCS
-import time as tm
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
 rc('ytick', direction='in')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
+
+# JWST PSF
+# os.env('export WEBBPSF_PATH="/Users/lzq/Dropbox/Zhuoqi Liu/Proposal/data/webbpsf-data:$WEBBPSF_PATH"')
+# ns = webbpsf.NIRSpec()
+# plt.figure(figsize=(8, 12))
+# ns = webbpsf.NIRSpec()
+# ns.image_mask='MSA all open'
+# ns.display()
+# plt.savefig('../../Proposal/HST+JWST/example_nirspec_msa_optics.png')
+# raise ValueError('Stop here')
+
+# HE1003+0149 m_z = 16.49, m_i = 16.56
 
 c_kms = 2.998e5
 wave_Halpha_vac = 6564.61
@@ -37,7 +51,7 @@ ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_q
 print('wavelength in um', line_list * (1 + z_qso) / 1e4)
 
 # Unit is in 10^-17
-OII_flux = 1.0
+OII_flux = 1.1
 lines_flux = OII_flux * np.asarray([1.0, 0.3, 0.16, 0.5, 0.8, 2.33, 0.5, 0.5])
 print('OII flux', OII_flux)
 print('line fluxes are', lines_flux)
@@ -45,11 +59,14 @@ print('line fluxes are', lines_flux)
 
 #
 data = np.loadtxt('../../Proposal/HST+JWST/mktrans_zm_10_10.dat.txt')
+data_sky = np.loadtxt('../../Proposal/HST+JWST/OH_JHK_band.dat')
 
 plt.figure(figsize=(10, 10), dpi=300)
-plt.plot(data[::5, 0], data[::5, 1], '-k', lw=1)
-plt.vlines(line_list * (1 + z_qso) / 1e4, ymin=0, ymax=1, color='r', linestyle='--', lw=1)
-plt.savefig('../../Proposal/HST+JWST/transmission.png')
-
-# write a line do vertical lines
-
+plt.plot(data[::40, 0], data[::40, 1], '-k', lw=1)
+plt.plot(data_sky[:, 0], data_sky[:, 1] / np.max(data_sky[:, 1]), '-b', lw=1)
+plt.vlines(line_list * (1 + z_qso) / 1e4, ymin=0, ymax=1.05, color='r', linestyle='--', lw=1)
+plt.xlim(0.8, 2.0)
+plt.ylim(0, 1.05)
+plt.xlabel('Wavelength ($\mu$m)')
+plt.ylabel('Transmission')
+plt.savefig('../../Proposal/HST+JWST/transmission_{}.png'.format(cubename))
