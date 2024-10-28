@@ -35,6 +35,8 @@ wave_OIII5008_vac = 5008.239
 # Set up the parser
 parser = argparse.ArgumentParser(description='2D kinematics fitting Gui')
 parser.add_argument('-m', metavar='cubename', help='MUSE cube name (without .fits), required', required=True, type=str)
+parser.add_argument('-seg', metavar='segmentation file', help='which set of segmentation map', required=False,
+                    type=str, default='(1.5, "gauss", 1.5, "gauss")')
 args = parser.parse_args()  # parse the arguments
 
 # QSO table
@@ -97,8 +99,8 @@ def model_OII_OIII(wave_vac, **params):
         wave_OIII_vac = wave_vac
         m_OIII5008 = np.zeros_like(wave_OIII_vac)
     else:
-        wave_OII_vac = wave_vac[0]
-        wave_OIII_vac = wave_vac[1]
+        wave_OII_vac = np.array(wave_vac[0], dtype=float)
+        wave_OIII_vac = np.array(wave_vac[1], dtype=float)
         m_OII = np.zeros_like(wave_OII_vac)
         m_OIII5008 = np.zeros_like(wave_OIII_vac)
 
@@ -516,7 +518,7 @@ class PlotWindow(QMainWindow):
         self.widget.setLayout(self.layout)
 
         # Set title
-        self.setWindowTitle("Check fitting")
+        self.setWindowTitle('{}'.format(cubename))
 
         # Create plot widgets
         self.widget1 = pg.GraphicsLayoutWidget()
@@ -1085,6 +1087,7 @@ class PlotWindow(QMainWindow):
             self.only_OII()
 
     def only_OII(self):
+        # something is wrong
         self.parameters['OIII'].value = 0
         self.parameters['flux_OIII5008_1'].value = np.nan
         self.parameters['flux_OIII5008_1'].vary = False
@@ -1100,6 +1103,17 @@ class PlotWindow(QMainWindow):
     def only_OIII(self):
         ###
         print('to be written')
+        self.parameters['OII'].value = 0
+        self.parameters['flux_OII_1'].value = np.nan
+        self.parameters['flux_OII_1'].vary = False
+        self.parameters['flux_OII_2'].value = np.nan
+        self.parameters['flux_OII_2'].vary = False
+        self.parameters['flux_OII_3'].value = np.nan
+        self.parameters['flux_OII_3'].vary = False
+        self.parameters['a_OII'].value = 0
+        self.parameters['a_OII'].vary = False
+        self.parameters['b_OII'].value = 0
+        self.parameters['b_OII'].vary = False
 
     def toggle_OII_ratio(self):
         if self.state == 0:
@@ -1306,6 +1320,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(cubename=args.m, NLR='')
+    window = PlotWindow(cubename=args.m, NLR='', UseDetectionSeg=eval(args.seg))
     window.show()
     sys.exit(app.exec_())
