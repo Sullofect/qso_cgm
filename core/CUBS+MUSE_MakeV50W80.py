@@ -59,7 +59,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     d_A_kpc = cosmo.angular_diameter_distance(z_qso).value * 1e3
     arcsec_str = '{:.0f}'.format(((50 / d_A_kpc) * 206265))
     gc.add_scalebar(length=float(arcsec_str) * u.arcsecond)
-    gc.scalebar.set_corner('bottom left')
+    gc.scalebar.set_corner('top left')
     gc.scalebar.set_label(arcsec_str + r"$'' \approx 50 \mathrm{\; kpc}$")
     gc.scalebar.set_font_size(30)
 
@@ -303,12 +303,12 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level=0.2):
 # MakeV50W80(cubename='HE0112-4145', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='HE0439-5254', v_max=500, sigma_max=300)
 # MakeV50W80(cubename='HE2305-5315', v_max=500, sigma_max=300)
-# MakeV50W80(cubename='HE1003+0149', v_max=300, sigma_max=300, contour_level=0.3)
+MakeV50W80(cubename='HE1003+0149', v_max=300, sigma_max=300, contour_level=0.3)
 # MakeV50W80(cubename='HE0331-4112', v_max=500, sigma_max=300)
 # MakeV50W80(cubename='TEX0206-048', v_max=600, sigma_max=400)
 MakeV50W80(cubename='Q1354+048', v_max=400, sigma_max=300, contour_level=0.2)
 # MakeV50W80(cubename='J0154-0712', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400)
-# MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300)
+MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='PKS0232-04', v_max=400, sigma_max=300, contour_level=0.2)
