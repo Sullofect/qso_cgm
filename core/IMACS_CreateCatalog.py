@@ -422,3 +422,11 @@ def RemoveObsObj(dir=None, file_obs='HE0439i123_objects.fits', field='HE0439'):
 # ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439i5_d', filename_p='HE0439i6', mode='find_diff', p_type='Sean',
 #                priority_cut=None)
 # ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439_*', filename_p='HE0439i7_*', mode='keep_same', p_type=None, priority_cut=None)
+
+# L1 14 hp
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439i6_d', filename_p='HE0439i7', mode='find_diff', p_type='Sean',
+#                priority_cut=[0, 40])
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439i6_d', filename_p='HE0439i7', mode='find_diff', p_type='Sean',
+#                priority_cut=None)
+# ConvertReg2Dat(dir='HE0439', dir2='2', filename_f='HE0439l1_*', filename_p='HE0439l1_star_ac', mode='keep_same', p_type=None, priority_cut=None)
+
