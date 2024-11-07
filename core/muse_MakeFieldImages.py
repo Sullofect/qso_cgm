@@ -103,7 +103,6 @@ def MakeFieldImage(cubename=None):
     bins_gal, row_gal, ID_gal, z_gal, v_gal, name_gal, ql_gal, ra_gal, dec_gal = LoadFieldGals(cubename=cubename,
                                                                                                z_qso=z_qso)
     print(ra_gal)
-
     if cubename == '3C57':
         path_IMACS = '../../MUSEQuBES+CUBS/gal_info/3C57_gal_IMACS.fits'
         data_IMACS = fits.getdata(path_IMACS, 1)
@@ -260,7 +259,7 @@ def MakeFieldImage(cubename=None):
 # MakeFieldImage(cubename='Q0107-0235')
 # MakeFieldImage(cubename='PB6291')
 # MakeFieldImage(cubename='HE0153-4520')
-MakeFieldImage(cubename='3C57')
+# MakeFieldImage(cubename='3C57')
 # MakeFieldImage(cubename='TEX0206-048')
 # MakeFieldImage(cubename='HE0226-4110')
 # MakeFieldImage(cubename='PKS0232-04')

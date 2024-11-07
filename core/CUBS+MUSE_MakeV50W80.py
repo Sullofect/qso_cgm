@@ -44,12 +44,13 @@ wave_OIII5008_vac = 5008.239
 
 
 def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None):
-    # gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
+    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
 
     # For JWST proposal
     # gc.recenter(ra_qso, dec_qso, width=20 / 3600, height=20 / 3600)
     if cubename == 'Q1354+048':
-        gc.recenter(ra_qso - 0.0005, dec_qso, width=20 / 3600, height=20 / 3600)
+        gc.recenter(ra_qso - 0.0005, dec_qso, width=30 / 3600, height=30 / 3600)
+
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=1000, zorder=100)
     gc.set_system_latex(True)
@@ -284,7 +285,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level=0.2):
 
 # MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
 # MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300)
-MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300)
 # MakeV50W80(cubename='HE0238-1904', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='3C57', v_max=300, sigma_max=300)
