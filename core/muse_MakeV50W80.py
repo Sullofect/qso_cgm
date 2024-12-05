@@ -278,10 +278,14 @@ path_cube_OII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.forma
 path_cube_OIII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}.fits'.format(line_OIII)
 path_cube_smoothed_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_{}_{}_' \
                          '{}_{}_{}.fits'.format(cubename, line_OII, *UseDataSeg)
+path_cube_smoothed_Hbeta = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_{}_{}_' \
+                          '{}_{}_{}.fits'.format(cubename, 'Hbeta', *UseDataSeg)
 path_cube_smoothed_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP_subtracted_{}_{}_' \
                           '{}_{}_{}.fits'.format(cubename, line_OIII, *UseDataSeg)
 path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
     format(line_OII, *UseSeg)
+path_3Dseg_Hbeta = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+    format('Hbeta', *UseSeg)
 path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
     format(line_OIII, *UseSeg)
 figurename_V50 = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}.png'. \

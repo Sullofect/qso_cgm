@@ -2010,6 +2010,10 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 #           '-s_spe 1.5 -k_spe gauss -ssf False -n 3 -sl 6205 6270')
 # os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
 #           '-ssf False -n 3 -sl 6205 6270')
+# os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_Hbeta -t 3.0 -s 1.5 -k gauss '
+#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.3 -sl 8110 8160 -n 5')
+# os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_Hbeta -t 1.0 -s 1.5 -k gauss '
+#           '-ssf False -l 0.3 -sl 8110 8160 -n 5')
 # os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss '
 #           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8350 8390 -n 5')   # change it to 5
 # os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss '

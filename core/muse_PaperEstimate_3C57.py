@@ -92,7 +92,7 @@ plt.tick_params(axis='both', which='major', direction='in', bottom='on', top='on
                 labelsize=20)
 plt.tick_params(axis='both', which='minor', direction='in', bottom='on', top='on', left='on', right='on', size=3)
 plt.legend(prop={'size': 17}, framealpha=0, loc=2, fontsize=15)
-plt.show()
+# plt.show()
 
 
 # Munari et al. 2013
@@ -119,3 +119,42 @@ print('N group loud', np.mean(sys_loud), np.std(sys_loud))
 print('halo mass', np.mean(mass_Li), np.std(mass_Li))
 print('halo mass loud', np.mean(mass_loud), np.std(mass_loud))
 
+
+# OIII / Hbeta ratio
+# os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_Hbeta -t 3.0 -s 1.5 -k gauss '
+#           '-s_spe 1.5 -k_spe gauss -ssf False -l 0.3 -sl 8110 8160 -n 5')
+# os.system('muse_MakeNBImageWith3DSeg.py -m 3C57_ESO-DEEP_subtracted_Hbeta -t 1.0 -s 1.5 -k gauss '
+#           '-ssf False -l 0.3 -sl 8110 8160 -n 5')
+UseSeg = (1.5, 'gauss', 1.5, 'gauss')
+path_SB_Hbeta = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_Hbeta_SB_3DSeg_1.5_gauss_1.5_gauss.fits'
+path_SB_OIII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_OIII_SB_3DSeg_1.5_gauss_1.5_gauss.fits'
+path_3Dseg_Hbeta = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+    format('Hbeta', *UseSeg)
+path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/3C57_ESO-DEEP_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+    format('OIII', *UseSeg)
+hdul_Hbeta, hdul_OIII = fits.open(path_SB_Hbeta), fits.open(path_SB_OIII)
+SB_Hbeta, SB_OIII = hdul_Hbeta[1].data, hdul_OIII[1].data
+seg_3D_Hbeta_ori, seg_3D_OIII_ori = fits.open(path_3Dseg_Hbeta)[0].data, fits.open(path_3Dseg_OIII)[0].data
+mask_seg_Hbeta, mask_seg_OIII = np.sum(seg_3D_Hbeta_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
+mask_seg = mask_seg_Hbeta + mask_seg_OIII
+OIII_Hbeta = np.log10(SB_OIII / SB_Hbeta)
+OIII_Hbeta = np.where(mask_seg > 0, OIII_Hbeta, np.nan)
+print(np.nanmedian(OIII_Hbeta), np.nanstd(OIII_Hbeta))
+plt.figure()
+plt.imshow(OIII_Hbeta, origin='lower')
+plt.show()
+
+
+
+# path_fit = '../../MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
+# hdul = fits.open(path_fit)
+# fs, hdr = hdul[1].data, hdul[2].header
+# v, z, dz = hdul[2].data, hdul[3].data, hdul[4].data
+# sigma, dsigma = hdul[5].data, hdul[6].data
+# flux_OII_fit, dflux_OII_fit = hdul[7].data, hdul[8].data
+# flux_OIII_fit, dflux_OIII_fit = hdul[9].data, hdul[10].data
+# r, dr = hdul[11].data, hdul[12].data
+# a_OII, da_OII = hdul[13].data, hdul[14].data
+# a_OIII, da_OIII = hdul[17].data, hdul[18].data
+# b_OII, db_OII = hdul[15].data, hdul[16].data
+# b_OIII, db_OIII = hdul[19].data, hdul[20].data
