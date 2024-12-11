@@ -5,6 +5,7 @@ import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from astropy.wcs import WCS
 from regions import Regions
 from scipy.stats import norm
 from astropy.io import ascii
@@ -12,6 +13,7 @@ from astropy.table import Table
 from astropy import units as u
 from scipy.optimize import minimize
 from astropy.coordinates import SkyCoord
+from photutils.segmentation import detect_sources, SourceCatalog, deblend_sources
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
@@ -107,78 +109,130 @@ def MakeFieldImage(cubename=None):
         path_IMACS = '../../MUSEQuBES+CUBS/gal_info/3C57_gal_IMACS.fits'
         data_IMACS = fits.getdata(path_IMACS, 1)
 
+        # Load VLASS
+        path_vlass = '../../MUSEQuBES+CUBS/3C57_radio/' \
+                     'VLASS-QL_2.2_J020157-113224_s1.0arcmin.T08t04.J020202-113000.10.2048.v1.I.iter1.image.pbcor.tt0.subim.fits'
+        hdul_vlass = fits.open(path_vlass, ignore_missing_end=True)[0]
+        data_vlass = hdul_vlass.data[0, 0, :, :]
+        header = hdul_vlass.header
+
+        header['NAXIS'] = 2
+        header.remove('NAXIS3')
+        header.remove('NAXIS4')
+        header.remove('PC3_1')
+        header.remove('PC1_3')
+        header.remove('PC4_1')
+        header.remove('PC1_4')
+        header.remove('PC3_2')
+        header.remove('PC2_3')
+        header.remove('PC4_2')
+        header.remove('PC2_4')
+        header.remove('PC3_3')
+        header.remove('PC4_3')
+        header.remove('PC3_4')
+        header.remove('PC4_4')
+        header.remove('CTYPE3')
+        header.remove('CTYPE4')
+        header.remove('CRVAL3')
+        header.remove('CRVAL4')
+        header.remove('CDELT3')
+        header.remove('CDELT4')
+        header.remove('CRPIX3')
+        header.remove('CRPIX4')
+        header.remove('CUNIT3')
+        header.remove('CUNIT4')
+
+        # Compute centroid
+        segment_map = detect_sources(data_vlass, 300 * np.median(data_vlass), npixels=5, connectivity=4)
+        segm_deblend = deblend_sources(data_vlass, segment_map,
+                                       npixels=10, nlevels=32, contrast=0.001)
+        cat = SourceCatalog(data_vlass, segm_deblend)
+        x_cen, y_cen = cat.xcentroid, cat.ycentroid
+
+        # Figure
+        # plt.imshow(segm_deblend.data, origin='lower', interpolation='nearest')
+        # plt.show()
+        # raise ValueError('exit')
+
+
     # Load the image
     path_hb = '../../MUSEQuBES+CUBS/datacubes_gaia/{}_drc_offset_gaia.fits'.format(cubename)
     # data_hb = fits.getdata(path_hb, 1, ignore_missing_end=True)
 
 
-    # # Figure
-    # fig = plt.figure(figsize=(8, 8), dpi=300)
-    # gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
-    # gc.set_xaxis_coord_type('scalar')
-    # gc.set_yaxis_coord_type('scalar')
+    # Figure
+    fig = plt.figure(figsize=(8, 8), dpi=300)
+    gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
+    gc.set_xaxis_coord_type('scalar')
+    gc.set_yaxis_coord_type('scalar')
+
+
     #
+    gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
+
     #
-    # #
-    # gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
-    #
-    # #
-    # gc.set_system_latex(True)
-    # # gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
-    # gc.show_colorscale(cmap='Greys', vmin=-0.005, vmax=1, vmid=-0.001, stretch='arcsinh')
-    # gc.add_colorbar()
-    # # gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
-    # gc.colorbar.set_location('bottom')
-    # gc.colorbar.set_pad(0.0)
-    # gc.colorbar.set_font(size=30)
-    # gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
-    #                                 r's^{-1} \; arcsec^{-2}]}$')
-    # gc.colorbar.set_axis_label_font(size=30)
-    # gc.colorbar.hide()
-    #
-    #
-    # # Hide ticks
-    # gc.ticks.set_length(30)
-    # gc.ticks.hide()
-    # gc.tick_labels.hide()
-    # gc.axis_labels.hide()
-    #
-    # # Markers
-    # gc.add_scalebar(length=7 * u.arcsecond)
-    # # gc.add_scalebar(length=15 * u.arcsecond)
-    # gc.scalebar.set_corner('top left')
-    # # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
-    # gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
-    # gc.scalebar.set_font_size(30)
-    #
-    # gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
-    #                 edgecolors='k', linewidths=0.5, s=3000)
-    # gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
-    #
-    # # Draw contours
-    # contour_level = 0.20
-    # gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='blue', linewidths=2,
-    #                 smooth=5, kernel='box', hdu=1)
-    # gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='red', linewidths=2,
-    #                 smooth=5, kernel='box', hdu=1)
-    #
-    # # labels
-    # gc.add_label(0.58, 0.88, r'$\rm MUSE \, [O\,II]$', color='blue', size=30, relative=True, horizontalalignment='left')
-    # gc.add_label(0.58, 0.80, r'$\rm MUSE \, [O\,III]$', color='red', size=30, relative=True, horizontalalignment='left')
-    # gc.add_label(0.58, 0.95, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=30, relative=True, horizontalalignment='left')
-    # gc.add_label(0.08, 0.08, '(a)', color='k', size=40, relative=True)
-    #
-    # # NE
-    # # xw, yw = gc.pixel2world(140, 140)
-    # # gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
-    # # gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
-    # # gc.add_label(0.9778, 0.30, r'N', size=30, relative=True)
-    # # gc.add_label(0.88, 0.10, r'E', size=30, relative=True)
-    #
-    # # Labels
-    # fig.savefig(path_savefig_mini, bbox_inches='tight')
-    #
-    # raise ValueError('STOP')
+    gc.set_system_latex(True)
+    # gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+    gc.show_colorscale(cmap='Greys', vmin=-0.005, vmax=1, vmid=-0.001, stretch='arcsinh')
+    gc.add_colorbar()
+    # gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
+    gc.colorbar.set_location('bottom')
+    gc.colorbar.set_pad(0.0)
+    gc.colorbar.set_font(size=30)
+    gc.colorbar.set_axis_label_text(r'$\mathrm{SB \; [10^{-17} \; erg \; cm^{-2} \; '
+                                    r's^{-1} \; arcsec^{-2}]}$')
+    gc.colorbar.set_axis_label_font(size=30)
+    gc.colorbar.hide()
+
+
+    # Hide ticks
+    gc.ticks.set_length(30)
+    gc.ticks.hide()
+    gc.tick_labels.hide()
+    gc.axis_labels.hide()
+
+    # Markers
+    gc.add_scalebar(length=7 * u.arcsecond)
+    # gc.add_scalebar(length=15 * u.arcsecond)
+    gc.scalebar.set_corner('top left')
+    # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+    gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
+    gc.scalebar.set_font_size(30)
+
+    gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey',
+                    edgecolors='k', linewidths=0.5, s=3000)
+    gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
+
+    # Show radio lobes centroid
+    w = WCS(hdul_vlass.header)
+    c2_hst = w.pixel_to_world(x_cen, y_cen)
+    gc.show_markers(c2_hst[1].ra.deg, c2_hst[1].dec.deg, facecolors='purple', marker='d', c='purple', edgecolors='k', linewidths=0.8, s=1000)
+    gc.show_markers(c2_hst[2].ra.deg, c2_hst[2].dec.deg, facecolors='purple', marker='d', c='purple', edgecolors='k', linewidths=0.8, s=300)
+
+    # Draw contours
+    contour_level = 0.20
+    gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='blue', linewidths=2,
+                    smooth=5, kernel='box', hdu=1)
+    gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='red', linewidths=2,
+                    smooth=5, kernel='box', hdu=1)
+
+    # labels
+    gc.add_label(0.58, 0.88, r'$\rm MUSE \, [O\,II]$', color='blue', size=30, relative=True, horizontalalignment='left')
+    gc.add_label(0.58, 0.80, r'$\rm MUSE \, [O\,III]$', color='red', size=30, relative=True, horizontalalignment='left')
+    gc.add_label(0.58, 0.95, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=30, relative=True, horizontalalignment='left')
+    gc.add_label(0.08, 0.08, '(a)', color='k', size=40, relative=True)
+
+    # NE
+    # xw, yw = gc.pixel2world(140, 140)
+    # gc.show_arrows(xw, yw, -0.000035 * yw, 0, color='k')
+    # gc.show_arrows(xw, yw, 0, -0.000035 * yw, color='k')
+    # gc.add_label(0.9778, 0.30, r'N', size=30, relative=True)
+    # gc.add_label(0.88, 0.10, r'E', size=30, relative=True)
+
+    # Labels
+    fig.savefig(path_savefig_mini, bbox_inches='tight')
+
+    raise ValueError('STOP')
 
     # Figure
     fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -259,7 +313,7 @@ def MakeFieldImage(cubename=None):
 # MakeFieldImage(cubename='Q0107-0235')
 # MakeFieldImage(cubename='PB6291')
 # MakeFieldImage(cubename='HE0153-4520')
-# MakeFieldImage(cubename='3C57')
+MakeFieldImage(cubename='3C57')
 # MakeFieldImage(cubename='TEX0206-048')
 # MakeFieldImage(cubename='HE0226-4110')
 # MakeFieldImage(cubename='PKS0232-04')

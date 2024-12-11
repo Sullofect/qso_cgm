@@ -172,7 +172,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.add_scalebar(length=8 * u.arcsecond)
         gc.scalebar.set_corner('top left')
         # gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # 3C57
-        gc.scalebar.set_label(r"$8'' \approx 50 \mathrm{\; kpc}$")  # HE0226
+        gc.scalebar.set_label(r"$8'' \approx 50 \mathrm{\; pkpc}$")  # HE0226
         gc.scalebar.set_font_size(30)
         # gc.add_label(0.98, 0.94, cubename, size=35, relative=True, horizontalalignment='right')
         # gc.add_label(0.98, 0.87, r'$z={}$'.format(z_qso), size=35, relative=True, horizontalalignment='right')
@@ -181,7 +181,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'GasMap':
         gc.add_scalebar(length=7 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
         gc.scalebar.set_font_size(30)
 
         gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
@@ -190,7 +190,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'GasMap_slit':
         gc.add_scalebar(length=7 * u.arcsecond)
         gc.scalebar.set_corner('bottom left')
-        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
         gc.scalebar.set_font_size(30)
         gc.colorbar.hide()
         # gc.add_label(0.98, 0.94, r'$\rm 3C\,57$', size=35, relative=True, horizontalalignment='right')
@@ -201,7 +201,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'GasMap_sigma':
         gc.add_scalebar(length=7 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
         gc.scalebar.set_font_size(30)
 
         gc.colorbar.set_ticks([0, 150, 300, 450, 600, 750])
@@ -210,14 +210,14 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'N':
         gc.add_scalebar(length=7 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
         gc.scalebar.set_font_size(30)
         gc.colorbar.set_ticks([0, 1, 2, 3])
         gc.colorbar.set_axis_label_text(r'$\rm Number \, of \, Gaussians$')
     else:
         gc.add_scalebar(length=7 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
         gc.scalebar.set_font_size(30)
 
         gc.colorbar.set_ticks([-1, -0.5, 0.0, 0.5, 1.0])
