@@ -624,7 +624,7 @@ ax.set_yticklabels([])
 fig.savefig('../../MUSEQuBES+CUBS/fit_kin/3C57_sudo_cone.png', bbox_inches='tight')
 
 
-raise ValueError('Stop here')
+# raise ValueError('Stop here')
 
 def emission_pixel(fgrid, vgrid, vmax, coord_MUSE=None, nbins=25, sampling=100, z=z_qso):
     global c2

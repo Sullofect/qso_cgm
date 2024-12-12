@@ -113,6 +113,7 @@ class DrawBiconeModel:
         pixcoord_sample = PixCoord(x=X_sample, y=Y_sample)
 
         #
+        c2 = (74.10229258, 75.00307991)
         center_x, center_y = (self.sampling - 1) / 2, (self.sampling - 1) / 2
         pixel_scale = 40 / (self.sampling - 1)
         coord_sample = int(coord_MUSE[0] - c2[0]) / pixel_scale + center_x, \
@@ -142,7 +143,7 @@ class DrawBiconeModel:
         v_xy = v_xy[f_xy > 0]
         f_xy = f_xy[f_xy > 0]
 
-        v_hist, v_edges = np.histogram(v_xy, bins=self.bins, weights=f_xy)
+        v_hist, v_edges = np.histogram(v_xy, bins=self.nbins, weights=f_xy)
 
         return wave_OIII_ext, v_hist / v_hist.max()
 
@@ -194,10 +195,10 @@ class DrawBiconeModel:
 # lambda_mid, v_hist = func.emission_pixel(coord_MUSE=coord_MUSE)
 # flux_model_cube = func.emission_cube()
 #
-# # Save the results
-# path_test = '../../MUSEQuBES+CUBS/fit_kin/Biconical_cube_test.fits'
-# hdul_test = fits.ImageHDU(flux_model_cube, header=None)
-# hdul_test.writeto(path_test, overwrite=True)
+# # # Save the results
+# # path_test = '../../MUSEQuBES+CUBS/fit_kin/Biconical_cube_test.fits'
+# # hdul_test = fits.ImageHDU(flux_model_cube, header=None)
+# # hdul_test.writeto(path_test, overwrite=True)
 #
 # # chi2, chi2_all = likelihood(flux_OIII, flux_err_OIII, flux_model_cube)
 # # print(chi2_all)
@@ -213,6 +214,6 @@ class DrawBiconeModel:
 # ax.set_xlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=20)
 # ax.set_ylabel(r'${f}_{\lambda} \; (10^{-17} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}})$', size = 20)
 # # ax.set_xlim(wave_OIII_vac.min(), wave_OIII_vac.max())
-# fig.savefig('../../MUSEQuBES+CUBS/fit_kin/3C57_cone_flux.png', bbox_inches='tight')
-# # plt.show()
-#
+# # fig.savefig('../../MUSEQuBES+CUBS/fit_kin/3C57_cone_flux.png', bbox_inches='tight')
+# plt.show()
+
