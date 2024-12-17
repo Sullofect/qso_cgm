@@ -44,7 +44,11 @@ wave_OIII5008_vac = 5008.239
 
 
 def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None):
-    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
+    # 3C57 paper
+    # gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
+
+    # All
+    # gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
 
     # For JWST proposal
     # gc.recenter(ra_qso, dec_qso, width=20 / 3600, height=20 / 3600)
@@ -249,7 +253,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level=0.2):
     gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='black', linewidths=2,
                     smooth=5, kernel='box', hdu=1)
     APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
-    # gc.add_label(0.03, 0.08, r'$\rm [O\,II]$', color='black', size=30, relative=True, horizontalalignment='left')
+    # gc.add_label(0.03, 0.08, r'$\rm [O\,II]$', color='black', size=40, relative=True, horizontalalignment='left')
     # gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
     # For JWST proposal
     if cubename == 'PKS0232-04':
@@ -274,7 +278,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level=0.2):
         gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='black', linewidths=2,
                         smooth=5, kernel='box', hdu=1)
         APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
-        gc.add_label(0.97, 0.92, r'$\rm [O\,III]$', color='black', size=30, relative=True, horizontalalignment='right')
+        # gc.add_label(0.97, 0.92, r'$\rm [O\,III]$', color='black', size=40, relative=True, horizontalalignment='right')
         # gc.add_label(0.08, 0.08, '(c)', color='k', size=40, relative=True)
         fig.savefig(figurename_SB_OIII, bbox_inches='tight')
 
