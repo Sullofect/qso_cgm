@@ -1203,7 +1203,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='black', linewidths=2,
                         smooth=5, kernel='box', hdu=1)
         APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
-        gc.add_label(0.97, 0.92, r'$\rm [O\,II]$', color='black', size=30, relative=True, horizontalalignment='right')
+        gc.add_label(0.97, 0.92, r'$\rm [O\,II]$', color='black', size=40, relative=True, horizontalalignment='right')
         gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
         fig.savefig(figurename_SB_OII, bbox_inches='tight')
 
@@ -1213,7 +1213,7 @@ def PlotKinematics(cubename=None, zapped=False, fit_param=None, UseDataSeg=(1.5,
         gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='black', linewidths=2,
                         smooth=5, kernel='box', hdu=1)
         APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
-        gc.add_label(0.97, 0.92, r'$\rm [O\,III]$', color='black', size=30, relative=True, horizontalalignment='right')
+        gc.add_label(0.97, 0.92, r'$\rm [O\,III]$', color='black', size=40, relative=True, horizontalalignment='right')
         gc.add_label(0.08, 0.08, '(c)', color='k', size=40, relative=True)
         fig.savefig(figurename_SB_OIII, bbox_inches='tight')
     else:
@@ -1798,7 +1798,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
         gc.add_scalebar(length=7 * u.arcsecond)
         # gc.add_scalebar(length=8 * u.arcsecond)
         gc.scalebar.set_corner('top left')
-        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; kpc}$")  # 3C57
+        gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")  # 3C57
         # gc.scalebar.set_label(r"$8'' \approx 50 \mathrm{\; kpc}$")  # HE0226
         gc.scalebar.set_font_size(30)
         # gc.add_label(0.98, 0.94, cubename, size=35, relative=True, horizontalalignment='right')
