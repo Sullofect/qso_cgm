@@ -279,7 +279,8 @@ z_2, sigma_kms_2, amp_NeV3425_2, amp_NeIII3869_2, amp_Hdel_2, amp_Hgam_2 = resul
                                                                   result.params['amp_NeV3425_2'].value, result.params['amp_NeIII3869_2'].value, \
                                                                     result.params['amp_Hdel_2'].value, result.params['amp_Hgam_2'].value
 amp_Hbeta, amp_Hbeta_2 = result.params['amp_Hbeta'].value, result.params['amp_Hbeta_2'].value
-
+err_Hgam, err_Hgam_2 = result.params['amp_Hgam'].stderr, result.params['amp_Hgam_2'].stderr
+err_Hbeta, err_Hbeta_2 = result.params['amp_Hbeta'].stderr, result.params['amp_Hbeta_2'].stderr
 model_NeV3425 = Gaussian(wave_NeV3425, z, sigma_kms, amp_NeV3425, pyasl.airtovac2(3425.881)) +\
                 Gaussian(wave_NeV3425, z_2, sigma_kms_2, amp_NeV3425_2, pyasl.airtovac2(3425.881))
 model_NeIII3869 = Gaussian(wave_NeIII3869, z, sigma_kms, amp_NeIII3869, pyasl.airtovac2(3868.760)) +\
@@ -290,8 +291,13 @@ model_Hgam = Gaussian(wave_Hgam, z, sigma_kms, amp_Hgam, pyasl.airtovac2(4340.47
                 Gaussian(wave_Hgam, z_2, sigma_kms_2, amp_Hgam_2, pyasl.airtovac2(4340.471))
 model_Hbeta = Gaussian(wave_Hbeta, z, sigma_kms, amp_Hbeta, pyasl.airtovac2(4861.333)) +\
                 Gaussian(wave_Hbeta, z_2, sigma_kms_2, amp_Hbeta_2, pyasl.airtovac2(4861.333))
+z = (amp_Hgam + amp_Hgam_2) / (amp_Hbeta + amp_Hbeta_2)
+dx = np.sqrt(err_Hgam ** 2 + err_Hgam_2 ** 2)
+dy = np.sqrt(err_Hbeta ** 2 + err_Hbeta_2 ** 2)
 print(amp_Hgam / amp_Hbeta, amp_Hgam_2 / amp_Hbeta_2)
-print((amp_Hgam + amp_Hgam_2) / (amp_Hbeta + amp_Hbeta_2))
+print(z)
+print('uncer_1', z * np.sqrt((dx / (amp_Hgam + amp_Hgam_2)) ** 2 + (dy / (amp_Hbeta + amp_Hbeta_2)) ** 2))
+print('uncer_2', 1 / (amp_Hbeta + amp_Hbeta_2) * np.sqrt(err_Hgam ** 2 + err_Hgam_2 ** 2 + z ** 2 * (err_Hbeta ** 2 + err_Hbeta_2 ** 2)))
 
 #
 fig, ax = plt.subplots(2, 2, figsize=(10,5))
