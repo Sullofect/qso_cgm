@@ -232,7 +232,7 @@ def MakeFieldImage(cubename=None):
     # Labels
     fig.savefig(path_savefig_mini, bbox_inches='tight')
 
-    raise ValueError('STOP')
+    # raise ValueError('STOP')
 
     # Figure
     fig = plt.figure(figsize=(8, 8), dpi=300)
@@ -251,7 +251,7 @@ def MakeFieldImage(cubename=None):
     #
     gc.set_system_latex(True)
     gc1.set_system_latex(True)
-    gc1.show_colorscale(cmap='coolwarm', vmin=-1000, vmax=1000)
+    gc1.show_colorscale(cmap='coolwarm', vmin=-350, vmax=350)
     gc1.hide_colorscale()
     gc1.add_colorbar()
     gc1.colorbar.set_box([0.15, 0.145, 0.38, 0.02], box_orientation='horizontal')
@@ -263,6 +263,13 @@ def MakeFieldImage(cubename=None):
     # gc.show_colorscale(cmap='Greys', vmin=0, vmax=0.005, stretch='linear', smooth=3, kernel='gauss')
     gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
     # gc.show_colorscale(cmap='Greys')
+
+    gc.add_scalebar(length=7 * u.arcsecond)
+    # gc.add_scalebar(length=15 * u.arcsecond)
+    gc.scalebar.set_corner('top left')
+    # gc.scalebar.set_label(r"$15'' \approx 100 \mathrm{\; pkpc}$")
+    gc.scalebar.set_label(r"$7'' \approx 50 \mathrm{\; pkpc}$")
+    gc.scalebar.set_font_size(30)
 
     gc.add_colorbar()
     gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
@@ -294,9 +301,9 @@ def MakeFieldImage(cubename=None):
     gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
     # gc.show_markers(ra_gal_all, dec_gal_all, facecolor='none', marker='o', c='none', edgecolors='red',
     #                 linewidths=0.8, s=120)
-    gc.show_contour(path_OII, hdu=1, levels=[0.1], color='black', linewidths=1, smooth=5, kernel='box')
-    gc.show_markers(data_IMACS['ra'], data_IMACS['dec'], facecolor='none', marker='o', c='none',
-                    edgecolors='r', linewidths=0.8, s=150)
+    gc.show_contour(path_OII, hdu=1, levels=[0.2], color='black', linewidths=1, smooth=5, kernel='box')
+    # gc.show_markers(data_IMACS['ra'], data_IMACS['dec'], facecolor='none', marker='o', c='none',
+    #                 edgecolors='r', linewidths=0.8, s=150)
 
     # Labels
     # xw, yw = 40.1231559, -18.8580071
