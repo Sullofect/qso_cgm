@@ -48,12 +48,12 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     # gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
 
     # All
-    # gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
+    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
 
     # For JWST proposal
     # gc.recenter(ra_qso, dec_qso, width=20 / 3600, height=20 / 3600)
-    if cubename == 'Q1354+048':
-        gc.recenter(ra_qso - 0.0005, dec_qso, width=30 / 3600, height=30 / 3600)
+    # if cubename == 'Q1354+048':
+    #     gc.recenter(ra_qso - 0.0005, dec_qso, width=30 / 3600, height=30 / 3600)
 
     gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='*', c='lightgrey', edgecolors='k',
                     linewidths=0.5, s=1000, zorder=100)
@@ -74,7 +74,9 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     gc.colorbar.set_pad(0.0)
     gc.colorbar.set_font(size=30)
     gc.colorbar.set_axis_label_font(size=30)
-    if type == 'NarrowBand':
+    if type == 'HST':
+        gc.colorbar.hide()
+    elif type == 'NarrowBand':
         gc.colorbar.set_location('bottom')
         gc.colorbar.set_ticks([0, 1, 2, 3, 4, 5])
         gc.colorbar.set_font(size=30)
@@ -98,30 +100,30 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif cubename == 'PB6291':
         cubename = 'Q0107-025'
 
-    if cubename == '3C57':
-        gc.add_label(0.98, 0.95, r'$\rm 3C\,57$', size=35, relative=True, horizontalalignment='right')
-    else:
-        try:
-            split = '-'
-            split_lax = r'$-$'
-            name_1, name_2 = cubename.split(split)
-        except ValueError:
-            split = '+'
-            split_lax = r'$+$'
-            name_1, name_2 = cubename.split(split)
-
-
-        for i in range(len(cubename)):
-            if not cubename[i].isalpha():
-                break
-
-        if i == 1:
-            cubename_label = name_1 + split_lax + name_2
+    if type == 'HST':
+        if cubename == '3C57':
+            gc.add_label(0.98, 0.95, r'$\rm 3C\,57$', size=35, relative=True, horizontalalignment='right')
         else:
-            cubename_label = cubename[:i] + r'$\,$' + name_1[i:] + split_lax + name_2
-        gc.add_label(0.98, 0.95, cubename_label, size=35, relative=True, horizontalalignment='right')
-    gc.add_label(0.98, 0.87, r'$z=$' + ' {:.4f}'.format(z_qso), size=35, relative=True, horizontalalignment='right')
+            try:
+                split = '-'
+                split_lax = r'$-$'
+                name_1, name_2 = cubename.split(split)
+            except ValueError:
+                split = '+'
+                split_lax = r'$+$'
+                name_1, name_2 = cubename.split(split)
 
+
+            for i in range(len(cubename)):
+                if not cubename[i].isalpha():
+                    break
+
+            if i == 1:
+                cubename_label = name_1 + split_lax + name_2
+            else:
+                cubename_label = cubename[:i] + r'$\,$' + name_1[i:] + split_lax + name_2
+            gc.add_label(0.98, 0.95, cubename_label, size=35, relative=True, horizontalalignment='right')
+        gc.add_label(0.98, 0.87, r'$z=$' + ' {:.4f}'.format(z_qso), size=35, relative=True, horizontalalignment='right')
     # Hide
     gc.ticks.hide()
     gc.tick_labels.hide()
@@ -143,7 +145,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level=0.2):
     line_OII, line_OIII = 'OII', 'OIII'
     figurename_V50 = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_{}_{}_{}_{}_{}_{}_{}.png'. \
         format(cubename, line, True, 3728, *UseDataSeg)
-    figurename_S80 = '../../MUSEQuBES+CUBS/fit_kin/{}_W80_{}_{}_{}_{}_{}_{}_{}.png'. \
+    figurename_S80 = '../../MUSEQuBES+CUBS/fit_kin/{}_S80_{}_{}_{}_{}_{}_{}_{}.png'. \
         format(cubename, line, True, 3728, *UseDataSeg)
     path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
     try:
@@ -226,7 +228,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level=0.2):
 
     # OII SBs
     if cubename == 'TEX0206-048':
-        str_zap = 'zapped'
+        str_zap = '_zapped'
     else:
         str_zap = ''
 
@@ -253,22 +255,26 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level=0.2):
     gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='black', linewidths=2,
                     smooth=5, kernel='box', hdu=1)
     APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
-    # gc.add_label(0.03, 0.08, r'$\rm [O\,II]$', color='black', size=40, relative=True, horizontalalignment='left')
+    if cubename == 'HE0435-5304':
+        gc.add_label(0.03, 0.08, r'$\rm [O\,II]$', color='black', size=40, relative=True, horizontalalignment='left')
+    if cubename != 'PKS0232-04':
+        gc.colorbar.hide()
     # gc.add_label(0.08, 0.08, '(b)', color='k', size=40, relative=True)
+
     # For JWST proposal
-    if cubename == 'PKS0232-04':
-        gc.show_rectangles(38.7804671, -4.0357864, 3 / 3600, 3 / 3600, edgecolor='black', linewidth=2)
-    elif cubename == 'PKS2242-498':
-        gc.show_rectangles(341.2493718, -49.5295075, 3 / 3600, 3 / 3600, edgecolor='black', linewidth=2)
-    elif cubename == 'Q0107-0235':
-        gc.show_rectangles(17.5556650, -2.3308936, 3 / 3600, 3 / 3600, edgecolor='black', linewidth=2)
-    elif cubename == 'Q1354+048':
-        gc.show_rectangles(209.3582986, 4.5953355, 3 / 3600, 3 / 3600, edgecolor='black', linewidth=2)
+    # if cubename == 'PKS0232-04':
+    #     gc.show_rectangles(38.7804671, -4.0357864, 3 / 3600, 3 / 3600, edgecolor='black', linewidth=2)
+    # elif cubename == 'PKS2242-498':
+    #     gc.show_rectangles(341.2493718, -49.5295075, 3 / 3600, 3 / 3600, edgecolor='black', linewidth=2)
+    # elif cubename == 'Q0107-0235':
+    #     gc.show_rectangles(17.5556650, -2.3308936, 3 / 3600, 3 / 3600, edgecolor='black', linewidth=2)
+    # elif cubename == 'Q1354+048':
+    #     gc.show_rectangles(209.3582986, 4.5953355, 3 / 3600, 3 / 3600, edgecolor='black', linewidth=2)
     fig.savefig(figurename_SB_OII, bbox_inches='tight')
 
 
     # OIII SB
-    if os.path.exists(path_SB_OIII_kin):
+    if os.path.exists(path_SB_OIII):
         hdul_SB_OIII_kin = fits.ImageHDU(fits.open(path_SB_OIII)[1].data, header=hdr)
         hdul_SB_OIII_kin.writeto(path_SB_OIII_kin, overwrite=True)
 
@@ -278,17 +284,48 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level=0.2):
         gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='black', linewidths=2,
                         smooth=5, kernel='box', hdu=1)
         APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
-        # gc.add_label(0.97, 0.92, r'$\rm [O\,III]$', color='black', size=40, relative=True, horizontalalignment='right')
+        if cubename == 'HE0435-5304':
+            gc.add_label(0.03, 0.08, r'$\rm [O\,III]$', color='black', size=40, relative=True, horizontalalignment='left')
+        if cubename != 'PKS0232-04':
+            gc.colorbar.hide()
         # gc.add_label(0.08, 0.08, '(c)', color='k', size=40, relative=True)
         fig.savefig(figurename_SB_OIII, bbox_inches='tight')
 
 
 
+    # HST image with MUSE field of view
+    path_hb = '../../MUSEQuBES+CUBS/datacubes_gaia/{}_drc_offset_gaia.fits'.format(cubename)
+    if os.path.exists(path_hb):
+        fig = plt.figure(figsize=(8, 8), dpi=300)
+        gc = aplpy.FITSFigure(path_hb, figure=fig, north=True, hdu=1)
+        gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
+        gc.show_colorscale(cmap='Greys', vmin=-0.005, vmax=1, vmid=-0.001, stretch='arcsinh')
+        APLpyStyle(gc, type='HST', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
+        gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
 
+        # Draw contours
+        gc.show_contour(path_SB_OII_kin, levels=[contour_level], colors='blue', linewidths=2,
+                        smooth=5, kernel='box', hdu=1)
+        if os.path.exists(path_SB_OIII_kin):
+            gc.show_contour(path_SB_OIII_kin, levels=[contour_level], colors='red', linewidths=2,
+                            smooth=5, kernel='box', hdu=1)
+
+        # labels
+        if cubename == 'HE0435-5304':
+            gc.add_label(0.62, 0.13, r'$\rm MUSE \, [O\,II]$', color='blue', size=30,
+                         relative=True, horizontalalignment='left')
+            gc.add_label(0.62, 0.05, r'$\rm MUSE \, [O\,III]$', color='red', size=30,
+                         relative=True, horizontalalignment='left')
+            gc.add_label(0.02, 0.05, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=40,
+                         relative=True, horizontalalignment='left')
+
+        # Labels
+        path_savefig_mini = '../../MUSEQuBES+CUBS/plots/{}_mini_gaia_25.png'.format(cubename)
+        fig.savefig(path_savefig_mini, bbox_inches='tight')
 
 
 # MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
-# MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300)
+MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level=0.5)
 # MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300)
 # MakeV50W80(cubename='HE0238-1904', v_max=300, sigma_max=300)

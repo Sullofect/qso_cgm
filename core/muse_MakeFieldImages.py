@@ -168,7 +168,7 @@ def MakeFieldImage(cubename=None):
 
 
     #
-    gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
+    gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
 
     #
     gc.set_system_latex(True)
@@ -232,7 +232,7 @@ def MakeFieldImage(cubename=None):
     # Labels
     fig.savefig(path_savefig_mini, bbox_inches='tight')
 
-    # raise ValueError('STOP')
+    raise ValueError('STOP')
 
     # Figure
     fig = plt.figure(figsize=(8, 8), dpi=300)
