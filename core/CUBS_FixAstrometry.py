@@ -168,6 +168,85 @@ def FixGalaxyCatalog(cubename=None):
     #     path_group = ''
 
 
+def FixAstrometrySeb(cubename):
+
+    if cubename == 'J0110-1648':
+        cubename_load = 'Q0110-1648'
+    elif cubename == 'J2135-5316':
+        cubename_load = 'Q2135-5316'
+    elif cubename == 'J0119-2010':
+        cubename_load = 'Q0119-2010'
+    elif cubename == 'HE0246-4101':
+        cubename_load = 'Q0248-4048'
+    elif cubename == 'J0028-3305':
+        cubename_load = 'Q0028-3305'
+    elif cubename == 'HE0419-5657':
+        cubename_load = 'Q0420-5650'
+    elif cubename == 'PKS2242-498':
+        cubename_load = 'Q2245-4931'
+    elif cubename == 'PKS0355-483':
+        cubename_load = 'Q0357-4812'
+    elif cubename == 'HE0112-4145':
+        cubename_load = 'Q0114-4129'
+    elif cubename == 'J0111-0316':
+        cubename_load = 'Q0111-0316'
+    elif cubename == 'HE2336-5540':
+        cubename_load = 'Q2339-5523'
+    elif cubename == 'HE2305-5315':
+        cubename_load = 'Q2308-5258'
+    elif cubename == 'J0454-6116':
+        cubename_load = 'Q0454-6116'
+    elif cubename == 'HE0331-4112':
+        cubename_load = 'Q0333-4102'
+    elif cubename == 'J0154-0712':
+        cubename_load = 'Q0154-0712'
+
+    # Will be replaced by a table
+    path_muse_white_gaia = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac_WHITE_gaia.fits'. \
+        format(cubename_load)
+    path_muse_white_gaia_save = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac_WHITE_gaia.fits'. \
+        format(cubename)
+    hdul_muse_white_gaia = fits.open(path_muse_white_gaia)
+
+    try:
+        print(hdul_muse_white_gaia[1].header['PC2_1'])
+    except KeyError:
+        print('no rotation copying PC1_1 to PC2_2')
+        hdul_muse_white_gaia[1].header.append('PC2_1', 'PC1_2', 'PC2_2')
+        hdul_muse_white_gaia[1].header['PC2_1'] = 0
+        hdul_muse_white_gaia[1].header['PC1_2'] = 0
+        hdul_muse_white_gaia[1].header['PC2_2'] = -1 * hdul_muse_white_gaia[1].header['PC1_1']
+    hdul_muse_white_gaia[1].header.append('CD1_1')
+    hdul_muse_white_gaia[1].header.append('CD1_2')
+    hdul_muse_white_gaia[1].header.append('CD2_1')
+    hdul_muse_white_gaia[1].header.append('CD2_2')
+    hdul_muse_white_gaia[1].header['CD1_1'] = hdul_muse_white_gaia[1].header['PC1_1'] * hdul_muse_white_gaia[1].header[
+        'CDELT1']
+    hdul_muse_white_gaia[1].header['CD2_1'] = hdul_muse_white_gaia[1].header['PC2_1'] * hdul_muse_white_gaia[1].header[
+        'CDELT2']
+    hdul_muse_white_gaia[1].header['CD1_2'] = hdul_muse_white_gaia[1].header['PC1_2'] * hdul_muse_white_gaia[1].header[
+        'CDELT1']
+    hdul_muse_white_gaia[1].header['CD2_2'] = hdul_muse_white_gaia[1].header['PC2_2'] * hdul_muse_white_gaia[1].header[
+        'CDELT2']
+    hdul_muse_white_gaia[1].header.remove('PC1_1')
+    hdul_muse_white_gaia[1].header.remove('PC1_2')
+    hdul_muse_white_gaia[1].header.remove('PC2_1')
+    hdul_muse_white_gaia[1].header.remove('PC2_2')
+    hdul_muse_white_gaia[1].header.remove('CDELT1')
+    hdul_muse_white_gaia[1].header.remove('CDELT2')
+    try:
+        hdul_muse_white_gaia[2].header['CD1_1'] = hdul_muse_white_gaia[1].header['CD1_1']
+        hdul_muse_white_gaia[2].header['CD2_1'] = hdul_muse_white_gaia[1].header['CD2_1']
+        hdul_muse_white_gaia[2].header['CD1_2'] = hdul_muse_white_gaia[1].header['CD1_2']
+        hdul_muse_white_gaia[2].header['CD2_2'] = hdul_muse_white_gaia[1].header['CD2_2']
+        hdul_muse_white_gaia[2].header['CRVAL1'] = hdul_muse_white_gaia[1].header['CRVAL1']
+        hdul_muse_white_gaia[2].header['CRVAL2'] = hdul_muse_white_gaia[1].header['CRVAL2']
+        hdul_muse_white_gaia[2].header['CRPIX1'] = hdul_muse_white_gaia[1].header['CRPIX1']
+        hdul_muse_white_gaia[2].header['CRPIX2'] = hdul_muse_white_gaia[1].header['CRPIX2']
+    except IndexError:
+        print('no second extension')
+
+    hdul_muse_white_gaia.writeto(path_muse_white_gaia_save, overwrite=True)
 
 
 
@@ -221,3 +300,20 @@ def FixGalaxyCatalog(cubename=None):
 # FixGalaxyCatalog(cubename='J0454-6116')
 # FixGalaxyCatalog(cubename='J0154-0712')
 # FixGalaxyCatalog(cubename='HE0331-4112')
+
+# Fix Seb+Mandy white light image
+# FixAstrometrySeb(cubename='J0110-1648')
+# FixAstrometrySeb(cubename='J2135-5316')
+# FixAstrometrySeb(cubename='J0119-2010')
+# FixAstrometrySeb(cubename='HE0246-4101')
+# FixAstrometrySeb(cubename='J0028-3305')
+# FixAstrometrySeb(cubename='HE0419-5657')
+# FixAstrometrySeb(cubename='PKS2242-498')
+# FixAstrometrySeb(cubename='PKS0355-483')
+# FixAstrometrySeb(cubename='HE0112-4145')
+# FixAstrometrySeb(cubename='J0111-0316')
+# FixAstrometrySeb(cubename='HE2336-5540')
+# FixAstrometrySeb(cubename='HE2305-5315')
+# FixAstrometrySeb(cubename='J0454-6116')
+# FixAstrometrySeb(cubename='J0154-0712')
+# FixAstrometrySeb(cubename='HE0331-4112')
