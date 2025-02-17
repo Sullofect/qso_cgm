@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from astropy.table import Table
 from matplotlib import rc
 from astropy import stats
+from scipy import interpolate
 from astropy.io import ascii
 from regions import Regions
 from astropy import units as u
@@ -249,6 +250,79 @@ def FixAstrometrySeb(cubename):
     hdul_muse_white_gaia.writeto(path_muse_white_gaia_save, overwrite=True)
 
 
+def GenerateF814WImage(cubename):
+    if cubename == 'J0110-1648':
+        cubename_load = 'Q0110-1648'
+    elif cubename == 'J2135-5316':
+        cubename_load = 'Q2135-5316'
+    elif cubename == 'J0119-2010':
+        cubename_load = 'Q0119-2010'
+    elif cubename == 'HE0246-4101':
+        cubename_load = 'Q0248-4048'
+    elif cubename == 'J0028-3305':
+        cubename_load = 'Q0028-3305'
+    elif cubename == 'HE0419-5657':
+        cubename_load = 'Q0420-5650'
+    elif cubename == 'PKS2242-498':
+        cubename_load = 'Q2245-4931'
+    elif cubename == 'PKS0355-483':
+        cubename_load = 'Q0357-4812'
+    elif cubename == 'HE0112-4145':
+        cubename_load = 'Q0114-4129'
+    elif cubename == 'J0111-0316':
+        cubename_load = 'Q0111-0316'
+    elif cubename == 'HE2336-5540':
+        cubename_load = 'Q2339-5523'
+    elif cubename == 'HE2305-5315':
+        cubename_load = 'Q2308-5258'
+    elif cubename == 'J0454-6116':
+        cubename_load = 'Q0454-6116'
+    elif cubename == 'HE0331-4112':
+        cubename_load = 'Q0333-4102'
+    elif cubename == 'J0154-0712':
+        cubename_load = 'Q0154-0712'
+
+    # Load MUSE cube
+    if cubename_load == 'Q2135-5316':
+        path_muse = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_FINAL_vac.fits'.format(cubename_load)
+    else:
+        path_muse = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac.fits'.format(cubename_load)
+
+    cube = Cube(path_muse)
+    wave_vac = cube.wave.coord()  # Already in vacuum wavelength
+    flux = cube.data * 1e-3
+
+    # Filter
+    F814W = '../../pyobs/data/kcorrect/filters/ACS_F814W.fits'
+    F814W = fits.open(F814W)[1].data
+    wave, trans = F814W['wave'], F814W['transmission']
+    wave_mask = (wave > wave_vac[0]) & (wave < wave_vac[-1])
+    wave = wave[wave_mask]
+    trans = trans[wave_mask]
+    f = interpolate.interp1d(wave, trans, kind='linear', bounds_error=False)
+
+    # Check passed!
+    # plt.figure()
+    # plt.plot(wave, trans, '-k')
+    # plt.plot(wave_vac, f(wave_vac), '--r')
+    # plt.show()
+
+    # i band
+    path_muse_white_gaia = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac_WHITE_gaia.fits'. \
+        format(cubename)
+    hdul_muse_white_gaia = fits.open(path_muse_white_gaia)
+    path_muse_F814W_band_gaia = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac_F814W_gaia.fits'.format(cubename)
+
+    # Save result with gaia header
+    i_band = np.nansum(flux * f(wave_vac)[:, np.newaxis, np.newaxis], axis=0) / np.nansum(f(wave_vac))
+    hdul_muse_white_gaia[1].data = i_band.data
+    hdul_muse_white_gaia.writeto(path_muse_F814W_band_gaia, overwrite=True)
+
+
+
+
+
+
 
 # CUBS
 # FixCubeHeader(cubename='J0110-1648')
@@ -317,3 +391,20 @@ def FixAstrometrySeb(cubename):
 # FixAstrometrySeb(cubename='J0454-6116')
 # FixAstrometrySeb(cubename='J0154-0712')
 # FixAstrometrySeb(cubename='HE0331-4112')
+
+# Generate i-band image
+GenerateF814WImage(cubename='J0110-1648')
+GenerateF814WImage(cubename='J2135-5316')
+GenerateF814WImage(cubename='J0119-2010')
+GenerateF814WImage(cubename='HE0246-4101')
+GenerateF814WImage(cubename='J0028-3305')
+GenerateF814WImage(cubename='HE0419-5657')
+GenerateF814WImage(cubename='PKS2242-498')
+GenerateF814WImage(cubename='PKS0355-483')
+GenerateF814WImage(cubename='HE0112-4145')
+GenerateF814WImage(cubename='J0111-0316')
+GenerateF814WImage(cubename='HE2336-5540')
+GenerateF814WImage(cubename='HE2305-5315')
+GenerateF814WImage(cubename='J0454-6116')
+GenerateF814WImage(cubename='J0154-0712')
+GenerateF814WImage(cubename='HE0331-4112')
