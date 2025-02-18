@@ -2074,6 +2074,8 @@ PlotKinematics(cubename='3C57', fit_param=fit_param, CheckSpectra=[64, 84], v_mi
 #           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8405 8445')
 # os.system('muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss '
 #           '-ssf False -sl 8405 8435')
+# muse_MakeNBImageWith3DSeg.py -m PKS0552-640_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss -s_spe
+# 1.5 -k_spe gauss -ssf False -sl 8405 8428
 # fit_param = {"OII": 1, 'ResolveOII': False, 'r_max': 1.6,
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1}
 # FitLines(cubename='PKS0552-640', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',

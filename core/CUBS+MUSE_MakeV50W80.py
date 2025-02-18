@@ -135,7 +135,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 
 
 def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, contour_level_OIII=0.2,
-               nums_seg_OII=[], nums_seg_OIII=[]):
+               nums_seg_OII=[], nums_seg_OIII=[], HSTcentroid=False):
     # QSO information
     path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
@@ -154,8 +154,11 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
     try:
         data_gal = fits.open(path_gal)[1].data
-        ra_gal, dec_gal, v_gal = data_gal['ra'], data_gal['dec'], data_gal['v']
-        ra_hst, dec_hst = data_gal['ra_HST'], data_gal['dec_HST']
+        v_gal = data_gal['v']
+        if HSTcentroid:
+            ra_gal, dec_gal = data_gal['ra_HST'], data_gal['dec_HST']
+        else:
+            ra_gal, dec_gal = data_gal['ra'], data_gal['dec']
     except FileNotFoundError:
         print('No galaxies info')
         ra_gal, dec_gal, v_gal, ra_hst, dec_hst = [], [], [], [], []
@@ -238,6 +241,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     # Special cases due to sky line
     if cubename == 'PKS0552-640':
         path_SB_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}_plot.fits'. \
+            format(cubename, str_zap, line_OIII, *UseSeg)
+        path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
             format(cubename, str_zap, line_OIII, *UseSeg)
 
     # Load segmentation
@@ -397,7 +402,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 
 
 
-MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
+# MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
 # MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level_OII=0.5, contour_level_OIII=1.0)
 # MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg=[])
 # MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300, contour_level_OIII=0.5, nums_seg_OII=[5], nums_seg_OIII=[15])
@@ -425,5 +430,5 @@ MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
 # MakeV50W80(cubename='J0154-0712', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400)
 # MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300)
-# MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300)
-# MakeV50W80(cubename='PKS0232-04', v_max=400, sigma_max=300)
+MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300, nums_seg_OII=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+# MakeV50W80(cubename='PKS0232-04', v_max=400, sigma_max=300, nums_seg_OII=[4, 5, 7])

@@ -44,9 +44,9 @@ def RecalculateCentroid(cubename=None, deblend_hst=False, thr_hst=3):
     threshold = thr_hst * bkg.background_rms
     kernel = Gaussian2DKernel(3)
     convolved_data = convolve(data_bkg, kernel)
-    segment_map = detect_sources(convolved_data, threshold, npixels=10)
+    segment_map = detect_sources(convolved_data, threshold, npixels=5)
     if deblend_hst:
-        segment_map = deblend_sources(convolved_data, segment_map, npixels=10, nlevels=32, contrast=0.001)
+        segment_map = deblend_sources(convolved_data, segment_map, npixels=5, nlevels=32, contrast=0.001)
     cat_hb = SourceCatalog(convolved_data, segment_map)
     x_cen, y_cen = cat_hb.xcentroid, cat_hb.ycentroid
     w = WCS(hdul_hst_gaia[1].header)
@@ -64,14 +64,17 @@ def RecalculateCentroid(cubename=None, deblend_hst=False, thr_hst=3):
 
     print(len(ra_muse), len(c_hst_muse.ra))
 
+    
     t['ra_HST'] = c_hst_muse.ra
     t['dec_HST'] = c_hst_muse.dec
 
     t.write(filename, format='fits', overwrite=True)
 
-RecalculateCentroid(cubename='HE0435-5304')
-# RecalculateCentroid(cubename='PKS0405-123', deblend_hst=True, thr_hst=0.1)
-# RecalculateCentroid(cubename='PKS0552-640')
+# RecalculateCentroid(cubename='HE0435-5304') # Done
+# RecalculateCentroid(cubename='PKS0232-04', deblend_hst=True, thr_hst=1.5) # MUSE centroid is better
+RecalculateCentroid(cubename='Q1354+048', deblend_hst=True, thr_hst=1.5)
+# RecalculateCentroid(cubename='PKS0405-123', deblend_hst=True, thr_hst=0.1) # not done
+# RecalculateCentroid(cubename='PKS0552-640')  # not done
 # MakeFieldImage(cubename='Q0107-0235')
 # MakeFieldImage(cubename='PB6291')
 # MakeFieldImage(cubename='HE0153-4520')
@@ -80,7 +83,6 @@ RecalculateCentroid(cubename='HE0435-5304')
 # MakeFieldImage(cubename='HE0226-4110')
 # MakeFieldImage(cubename='PKS0232-04')
 # MakeFieldImage(cubename='HE0439-5254')
-# MakeFieldImage(cubename='Q1354+048')
 # MakeFieldImage(cubename='LBQS1435-0134')
 # MakeFieldImage(cubename='PG1522+101')
 # MakeFieldImage(cubename='HE1003+0149')
