@@ -290,7 +290,7 @@ def GenerateF814WImage(cubename):
 
     cube = Cube(path_muse)
     wave_vac = cube.wave.coord()  # Already in vacuum wavelength
-    flux = cube.data * 1e-3
+    flux = cube.data  # Keep the initial unit 1e-20 erg/s/cm2/Ang
 
     # Filter
     F814W = '../../pyobs/data/kcorrect/filters/ACS_F814W.fits'

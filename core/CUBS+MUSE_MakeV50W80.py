@@ -155,9 +155,10 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     try:
         data_gal = fits.open(path_gal)[1].data
         ra_gal, dec_gal, v_gal = data_gal['ra'], data_gal['dec'], data_gal['v']
+        ra_hst, dec_hst = data_gal['ra_HST'], data_gal['dec_HST']
     except FileNotFoundError:
         print('No galaxies info')
-        ra_gal, dec_gal, v_gal = [], [], []
+        ra_gal, dec_gal, v_gal, ra_hst, dec_hst = [], [], [], [], []
 
     # V50, S80
     path_v50 = '../../MUSEQuBES+CUBS/fit_kin/{}_V50.fits'.format(cubename)
@@ -376,12 +377,12 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
         fig.savefig(path_savefig_mini, bbox_inches='tight')
     else:
         # Plot MUSE white light image
-        path_white_gaia = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac_WHITE_gaia.fits'.format(cubename)
+        path_white_gaia = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac_F814W_gaia.fits'.format(cubename)
 
         fig = plt.figure(figsize=(8, 8), dpi=300)
         gc = aplpy.FITSFigure(path_white_gaia, figure=fig, hdu=1)
         gc.recenter(ra_qso, dec_qso, width=30 / 3600, height=30 / 3600)
-        gc.show_colorscale(cmap='Greys', vmin=-0.2, vmid=0.1, vmax=20, stretch='arcsinh')
+        gc.show_colorscale(cmap='Greys', vmin=-0.2, vmid=0.2, vmax=20, stretch='arcsinh')
         APLpyStyle(gc, type='HST', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
         gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
 
@@ -396,10 +397,10 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 
 
 
-# MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
+MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
 # MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level_OII=0.5, contour_level_OIII=1.0)
 # MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg=[])
-MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300, contour_level_OIII=0.5, nums_seg_OII=[5], nums_seg_OIII=[15])
+# MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300, contour_level_OIII=0.5, nums_seg_OII=[5], nums_seg_OIII=[15])
 # MakeV50W80(cubename='HE0238-1904', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='3C57', v_max=350, sigma_max=300)
 # MakeV50W80(cubename='PKS0552-640', v_max=300, sigma_max=300, contour_level_OII=0.3, contour_level_OIII=0.3)
