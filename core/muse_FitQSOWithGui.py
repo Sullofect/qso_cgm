@@ -564,7 +564,8 @@ class PlotWindow(QMainWindow):
                           dict(name='sigma_3=', type='float', value=0, readonly=False),
                           dict(name='OII_3=', type='float', value=0, readonly=False),
                           dict(name='OIII_3=', type='float', value=0, readonly=False),
-                          dict(name='r_3=', type='float', value=0, readonly=False)]
+                          dict(name='r_3=', type='float', value=0, readonly=False),
+                          dict(name='BIC=', type='float', value=0, readonly=False)]
         self.param = pt.Parameter.create(name='Options', type='group', children=self.paramSpec)
         self.tree = pt.ParameterTree()
         self.tree.setParameters(self.param)
@@ -1210,6 +1211,7 @@ class PlotWindow(QMainWindow):
         self.fs[i, j] = result.success
         self.chisqr[i, j], self.redchi[i, j] = result.chisqr, result.redchi
         self.redchi_show[i, j] = result.redchi
+        print('AIC/BIC=', result.aic, result.bic)
 
         # fill the value
         a_OII, b_OII = result.best_values['a_OII'], result.best_values['b_OII']

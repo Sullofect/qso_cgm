@@ -64,7 +64,7 @@ def RecalculateCentroid(cubename=None, deblend_hst=False, thr_hst=3):
 
     print(len(ra_muse), len(c_hst_muse.ra))
 
-    
+
     t['ra_HST'] = c_hst_muse.ra
     t['dec_HST'] = c_hst_muse.dec
 
