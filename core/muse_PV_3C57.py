@@ -199,12 +199,62 @@ w80_blue, w80_red = w80_flatten[mask][blue], w80_flatten[mask][red]
 # w80_blue, w80_red = w80_blue[~np.isnan(w80_blue)], w80_red[~np.isnan(w80_red)]
 d5080_blue, v50_blue_mean, _, _, w80_blue_mean, _, _ = Bin(dis_blue, v50_blue, w80_blue, bins=20)
 d5080_red, v50_red_mean, _, _, w80_red_mean, _, _ = Bin(dis_red, v50_red, w80_red, bins=20)
-ax[0].scatter(d5080_red, v50_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',
-              label=r'$\rm 3C\,57 \, northeast$')
-ax[0].scatter(d5080_blue, v50_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue',
-              label=r'$\rm 3C\,57 \, southwest$')
-ax[1].scatter(d5080_red, w80_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(d5080_blue, w80_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+# ax[0].scatter(d5080_red, v50_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red',
+#               label=r'$\rm 3C\,57 \, northeast$')
+# ax[0].scatter(d5080_blue, v50_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue',
+#               label=r'$\rm 3C\,57 \, southwest$')
+# ax[1].scatter(d5080_red, w80_red_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='red')
+# ax[1].scatter(d5080_blue, w80_blue_mean, s=50, marker='D', edgecolors='k', linewidths=0.5, color='blue')
+
+# Plot each componenet
+path_fit = '../../MUSEQuBES+CUBS/fit_kin/3C57_fit_OII+OIII_True_3728_1.5_gauss_None_None.fits'
+hdul = fits.open(path_fit)
+fs, hdr = hdul[1].data, hdul[2].header
+v, z, dz = hdul[2].data, hdul[3].data, hdul[4].data
+sigma, dsigma = hdul[5].data, hdul[6].data
+
+# Order by velocity
+sorting_indices = np.argsort(v, axis=0)
+v = np.take_along_axis(v, sorting_indices, axis=0)
+sigma = np.take_along_axis(sigma, sorting_indices, axis=0)
+
+v_1, v_2, v_3 = v[0, :, :], v[1, :, :], v[2, :, :]
+sigma_1, sigma_2, sigma_3 = sigma[0, :, :], sigma[1, :, :], sigma[2, :, :]
+v_1_flatten, v_2_flatten, v_3_flatten = v_1.flatten()[center_mask_flatten], \
+                                        v_2.flatten()[center_mask_flatten], v_3.flatten()[center_mask_flatten]
+sigma_1_flatten, sigma_2_flatten, sigma_3_flatten = sigma_1.flatten()[center_mask_flatten], \
+                                                    sigma_2.flatten()[center_mask_flatten], \
+                                                    sigma_3.flatten()[center_mask_flatten]
+v_1_blue, v_1_red = v_1_flatten[mask][blue], v_1_flatten[mask][red]
+v_2_blue, v_2_red = v_2_flatten[mask][blue], v_2_flatten[mask][red]
+v_3_blue, v_3_red = v_3_flatten[mask][blue], v_3_flatten[mask][red]
+sigma_1_blue, sigma_1_red = sigma_1_flatten[mask][blue], sigma_1_flatten[mask][red]
+sigma_2_blue, sigma_2_red = sigma_2_flatten[mask][blue], sigma_2_flatten[mask][red]
+sigma_3_blue, sigma_3_red = sigma_3_flatten[mask][blue], sigma_3_flatten[mask][red]
+
+d5080_blue, v_1_blue_mean, _, _, w_1_blue_mean, _, _ = Bin(dis_blue, v_1_blue, sigma_1_blue * 2.563, bins=20)
+d5080_red, v_1_red_mean, _, _, w_1_red_mean, _, _ = Bin(dis_red, v_1_red, sigma_1_red * 2.563, bins=20)
+d5080_blue, v_2_blue_mean, _, _, w_2_blue_mean, _, _ = Bin(dis_blue, v_2_blue, sigma_2_blue * 2.563, bins=20)
+d5080_red, v_2_red_mean, _, _, w_2_red_mean, _, _ = Bin(dis_red, v_2_red, sigma_2_red * 2.563, bins=20)
+d5080_blue, v_3_blue_mean, _, _, w_3_blue_mean, _, _ = Bin(dis_blue, v_3_blue, sigma_3_blue * 2.563, bins=20)
+d5080_red, v_3_red_mean, _, _, w_3_red_mean, _, _ = Bin(dis_red, v_3_red, sigma_3_red * 2.563, bins=20)
+
+# V50
+ax[0].scatter(d5080_red, v_1_red_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='red')
+ax[0].scatter(d5080_blue, v_1_blue_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='blue')
+ax[0].scatter(d5080_red, v_2_red_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='red')
+ax[0].scatter(d5080_blue, v_2_blue_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='blue')
+ax[0].scatter(d5080_red, v_3_red_mean, s=50, marker=6, edgecolors='k', linewidths=0.5, color='red')
+ax[0].scatter(d5080_blue, v_3_blue_mean, s=50, marker=6, edgecolors='k', linewidths=0.5, color='blue')
+
+# W80
+ax[1].scatter(d5080_red, w_1_red_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w_1_blue_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='blue')
+ax[1].scatter(d5080_red, w_2_red_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w_2_blue_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='blue')
+ax[1].scatter(d5080_red, w_3_red_mean, s=50, marker=6, edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w_3_blue_mean, s=50, marker=6, edgecolors='k', linewidths=0.5, color='blue')
+
 
 # OII
 v50_OII_flatten = v50_OII.flatten()[center_mask_flatten]
