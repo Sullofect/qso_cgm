@@ -318,6 +318,7 @@ S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
 S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
 S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
 OIII_OII = np.log10(np.nansum(flux_OIII_fit, axis=0) / np.nansum(flux_OII_fit, axis=0))
+OII_all, OIII_all = np.nansum(flux_OII_fit, axis=0), np.nansum(flux_OIII_fit, axis=0)
 
 # Compute 3sigma limit
 wave_array_OII, wave_array_OIII = np.zeros_like(flux_OII), np.zeros_like(flux_OIII)
@@ -331,64 +332,6 @@ OIII_end = OIII_start + win_OIII
 flux_OIII_3sig = np.where((wave_array_OIII >= OIII_start) * (wave_array_OIII <= OIII_end), 3 * flux_err_OIII, np.nan)
 OIII_OII_3sig = np.log10(np.nansum(flux_OIII_3sig, axis=0) * 1.25 / np.nansum(flux_OII_fit, axis=0))
 OIII_OII = np.where(mask_seg_OIII != 0, OIII_OII, OIII_OII_3sig)
-# plt.figure()
-# plt.imshow(OIII_OII - OIII_OII_ori, origin='lower')
-# plt.show()
-# raise ValueError('Stop')
-# OIII_OII = np.where(mask_seg_OIII > 0, OIII_OII, OIII_OII_upper)
-# print(np.nansum(flux_seg_OIII, axis=0)[71, 88], np.nansum(flux_OII_fit, axis=0)[71, 88])
-# print(OIII_OII_upper.ravel())
-# flux components
-# flux_OII_C2 = np.nansum(model_OII(wave_OII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
-#                                   flux_OII_fit, r, plot=True)[0] * (1 + r), axis=1)
-# flux_OIII_C2 = np.nansum(Gaussian(wave_OIII_vac[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
-#                                   flux_OIII_fit, wave_OIII5008_vac), axis=1)
-
-# Moments
-# flux_cumsum_OII = integrate.cumtrapz(flux_OII_C2, wave_OII_exp, initial=0, axis=0)
-# flux_cumsum_OIII = integrate.cumtrapz(flux_OIII_C2, wave_OIII_exp, initial=0, axis=0)
-# flux_cumsum_OII /= flux_cumsum_OII.max(axis=0)
-# flux_cumsum_OIII /= flux_cumsum_OIII.max(axis=0)
-#
-# wave_10_OII, wave_10_OIII = np.nan * np.zeros_like(v[0, :, :]), np.nan * np.zeros_like(v[0, :, :])
-# wave_50_OII, wave_50_OIII = np.nan * np.zeros_like(v[0, :, :]), np.nan * np.zeros_like(v[0, :, :])
-# wave_90_OII, wave_90_OIII = np.nan * np.zeros_like(v[0, :, :]), np.nan * np.zeros_like(v[0, :, :])
-# for i in range(v.shape[1]):
-#     for j in range(v.shape[2]):
-#         if mask_seg[i, j] != 0:
-#             f_OII = interpolate.interp1d(flux_cumsum_OII[:, i, j], wave_OII_vac, fill_value='extrapolate')
-#             f_OIII = interpolate.interp1d(flux_cumsum_OIII[:, i, j], wave_OIII_vac, fill_value='extrapolate')
-#             wave_10_OII[i, j], wave_10_OIII[i, j] = f_OII(0.1), f_OIII(0.1)
-#             wave_50_OII[i, j], wave_50_OIII[i, j] = f_OII(0.5), f_OIII(0.5)
-#             wave_90_OII[i, j], wave_90_OIII[i, j] = f_OII(0.9), f_OIII(0.9)
-#         else:
-#             pass
-#
-# z_guess_array_OII = (wave_50_OII - wave_OII3727_vac) / wave_OII3727_vac
-# v_guess_array_OII = c_kms * (z_guess_array_OII - z_qso) / (1 + z_qso)
-# W80_guess_array_OII = c_kms * (wave_90_OII - wave_10_OII) / (wave_OII3727_vac * (1 + z_guess_array_OII))
-# sigma_kms_guess_array_OII = W80_guess_array_OII / 2.563  # W_80 = 2.563sigma
-#
-# z_guess_array_OIII = (wave_50_OIII - wave_OIII5008_vac) / wave_OIII5008_vac
-# v_guess_array_OIII = c_kms * (z_guess_array_OIII - z_qso) / (1 + z_qso)
-# W80_guess_array_OIII = c_kms * (wave_90_OIII - wave_10_OIII) / (wave_OIII5008_vac * (1 + z_guess_array_OIII))
-# sigma_kms_guess_array_OIII = W80_guess_array_OIII / 2.563  # W_80 = 2.563sigma
-#
-# z_guess_array = np.where(mask_seg_OIII != 0, z_guess_array_OIII, z_guess_array_OII)
-# v_guess_array = c_kms * (z_guess_array - z_qso) / (1 + z_qso)
-# sigma_kms_guess_array = np.where(mask_seg_OIII != 0, sigma_kms_guess_array_OIII, sigma_kms_guess_array_OII)
-# W80_guess_array = np.where(mask_seg_OIII != 0, W80_guess_array_OIII, W80_guess_array_OII)
-# v_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, v_guess_array, np.nan)
-# sigma_kms_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, sigma_kms_guess_array, np.nan)
-# W80_guess_array = np.where((mask_seg_OII + mask_seg_OIII) != 0, W80_guess_array, np.nan)
-#
-#
-# #
-# v_guess_array = np.where(S_N_OII > 15, v_guess_array, np.nan)
-# # sigma_kms_guess_array = np.where(S_N_OII > 15, sigma_kms_guess_array, np.nan)
-# plt.figure()
-# plt.imshow(v_guess_array, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
-# plt.show()
 
 path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
 try:
@@ -453,10 +396,14 @@ dis_blue = dis_mask[blue]
 hdul_v50[1].data = np.where(center_mask, hdul_v50[1].data, np.nan)
 hdul_w80[1].data = np.where(center_mask, hdul_w80[1].data, np.nan)
 OIII_OII = np.where(center_mask, OIII_OII, np.nan)
+OII_all, OIII_all = np.where(center_mask, OII_all, np.nan), np.where(center_mask, OIII_all, np.nan)
 hdul_v50[1].data = np.where(S_N > 10, hdul_v50[1].data, np.nan)
 hdul_w80[1].data = np.where(S_N > 10, hdul_w80[1].data, np.nan)
 OIII_OII = np.where(S_N > 10, OIII_OII, np.nan)
-print('Median O32', np.nanmedian(OIII_OII))
+OII_all, OIII_all = np.where(S_N > 10, OII_all, np.nan), np.where(S_N > 10, OIII_all, np.nan)
+print('Median O32 geometric', np.nanmedian(OIII_OII))
+print('O32 all', np.log10(np.nansum(OIII_all) / np.nansum(OII_all)))
+print('O32 weighted by OIII', np.log10(np.nansum(OIII_all ** 2 / OII_all) / np.nansum(OIII_all)))
 
 hdul_v50[1].header = hdr
 hdul_w80[1].header = hdr
