@@ -246,20 +246,20 @@ d5080_blue, v_3_blue_mean, _, _, w_3_blue_mean, _, _ = Bin(dis_blue, v_3_blue, s
 d5080_red, v_3_red_mean, _, _, w_3_red_mean, _, _ = Bin(dis_red, v_3_red, sigma_3_red * 2.563, bins=20)
 
 # V50
-ax[0].scatter(d5080_red, v_1_red_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='red')
-ax[0].scatter(d5080_blue, v_1_blue_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='blue')
-ax[0].scatter(d5080_red, v_2_red_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='red')
-ax[0].scatter(d5080_blue, v_2_blue_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='blue')
-ax[0].scatter(d5080_red, v_3_red_mean, s=50, marker=1, edgecolors='k', linewidths=0.5, color='red')
-ax[0].scatter(d5080_blue, v_3_blue_mean, s=50, marker=1, edgecolors='k', linewidths=0.5, color='blue')
+ax[0].scatter(d5080_red, v_1_red_mean, s=50, marker="8", edgecolors='k', linewidths=0.5, color='red')
+ax[0].scatter(d5080_blue, v_1_blue_mean, s=50, marker="8", edgecolors='k', linewidths=0.5, color='blue')
+ax[0].scatter(d5080_red, v_2_red_mean, s=50, marker="s", edgecolors='k', linewidths=0.5, color='red')
+ax[0].scatter(d5080_blue, v_2_blue_mean, s=50, marker="s", edgecolors='k', linewidths=0.5, color='blue')
+ax[0].scatter(d5080_red, v_3_red_mean, s=50, marker="*", edgecolors='k', linewidths=0.5, color='red')
+ax[0].scatter(d5080_blue, v_3_blue_mean, s=50, marker="*", edgecolors='k', linewidths=0.5, color='blue')
 
 # W80
-ax[1].scatter(d5080_red, w_1_red_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(d5080_blue, w_1_blue_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='blue')
-ax[1].scatter(d5080_red, w_2_red_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(d5080_blue, w_2_blue_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='blue')
-ax[1].scatter(d5080_red, w_3_red_mean, s=50, marker=1, edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(d5080_blue, w_3_blue_mean, s=50, marker=1, edgecolors='k', linewidths=0.5, color='blue')
+ax[1].scatter(d5080_red, w_1_red_mean, s=50, marker="8", edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w_1_blue_mean, s=50, marker="8", edgecolors='k', linewidths=0.5, color='blue')
+ax[1].scatter(d5080_red, w_2_red_mean, s=50, marker="s", edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w_2_blue_mean, s=50, marker="s", edgecolors='k', linewidths=0.5, color='blue')
+ax[1].scatter(d5080_red, w_3_red_mean, s=50, marker="*", edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w_3_blue_mean, s=50, marker="*", edgecolors='k', linewidths=0.5, color='blue')
 
 
 # OII

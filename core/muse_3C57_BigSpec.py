@@ -229,13 +229,132 @@ ax.tick_params(axis='y', which='major', labelleft=False, left=False)
 figname_OIII = '../../MUSEQuBES+CUBS/fit_kin/3C57_ShowFit_OIII.png'
 fig.savefig(figname_OIII, bbox_inches='tight')
 
-# raise ValueError('testing')
-# plt.figure()
-# plt.plot(v_array, flux_OII_C[:, 0, 79, 67], '-k')
-# plt.plot(v_array, flux_OII_C[:, 1, 79, 67], '-r')
-# plt.plot(v_array, flux_OII_C[:, 2, 79, 67], '-b')
-# plt.plot(v_array, flux_OII_sum[:, 79, 67], '-g')
-# plt.show()
+# Plot the spectra at fix place.
+x, y = np.meshgrid(np.arange(v50.shape[0]), np.arange(v50.shape[1]))
+x, y = x.flatten(), y.flatten()
+pixcoord = PixCoord(x=x, y=y)
+
+# Hedaer information
+str_zap = ''
+path_sub_white_gaia = '../../MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
+hdr_sub_gaia = fits.open(path_sub_white_gaia)[1].header
+w = WCS(hdr_sub_gaia, naxis=2)
+center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
+c2 = w.world_to_pixel(center_qso)
+
+# Mask the center
+circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=2.5)
+center_mask_flatten = ~circle.contains(pixcoord)
+center_mask = center_mask_flatten.reshape(v50.shape)
+x, y = x[center_mask_flatten], y[center_mask_flatten]
+pixcoord = pixcoord[center_mask_flatten]
+
+# Mask a slit
+rectangle = RectanglePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), width=50, height=5, angle=Angle(-30, 'deg'))
+mask = rectangle.contains(pixcoord)
+dis = np.sqrt((x - c2[0]) ** 2 + (y - c2[1]) ** 2) * 0.2 * 50 / 7
+dis_mask = dis[mask]
+
+# Mask each side
+red = ((x[mask] - c2[0]) < 0) * ((y[mask] - c2[1]) > 0)
+blue = ~red
+dis_red = dis_mask[red] * -1
+dis_blue = dis_mask[blue]
+
+# Plot the [O II] spectra at fix place.
+fig, ax = plt.subplots(1, 6, figsize=(30, 5), dpi=300, sharex=True)
+fig.subplots_adjust(hspace=0, wspace=0)
+
+pos_array = [-30, -20, -10]
+for i in range(3):
+    select_red = np.argmin(np.abs(dis_red - pos_array[i]))
+    x_i, y_i = x[mask][red][select_red], y[mask][red][select_red]
+    flux_OII_model = model_OII(wave_OII_exp[:, np.newaxis, np.newaxis, np.newaxis], z, sigma, flux_OII_fit, r)[:, :, y_i,
+                     x_i]
+    ax[i].plot(wave_OII_vac, flux_OII[:, y_i, x_i] - b_OII[y_i, x_i], '-k', drawstyle='steps-mid')
+    ax[i].plot(wave_OII_vac, flux_err_OII[:, y_i, x_i], '-C0', drawstyle='steps-mid')
+    ax[i].plot(wave_OII_exp, np.nansum(flux_OII_model, axis=1), '-r')
+    ax[i].plot(wave_OII_exp, flux_OII_model[:, 0], '--r')
+    ax[i].plot(wave_OII_exp, flux_OII_model[:, 1], '--r')
+    ax[i].plot(wave_OII_exp, flux_OII_model[:, 2], '--C1')
+    ax[i].axvline(x=(1 + z_qso) * wave_OII3727_vac, color='grey', linestyle='--', zorder=-100)
+    ax[i].axvline(x=(1 + z_qso) * wave_OII3729_vac, color='grey', linestyle='--', zorder=-100)
+    ax[i].set_xticks([6230, 6250])
+    ax[i].set_xlim(6205, 6255)
+    ax[i].tick_params(axis='y', which='major', labelleft=False, left=False)
+    ax[i].annotate('{} kpc'.format(pos_array[i]), (0.73, 0.9), size=25, xycoords='axes fraction')
+
+pos_array = [10, 20, 30]
+for i in range(3):
+    select_blue = np.argmin(np.abs(dis_blue - pos_array[i]))
+    x_i, y_i = x[mask][blue][select_blue], y[mask][blue][select_blue]
+    flux_OII_model = model_OII(wave_OII_exp[:, np.newaxis, np.newaxis, np.newaxis], z, sigma, flux_OII_fit, r)[:, :, y_i,
+                     x_i]
+    ax[i+3].plot(wave_OII_vac, flux_OII[:, y_i, x_i] - b_OII[y_i, x_i], '-k', drawstyle='steps-mid')
+    ax[i+3].plot(wave_OII_vac, flux_err_OII[:, y_i, x_i], '-C0', drawstyle='steps-mid')
+    ax[i+3].plot(wave_OII_exp, np.nansum(flux_OII_model, axis=1), '-r')
+    ax[i+3].plot(wave_OII_exp, flux_OII_model[:, 0], '--r')
+    ax[i+3].plot(wave_OII_exp, flux_OII_model[:, 1], '--r')
+    ax[i+3].plot(wave_OII_exp, flux_OII_model[:, 2], '--C1')
+    ax[i+3].axvline(x=(1 + z_qso) * wave_OII3727_vac, color='grey', linestyle='--', zorder=-100)
+    ax[i+3].axvline(x=(1 + z_qso) * wave_OII3729_vac, color='grey', linestyle='--', zorder=-100)
+    ax[i+3].set_xticks([6230, 6250])
+    ax[i+3].set_xlim(6205, 6255)
+    ax[i+3].tick_params(axis='y', which='major', labelleft=False, left=False)
+    ax[i+3].annotate('{} kpc'.format(pos_array[i]), (0.73, 0.9), size=25, xycoords='axes fraction')
+ax[0].set_title(r'$\mathrm{[O\,II]}$', x=0.2, y=0.85, size=40)
+fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=25, y=-0.05)
+ax[0].set_ylabel(r'${f}_{\lambda}$', size=25, x=-0.12)
+figname_OII = '../../MUSEQuBES+CUBS/fit_kin/3C57_OII_ref.png'
+fig.savefig(figname_OII, bbox_inches='tight')
+
+# Plot the [O III] spectra at fix place.
+fig, ax = plt.subplots(1, 6, figsize=(30, 5), dpi=300, sharex=True)
+fig.subplots_adjust(hspace=0, wspace=0)
+
+pos_array = [-30, -20, -10]
+for i in range(3):
+    select_red = np.argmin(np.abs(dis_red - pos_array[i]))
+    x_i, y_i = x[mask][red][select_red], y[mask][red][select_red]
+    flux_OIII_model = Gaussian(wave_OIII_exp[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
+                               flux_OIII_fit, wave_OIII5008_vac)[:, :, y_i, x_i]
+    ax[i].plot(wave_OIII_vac, flux_OIII[:, y_i, x_i] - b_OIII[y_i, x_i], '-k', drawstyle='steps-mid')
+    ax[i].plot(wave_OIII_vac, flux_err_OIII[:, y_i, x_i], '-C0', drawstyle='steps-mid')
+    ax[i].plot(wave_OIII_exp, np.nansum(flux_OIII_model, axis=1), '-r')
+    ax[i].plot(wave_OIII_exp, flux_OIII_model[:, 0], '--r')
+    ax[i].plot(wave_OIII_exp, flux_OIII_model[:, 1], '--r')
+    ax[i].plot(wave_OIII_exp, flux_OIII_model[:, 2], '--C1')
+    ax[i].axvline(x=(1 + z_qso) * wave_OIII5008_vac, color='grey', linestyle='--', zorder=-100)
+    ax[i].set_xticks([8360, 8390])
+    ax[i].set_xlim(8350, 8395)
+    ax[i].tick_params(axis='y', which='major', labelleft=False, left=False)
+    ax[i].annotate('{} kpc'.format(pos_array[i]), (0.73, 0.9), size=25, xycoords='axes fraction')
+
+pos_array = [10, 20, 30]
+for i in range(3):
+    select_blue = np.argmin(np.abs(dis_blue - pos_array[i]))
+    x_i, y_i = x[mask][blue][select_blue], y[mask][blue][select_blue]
+    flux_OIII_model = Gaussian(wave_OIII_exp[:, np.newaxis, np.newaxis, np.newaxis], z, sigma,
+                               flux_OIII_fit, wave_OIII5008_vac)[:, :, y_i, x_i]
+    ax[i+3].plot(wave_OIII_vac, flux_OIII[:, y_i, x_i] - b_OIII[y_i, x_i], '-k', drawstyle='steps-mid')
+    ax[i+3].plot(wave_OIII_vac, flux_err_OIII[:, y_i, x_i], '-C0', drawstyle='steps-mid')
+    ax[i+3].plot(wave_OIII_exp, np.nansum(flux_OIII_model, axis=1), '-r')
+    ax[i+3].plot(wave_OIII_exp, flux_OIII_model[:, 0], '--r')
+    ax[i+3].plot(wave_OIII_exp, flux_OIII_model[:, 1], '--r')
+    ax[i+3].plot(wave_OIII_exp, flux_OIII_model[:, 2], '--C1')
+    ax[i+3].axvline(x=(1 + z_qso) * wave_OIII5008_vac, color='grey', linestyle='--', zorder=-100)
+    ax[i+3].set_xticks([8360, 8390])
+    ax[i+3].set_xlim(8350, 8395)
+    ax[i+3].tick_params(axis='y', which='major', labelleft=False, left=False)
+    ax[i+3].annotate('{} kpc'.format(pos_array[i]), (0.73, 0.9), size=25, xycoords='axes fraction')
+ax[0].set_title(r'$\mathrm{[O\,III]}$', x=0.2, y=0.85, size=40)
+fig.supxlabel(r'$\mathrm{Observed \; Wavelength \; [\AA]}$', size=25, y=-0.05)
+ax[0].set_ylabel(r'${f}_{\lambda}$', size=25, x=-0.12)
+figname_OIII = '../../MUSEQuBES+CUBS/fit_kin/3C57_OIII_ref.png'
+fig.savefig(figname_OIII, bbox_inches='tight')
+
+
+raise ValueError('Stop here')
 
 # Generate random 2D map data and 1D velocity data
 v_rebin = v50
