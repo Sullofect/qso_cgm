@@ -403,7 +403,8 @@ OIII_OII = np.where(S_N > 10, OIII_OII, np.nan)
 OII_all, OIII_all = np.where(S_N > 10, OII_all, np.nan), np.where(S_N > 10, OIII_all, np.nan)
 print('Median O32 geometric', np.nanmedian(OIII_OII))
 print('O32 all', np.log10(np.nansum(OIII_all) / np.nansum(OII_all)))
-print('O32 weighted by OIII', np.log10(np.nansum(OIII_all ** 2 / OII_all) / np.nansum(OIII_all)))
+print('O32 weighted by OIII', np.log10(np.nansum(OIII_all / OII_all * np.sqrt(OIII_all)) / np.nansum(np.sqrt(OIII_all))))
+print('O32 multi', np.nanmean(np.where(v[2, :, :] > -1000, OIII_OII, np.nan)))
 
 hdul_v50[1].header = hdr
 hdul_w80[1].header = hdr

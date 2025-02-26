@@ -219,9 +219,15 @@ v = np.take_along_axis(v, sorting_indices, axis=0)
 sigma = np.take_along_axis(sigma, sorting_indices, axis=0)
 
 v_1, v_2, v_3 = v[0, :, :], v[1, :, :], v[2, :, :]
+# plt.figure()
+# plt.imshow(v_2, origin='lower', cmap='coolwarm', vmin=-350, vmax=350)
+# plt.colorbar()
+# plt.show()
+# raise ValueError('stop')
 sigma_1, sigma_2, sigma_3 = sigma[0, :, :], sigma[1, :, :], sigma[2, :, :]
 v_1_flatten, v_2_flatten, v_3_flatten = v_1.flatten()[center_mask_flatten], \
-                                        v_2.flatten()[center_mask_flatten], v_3.flatten()[center_mask_flatten]
+                                        v_2.flatten()[center_mask_flatten], \
+                                        v_3.flatten()[center_mask_flatten]
 sigma_1_flatten, sigma_2_flatten, sigma_3_flatten = sigma_1.flatten()[center_mask_flatten], \
                                                     sigma_2.flatten()[center_mask_flatten], \
                                                     sigma_3.flatten()[center_mask_flatten]
@@ -244,16 +250,16 @@ ax[0].scatter(d5080_red, v_1_red_mean, s=50, marker=7, edgecolors='k', linewidth
 ax[0].scatter(d5080_blue, v_1_blue_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='blue')
 ax[0].scatter(d5080_red, v_2_red_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='red')
 ax[0].scatter(d5080_blue, v_2_blue_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='blue')
-ax[0].scatter(d5080_red, v_3_red_mean, s=50, marker=6, edgecolors='k', linewidths=0.5, color='red')
-ax[0].scatter(d5080_blue, v_3_blue_mean, s=50, marker=6, edgecolors='k', linewidths=0.5, color='blue')
+ax[0].scatter(d5080_red, v_3_red_mean, s=50, marker=1, edgecolors='k', linewidths=0.5, color='red')
+ax[0].scatter(d5080_blue, v_3_blue_mean, s=50, marker=1, edgecolors='k', linewidths=0.5, color='blue')
 
 # W80
 ax[1].scatter(d5080_red, w_1_red_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='red')
 ax[1].scatter(d5080_blue, w_1_blue_mean, s=50, marker=7, edgecolors='k', linewidths=0.5, color='blue')
 ax[1].scatter(d5080_red, w_2_red_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='red')
 ax[1].scatter(d5080_blue, w_2_blue_mean, s=50, marker=8, edgecolors='k', linewidths=0.5, color='blue')
-ax[1].scatter(d5080_red, w_3_red_mean, s=50, marker=6, edgecolors='k', linewidths=0.5, color='red')
-ax[1].scatter(d5080_blue, w_3_blue_mean, s=50, marker=6, edgecolors='k', linewidths=0.5, color='blue')
+ax[1].scatter(d5080_red, w_3_red_mean, s=50, marker=1, edgecolors='k', linewidths=0.5, color='red')
+ax[1].scatter(d5080_blue, w_3_blue_mean, s=50, marker=1, edgecolors='k', linewidths=0.5, color='blue')
 
 
 # OII
