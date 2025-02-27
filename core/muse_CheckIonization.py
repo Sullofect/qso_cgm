@@ -19,19 +19,22 @@ for i, i_val in enumerate([1.3]):
     # color = 'C' + str(i)
     color='k'
     label = r'$\rm log(n_H)=$ ' + str(i_val)
-    path_S5_con = '/Users/lzq/Dropbox/Data/CGM/cloudy/ComputeLogU/S5_distance_{}.con'.format(i_val)
+    path_S5_con = '../../Data/CGM/cloudy/ComputeLogU/S5_distance_{}.con'.format(i_val)
     S5_con = np.loadtxt(path_S5_con, usecols=[0, 1, 2, 3, 4])
 
-    path_S5_hyd = '/Users/lzq/Dropbox/Data/CGM/cloudy/ComputeLogU/S5_distance_{}.hyd'.format(i_val)
+    path_S5_hyd = '../../Data/CGM/cloudy/ComputeLogU/S5_distance_{}.hyd'.format(i_val)
     S5_hyd = np.loadtxt(path_S5_hyd)
     T_e, Hden, HI_H = S5_hyd[:, 1], S5_hyd[:, 2], S5_hyd[:, 4]
 
-    path_S5_emi = '/Users/lzq/Dropbox/Data/CGM/cloudy/ComputeLogU/S5_distance_{}.emi'.format(i_val)
+    path_S5_emi = '../../Data/CGM/cloudy/ComputeLogU/S5_distance_{}.emi'.format(i_val)
     LineEmis = np.loadtxt(path_S5_emi)
     depth, NeV = LineEmis[:, 0], LineEmis[:, 1]
     OII = LineEmis[:, 2] + LineEmis[:, 3]
     Hbeta, OIII = LineEmis[:, 11], LineEmis[:, 12]
 
+    path_S5_oxy = '../../Data/CGM/cloudy/ComputeLogU/S5_distance_{}.oxy'.format(i_val)
+    S5_oxy = np.loadtxt(path_S5_oxy)
+    abun = S5_oxy[:, 3::4]
 
     N_HI = integrate.cumulative_trapezoid(y=Hden * HI_H, x=depth, initial=0)
     tau_912 = N_HI * 6.30e-18  # X.Prochaska 2017
@@ -77,7 +80,7 @@ for i, i_val in enumerate([1.3]):
     ax[3].set_xlabel(r'Depth into the cloud [kpc]', size=15)
     ax[3].set_ylabel(r'Neutral fraction', size=15)
     # fig.tight_layout()
-    fig.savefig('/Users/lzq/Dropbox/Data/CGM_plots/CheckLineratio.png', bbox_inches='tight')
+    fig.savefig('../../Data/CGM_plots/CheckLineratio.png', bbox_inches='tight')
 
 
 
