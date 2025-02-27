@@ -32,9 +32,9 @@ for i, i_val in enumerate([1.3]):
     OII = LineEmis[:, 2] + LineEmis[:, 3]
     Hbeta, OIII = LineEmis[:, 11], LineEmis[:, 12]
 
-    path_S5_oxy = '../../Data/CGM/cloudy/ComputeLogU/S5_distance_{}.oxy'.format(i_val)
+    path_S5_oxy = '../../Data/CGM/cloudy/ComputeLogU/S5_distance_{}.oxy_2'.format(i_val)
     S5_oxy = np.loadtxt(path_S5_oxy)
-    abun = S5_oxy[:, 3::4]
+    abun = S5_oxy
 
     N_HI = integrate.cumulative_trapezoid(y=Hden * HI_H, x=depth, initial=0)
     tau_912 = N_HI * 6.30e-18  # X.Prochaska 2017
@@ -76,9 +76,13 @@ for i, i_val in enumerate([1.3]):
     ax[2].set_ylabel(r'Optical depth at 912 $\rm \AA (\tau_{912})$', size=15)
     ax[2].set_yscale('log')
 
-    ax[3].plot(depth, HI_H, '-', c=color, label=label)
+    # ax[3].plot(depth, abun, '-', c=color, label=label)
+    ax[3].plot(depth, abun[:, 2], '-', c='k', label=r'$\rm O^+$', zorder=100)
+    ax[3].plot(depth, abun[:, 3], '--', c='b', label=r'$\rm O^{2+}$')
+    ax[3].plot(depth, abun[:, 8] + abun[:, 9], '-', c='red', label=r'$\rm O^{7+} + O^{8+}$')
     ax[3].set_xlabel(r'Depth into the cloud [kpc]', size=15)
-    ax[3].set_ylabel(r'Neutral fraction', size=15)
+    ax[3].set_ylabel(r'Ion fraction', size=15)
+    ax[3].legend()
     # fig.tight_layout()
     fig.savefig('../../Data/CGM_plots/CheckLineratio.png', bbox_inches='tight')
 
