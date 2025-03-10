@@ -1,32 +1,17 @@
 import os
 import aplpy
-import lmfit
 import numpy as np
-import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from astropy import units as u
-from astropy import stats
 from astropy.io import ascii
 from matplotlib import rc
-from PyAstronomy import pyasl
-from mpdaf.obj import Cube, WaveCoord, Image
 from astropy.wcs import WCS
 from regions import PixCoord
 from astropy.cosmology import FlatLambdaCDM
 from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
 from astropy.coordinates import SkyCoord
-from astropy.coordinates import Angle
-from photutils.segmentation import detect_sources
-from photutils.segmentation import deblend_sources
-from palettable.scientific.sequential import Acton_6
-from palettable.cubehelix import red_16
 from palettable.cmocean.sequential import Dense_20_r
-import palettable.scientific.sequential as sequential_s
-import palettable
-from scipy import integrate
-from scipy import interpolate
-import time as tm
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
