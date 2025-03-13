@@ -11,6 +11,7 @@ from regions import PixCoord
 from astropy.cosmology import FlatLambdaCDM
 from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
 from astropy.coordinates import SkyCoord
+from astropy.convolution import convolve, Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel, Box1DKernel
 from palettable.cmocean.sequential import Dense_20_r
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -73,11 +74,13 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'GasMap':
         # gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
         gc.colorbar.set_ticks([-300, -200, -100, 0, 100, 200, 300])
-        gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
+        # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v_{50} / v_{max} \mathrm{\; [km \, s^{-1}]}$')
+        gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v_{50} / v_{\rm max}$')
         gc.colorbar.hide()
     elif type == 'GasMap_sigma':
         gc.colorbar.set_ticks([0, 150, 300, 450, 600, 750])
-        gc.colorbar.set_axis_label_text(r'$\rm \sigma_{80} \mathrm{\; [km \, s^{-1}]}$')
+        # gc.colorbar.set_axis_label_text(r'$\rm \sigma_{80} \mathrm{\; [km \, s^{-1}]}$')
+        gc.colorbar.set_axis_label_text(r'$\rm \sigma_{80} / \sigma_{\rm max}$')
         gc.colorbar.hide()
 
     # Cubename and redshift
@@ -120,7 +123,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 
 
 def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, contour_level_OIII=0.2,
-               nums_seg_OII=[], nums_seg_OIII=[], HSTcentroid=False):
+               nums_seg_OII=[], rmbkgResidue=False, nums_seg_OIII=[], HSTcentroid=False):
     # QSO information
     path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
@@ -239,16 +242,28 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     hdul_s80[1].data = np.where(seg_OII_mask != -1, hdul_s80[1].data, np.nan)
 
     # OII SB
+    path_OII_contour = path_SB_OII_kin
     SB_OII = fits.open(path_SB_OII)[1].data
     bkgrd_OII = np.where(seg_OII_mask == 0, SB_OII, np.nan)
     bkgrd_OII_random = np.random.choice(bkgrd_OII.flatten(), bkgrd_OII.shape, replace=True).reshape(bkgrd_OII.shape)
-    hdul_SB_OII_kin = fits.ImageHDU(np.where(seg_OII_mask != -1, SB_OII, bkgrd_OII_random), header=hdr)
+    SB_OII = np.where(seg_OII_mask != -1, SB_OII, bkgrd_OII_random)
+    if rmbkgResidue:
+        path_SB_OII_kin_2lev = '../../MUSEQuBES+CUBS/fit_kin/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}_2lev.fits'. \
+            format(cubename, str_zap, line_OII, *UseSeg)
+        # kernel = Box2DKernel(5)
+        # bkgrd_OII_conv = convolve(bkgrd_OII, kernel)
+        bkgrd_OII_2lev = np.where((bkgrd_OII <= 1.8 * contour_level_OII), bkgrd_OII, bkgrd_OII_random)
+        SB_OII_2lev = np.where(seg_OII_mask != 0, SB_OII, bkgrd_OII_2lev)
+        hdul_SB_OII_kin_2lev = fits.ImageHDU(SB_OII_2lev, header=hdr)
+        hdul_SB_OII_kin_2lev.writeto(path_SB_OII_kin_2lev, overwrite=True)
+        path_OII_contour = path_SB_OII_kin_2lev
+    hdul_SB_OII_kin = fits.ImageHDU(SB_OII, header=hdr)
     hdul_SB_OII_kin.writeto(path_SB_OII_kin, overwrite=True)
 
     fig = plt.figure(figsize=(8, 8), dpi=300)
     gc = aplpy.FITSFigure(path_SB_OII_kin, figure=fig, hdu=1)
     gc.show_colorscale(vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'), stretch='linear')
-    gc.show_contour(path_SB_OII_kin, levels=[contour_level_OII], colors='black', linewidths=2,
+    gc.show_contour(path_OII_contour, levels=[contour_level_OII], colors='black', linewidths=2,
                     smooth=5, kernel='box', hdu=1)
     APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
     if cubename == 'HE0435-5304':
@@ -314,8 +329,12 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     if cubename == 'PKS0232-04' or cubename == 'TEX0206-048' or cubename == 'PKS0355-483' \
             or cubename == 'HE0246-4101' or cubename == '3C57':
         gc.colorbar.set_ticks([-v_max, -v_max / 2, 0, v_max / 2, v_max])
-        gc.colorbar._colorbar.set_ticklabels([r'$-v_{\rm max}$', r'$-\frac{v_{\rm max}}{2}$',
-                                              0, r'$\frac{v_{\rm max}}{2}$', r'$v_{\rm max}$'])
+        # gc.colorbar._colorbar.set_ticklabels([r'$-v_{\rm max}$', r'$-\frac{1}{2}v_{\rm max}$',
+        #                                       0, r'$\frac{1}{2}v_{\rm max}$', r'$v_{\rm max}$'])
+        gc.colorbar._colorbar.set_ticklabels([r'$-1$', r'$-\frac{1}{2}$', 0, r'$\frac{1}{2}$', r'$1$'])
+        tick_labels = gc.colorbar._colorbar.ax.get_xticklabels()
+        tick_labels[0].set_ha('left')
+
     gc.add_label(0.05, 0.08, '[{}, {}]'.format(-v_max, v_max), size=30, relative=True, horizontalalignment='left')
     gc.show_markers(ra_gal, dec_gal, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
     gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
@@ -330,10 +349,13 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     APLpyStyle(gc, type='GasMap_sigma', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
     if cubename == 'PKS0232-04' or cubename == 'TEX0206-048' or cubename == 'PKS0355-483' \
             or cubename == 'HE0246-4101' or cubename == '3C57':
-        gc.colorbar.set_ticks([0, sigma_max / 4, sigma_max / 2, sigma_max])
-        gc.colorbar._colorbar.set_ticklabels([r'$0$', r'$\frac{\sigma_{\rm max}}{4}$',
-                                              r'$\frac{\sigma_{\rm max}}{2}$',
-                                              r'$\sigma_{\rm max}$'])
+        gc.colorbar.set_ticks([0, sigma_max / 4, sigma_max / 2,  3 * sigma_max / 4, sigma_max])
+        # gc.colorbar._colorbar.set_ticklabels([r'$0$', r'$\frac{1}{4}\sigma_{\rm max}$',
+        #                                       r'$\frac{1}{2}\sigma_{\rm max}$', r'$\frac{3}{4}\sigma_{\rm max}$',
+        #                                       r'$\sigma_{\rm max}$'])
+        gc.colorbar._colorbar.set_ticklabels([r'$0$', r'$\frac{1}{4}$', r'$\frac{1}{2}$', r'$\frac{3}{4}$', r'$1$'])
+        tick_labels = gc.colorbar._colorbar.ax.get_xticklabels()
+        tick_labels[0].set_ha('left')
     fig.savefig(figurename_S80, bbox_inches='tight')
 
     # HST image with MUSE field of view
@@ -347,8 +369,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
         gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
 
         # Draw contours
-        gc.show_contour(path_SB_OII_kin, levels=[contour_level_OII], colors='blue', linewidths=2,
-                        smooth=5, kernel='box', hdu=1)
+        gc.show_contour(path_OII_contour, levels=[contour_level_OII], colors='blue', linewidths=2, smooth=5,
+                        kernel='box', hdu=1)
         if os.path.exists(path_SB_OIII_kin):
             gc.show_contour(path_SB_OIII_kin, levels=[contour_level_OIII], colors='red', linewidths=2,
                             smooth=5, kernel='box', hdu=1)
@@ -377,7 +399,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
         gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=530)
 
         # Draw contours
-        gc.show_contour(path_SB_OII_kin, levels=[contour_level_OII], colors='blue', linewidths=2,
+        gc.show_contour(path_OII_contour, levels=[contour_level_OII], colors='blue', linewidths=2,
                         smooth=5, kernel='box', hdu=1)
         if os.path.exists(path_SB_OIII_kin):
             gc.show_contour(path_SB_OIII_kin, levels=[contour_level_OIII], colors='red', linewidths=2,
@@ -399,21 +421,21 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 # MakeV50W80(cubename='J2135-5316', v_max=300, sigma_max=300, contour_level_OII=0.3) # Double component
 # MakeV50W80(cubename='J0119-2010', v_max=500, sigma_max=300, contour_level_OIII=0.5)  # Double component
 # MakeV50W80(cubename='HE0246-4101', v_max=300, sigma_max=300)
-# MakeV50W80(cubename='J0028-3305', v_max=300, sigma_max=300)
-# MakeV50W80(cubename='HE0419-5657', v_max=400, sigma_max=300)
-# MakeV50W80(cubename='PB6291', v_max=400, sigma_max=300)
-# MakeV50W80(cubename='Q0107-0235', v_max=400, sigma_max=300)
+# MakeV50W80(cubename='J0028-3305', v_max=300, sigma_max=300, contour_level_OII=0.3)
+# MakeV50W80(cubename='HE0419-5657', v_max=400, sigma_max=300, nums_seg_OII=[1], rmbkgResidue=True)
+# MakeV50W80(cubename='PB6291', v_max=400, sigma_max=300, nums_seg_OII=[3, 5])
+# MakeV50W80(cubename='Q0107-0235', v_max=400, sigma_max=300, nums_seg_OII=[7], rmbkgResidue=True)
 # MakeV50W80(cubename='PKS2242-498', v_max=400, sigma_max=300, contour_level_OII=0.3)
-# MakeV50W80(cubename='PKS0355-483', v_max=300, sigma_max=300)
-# MakeV50W80(cubename='HE0112-4145', v_max=300, sigma_max=300)
+# MakeV50W80(cubename='PKS0355-483', v_max=300, sigma_max=300, nums_seg_OII=[6, 14], rmbkgResidue=True)
+# MakeV50W80(cubename='HE0112-4145', v_max=300, sigma_max=300, rmbkgResidue=True)
 # MakeV50W80(cubename='HE0439-5254', v_max=500, sigma_max=300)
-# MakeV50W80(cubename='HE2305-5315', v_max=500, sigma_max=300)
+# MakeV50W80(cubename='HE2305-5315', v_max=500, sigma_max=300, nums_seg_OII=[5, 6, 7, 8])
 # MakeV50W80(cubename='HE1003+0149', v_max=300, sigma_max=300, contour_level_OII=0.3)
-# MakeV50W80(cubename='HE0331-4112', v_max=500, sigma_max=300)
+# MakeV50W80(cubename='HE0331-4112', v_max=500, sigma_max=300, nums_seg_OII=[1, 2], rmbkgResidue=True)
 # MakeV50W80(cubename='TEX0206-048', v_max=600, sigma_max=400)
-# MakeV50W80(cubename='Q1354+048', v_max=400, sigma_max=300)
+MakeV50W80(cubename='Q1354+048', v_max=400, sigma_max=300, rmbkgResidue=True)
 # MakeV50W80(cubename='J0154-0712', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400)
-# MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300)
-MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300, nums_seg_OII=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+# MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300, nums_seg_OII=[6, 12])
+# MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300, nums_seg_OII=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 # MakeV50W80(cubename='PKS0232-04', v_max=400, sigma_max=300, nums_seg_OII=[4, 5, 7])
