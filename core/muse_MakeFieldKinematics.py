@@ -1904,7 +1904,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # -s_spe 1.5 -k_spe gauss -ssf False -sl 7440 7500 -l 0.1
 # os.chdir(path_SB)
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0226-4110_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 5550 5575 -l 0.1')
+#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 5550 5575 -l 0.1') # 5574 for plotting to avoid skyline
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0226-4110_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
 #           '-ssf False -sl 5550 5575 -l 0.1')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0226-4110_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss '
@@ -1982,9 +1982,9 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
 #           '-ssf False -sl 6050 6090')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8130 8170')
+#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 8130 8180')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0238-1904_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss '
-#           '-ssf False -sl 8130 8170')
+#           '-ssf False -sl 8130 8180')
 # fit_param = {"OII": 1, "OII_2nd": 0, 'ResolveOII': True, 'r_max': 1.6,
 #              'OII_center': (wave_OII3727_vac + wave_OII3729_vac) / 2, "OIII": 1, "OIII_2nd": 0}
 # FitLines(cubename='HE0238-1904', fit_param=fit_param, smooth_2D=1.5, kernel_2D='gauss',
