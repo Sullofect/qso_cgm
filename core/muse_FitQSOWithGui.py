@@ -451,6 +451,7 @@ class PlotWindow(QMainWindow):
                                                  flux_OIII_fit, dflux_OIII_fit, r, dr, a_OII, da_OII, b_OII, db_OII, \
                                                  a_OIII, da_OIII, b_OIII, db_OIII, chisqr, redchi
         self.redchi_show = redchi
+        self.num_comp = np.sum(~np.isnan(self.v), axis=0)
 
         # Calculae flux of each component
         self.wave_OII_exp = expand_wave([self.wave_OII_vac], stack=True)
@@ -501,6 +502,7 @@ class PlotWindow(QMainWindow):
         v50 = np.where(self.mask != 0, v50, np.nan)
         w80 = np.where(self.mask != 0, w80, np.nan)
         self.redchi_show = np.where(self.mask != 0, self.redchi_show, np.nan)
+        self.num_comp = np.where(self.mask != 0, self.num_comp, np.nan)
         self.v50_OII = np.where(self.mask_OII, v50_OII, np.nan)
         self.w80_OII = np.where(self.mask_OII, w80_OII, np.nan)
         self.v50_OIII = np.where(self.mask_OIII, v50_OIII, np.nan)
@@ -524,16 +526,19 @@ class PlotWindow(QMainWindow):
         self.widget1 = pg.GraphicsLayoutWidget()
         self.widget2 = pg.GraphicsLayoutWidget()
         self.widget3 = pg.GraphicsLayoutWidget()
+        self.widget3_2 = pg.GraphicsLayoutWidget()
         self.widget4 = pg.GraphicsLayoutWidget()
         self.widget5 = pg.GraphicsLayoutWidget()
         self.widget1_plot = self.widget1.addPlot()
         self.widget2_plot = self.widget2.addPlot()
         self.widget3_plot = self.widget3.addPlot()
+        self.widget3_2_plot = self.widget3_2.addPlot()
         self.widget4_plot = self.widget4.addPlot()
         self.widget5_plot = self.widget5.addPlot()
         self.widget1.setFixedSize(450, 450)
         self.widget2.setFixedSize(450, 450)
         self.widget3.setFixedSize(450, 450)
+        self.widget3_2.setFixedSize(450, 450)
         self.widget4.setFixedSize(450, 450)
         self.widget5.setFixedSize(450, 450)
 
@@ -541,11 +546,14 @@ class PlotWindow(QMainWindow):
         self.widget1.setBackground((235, 233, 221, 100))
         self.widget2.setBackground((235, 233, 221, 100))
         self.widget3.setBackground((235, 233, 221, 100))
+        self.widget3_2.setBackground((235, 233, 221, 100))
         self.widget4.setBackground((235, 233, 221, 100))
         self.widget5.setBackground((235, 233, 221, 100))
         self.widget1_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
+        self.widget3_2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
+
 
         # Set param
         self.paramSpec = [dict(name='S_N=', type='float', value=10, dec=False, readonly=False),
@@ -621,6 +629,7 @@ class PlotWindow(QMainWindow):
         self.layout.addWidget(self.widget1, 0, 0, 1, 1)
         self.layout.addWidget(self.widget2, 0, 1, 1, 1)
         self.layout.addWidget(self.widget3, 0, 2, 1, 1)
+        self.layout.addWidget(self.widget3_2, 0, 3, 1, 1)
         self.layout.addWidget(self.widget4, 1, 0, 1, 1)
         self.layout.addWidget(self.widget5, 1, 1, 1, 1)
         self.layout.addLayout(layout_RHS, 1, 2, 1, 1)
@@ -663,6 +672,18 @@ class PlotWindow(QMainWindow):
         self.chi_map.updateImage(image=self.redchi_show.T)
         bar.setImageItem(self.chi_map, insert_in=self.widget3_plot)
 
+        # Plot the number of component 2D map in the fourth plot
+        self.num_map = pg.ImageItem()
+        self.widget3_2_plot.addItem(self.num_map)
+        colormap = cm.get_cmap("Dark2")
+        colormap._init()
+        lut = (colormap._lut * 255).view(np.ndarray)
+        self.num_map.setLookupTable(lut)
+        bar = pg.ColorBarItem(values=(1, 3), colorMap=pg.ColorMap(np.linspace(0, 1, len(lut)), lut),
+                              orientation='horizontal', limits=(1, 3))
+        self.num_map.updateImage(image=self.num_comp.T)
+        bar.setImageItem(self.num_map, insert_in=self.widget3_2_plot)
+
         # Mark the locations
         self.scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
         self.scatter_2 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
@@ -678,6 +699,8 @@ class PlotWindow(QMainWindow):
         self.widget2_plot.setYLink(self.widget1_plot)
         self.widget3_plot.setXLink(self.widget2_plot)
         self.widget3_plot.setYLink(self.widget2_plot)
+        self.widget3_2_plot.setXLink(self.widget3_plot)
+        self.widget3_2_plot.setYLink(self.widget3_plot)
 
         # Plot initial data in the second plot
         self.widget4_plot.setLabel('bottom', 'Wavelength ($\AA$)')
@@ -689,6 +712,7 @@ class PlotWindow(QMainWindow):
         self.widget1_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget2_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget3_plot.scene().sigMouseClicked.connect(self.update_plot)
+        self.widget3_2_plot.scene().sigMouseClicked.connect(self.update_plot)
 
         # Initiate region fit
         self.current_roi = None
