@@ -526,19 +526,19 @@ class PlotWindow(QMainWindow):
         self.widget1 = pg.GraphicsLayoutWidget()
         self.widget2 = pg.GraphicsLayoutWidget()
         self.widget3 = pg.GraphicsLayoutWidget()
-        self.widget3_2 = pg.GraphicsLayoutWidget()
+        # self.widget3_2 = pg.GraphicsLayoutWidget()
         self.widget4 = pg.GraphicsLayoutWidget()
         self.widget5 = pg.GraphicsLayoutWidget()
         self.widget1_plot = self.widget1.addPlot()
         self.widget2_plot = self.widget2.addPlot()
         self.widget3_plot = self.widget3.addPlot()
-        self.widget3_2_plot = self.widget3_2.addPlot()
+        # self.widget3_2_plot = self.widget3_2.addPlot()
         self.widget4_plot = self.widget4.addPlot()
         self.widget5_plot = self.widget5.addPlot()
         self.widget1.setFixedSize(450, 450)
         self.widget2.setFixedSize(450, 450)
         self.widget3.setFixedSize(450, 450)
-        self.widget3_2.setFixedSize(450, 450)
+        # self.widget3_2.setFixedSize(450, 450)
         self.widget4.setFixedSize(450, 450)
         self.widget5.setFixedSize(450, 450)
 
@@ -546,17 +546,19 @@ class PlotWindow(QMainWindow):
         self.widget1.setBackground((235, 233, 221, 100))
         self.widget2.setBackground((235, 233, 221, 100))
         self.widget3.setBackground((235, 233, 221, 100))
-        self.widget3_2.setBackground((235, 233, 221, 100))
+        # self.widget3_2.setBackground((235, 233, 221, 100))
         self.widget4.setBackground((235, 233, 221, 100))
         self.widget5.setBackground((235, 233, 221, 100))
         self.widget1_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
-        self.widget3_2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
+        # self.widget3_2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
 
 
         # Set param
-        self.paramSpec = [dict(name='S_N=', type='float', value=10, dec=False, readonly=False),
+        self.paramSpec = [dict(name='Select 3rd panel', type='list', values=['chi^2', 'N_comp'], value='chi^2'),
+                          dict(name='S_N=', type='float', value=10, dec=False, readonly=False),
+                          dict(name='AIC, BIC=', type='str', value='', readonly=False),
                           dict(name='chi=', type='float', value=0, dec=False, readonly=False),
                           dict(name='v_1=', type='float', value=0, dec=False, readonly=False),
                           dict(name='sigma_1=', type='float', value=0, readonly=False),
@@ -572,11 +574,11 @@ class PlotWindow(QMainWindow):
                           dict(name='sigma_3=', type='float', value=0, readonly=False),
                           dict(name='OII_3=', type='float', value=0, readonly=False),
                           dict(name='OIII_3=', type='float', value=0, readonly=False),
-                          dict(name='r_3=', type='float', value=0, readonly=False),
-                          dict(name='BIC=', type='float', value=0, readonly=False)]
+                          dict(name='r_3=', type='float', value=0, readonly=False)]
         self.param = pt.Parameter.create(name='Options', type='group', children=self.paramSpec)
         self.tree = pt.ParameterTree()
         self.tree.setParameters(self.param)
+        self.param.child('Select 3rd panel').sigValueChanged.connect(self.Plot3rdPanel)
 
         # Buttons
         self.state = 0
@@ -629,7 +631,7 @@ class PlotWindow(QMainWindow):
         self.layout.addWidget(self.widget1, 0, 0, 1, 1)
         self.layout.addWidget(self.widget2, 0, 1, 1, 1)
         self.layout.addWidget(self.widget3, 0, 2, 1, 1)
-        self.layout.addWidget(self.widget3_2, 0, 3, 1, 1)
+        # self.layout.addWidget(self.widget3_2, 0, 3, 1, 1)
         self.layout.addWidget(self.widget4, 1, 0, 1, 1)
         self.layout.addWidget(self.widget5, 1, 1, 1, 1)
         self.layout.addLayout(layout_RHS, 1, 2, 1, 1)
@@ -673,16 +675,16 @@ class PlotWindow(QMainWindow):
         bar.setImageItem(self.chi_map, insert_in=self.widget3_plot)
 
         # Plot the number of component 2D map in the fourth plot
-        self.num_map = pg.ImageItem()
-        self.widget3_2_plot.addItem(self.num_map)
-        colormap = cm.get_cmap("Dark2")
-        colormap._init()
-        lut = (colormap._lut * 255).view(np.ndarray)
-        self.num_map.setLookupTable(lut)
-        bar = pg.ColorBarItem(values=(1, 3), colorMap=pg.ColorMap(np.linspace(0, 1, len(lut)), lut),
-                              orientation='horizontal', limits=(1, 3))
-        self.num_map.updateImage(image=self.num_comp.T)
-        bar.setImageItem(self.num_map, insert_in=self.widget3_2_plot)
+        # self.num_map = pg.ImageItem()
+        # self.widget3_2_plot.addItem(self.num_map)
+        # colormap = cm.get_cmap("Dark2")
+        # colormap._init()
+        # lut = (colormap._lut * 255).view(np.ndarray)
+        # self.num_map.setLookupTable(lut)
+        # bar = pg.ColorBarItem(values=(1, 3), colorMap=pg.ColorMap(np.linspace(0, 1, len(lut)), lut),
+        #                       orientation='horizontal', limits=(1, 3))
+        # self.num_map.updateImage(image=self.num_comp.T)
+        # bar.setImageItem(self.num_map, insert_in=self.widget3_2_plot)
 
         # Mark the locations
         self.scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
@@ -699,8 +701,8 @@ class PlotWindow(QMainWindow):
         self.widget2_plot.setYLink(self.widget1_plot)
         self.widget3_plot.setXLink(self.widget2_plot)
         self.widget3_plot.setYLink(self.widget2_plot)
-        self.widget3_2_plot.setXLink(self.widget3_plot)
-        self.widget3_2_plot.setYLink(self.widget3_plot)
+        # self.widget3_2_plot.setXLink(self.widget3_plot)
+        # self.widget3_2_plot.setYLink(self.widget3_plot)
 
         # Plot initial data in the second plot
         self.widget4_plot.setLabel('bottom', 'Wavelength ($\AA$)')
@@ -712,7 +714,7 @@ class PlotWindow(QMainWindow):
         self.widget1_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget2_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget3_plot.scene().sigMouseClicked.connect(self.update_plot)
-        self.widget3_2_plot.scene().sigMouseClicked.connect(self.update_plot)
+        # self.widget3_2_plot.scene().sigMouseClicked.connect(self.update_plot)
 
         # Initiate region fit
         self.current_roi = None
@@ -1235,7 +1237,6 @@ class PlotWindow(QMainWindow):
         self.fs[i, j] = result.success
         self.chisqr[i, j], self.redchi[i, j] = result.chisqr, result.redchi
         self.redchi_show[i, j] = result.redchi
-        print('AIC/BIC=', result.aic, result.bic)
 
         # fill the value
         a_OII, b_OII = result.best_values['a_OII'], result.best_values['b_OII']
@@ -1298,6 +1299,7 @@ class PlotWindow(QMainWindow):
                                         self.flux_OIII_fit[:, i, j], wave_OIII5008_vac)
 
         # Replot
+        self.param['AIC, BIC='] = '{:.2f}, {:.2f}'.format(result.aic, result.bic)
         self.show_fit()
         self.plot_OII()
         self.plot_OIII()
@@ -1343,6 +1345,11 @@ class PlotWindow(QMainWindow):
         self.scatter_3_mask.clear()
         self.widget1_plot.removeItem(self.current_roi)
 
+    def Plot3rdPanel(self):
+        if self.param['Select 3rd panel'] == 'chi^2':
+            self.chi_map.updateImage(image=self.redchi_show.T)
+        elif self.param['Select 3rd panel'] == 'N_comp':
+            self.chi_map.updateImage(image=self.num_comp.T)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
