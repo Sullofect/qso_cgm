@@ -451,7 +451,7 @@ class PlotWindow(QMainWindow):
                                                  flux_OIII_fit, dflux_OIII_fit, r, dr, a_OII, da_OII, b_OII, db_OII, \
                                                  a_OIII, da_OIII, b_OIII, db_OIII, chisqr, redchi
         self.redchi_show = redchi
-        self.num_comp = np.sum(~np.isnan(self.v), axis=0)
+        self.num_comp, self.num_comp_show = np.sum(~np.isnan(self.v), axis=0), np.sum(~np.isnan(self.v), axis=0)
 
         # Calculae flux of each component
         self.wave_OII_exp = expand_wave([self.wave_OII_vac], stack=True)
@@ -502,7 +502,7 @@ class PlotWindow(QMainWindow):
         v50 = np.where(self.mask != 0, v50, np.nan)
         w80 = np.where(self.mask != 0, w80, np.nan)
         self.redchi_show = np.where(self.mask != 0, self.redchi_show, np.nan)
-        self.num_comp = np.where(self.mask != 0, self.num_comp, np.nan)
+        self.num_comp_show = np.where(self.mask != 0, self.num_comp_show, np.nan)
         self.v50_OII = np.where(self.mask_OII, v50_OII, np.nan)
         self.w80_OII = np.where(self.mask_OII, w80_OII, np.nan)
         self.v50_OIII = np.where(self.mask_OIII, v50_OIII, np.nan)
@@ -526,19 +526,16 @@ class PlotWindow(QMainWindow):
         self.widget1 = pg.GraphicsLayoutWidget()
         self.widget2 = pg.GraphicsLayoutWidget()
         self.widget3 = pg.GraphicsLayoutWidget()
-        # self.widget3_2 = pg.GraphicsLayoutWidget()
         self.widget4 = pg.GraphicsLayoutWidget()
         self.widget5 = pg.GraphicsLayoutWidget()
         self.widget1_plot = self.widget1.addPlot()
         self.widget2_plot = self.widget2.addPlot()
         self.widget3_plot = self.widget3.addPlot()
-        # self.widget3_2_plot = self.widget3_2.addPlot()
         self.widget4_plot = self.widget4.addPlot()
         self.widget5_plot = self.widget5.addPlot()
         self.widget1.setFixedSize(450, 450)
         self.widget2.setFixedSize(450, 450)
         self.widget3.setFixedSize(450, 450)
-        # self.widget3_2.setFixedSize(450, 450)
         self.widget4.setFixedSize(450, 450)
         self.widget5.setFixedSize(450, 450)
 
@@ -546,13 +543,11 @@ class PlotWindow(QMainWindow):
         self.widget1.setBackground((235, 233, 221, 100))
         self.widget2.setBackground((235, 233, 221, 100))
         self.widget3.setBackground((235, 233, 221, 100))
-        # self.widget3_2.setBackground((235, 233, 221, 100))
         self.widget4.setBackground((235, 233, 221, 100))
         self.widget5.setBackground((235, 233, 221, 100))
         self.widget1_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
         self.widget3_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
-        # self.widget3_2_plot.setLimits(xMin=0, xMax=self.size[0], yMin=0, yMax=self.size[1])
 
 
         # Set param
@@ -578,7 +573,7 @@ class PlotWindow(QMainWindow):
         self.param = pt.Parameter.create(name='Options', type='group', children=self.paramSpec)
         self.tree = pt.ParameterTree()
         self.tree.setParameters(self.param)
-        self.param.child('Select 3rd panel').sigValueChanged.connect(self.Plot3rdPanel)
+        self.param.child('Select 3rd panel').sigValueChanged.connect(self.plot_3rd_panel)
 
         # Buttons
         self.state = 0
@@ -631,7 +626,6 @@ class PlotWindow(QMainWindow):
         self.layout.addWidget(self.widget1, 0, 0, 1, 1)
         self.layout.addWidget(self.widget2, 0, 1, 1, 1)
         self.layout.addWidget(self.widget3, 0, 2, 1, 1)
-        # self.layout.addWidget(self.widget3_2, 0, 3, 1, 1)
         self.layout.addWidget(self.widget4, 1, 0, 1, 1)
         self.layout.addWidget(self.widget5, 1, 1, 1, 1)
         self.layout.addLayout(layout_RHS, 1, 2, 1, 1)
@@ -674,18 +668,6 @@ class PlotWindow(QMainWindow):
         self.chi_map.updateImage(image=self.redchi_show.T)
         bar.setImageItem(self.chi_map, insert_in=self.widget3_plot)
 
-        # Plot the number of component 2D map in the fourth plot
-        # self.num_map = pg.ImageItem()
-        # self.widget3_2_plot.addItem(self.num_map)
-        # colormap = cm.get_cmap("Dark2")
-        # colormap._init()
-        # lut = (colormap._lut * 255).view(np.ndarray)
-        # self.num_map.setLookupTable(lut)
-        # bar = pg.ColorBarItem(values=(1, 3), colorMap=pg.ColorMap(np.linspace(0, 1, len(lut)), lut),
-        #                       orientation='horizontal', limits=(1, 3))
-        # self.num_map.updateImage(image=self.num_comp.T)
-        # bar.setImageItem(self.num_map, insert_in=self.widget3_2_plot)
-
         # Mark the locations
         self.scatter_1 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
         self.scatter_2 = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(30, 255, 35, 255))
@@ -701,8 +683,6 @@ class PlotWindow(QMainWindow):
         self.widget2_plot.setYLink(self.widget1_plot)
         self.widget3_plot.setXLink(self.widget2_plot)
         self.widget3_plot.setYLink(self.widget2_plot)
-        # self.widget3_2_plot.setXLink(self.widget3_plot)
-        # self.widget3_2_plot.setYLink(self.widget3_plot)
 
         # Plot initial data in the second plot
         self.widget4_plot.setLabel('bottom', 'Wavelength ($\AA$)')
@@ -714,7 +694,6 @@ class PlotWindow(QMainWindow):
         self.widget1_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget2_plot.scene().sigMouseClicked.connect(self.update_plot)
         self.widget3_plot.scene().sigMouseClicked.connect(self.update_plot)
-        # self.widget3_2_plot.scene().sigMouseClicked.connect(self.update_plot)
 
         # Initiate region fit
         self.current_roi = None
@@ -1258,7 +1237,8 @@ class PlotWindow(QMainWindow):
         self.v[:, i, j] = [c_kms * (z_1 - self.z_qso) / (1 + self.z_qso),
                            c_kms * (z_2 - self.z_qso) / (1 + self.z_qso),
                            c_kms * (z_3 - self.z_qso) / (1 + self.z_qso)]
-
+        self.num_comp[i, j], self.num_comp_show[i, j] = np.sum(~np.isnan(self.v[:, i, j])), \
+                                                        np.sum(~np.isnan(self.v[:, i, j]))
 
         flux_OII_1, dflux_OII_1 = result.best_values['flux_OII_1'], result.params['flux_OII_1'].stderr
         flux_OII_2, dflux_OII_2 = result.best_values['flux_OII_2'], result.params['flux_OII_2'].stderr
@@ -1305,7 +1285,7 @@ class PlotWindow(QMainWindow):
         self.plot_OIII()
         self.v_map.updateImage(image=self.v50.T)
         self.sigma_map.updateImage(image=self.w80.T)
-        self.chi_map.updateImage(image=self.redchi_show.T)
+        self.plot_3rd_panel()
 
     def save_v50w80(self):
         hdul_v50 = fits.ImageHDU(self.v50, header=self.hdul_fit[2].header)
@@ -1331,10 +1311,11 @@ class PlotWindow(QMainWindow):
         self.v50 = np.where(self.mask, self.v50_ori, np.nan)
         self.w80 = np.where(self.mask, self.w80_ori, np.nan)
         self.redchi_show = np.where(self.mask, self.redchi, np.nan)
+        self.num_comp_show = np.where(self.mask, self.num_comp, np.nan)
 
         self.v_map.updateImage(image=self.v50.T)
         self.sigma_map.updateImage(image=self.w80.T)
-        self.chi_map.updateImage(image=self.redchi_show.T)
+        self.plot_3rd_panel()
 
     def clear_scatter(self):
         self.scatter_1.clear()
@@ -1345,11 +1326,11 @@ class PlotWindow(QMainWindow):
         self.scatter_3_mask.clear()
         self.widget1_plot.removeItem(self.current_roi)
 
-    def Plot3rdPanel(self):
+    def plot_3rd_panel(self):
         if self.param['Select 3rd panel'] == 'chi^2':
             self.chi_map.updateImage(image=self.redchi_show.T)
         elif self.param['Select 3rd panel'] == 'N_comp':
-            self.chi_map.updateImage(image=self.num_comp.T)
+            self.chi_map.updateImage(image=self.num_comp_show.T)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
