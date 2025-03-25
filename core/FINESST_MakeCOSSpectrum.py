@@ -39,13 +39,13 @@ for i in ['3C57']:
     cubename = i
 
     # Load qso information
-    path_qso = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/gal_info/quasars.dat'
+    path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
     # Spectrum
-    path_cos = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_FUV.fits'.format(cubename)
+    path_cos = '../../MUSEQuBES+CUBS/COS/{}_FUV.fits'.format(cubename)
     data_cos = fits.getdata(path_cos, 1, ignore_missing_end=True)
     wave = data_cos['wave'] / (1 + z_qso)
     flux = data_cos['flux'] / data_cos['continuum']
@@ -73,7 +73,7 @@ for i in ['3C57']:
     plt.xlabel(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$', size=20)
     plt.ylabel(r'$\mathrm{Normalized \; Flux}$', size=20)
     plt.title(r'$\rm O \, VI$', size=20, x=0.8, y=0.1)
-    plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_{}_FUV.pdf'.format(cubename, 'OVI'), bbox_inches='tight')
+    plt.savefig('../../Proposal/FINESST_25/{}_{}_FUV.pdf'.format(cubename, 'OVI'), bbox_inches='tight')
 
     # Spectrum
     plt.figure(figsize=(5, 2.5), dpi=300)
@@ -84,7 +84,7 @@ for i in ['3C57']:
     plt.xlabel(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$', size=20)
     plt.ylabel(r'$\mathrm{Normalized \; Flux}$', size=20)
     plt.title(r'$\rm Ne \, VIII$', size=20, x=0.8, y=0.1)
-    plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_{}_FUV.pdf'.format(cubename, 'NeVIII'), bbox_inches='tight')
+    plt.savefig('../../Proposal/FINESST_25/{}_{}_FUV.pdf'.format(cubename, 'NeVIII'), bbox_inches='tight')
 
 
 for i in ['HE0238-1904']:
@@ -96,7 +96,7 @@ for i in ['HE0238-1904']:
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
 
     # Spectrum
-    path_cos = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_FUV.fits'.format(cubename)
+    path_cos = '../../MUSEQuBES+CUBS/COS/{}_FUV.fits'.format(cubename)
     data_cos = fits.getdata(path_cos, 1, ignore_missing_end=True)
     wave = data_cos['wave'] / (1 + z_qso)
     flux = data_cos['flux'] / data_cos['continuum']
@@ -125,7 +125,7 @@ for i in ['HE0238-1904']:
     plt.xlabel(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$', size=20)
     plt.ylabel(r'$\mathrm{Normalized \; Flux}$', size=20)
     plt.title(r'$\rm O \, VI$', size=20, x=0.8, y=0.1)
-    plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_{}_FUV.pdf'.format(cubename, 'OVI'), bbox_inches='tight')
+    plt.savefig('../../Proposal/FINESST_25/{}_{}_FUV.pdf'.format(cubename, 'OVI'), bbox_inches='tight')
 
     plt.figure(figsize=(5, 2.5), dpi=300)
     plt.plot(v_NeVIII_array, flux_NeVIII_array, 'k-', lw=0.5, drawstyle='steps-mid')
@@ -136,7 +136,7 @@ for i in ['HE0238-1904']:
     plt.xlabel(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$', size=20)
     plt.ylabel(r'$\mathrm{Normalized \; Flux}$', size=20)
     plt.title(r'$\rm Ne \, VIII$', size=20, x=0.8, y=0.1)
-    plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_{}_FUV.pdf'.format(cubename, 'NeVIII'), bbox_inches='tight')
+    plt.savefig('../../Proposal/FINESST_25/{}_{}_FUV.pdf'.format(cubename, 'NeVIII'), bbox_inches='tight')
 
 for i in ['TEX0206-048']:
     cubename = i
@@ -148,7 +148,7 @@ for i in ['TEX0206-048']:
     print(z_qso)
 
     # Spectrum
-    path_cos = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_FUV.fits'.format(cubename)
+    path_cos = '../../MUSEQuBES+CUBS/COS/{}_FUV.fits'.format(cubename)
     data_cos = fits.getdata(path_cos, 1, ignore_missing_end=True)
     wave = data_cos['wave'] / (1 + z_qso)
     flux = data_cos['flux'] / data_cos['continuum']
@@ -164,20 +164,22 @@ for i in ['TEX0206-048']:
 
     plt.figure(figsize=(5, 2.5), dpi=300)
     plt.plot(v_NeVIII_array, flux_NeVIII_array, 'k-', lw=1, drawstyle='steps-mid')
+    plt.fill_between([63, 175], [0, 0], [1.5, 1.5], color='red', alpha=0.5)
     plt.axvline(0, ls='--', color='grey', lw=1)
     plt.axhline(1, ls='--', color='grey', lw=1)
     plt.xlim(-850, 250)
+    plt.ylim(0, 1.5)
     plt.xlabel(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$', size=20)
     plt.ylabel(r'$\mathrm{Normalized \; Flux}$', size=20)
     plt.title(r'$\rm Ne \, VIII$', size=20, x=0.15, y=0.1)
-    plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/{}_FUV.pdf'.format(cubename), bbox_inches='tight')
+    plt.savefig('../../Proposal/FINESST_25/{}_FUV.pdf'.format(cubename), bbox_inches='tight')
 
 
 
 
 
 # Spectrum
-# path_cos = '/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/HE0226-4110_COS_FUV_wavecal.fits'
+# path_cos = '../../MUSEQuBES+CUBS/COS/HE0226-4110_COS_FUV_wavecal.fits'
 # data_cos = fits.getdata(path_cos, 1, ignore_missing_end=True)
 # wave = data_cos['wave']
 # flux = data_cos['flux']
@@ -189,4 +191,4 @@ for i in ['TEX0206-048']:
 # plt.ylabel(r'${f}_{\lambda} \; [10^{-14} \; \mathrm{erg \; s^{-1} \; cm^{-2} \AA^{-1}}]$', size=20, x=0.03)
 # plt.title('HE0226-4110 COS', size=20, x=0.2, y=0.8)
 # plt.xlim(1150, 1800)
-# plt.savefig('/Users/lzq/Dropbox/MUSEQuBES+CUBS/COS/HE0226-4110_COS_FUV_wavecal.pdf', bbox_inches='tight')
+# plt.savefig('../../MUSEQuBES+CUBS/COS/HE0226-4110_COS_FUV_wavecal.pdf', bbox_inches='tight')
