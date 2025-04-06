@@ -74,8 +74,9 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'GasMap':
         # gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
         gc.colorbar.set_ticks([-300, -200, -100, 0, 100, 200, 300])
+        gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
         # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v_{50} / v_{max} \mathrm{\; [km \, s^{-1}]}$')
-        gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v_{50} / v_{\rm max}$')
+        # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v_{50} / v_{\rm max}$')
         gc.colorbar.hide()
     elif type == 'GasMap_sigma':
         gc.colorbar.set_ticks([0, 150, 300, 450, 600, 750])
@@ -341,14 +342,18 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
     if cubename == 'PKS0232-04' or cubename == 'TEX0206-048' or cubename == 'PKS0355-483' \
             or cubename == 'HE0246-4101' or cubename == '3C57':
-        gc.colorbar.set_ticks([-v_max, -v_max / 2, 0, v_max / 2, v_max])
+        # gc.colorbar.set_ticks([-v_max, -v_max / 2, 0, v_max / 2, v_max])
         # gc.colorbar._colorbar.set_ticklabels([r'$-v_{\rm max}$', r'$-\frac{1}{2}v_{\rm max}$',
         #                                       0, r'$\frac{1}{2}v_{\rm max}$', r'$v_{\rm max}$'])
-        gc.colorbar._colorbar.set_ticklabels([r'$-1$', r'$-\frac{1}{2}$', 0, r'$\frac{1}{2}$', r'$1$'])
-        tick_labels = gc.colorbar._colorbar.ax.get_xticklabels()
-        tick_labels[0].set_ha('left')
+        # gc.colorbar._colorbar.set_ticklabels([r'$-1$', r'$-\frac{1}{2}$', 0, r'$\frac{1}{2}$', r'$1$'])
+        # tick_labels = gc.colorbar._colorbar.ax.get_xticklabels()
+        # tick_labels[0].set_ha('left')
 
-    gc.add_label(0.05, 0.08, '[{}, {}]'.format(-v_max, v_max), size=30, relative=True, horizontalalignment='left')
+        # For HST proposal
+        gc.colorbar.set_ticks([-600, -400, -200, 0, 200, 400, 600])
+
+
+    # gc.add_label(0.05, 0.08, '[{}, {}]'.format(-v_max, v_max), size=30, relative=True, horizontalalignment='left')
     gc.show_markers(ra_gal, dec_gal, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
     gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
     gc.show_markers(ra_gal, dec_gal, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-v_max, vmax=v_max, cmap='coolwarm')
@@ -424,8 +429,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 
 # MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
 # MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level_OII=0.5, contour_level_OIII=1.0)
-MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg_OII=[14, 15, 16, 17, 20],
-           nums_seg_OIII=[5, 11, 16, 19], contour_level_OII=0.1, contour_level_OIII=0.1, rmbkgResidue=True)
+# MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg_OII=[14, 15, 16, 17, 20],
+#            nums_seg_OIII=[5, 11, 16, 19], contour_level_OII=0.1, contour_level_OIII=0.1, rmbkgResidue=True)
 # MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300, contour_level_OIII=0.5, nums_seg_OII=[5], nums_seg_OIII=[15])
 # MakeV50W80(cubename='HE0238-1904', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='3C57', v_max=350, sigma_max=300)
@@ -451,10 +456,10 @@ MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg_OII=[14, 1
 # MakeV50W80(cubename='HE2305-5315', v_max=500, sigma_max=300, nums_seg_OII=[5, 6, 7, 8])
 # MakeV50W80(cubename='HE1003+0149', v_max=300, sigma_max=300, contour_level_OII=0.3)
 # MakeV50W80(cubename='HE0331-4112', v_max=500, sigma_max=300, nums_seg_OII=[1, 2], rmbkgResidue=True)
-# MakeV50W80(cubename='TEX0206-048', v_max=600, sigma_max=400,
-#            nums_seg_OII=np.setdiff1d(np.arange(1, 1001),
-#                                      [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 20, 22, 23, 26, 27, 28, 34, 57,
-#                                       60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552])) # SNR=20
+MakeV50W80(cubename='TEX0206-048', v_max=600, sigma_max=400,
+           nums_seg_OII=np.setdiff1d(np.arange(1, 1001),
+                                     [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 20, 22, 23, 26, 27, 28, 34, 57,
+                                      60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552])) # SNR=20
 # MakeV50W80(cubename='Q1354+048', v_max=400, sigma_max=300, rmbkgResidue=True)
 # MakeV50W80(cubename='J0154-0712', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400)

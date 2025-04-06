@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 from matplotlib import rc
 from mpdaf.obj import Cube
-sys.path.append('/Users/lzq/Dropbox/PyQSOFit')
+sys.path.append('../../PyQSOFit')
 from PyQSOFit import QSOFit
 from PyAstronomy import pyasl
 from astropy.cosmology import FlatLambdaCDM
 warnings.filterwarnings("ignore")
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
-path_savefig = '/Users/lzq/Dropbox/Data/CGM_plots/'
+path_savefig = '../../Data/CGM_plots/'
 
 def rest2obs(x):
     return x * (1 + z)
@@ -56,7 +56,7 @@ def model(wave_vac, z, sigma_kms, flux_OII, r_OII3729_3727, a, b):
 
 
 # Take Muse data
-path = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'raw_data', 'ESO_DEEP_offset.fits')
+path = '../../Data/CGM/raw_data/ESO_DEEP_offset.fits'
 cube = Cube(path)
 
 # Calculate the white image
@@ -141,11 +141,11 @@ print(result.params['z'].stderr)
 # fig.savefig(path_savefig + 'qso_spec_fit_z', bbox_inches='tight')
 
 # Fit the Spectrum
-path = '/Users/lzq/Dropbox/PyQSOFit/'
+path = '../../PyQSOFit/'
 path1 = path             # the path of the source code file and qsopar.fits
-path2 = '/Users/lzq/Dropbox/qso_cgm/data/result/' # path of fitting results
-path3 = '/Users/lzq/Dropbox/qso_cgm/data/QA_result/'   # path of figure
-path4 = '/Users/lzq/Dropbox/PyQSOFit/sfddata/'             # path of dust reddening map
+path2 = '../../qso_cgm/data/result/' # path of fitting results
+path3 = '../../qso_cgm/data/QA_result/'   # path of figure
+path4 = '../../PyQSOFit/sfddata/'             # path of dust reddening map
 
 newdata = np.rec.array([(6564.61, 'Ha', 6400., 6800., 'Ha_br', 3, 5e-3, 0.004, 0.05, 0.015, 0, 0, 0, 0.05), \
                         # (6564.61, 'Ha', 6400., 6800., 'Ha_na', 1, 1e-3, 5e-4, 0.0017, 0.01, 1, 1, 0, 0.002),\
@@ -239,7 +239,7 @@ q.Fit(name='HE0238-1904', nsmooth=1, and_or_mask=False, deredden=True, reject_ba
       initial_guess=None, MC=False, n_trails=5, linefit=True, tie_lambda=True, tie_width=True,
       tie_flux_1=True, tie_flux_2=True, save_result=True, plot_fig=True, save_fig=True,
       plot_line_name=True, plot_legend=True, dustmap_path=path4, save_fig_path=path3,
-      save_fits_path=path2, save_fits_name='qso_fittings')
+      save_fits_path=path2, save_fits_name='HE0238-1904_fittings')
 
 
 # Plot the Spectrum
@@ -360,6 +360,8 @@ fig.savefig(path_savefig + 'spectra_qso', bbox_inches='tight')
 # Calcualte BH mass
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 d_l = cosmo.luminosity_distance(z).to(u.cm).value
+print(q.linelist)
+print(q.line_result)
 fwhm, sigma, ew, peak, area = q.line_prop(q.linelist[1][0], q.line_result[6:15], 'broad')
 print(fwhm, ew)
 L_5100 = 4 * np.pi * d_l ** 2 * float(q.conti_result[13]) * (5100.0/3000.0) ** float(q.conti_result[14])
