@@ -77,6 +77,8 @@ def AnalyzeMorphology(cubename=None, threshold=1.5, HSTcentroid=False):
     # SB_OII = np.where(center_mask, SB_OII, np.nan)
 
     seg_OII = fits.open(path_3Dseg_OII)[1].data
+    seg_OII = np.where(seg_OII == 0 , seg_OII, 1)
+    # seg_OII_mask = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, -1)
 
     kernel = Gaussian2DKernel(x_stddev=1.5, y_stddev=1.5)
     threshold = detect_threshold(SB_OII, 0.8)
@@ -93,13 +95,16 @@ def AnalyzeMorphology(cubename=None, threshold=1.5, HSTcentroid=False):
     labels = segmap.labels
     segmap.data = np.where(segmap.data == labels[np.argmax(areas)], segmap.data, 0)
 
-    plt.figure()
-    plt.imshow(seg_OII, origin='lower', cmap='gray')
-    plt.show()
-    raise Exception('segmap')
+    # plt.figure()
+    # plt.imshow(seg_OII, origin='lower', cmap='gray')
+    # plt.show()
+    # raise Exception('segmap')
 
     source_morphs = source_morphology(SB_OII, seg_OII, gain=1e5, psf=psf, x_qso=c2[0], y_qso=c2[1])
     morph = source_morphs[0]
+
+    print('A =', morph.asymmetry)
+    print('A_shape=', morph.shape_asymmetry)
     fig = make_figure(morph)
     plt.savefig(path_savefig_OII_morph, dpi=300, bbox_inches='tight')
 
