@@ -35,6 +35,7 @@ rc('ytick.major', size=8)
 wave_NeVIII = 770.40
 wave_OVI = 1031.92
 wave_OV = 629.73
+wave_NIV = 765.147
 for i in ['3C57']:
     cubename = i
 
@@ -168,6 +169,12 @@ for i in ['TEX0206-048']:
     v_OV_array = (wave_OV_array - wave_OV) / wave_OV * 3e5
     flux_OV_array = flux[mask_OV]
 
+    window_NIV = 5
+    mask_NIV = np.where((wave > wave_NIV - window_NIV) * (wave < wave_NIV + window_NIV))
+    wave_NIV_array = wave[mask_NIV]
+    v_NIV_array = (wave_NIV_array - wave_NIV) / wave_NIV * 3e5
+    flux_NIV_array = flux[mask_NIV]
+
     # plt.figure(figsize=(5, 2.5), dpi=300)
     # plt.plot(v_NeVIII_array, flux_NeVIII_array, 'k-', lw=1, drawstyle='steps-mid')
     # plt.fill_between([63, 175], [0, 0], [1.5, 1.5], color='red', alpha=0.5)
@@ -182,20 +189,21 @@ for i in ['TEX0206-048']:
 
     fig, ax = plt.subplots(2, 1, figsize=(5, 5), dpi=300, sharex=True, sharey=True)
     fig.subplots_adjust(hspace=0.0)
-    ax[1].plot(v_NeVIII_array, flux_NeVIII_array, 'k-', lw=1, drawstyle='steps-mid')
     ax[0].plot(v_OV_array, flux_OV_array, 'k-', lw=1, drawstyle='steps-mid')
-    ax[0].fill_between([63, 210], [0, 0], [1.5, 1.5], color='red', alpha=0.5)
-    ax[1].fill_between([63, 210], [0, 0], [1.5, 1.5], color='red', alpha=0.5)
+    ax[1].plot(v_NIV_array, flux_NIV_array, 'k-', lw=1, drawstyle='steps-mid')
+    ax[0].fill_between([150, 250], [0, 0], [1.5, 1.5], color='red', alpha=0.5)
+    ax[1].fill_between([150, 250], [0, 0], [1.5, 1.5], color='red', alpha=0.5)
     ax[0].axvline(0, ls='--', color='grey', lw=1)
     ax[0].axhline(1, ls='--', color='grey', lw=1)
     ax[1].axvline(0, ls='--', color='grey', lw=1)
     ax[1].axhline(1, ls='--', color='grey', lw=1)
-    ax[0].set_xlim(-850, 250)
+    ax[0].set_xlim(-850, 300)
     ax[0].set_ylim(0, 1.4)
     ax[1].set_xlabel(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$', size=20)
     fig.supylabel(r'$\mathrm{Normalized \; Flux}$', size=20)
-    ax[1].set_title(r'$\rm Ne \, VIII$', size=20, x=0.15, y=0.80)
+    # ax[1].set_title(r'$\rm Ne \, VIII$', size=20, x=0.15, y=0.80)
     ax[0].set_title(r'$\rm O \, V$', size=20, x=0.15, y=0.80)
+    ax[1].set_title(r'$\rm N \, IV$', size=20, x=0.15, y=0.80)
     plt.savefig('../../Proposal/FINESST_25/{}_FUV.pdf'.format(cubename), bbox_inches='tight')
 
 
