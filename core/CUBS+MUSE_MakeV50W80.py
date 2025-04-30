@@ -456,13 +456,13 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 # MakeV50W80(cubename='HE2305-5315', v_max=500, sigma_max=300, nums_seg_OII=[5, 6, 7, 8])
 # MakeV50W80(cubename='HE1003+0149', v_max=300, sigma_max=300, contour_level_OII=0.3)
 # MakeV50W80(cubename='HE0331-4112', v_max=500, sigma_max=300, nums_seg_OII=[1, 2], rmbkgResidue=True)
-MakeV50W80(cubename='TEX0206-048', v_max=600, sigma_max=400,
-           nums_seg_OII=np.setdiff1d(np.arange(1, 1001),
-                                     [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 20, 22, 23, 26, 27, 28, 34, 57,
-                                      60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552])) # SNR=20
+# MakeV50W80(cubename='TEX0206-048', v_max=600, sigma_max=400,
+#            nums_seg_OII=np.setdiff1d(np.arange(1, 1001),
+#                                      [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 20, 22, 23, 26, 27, 28, 34, 57,
+#                                       60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552])) # SNR=20
 # MakeV50W80(cubename='Q1354+048', v_max=400, sigma_max=300, rmbkgResidue=True)
 # MakeV50W80(cubename='J0154-0712', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400)
 # MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300, nums_seg_OII=[6, 12])
 # MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300, nums_seg_OII=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-# MakeV50W80(cubename='PKS0232-04', v_max=400, sigma_max=300, nums_seg_OII=[4, 5, 7])
+MakeV50W80(cubename='PKS0232-04', v_max=400, sigma_max=300, nums_seg_OII=[4, 5, 7])

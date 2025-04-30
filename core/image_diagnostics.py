@@ -195,8 +195,9 @@ def make_figure(morph):
     # Original segmap #
     ###################
     ax = _get_ax(fig, 1, 0, nrows, ncols, wpanel, hpanel, htop, eps, wfig, hfig)
-    ax.imshow(image, cmap='gray', origin='lower',
-              norm=simple_norm(image, stretch='log', log_a=10000))
+    # ax.imshow(image, cmap='gray', origin='lower',
+    #           norm=simple_norm(image, stretch='log', log_a=10000))
+    ax.imshow(image, vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'))
     # Show original segmap
     contour_levels = [0.5]
     contour_colors = [(0, 0, 0)]
@@ -231,8 +232,9 @@ def make_figure(morph):
     # Gini segmap #
     ###############
     ax = _get_ax(fig, 1, 1, nrows, ncols, wpanel, hpanel, htop, eps, wfig, hfig)
-    ax.imshow(image, cmap='gray', origin='lower',
-              norm=simple_norm(image, stretch='log', log_a=10000))
+    # ax.imshow(image, cmap='gray', origin='lower',
+    #           norm=simple_norm(image, stretch='log', log_a=10000))
+    ax.imshow(image, vmin=-0.05, vmax=5, cmap=plt.get_cmap('gist_heat_r'))
     # Show Gini segmap
     contour_levels = [0.5]
     contour_colors = [(0, 0, 0)]
