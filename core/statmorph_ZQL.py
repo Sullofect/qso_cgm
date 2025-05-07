@@ -1113,6 +1113,12 @@ class SourceMorphology(object):
         of this function is the Petrosian radius.
         """
         image = self._cutout_stamp_maskzeroed
+        # image = np.where(image !=0, image, np.nan)  # Edits by ZQL
+        # import matplotlib.pyplot as plt
+        # plt.figure()
+        # plt.imshow(image)
+        # plt.show()
+        # raise ValueError('Debugging')
 
         r_in = r - 0.5 * self._annulus_width
         r_out = r + 0.5 * self._annulus_width
@@ -1122,9 +1128,15 @@ class SourceMorphology(object):
 
         # Force mean fluxes to be positive:
         circ_annulus_mean_flux = np.abs(_aperture_mean_nomask(
-            circ_annulus, image, method='exact'))
+            circ_annulus, image, method='exact'))          # Edits by ZQL
         circ_aperture_mean_flux = np.abs(_aperture_mean_nomask(
             circ_aperture, image, method='exact'))
+        # circ_annulus_mean_flux_2 = np.abs(_aperture_mean_nomask(
+        #     circ_annulus, image, method='exact'))          # Edits by ZQL
+        # circ_aperture_mean_flux_2 = np.abs(_aperture_mean_nomask(
+        #     circ_aperture, image, method='exact'))
+        # print(circ_annulus_mean_flux_2 - circ_annulus_mean_flux)
+        # print(circ_aperture_mean_flux_2 - circ_aperture_mean_flux)
 
         if circ_aperture_mean_flux == 0:
             warnings.warn('[rpetro_circ] Mean flux is zero.', AstropyUserWarning)
@@ -1156,6 +1168,7 @@ class SourceMorphology(object):
         npoints = 100
         r_inner = self._annulus_width
         r_outer = self._diagonal_distance
+        print(r_inner, r_outer)
         assert r_inner < r_outer
         r_min, r_max = None, None
         for r in np.linspace(r_inner, r_outer, npoints):
@@ -1185,7 +1198,7 @@ class SourceMorphology(object):
 
         rpetro_circ = opt.brentq(self._petrosian_function_circ,
                                  r_min, r_max, args=(center,), xtol=1e-6)
-
+        print(rpetro_circ)
         return rpetro_circ
 
     @lazyproperty
@@ -1698,9 +1711,17 @@ class SourceMorphology(object):
         image = np.where(~mask_symmetric, image, 0.0)
         image_180 = np.where(~mask_symmetric, image_180, 0.0)
 
+        # Checking variables
+        # import matplotlib.pyplot as plt
+        # plt.figure()
+        # plt.imshow(image, origin='lower', cmap='gray')
+        # plt.show()
+        # raise ValueError('Debugging: Check the image and mask')
+
         # Create aperture for the chosen kind of asymmetry
         if kind == 'cas' or kind == 'rms':
             r = self._petro_extent_cas * self._rpetro_circ_centroid
+            # r = 4.0 * self._rpetro_circ_centroid
             ap = CircularAperture(center, r)
         elif kind == 'outer':
             a_in = self.rhalf_ellip
@@ -2547,6 +2568,8 @@ class SourceMorphology(object):
         Note that the center is the one used for the standard asymmetry.
         """
         image = np.where(self._segmap_shape_asym, 1.0, 0.0)
+        # image = self._cutout_stamp_maskzeroed
+        # image = self._image
         asym = self._asymmetry_function(self._asymmetry_center, image, 'shape')
 
         return asym

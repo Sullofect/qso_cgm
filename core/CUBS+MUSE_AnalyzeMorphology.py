@@ -2,6 +2,10 @@ import os
 import aplpy
 import statmorph
 import numpy as np
+import skimage.measure
+import skimage.transform
+import skimage.feature
+import skimage.segmentation
 from statmorph_ZQL import source_morphology
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
@@ -18,6 +22,7 @@ from astropy.convolution import convolve, Kernel, Gaussian1DKernel, Gaussian2DKe
 from palettable.cmocean.sequential import Dense_20_r
 # from statmorph.utils.image_diagnostics import make_figure
 from image_diagnostics import make_figure
+
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -33,7 +38,38 @@ wave_OII3728_vac = (wave_OII3727_vac + wave_OII3729_vac) / 2
 wave_Hbeta_vac = 4862.721
 wave_OIII5008_vac = 5008.239
 
-def AnalyzeMorphology(cubename=None, threshold=1.5, HSTcentroid=False):
+
+def CalculateAsymmetry(image=None, mask=None, center=None):
+    image_bkg = image.copy()
+    image = np.where(mask == 1, image, np.nan)
+
+    # Rotate around given center
+    image_180 = skimage.transform.rotate(image, 180.0, center=center)
+
+    # Apply symmetric mask
+    mask = mask.astype(bool)
+    mask_180 = skimage.transform.rotate(mask, 180.0, center=center)
+    mask_180 = mask_180 >= 0.5  # convert back to bool
+    # mask_symmetric = mask | mask_180
+    # image = np.where(~mask_symmetric, image, 0.0)
+    # image_180 = np.where(~mask_symmetric, image_180, 0.0)
+    #
+    # plt.figure()
+    # plt.imshow(image_180, origin='lower', cmap='gray')
+    # plt.show()
+    # raise ValueError('Debugging: Check the image and mask')
+
+    ap_abs_sum = np.nansum(np.abs(image))
+    ap_abs_diff = np.nansum(np.abs(image_180 - image))
+
+    # Estimate background
+    bkg = image_bkg[:15, :15]
+    bkg_180 = bkg[::-1, ::-1]
+    sky_asymmetry = np.nansum(np.abs(bkg_180 - bkg)) / float(bkg.size)
+
+    return (ap_abs_diff - np.nansum(image) * sky_asymmetry) / ap_abs_sum
+
+def AnalyzeMorphology(cubename=None):
     # QSO information
     path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
@@ -74,37 +110,48 @@ def AnalyzeMorphology(cubename=None, threshold=1.5, HSTcentroid=False):
     circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=2.5)
     center_mask_flatten = ~circle.contains(pixcoord)
     center_mask = center_mask_flatten.reshape(SB_OII.shape)
-    # SB_OII = np.where(center_mask, SB_OII, np.nan)
+    SB_OII = np.where(center_mask, SB_OII, np.nan)
 
     seg_OII = fits.open(path_3Dseg_OII)[1].data
     seg_OII = np.where(seg_OII == 0 , seg_OII, 1)
-    # seg_OII_mask = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, -1)
+    seg_OII = np.where(center_mask, seg_OII, 0)
 
     kernel = Gaussian2DKernel(x_stddev=1.5, y_stddev=1.5)
-    threshold = detect_threshold(SB_OII, 0.8)
-    npixels = 20  # minimum number of connected pixels
-    convolved_image = convolve(SB_OII, kernel)
     kernel.normalize()
     psf = kernel.array
-    convolved_image = np.where(center_mask, convolved_image, np.nan)
-
-    segmap = detect_sources(convolved_image, threshold, npixels)
+    # threshold = detect_threshold(SB_OII, 0.8)
+    # npixels = 20  # minimum number of connected pixels
+    # convolved_image = convolve(SB_OII, kernel)
+    # convolved_image = np.where(center_mask, convolved_image, np.nan)
+    # segmap = detect_sources(convolved_image, threshold, npixels)
 
     # Only select the largest in size
-    areas = segmap.areas
-    labels = segmap.labels
-    segmap.data = np.where(segmap.data == labels[np.argmax(areas)], segmap.data, 0)
+    # areas = segmap.areas
+    # labels = segmap.labels
+    # segmap.data = np.where(segmap.data == labels[np.argmax(areas)], segmap.data, 0)
+
+    # Test with a circular region
+    circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=30)
+    center_mask_flatten = ~circle.contains(pixcoord)
+    center_mask = center_mask_flatten.reshape(SB_OII.shape)
+    SB_OII = np.where(center_mask, SB_OII, 10)
+    seg_OII = np.where(center_mask, seg_OII, 1)
 
     # plt.figure()
     # plt.imshow(seg_OII, origin='lower', cmap='gray')
     # plt.show()
-    # raise Exception('segmap')
+    A_ZQL = CalculateAsymmetry(image=SB_OII, mask=seg_OII, center=c2)
+    print('A_ZQL', A_ZQL)
+    raise Exception('segmap')
 
-    source_morphs = source_morphology(SB_OII, seg_OII, gain=1e5, psf=psf, x_qso=c2[0], y_qso=c2[1])
+    source_morphs = source_morphology(SB_OII, seg_OII, gain=1e5, psf=psf, x_qso=c2[0], y_qso=c2[1], annulus_width=2.5)
     morph = source_morphs[0]
 
     print('A =', morph.asymmetry)
+    print('A_rms =', morph.rms_asymmetry2)
+    print('A_outer =', morph.outer_asymmetry)
     print('A_shape=', morph.shape_asymmetry)
+
     fig = make_figure(morph)
     plt.savefig(path_savefig_OII_morph, dpi=300, bbox_inches='tight')
 
@@ -130,7 +177,7 @@ def AnalyzeMorphology(cubename=None, threshold=1.5, HSTcentroid=False):
 # AnalyzeMorphology(cubename='Q0107-0235')
 # AnalyzeMorphology(cubename='PKS2242-498')
 # AnalyzeMorphology(cubename='PKS0355-483')
-# AnalyzeMorphology(cubename='HE0112-4145')
+AnalyzeMorphology(cubename='HE0112-4145')
 # AnalyzeMorphology(cubename='HE0439-5254')
 # AnalyzeMorphology(cubename='HE2305-5315')
 # AnalyzeMorphology(cubename='HE1003+0149')
@@ -140,4 +187,4 @@ def AnalyzeMorphology(cubename=None, threshold=1.5, HSTcentroid=False):
 # AnalyzeMorphology(cubename='LBQS1435-0134')
 # AnalyzeMorphology(cubename='PG1522+101')
 # AnalyzeMorphology(cubename='HE2336-5540')
-AnalyzeMorphology(cubename='PKS0232-04')
+# AnalyzeMorphology(cubename='PKS0232-04')
