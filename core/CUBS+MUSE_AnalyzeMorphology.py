@@ -41,7 +41,7 @@ wave_OIII5008_vac = 5008.239
 
 def CalculateAsymmetry(image=None, mask=None, center=None):
     image_bkg = image.copy()
-    image = np.where(mask == 1, image, np.nan)
+    # image = np.where(mask == 1, image, np.nan)
 
     # Rotate around given center
     image_180 = skimage.transform.rotate(image, 180.0, center=center)
@@ -61,9 +61,10 @@ def CalculateAsymmetry(image=None, mask=None, center=None):
 
     ap_abs_sum = np.nansum(np.abs(image))
     ap_abs_diff = np.nansum(np.abs(image_180 - image))
+    print(ap_abs_diff)
 
     # Estimate background
-    bkg = image_bkg[:15, :15]
+    bkg = image_bkg[:32, :32]
     bkg_180 = bkg[::-1, ::-1]
     sky_asymmetry = np.nansum(np.abs(bkg_180 - bkg)) / float(bkg.size)
 
@@ -131,20 +132,21 @@ def AnalyzeMorphology(cubename=None):
     # segmap.data = np.where(segmap.data == labels[np.argmax(areas)], segmap.data, 0)
 
     # Test with a circular region
-    circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=30)
-    center_mask_flatten = ~circle.contains(pixcoord)
-    center_mask = center_mask_flatten.reshape(SB_OII.shape)
-    SB_OII = np.where(center_mask, SB_OII, 10)
-    seg_OII = np.where(center_mask, seg_OII, 1)
+    # circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=30)
+    # center_mask_flatten = ~circle.contains(pixcoord)
+    # center_mask = center_mask_flatten.reshape(SB_OII.shape)
+    # SB_OII = np.where(center_mask, SB_OII, 10)
+    # seg_OII = np.where(center_mask, seg_OII, 1)
 
     # plt.figure()
     # plt.imshow(seg_OII, origin='lower', cmap='gray')
     # plt.show()
-    A_ZQL = CalculateAsymmetry(image=SB_OII, mask=seg_OII, center=c2)
-    print('A_ZQL', A_ZQL)
-    raise Exception('segmap')
+    # A_ZQL = CalculateAsymmetry(image=SB_OII, mask=seg_OII, center=c2)
+    # print('A_ZQL', A_ZQL)
+    # raise Exception('segmap')
 
-    source_morphs = source_morphology(SB_OII, seg_OII, gain=1e5, psf=psf, x_qso=c2[0], y_qso=c2[1], annulus_width=2.5)
+    source_morphs = source_morphology(SB_OII, seg_OII, gain=1e5, psf=psf, x_qso=c2[0], y_qso=c2[1],
+                                      annulus_width=2.5, skybox_size=32)
     morph = source_morphs[0]
 
     print('A =', morph.asymmetry)
@@ -177,7 +179,7 @@ def AnalyzeMorphology(cubename=None):
 # AnalyzeMorphology(cubename='Q0107-0235')
 # AnalyzeMorphology(cubename='PKS2242-498')
 # AnalyzeMorphology(cubename='PKS0355-483')
-AnalyzeMorphology(cubename='HE0112-4145')
+# AnalyzeMorphology(cubename='HE0112-4145')
 # AnalyzeMorphology(cubename='HE0439-5254')
 # AnalyzeMorphology(cubename='HE2305-5315')
 # AnalyzeMorphology(cubename='HE1003+0149')

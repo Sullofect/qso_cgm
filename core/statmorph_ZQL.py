@@ -1721,7 +1721,6 @@ class SourceMorphology(object):
         # Create aperture for the chosen kind of asymmetry
         if kind == 'cas' or kind == 'rms':
             r = self._petro_extent_cas * self._rpetro_circ_centroid
-            # r = 4.0 * self._rpetro_circ_centroid
             ap = CircularAperture(center, r)
         elif kind == 'outer':
             a_in = self.rhalf_ellip
