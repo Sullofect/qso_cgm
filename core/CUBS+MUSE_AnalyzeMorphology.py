@@ -22,6 +22,8 @@ from astropy.convolution import convolve, Kernel, Gaussian1DKernel, Gaussian2DKe
 from palettable.cmocean.sequential import Dense_20_r
 # from statmorph.utils.image_diagnostics import make_figure
 from image_diagnostics import make_figure
+from photutils.aperture import (CircularAperture, CircularAnnulus,
+                                EllipticalAperture, EllipticalAnnulus)
 
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -39,38 +41,39 @@ wave_Hbeta_vac = 4862.721
 wave_OIII5008_vac = 5008.239
 
 
-def CalculateAsymmetry(image=None, mask=None, center=None):
-    image_bkg = image.copy()
-    # image = np.where(mask == 1, image, np.nan)
-
+def CalculateAsymmetry(image=None, mask=None, center=None, sky_asymmetry=None, type='shape'):
     # Rotate around given center
     image_180 = skimage.transform.rotate(image, 180.0, center=center)
 
     # Apply symmetric mask
-    mask = mask.astype(bool)
     mask_180 = skimage.transform.rotate(mask, 180.0, center=center)
     mask_180 = mask_180 >= 0.5  # convert back to bool
-    # mask_symmetric = mask | mask_180
-    # image = np.where(~mask_symmetric, image, 0.0)
-    # image_180 = np.where(~mask_symmetric, image_180, 0.0)
-    #
+    mask_symmetric = mask | mask_180
+    image = np.where(~mask_symmetric, image, 0.0)
+    image_180 = np.where(~mask_symmetric, image_180, 0.0)
+
+    # Testing
     # plt.figure()
-    # plt.imshow(image_180, origin='lower', cmap='gray')
+    # plt.imshow(np.abs(image), origin='lower', cmap='gray')
     # plt.show()
     # raise ValueError('Debugging: Check the image and mask')
 
     ap_abs_sum = np.nansum(np.abs(image))
     ap_abs_diff = np.nansum(np.abs(image_180 - image))
-    print(ap_abs_diff)
 
-    # Estimate background
-    bkg = image_bkg[:32, :32]
-    bkg_180 = bkg[::-1, ::-1]
-    sky_asymmetry = np.nansum(np.abs(bkg_180 - bkg)) / float(bkg.size)
+    # Difference between this function and the original one
+    # image_2 = np.where(image, 1.0, 0.0)
+    # ap = CircularAperture(center, 27.145397887497694)
+    # ap_abs_sum = ap.do_photometry(np.abs(image), method='exact')[0][0]
+    # ap_abs_diff = ap.do_photometry(np.abs(image_180 - image), method='exact')[0][0]
+    # print('Asymmetry: ', ap_abs_diff, ap_abs_sum)
 
-    return (ap_abs_diff - np.nansum(image) * sky_asymmetry) / ap_abs_sum
+    if type == 'shape':
+        return ap_abs_diff / ap_abs_sum
+    elif type == 'standard':
+        return (ap_abs_diff - np.nansum(mask) * sky_asymmetry) / ap_abs_sum
 
-def AnalyzeMorphology(cubename=None):
+def AnalyzeMorphology(cubename=None, nums_seg_OII=[], select_seg=False):
     # QSO information
     path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
@@ -114,8 +117,17 @@ def AnalyzeMorphology(cubename=None):
     SB_OII = np.where(center_mask, SB_OII, np.nan)
 
     seg_OII = fits.open(path_3Dseg_OII)[1].data
-    seg_OII = np.where(seg_OII == 0 , seg_OII, 1)
     seg_OII = np.where(center_mask, seg_OII, 0)
+    if select_seg:
+        nums_seg_OII = np.setdiff1d(np.arange(1, np.max(seg_OII) + 1), nums_seg_OII)
+    seg_OII_mask = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, -1)
+    seg_OII = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, 0)
+    seg_OII = np.where(seg_OII == 0 , seg_OII, 1)
+
+    bkgrd_OII = np.where(seg_OII_mask == 0, SB_OII, np.nan)
+    bkgrd_OII_random = np.random.choice(bkgrd_OII.flatten()[~np.isnan(bkgrd_OII.flatten())],
+                                        bkgrd_OII.shape, replace=True).reshape(bkgrd_OII.shape)
+    SB_OII = np.where(seg_OII_mask != -1, SB_OII, bkgrd_OII_random)
 
     kernel = Gaussian2DKernel(x_stddev=1.5, y_stddev=1.5)
     kernel.normalize()
@@ -141,14 +153,31 @@ def AnalyzeMorphology(cubename=None):
     # plt.figure()
     # plt.imshow(seg_OII, origin='lower', cmap='gray')
     # plt.show()
-    # A_ZQL = CalculateAsymmetry(image=SB_OII, mask=seg_OII, center=c2)
-    # print('A_ZQL', A_ZQL)
+    # raise Exception('segmap')
+    source_morphs = source_morphology(SB_OII, seg_OII, mask=np.isnan(SB_OII),gain=1e5, psf=psf,
+                                      x_qso=c2[0], y_qso=c2[1], annulus_width=2.5, skybox_size=32, petro_extent_cas=1.5)
+    morph = source_morphs[0]
+    # plt.figure()
+    # plt.imshow(morph._segmap_shape_asym, origin='lower', cmap='gray')
+    # plt.show()
     # raise Exception('segmap')
 
-    source_morphs = source_morphology(SB_OII, seg_OII, gain=1e5, psf=psf, x_qso=c2[0], y_qso=c2[1],
-                                      annulus_width=2.5, skybox_size=32)
-    morph = source_morphs[0]
 
+    A_ZQL = CalculateAsymmetry(image=morph._segmap_shape_asym, mask=morph._mask_stamp, center=c2, type='shape')
+    A_ZQL_2 = CalculateAsymmetry(image=morph._cutout_stamp_maskzeroed_no_bg, mask=morph._mask_stamp, center=c2,
+                                 sky_asymmetry=morph._sky_asymmetry, type='standard')
+    seg_OII_cutout = np.where(morph._cutout_stamp_maskzeroed_no_bg == 0, morph._cutout_stamp_maskzeroed_no_bg, 1)
+    A_ZQL_3 = CalculateAsymmetry(image=seg_OII_cutout, mask=morph._mask_stamp, center=c2, type='shape')
+
+    # plt.figure()
+    # plt.imshow(seg_OII_cutout, origin='lower', cmap='gray')
+    # plt.show()
+    # raise Exception('segmap')
+
+    # Print the asymmetry values
+    print('A_ZQL_given seg', A_ZQL)
+    print('A_ZQL_standard', A_ZQL_2)
+    print('A_ZQL_my own seg', A_ZQL_3)
     print('A =', morph.asymmetry)
     print('A_rms =', morph.rms_asymmetry2)
     print('A_outer =', morph.outer_asymmetry)
@@ -161,32 +190,36 @@ def AnalyzeMorphology(cubename=None):
     # if os.path.exists(path_SB_OIII):
 
 
-# AnalyzeMorphology(cubename='HE0435-5304')
+# AnalyzeMorphology(cubename='HE0435-5304', nums_seg_OII=[1])
 # AnalyzeMorphology(cubename='HE0153-4520')
-# AnalyzeMorphology(cubename='HE0226-4110')
+# AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[14, 15, 16, 17, 20])
 # AnalyzeMorphology(cubename='PKS0405-123')
-# AnalyzeMorphology(cubename='HE0238-1904', threshold=1.0)
-# AnalyzeMorphology(cubename='3C57')
-# AnalyzeMorphology(cubename='PKS0552-640')
-# AnalyzeMorphology(cubename='J0110-1648')
-# AnalyzeMorphology(cubename='J0454-6116')
-# AnalyzeMorphology(cubename='J2135-5316')
-# AnalyzeMorphology(cubename='J0119-2010')
-# AnalyzeMorphology(cubename='HE0246-4101')
-# AnalyzeMorphology(cubename='J0028-3305')
-# AnalyzeMorphology(cubename='HE0419-5657')
-# AnalyzeMorphology(cubename='PB6291')
-# AnalyzeMorphology(cubename='Q0107-0235')
-# AnalyzeMorphology(cubename='PKS2242-498')
-# AnalyzeMorphology(cubename='PKS0355-483')
-# AnalyzeMorphology(cubename='HE0112-4145')
-# AnalyzeMorphology(cubename='HE0439-5254')
+# AnalyzeMorphology(cubename='HE0238-1904')
+AnalyzeMorphology(cubename='3C57', nums_seg_OII=[2])
+# AnalyzeMorphology(cubename='PKS0552-640', nums_seg_OII=[2, 3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18])
+# AnalyzeMorphology(cubename='J0110-1648', nums_seg_OII=[1])
+# AnalyzeMorphology(cubename='J0454-6116', nums_seg_OII=[2, 3, 4, 5, 6, 8, 11, 12, 13, 15, 17, 18])
+# AnalyzeMorphology(cubename='J2135-5316', nums_seg_OII=[2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19])
+# AnalyzeMorphology(cubename='J0119-2010', nums_seg_OII=[3, 4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20])
+# AnalyzeMorphology(cubename='HE0246-4101', nums_seg_OII=[1], select_seg=True) # 0.7 difference between A and A_shape
+# AnalyzeMorphology(cubename='J0028-3305', nums_seg_OII=[2], select_seg=True) # 0.7 difference between A and A_shape
+# AnalyzeMorphology(cubename='HE0419-5657', nums_seg_OII=[2, 4, 5], select_seg=True) # 0.7 difference between A and A_shape
+# AnalyzeMorphology(cubename='PB6291', nums_seg_OII=[2, 6, 7], select_seg=True) # 0.9 difference between A and A_shape
+# AnalyzeMorphology(cubename='Q0107-0235', nums_seg_OII=[1, 4, 5, 6], select_seg=True) # 0.2 difference between A and A_shape
+# AnalyzeMorphology(cubename='PKS2242-498', nums_seg_OII=[1, 2], select_seg=True) # 0.6 difference between A and A_shape
+# AnalyzeMorphology(cubename='PKS0355-483', nums_seg_OII=[2, 3, 4, 8, 9, 10, 11],
+#                   select_seg=True) # 0.3 difference between A and A_shape
+# AnalyzeMorphology(cubename='HE0112-4145') # 0.25 difference between A and A_shape
+# AnalyzeMorphology(cubename='HE0439-5254') # 0.5 difference between A and A_shape
 # AnalyzeMorphology(cubename='HE2305-5315')
-# AnalyzeMorphology(cubename='HE1003+0149')
-# AnalyzeMorphology(cubename='TEX0206-048')
-# AnalyzeMorphology(cubename='Q1354+048')
-# AnalyzeMorphology(cubename='J0154-0712')
-# AnalyzeMorphology(cubename='LBQS1435-0134')
-# AnalyzeMorphology(cubename='PG1522+101')
+# AnalyzeMorphology(cubename='HE1003+0149') # 0.5 difference between A and A_shape
+# AnalyzeMorphology(cubename='HE0331-4112', nums_seg_OII=[6], select_seg=True) # 0.2 difference between A and A_shape
+# AnalyzeMorphology(cubename='TEX0206-048', nums_seg_OII=[1, 8, 12, 13, 15, 20, 23, 26, 27, 28, 34, 57, 60, 79, 81,
+#                                                         101, 107, 108, 114, 118, 317, 547, 552],
+#                                                         select_seg=True) # 0.1 difference between A and A_shape
+# AnalyzeMorphology(cubename='Q1354+048', nums_seg_OII=[1, 2])  # large difference between A and A_shape
+# AnalyzeMorphology(cubename='J0154-0712', nums_seg_OII=[5])  # large difference between A and A_shape
+# AnalyzeMorphology(cubename='LBQS1435-0134', nums_seg_OII=[1, 3, 7], select_seg=True)
+# AnalyzeMorphology(cubename='PG1522+101', nums_seg_OII=[2, 3, 8, 11], select_seg=True)
 # AnalyzeMorphology(cubename='HE2336-5540')
-# AnalyzeMorphology(cubename='PKS0232-04')
+# AnalyzeMorphology(cubename='PKS0232-04', nums_seg_OII=[2, 4, 5, 7])

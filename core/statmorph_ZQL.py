@@ -1168,7 +1168,6 @@ class SourceMorphology(object):
         npoints = 100
         r_inner = self._annulus_width
         r_outer = self._diagonal_distance
-        print(r_inner, r_outer)
         assert r_inner < r_outer
         r_min, r_max = None, None
         for r in np.linspace(r_inner, r_outer, npoints):
@@ -1198,7 +1197,6 @@ class SourceMorphology(object):
 
         rpetro_circ = opt.brentq(self._petrosian_function_circ,
                                  r_min, r_max, args=(center,), xtol=1e-6)
-        print(rpetro_circ)
         return rpetro_circ
 
     @lazyproperty
@@ -1754,7 +1752,6 @@ class SourceMorphology(object):
             return 100.0
 
         if kind == 'shape':
-            # The shape asymmetry of the background is zero
             asym = ap_abs_diff / ap_abs_sum
         elif kind == 'rms':
             # Apply eq. 27 from Sazonova et al. (2024)
@@ -2567,8 +2564,6 @@ class SourceMorphology(object):
         Note that the center is the one used for the standard asymmetry.
         """
         image = np.where(self._segmap_shape_asym, 1.0, 0.0)
-        # image = self._cutout_stamp_maskzeroed
-        # image = self._image
         asym = self._asymmetry_function(self._asymmetry_center, image, 'shape')
 
         return asym
