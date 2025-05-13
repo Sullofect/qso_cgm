@@ -54,7 +54,7 @@ def CalculateAsymmetry(image=None, mask=None, center=None, sky_asymmetry=None, t
 
     # Testing
     # plt.figure()
-    # plt.imshow(np.abs(image), origin='lower', cmap='gray')
+    # plt.imshow(np.abs(image_180), origin='lower', cmap='gray')
     # plt.show()
     # raise ValueError('Debugging: Check the image and mask')
 
@@ -192,10 +192,10 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], select_seg=False):
 
 # AnalyzeMorphology(cubename='HE0435-5304', nums_seg_OII=[1])
 # AnalyzeMorphology(cubename='HE0153-4520')
-# AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[14, 15, 16, 17, 20])
-# AnalyzeMorphology(cubename='PKS0405-123')
-# AnalyzeMorphology(cubename='HE0238-1904')
-AnalyzeMorphology(cubename='3C57', nums_seg_OII=[2])
+AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+# AnalyzeMorphology(cubename='PKS0405-123', nums_seg_OII=[5, 7, 10, 11, 13, 16, 17, 20])
+# AnalyzeMorphology(cubename='HE0238-1904', nums_seg_OII=[1, 6, 12, 13, 17, 19], select_seg=True)
+# AnalyzeMorphology(cubename='3C57', nums_seg_OII=[2])
 # AnalyzeMorphology(cubename='PKS0552-640', nums_seg_OII=[2, 3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18])
 # AnalyzeMorphology(cubename='J0110-1648', nums_seg_OII=[1])
 # AnalyzeMorphology(cubename='J0454-6116', nums_seg_OII=[2, 3, 4, 5, 6, 8, 11, 12, 13, 15, 17, 18])
