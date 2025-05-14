@@ -14,6 +14,7 @@ from astropy.io import ascii
 from matplotlib import rc
 from astropy.wcs import WCS
 from regions import PixCoord
+from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
 from photutils.segmentation import detect_threshold, detect_sources
@@ -183,16 +184,28 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], select_seg=False):
     print('A_outer =', morph.outer_asymmetry)
     print('A_shape=', morph.shape_asymmetry)
 
+
+    # Save the asymmetry values
+    path_OII_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_OII_asymmetry.txt'
+
+    if os.path.exists(path_OII_asymmetry):
+        t = Table.read(path_OII_asymmetry, format='ascii.fixed_width')
+    else:
+        t = Table(names=('cubename', 'A', 'A_rms', 'A_outer', 'A_shape', 'A_ZQL', 'A_shape_ZQL'),
+                  dtype=('S15', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
+    t.add_row((cubename, morph.asymmetry, morph.rms_asymmetry2, morph.outer_asymmetry, morph.shape_asymmetry,
+               A_ZQL_2, A_ZQL_3))
+    t.write(path_OII_asymmetry, format='ascii.fixed_width', overwrite=True)
+
     fig = make_figure(morph)
     plt.savefig(path_savefig_OII_morph, dpi=300, bbox_inches='tight')
 
     # OIII SB
     # if os.path.exists(path_SB_OIII):
 
-
 # AnalyzeMorphology(cubename='HE0435-5304', nums_seg_OII=[1])
 # AnalyzeMorphology(cubename='HE0153-4520')
-AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+# AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
 # AnalyzeMorphology(cubename='PKS0405-123', nums_seg_OII=[5, 7, 10, 11, 13, 16, 17, 20])
 # AnalyzeMorphology(cubename='HE0238-1904', nums_seg_OII=[1, 6, 12, 13, 17, 19], select_seg=True)
 # AnalyzeMorphology(cubename='3C57', nums_seg_OII=[2])

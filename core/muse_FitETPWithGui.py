@@ -28,7 +28,7 @@ from palettable.cmocean.sequential import Dense_20_r
 from scipy.ndimage import rotate
 from astropy.table import Table
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QHBoxLayout, QWidget, QPushButton, QVBoxLayout
 from matplotlib import cm
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -123,7 +123,7 @@ class PlotWindow(QMainWindow):
         self.widget = QWidget()
         self.widget.resize(2000, 2000)
         self.setCentralWidget(self.widget)
-        self.layout = QtGui.QGridLayout()
+        self.layout = QGridLayout()
         self.widget.setLayout(self.layout)
         # self.setStyleSheet("background-color: rgb(235, 233, 221);")
         # self.setStyleSheet("background-color: white;")
@@ -358,6 +358,6 @@ class PlotWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PlotWindow(gal_name='NGC2685')
+    window = PlotWindow(gal_name='NGC3626')
     window.show()
     sys.exit(app.exec_())
