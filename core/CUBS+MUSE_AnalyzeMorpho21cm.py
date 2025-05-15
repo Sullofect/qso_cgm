@@ -33,15 +33,6 @@ rc('ytick', direction='in')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 
-# Constants
-c_kms = 2.998e5
-wave_OII3727_vac = 3727.092
-wave_OII3729_vac = 3729.875
-wave_OII3728_vac = (wave_OII3727_vac + wave_OII3729_vac) / 2
-wave_Hbeta_vac = 4862.721
-wave_OIII5008_vac = 5008.239
-
-
 def CalculateAsymmetry(image=None, mask=None, center=None, sky_asymmetry=None, type='shape'):
     # Rotate around given center
     image_180 = skimage.transform.rotate(image, 180.0, center=center)
@@ -55,19 +46,13 @@ def CalculateAsymmetry(image=None, mask=None, center=None, sky_asymmetry=None, t
 
     # Testing
     # plt.figure()
-    # plt.imshow(np.abs(image_180), origin='lower', cmap='gray')
+    # plt.imshow(np.abs(image - image_180), origin='lower', cmap='gray')
+    # plt.plot(center[0], center[1], 'r+')
     # plt.show()
     # raise ValueError('Debugging: Check the image and mask')
 
     ap_abs_sum = np.nansum(np.abs(image))
     ap_abs_diff = np.nansum(np.abs(image_180 - image))
-
-    # Difference between this function and the original one
-    # image_2 = np.where(image, 1.0, 0.0)
-    # ap = CircularAperture(center, 27.145397887497694)
-    # ap_abs_sum = ap.do_photometry(np.abs(image), method='exact')[0][0]
-    # ap_abs_diff = ap.do_photometry(np.abs(image_180 - image), method='exact')[0][0]
-    # print('Asymmetry: ', ap_abs_diff, ap_abs_sum)
 
     if type == 'shape':
         return ap_abs_diff / ap_abs_sum
@@ -88,15 +73,11 @@ def Analyze21cmMorphology(gals, dis):
 
         # Load the distances and angles
         dis_i = dis_list[gal_list == igal][0]
-        ang_i = ang_list[gal_list == igal][0]
-
-        #
         name_i = igal.replace('C', 'C ')
         name_sort = table_gals['Object Name'] == name_i
 
         # Galaxy information
         ra_gal, dec_gal = table_gals[name_sort]['RA'], table_gals[name_sort]['Dec']
-        v_sys_gal = table_gals[name_sort]['cz (Velocity)']
 
         path_mom0 = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom0/{}_mom0.fits'.format(igal_cube)
         path_mom1 = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_mom1/{}_mom1.fits'.format(igal_cube)
@@ -117,8 +98,8 @@ def Analyze21cmMorphology(gals, dis):
 
         # 15 arcsec in 3C57 corresponding kpc
         scale = np.pi * dis_i * 1 / 3600 / 180 * 1e3  # how many kpc per arcsec
-        height = np.round(100 / scale / hdr_Serra['CDELT2'] / 3600, 0)  # 5 pix in MUSE = 1 arcsec = 7 kpc for 3C57
-        width = np.round(100 / scale / hdr_Serra['CDELT2'] / 3600, 0)
+        height = np.round(110 / scale / hdr_Serra['CDELT2'] / 3600, 0)  # 5 pix in MUSE = 1 arcsec = 7 kpc for 3C57
+        width = np.round(110 / scale / hdr_Serra['CDELT2'] / 3600, 0)
         rectangle = RectanglePixelRegion(center=PixCoord(x=c_gal[0], y=c_gal[1]), width=width, height=height)
         mask_flatten = rectangle.contains(pixcoord)
         mask = mask_flatten.reshape(mom1.shape)
@@ -131,36 +112,43 @@ def Analyze21cmMorphology(gals, dis):
         new_center_x = (x_max - x_min + 1) // 2
         new_center_y = (y_max - y_min + 1) // 2
         new_center = (new_center_x, new_center_y)
-        mask = np.where(mom0 ==0, mom0, 1)
-
-        # plt.figure()
-        # plt.imshow(mask, origin='lower', cmap='gray')
-        # plt.plot(new_center[0], new_center[1], 'ro', markersize=5)
-        # plt.show()
-        # print(mask.shape)
-        # raise Exception('segmap')
+        # mask = np.where(mom0 == 0, mom0, 1)
 
         # Beam size
         kernel = Gaussian2DKernel(x_stddev=3, y_stddev=3)
         kernel.normalize()
         psf = kernel.array
 
-        source_morphs = source_morphology(mom0, mask, gain=1e5, psf=psf, x_qso=new_center[0], y_qso=new_center[1],
+        threshold = detect_threshold(mom0, 0.8)
+        npixels = 20  # minimum number of connected pixels
+        segmap = detect_sources(mom0, threshold, npixels)
+
+        # Only select the largest in size
+        areas = segmap.areas
+        labels = segmap.labels
+        segmap.data = np.where(segmap.data == labels[np.argmax(areas)], segmap.data, 0)
+        segmap.data = np.where(segmap.data == 0, segmap.data, 1)
+
+        source_morphs = source_morphology(mom0, segmap.data, gain=1e5, psf=psf, x_qso=new_center[0], y_qso=new_center[1],
                                           annulus_width=2.5, skybox_size=32, petro_extent_cas=1.5)
         morph = source_morphs[0]
-        print(morph)
 
-        A_ZQL = CalculateAsymmetry(image=morph._segmap_shape_asym, mask=morph._mask_stamp, center=new_center, type='shape')
-        A_ZQL_2 = CalculateAsymmetry(image=morph._cutout_stamp_maskzeroed_no_bg, mask=morph._mask_stamp, center=new_center,
+        A_ZQL = CalculateAsymmetry(image=morph._segmap_shape_asym, mask=morph._mask_stamp, center=morph._asymmetry_center, type='shape')
+        A_ZQL_2 = CalculateAsymmetry(image=morph._cutout_stamp_maskzeroed_no_bg, mask=morph._mask_stamp, center=morph._asymmetry_center,
                                      sky_asymmetry=morph._sky_asymmetry, type='standard')
         seg_OII_cutout = np.where(morph._cutout_stamp_maskzeroed_no_bg == 0, morph._cutout_stamp_maskzeroed_no_bg, 1)
-        A_ZQL_3 = CalculateAsymmetry(image=seg_OII_cutout, mask=morph._mask_stamp, center=new_center, type='shape')
+        A_ZQL_3 = CalculateAsymmetry(image=seg_OII_cutout, mask=morph._mask_stamp, center=morph._asymmetry_center, type='shape')
 
+        # plt.figure()
+        # plt.imshow(seg_OII_cutout, origin='lower', cmap='gray')
+        # plt.plot(morph._asymmetry_center[0], morph._asymmetry_center[1], 'ro', markersize=5)
+        # plt.show()
+        # raise Exception('segmap')
 
         # Print the asymmetry values
-        print('A_ZQL_given seg', A_ZQL)
+        print('A_ZQL_shape_ori', A_ZQL)
         print('A_ZQL_standard', A_ZQL_2)
-        print('A_ZQL_my own seg', A_ZQL_3)
+        print('A_ZQL_shape', A_ZQL_3)
         print('A =', morph.asymmetry)
         print('A_rms =', morph.rms_asymmetry2)
         print('A_outer =', morph.outer_asymmetry)
@@ -174,14 +162,22 @@ def Analyze21cmMorphology(gals, dis):
         else:
             t = Table(names=('cubename', 'A', 'A_rms', 'A_outer', 'A_shape', 'A_ZQL', 'A_shape_ZQL'),
                       dtype=('S15', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
-        t.add_row((igal_cube, morph.asymmetry, morph.rms_asymmetry2, morph.outer_asymmetry, morph.shape_asymmetry,
-                   A_ZQL_2, A_ZQL_3))
+
+        if igal_cube in t['cubename']:
+            index = np.where(t['cubename'] == igal_cube)[0][0]
+            t['A'][index] = morph.asymmetry
+            t['A_rms'][index] = morph.rms_asymmetry2
+            t['A_outer'][index] = morph.outer_asymmetry
+            t['A_shape'][index] = morph.shape_asymmetry
+            t['A_ZQL'][index] = A_ZQL_2
+            t['A_shape_ZQL'][index] = A_ZQL_3
+        else:
+            t.add_row((igal_cube, morph.asymmetry, morph.rms_asymmetry2, morph.outer_asymmetry, morph.shape_asymmetry,
+                       A_ZQL_2, A_ZQL_3))
         t.write(path_21cm_asymmetry, format='ascii.fixed_width', overwrite=True)
 
         fig = make_figure(morph)
         plt.savefig(path_savefig_21_morph, dpi=300, bbox_inches='tight')
-
-
 
 gal_list = np.array(['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941',
                      'NGC3945', 'NGC4203', 'NGC4262', 'NGC5173', 'NGC5582', 'NGC5631', 'NGC6798',
@@ -189,8 +185,6 @@ gal_list = np.array(['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC
 dis_list = np.array([35.1, 13.05, 37.40, 31.967, 17.755, 23.5, 11.816,
                      23.400, 18.836, 19.741, 38.000, 33.791, 23.933, 37.5,
                      40.1, 27.6])  # in Mpc
-ang_list = np.array([45, 180-53, 180 + 65, 180, -90, 180 + 50, -65,
-                     180 + 80, -60, -60, 0, 180-60, 90, 53,
-                     -55, -55])
 
 Analyze21cmMorphology(gal_list, dis_list,)
+# Analyze21cmMorphology(['NGC3838'], ['23.5'])

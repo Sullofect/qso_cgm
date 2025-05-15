@@ -1899,14 +1899,14 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
 
 # HE0226-4110
 # muse_MakeNBImageWith3DSeg.py -m HE0226-4110_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss
-# -s_spe 1.5 -k_spe gauss -ssf False -sl 5550 5575 -l 0.1
+# -s_spe 1.5 -k_spe gauss -ssf False -sl 5550 5580 -l 0.1
 # muse_MakeNBImageWith3DSeg.py -m HE0226-4110_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss
 # -s_spe 1.5 -k_spe gauss -ssf False -sl 7440 7500 -l 0.1
 # os.chdir(path_SB)
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0226-4110_ESO-DEEP_subtracted_OII -t 3.0 -s 1.5 -k gauss '
-#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 5550 5575 -l 0.1') # 5574 for plotting to avoid skyline
+#           '-s_spe 1.5 -k_spe gauss -ssf False -sl 5550 5580 -l 0.1') # 5574/75 for plotting to avoid skyline
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0226-4110_ESO-DEEP_subtracted_OII -t 1.0 -s 1.5 -k gauss '
-#           '-ssf False -sl 5550 5575 -l 0.1')
+#           '-ssf False -sl 5550 5580 -l 0.1')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0226-4110_ESO-DEEP_subtracted_OIII -t 3.0 -s 1.5 -k gauss '
 #           '-s_spe 1.5 -k_spe gauss -ssf False -sl 7440 7500 -l 0.1')
 # os.system('muse_MakeNBImageWith3DSeg.py -m HE0226-4110_ESO-DEEP_subtracted_OIII -t 1.0 -s 1.5 -k gauss '

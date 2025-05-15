@@ -21,7 +21,6 @@ from photutils.segmentation import detect_threshold, detect_sources
 from astropy.coordinates import SkyCoord
 from astropy.convolution import convolve, Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel, Box1DKernel
 from palettable.cmocean.sequential import Dense_20_r
-# from statmorph.utils.image_diagnostics import make_figure
 from image_diagnostics import make_figure
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 EllipticalAperture, EllipticalAnnulus)
@@ -32,15 +31,6 @@ rc('xtick', direction='in')
 rc('ytick', direction='in')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
-
-# Constants
-c_kms = 2.998e5
-wave_OII3727_vac = 3727.092
-wave_OII3729_vac = 3729.875
-wave_OII3728_vac = (wave_OII3727_vac + wave_OII3729_vac) / 2
-wave_Hbeta_vac = 4862.721
-wave_OIII5008_vac = 5008.239
-
 
 def CalculateAsymmetry(image=None, mask=None, center=None, sky_asymmetry=None, type='shape'):
     # Rotate around given center
@@ -53,28 +43,22 @@ def CalculateAsymmetry(image=None, mask=None, center=None, sky_asymmetry=None, t
     image = np.where(~mask_symmetric, image, 0.0)
     image_180 = np.where(~mask_symmetric, image_180, 0.0)
 
-    # Testing
+    # Debugging
     # plt.figure()
     # plt.imshow(np.abs(image_180), origin='lower', cmap='gray')
+    # plt.plot(center[0], center[1], 'r+')
     # plt.show()
     # raise ValueError('Debugging: Check the image and mask')
 
     ap_abs_sum = np.nansum(np.abs(image))
     ap_abs_diff = np.nansum(np.abs(image_180 - image))
 
-    # Difference between this function and the original one
-    # image_2 = np.where(image, 1.0, 0.0)
-    # ap = CircularAperture(center, 27.145397887497694)
-    # ap_abs_sum = ap.do_photometry(np.abs(image), method='exact')[0][0]
-    # ap_abs_diff = ap.do_photometry(np.abs(image_180 - image), method='exact')[0][0]
-    # print('Asymmetry: ', ap_abs_diff, ap_abs_sum)
-
     if type == 'shape':
         return ap_abs_diff / ap_abs_sum
     elif type == 'standard':
         return (ap_abs_diff - np.nansum(mask) * sky_asymmetry) / ap_abs_sum
 
-def AnalyzeMorphology(cubename=None, nums_seg_OII=[], select_seg=False):
+def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_seg_OII=False, select_seg_OIII=False):
     # QSO information
     path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
     data_qso = ascii.read(path_qso, format='fixed_width')
@@ -119,7 +103,7 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], select_seg=False):
 
     seg_OII = fits.open(path_3Dseg_OII)[1].data
     seg_OII = np.where(center_mask, seg_OII, 0)
-    if select_seg:
+    if select_seg_OII:
         nums_seg_OII = np.setdiff1d(np.arange(1, np.max(seg_OII) + 1), nums_seg_OII)
     seg_OII_mask = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, -1)
     seg_OII = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, 0)
@@ -130,45 +114,31 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], select_seg=False):
                                         bkgrd_OII.shape, replace=True).reshape(bkgrd_OII.shape)
     SB_OII = np.where(seg_OII_mask != -1, SB_OII, bkgrd_OII_random)
 
+    # PSF and gain do not matter for asymmetry
     kernel = Gaussian2DKernel(x_stddev=1.5, y_stddev=1.5)
     kernel.normalize()
     psf = kernel.array
-    # threshold = detect_threshold(SB_OII, 0.8)
-    # npixels = 20  # minimum number of connected pixels
-    # convolved_image = convolve(SB_OII, kernel)
-    # convolved_image = np.where(center_mask, convolved_image, np.nan)
-    # segmap = detect_sources(convolved_image, threshold, npixels)
 
-    # Only select the largest in size
-    # areas = segmap.areas
-    # labels = segmap.labels
-    # segmap.data = np.where(segmap.data == labels[np.argmax(areas)], segmap.data, 0)
-
-    # Test with a circular region
-    # circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=30)
+    # Test with a circular region at the center and away from center, A_circular = 0, A_side = 2
+    # circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=20)
+    # circle = CirclePixelRegion(center=PixCoord(x=c2[0]+8, y=c2[1]), radius=4)
     # center_mask_flatten = ~circle.contains(pixcoord)
     # center_mask = center_mask_flatten.reshape(SB_OII.shape)
-    # SB_OII = np.where(center_mask, SB_OII, 10)
+    # SB_OII[:, :] = bkgrd_OII_random
+    # seg_OII[:, :] = 0
+    # SB_OII = np.where(center_mask, SB_OII, 3)
     # seg_OII = np.where(center_mask, seg_OII, 1)
 
-    # plt.figure()
-    # plt.imshow(seg_OII, origin='lower', cmap='gray')
-    # plt.show()
-    # raise Exception('segmap')
     source_morphs = source_morphology(SB_OII, seg_OII, mask=np.isnan(SB_OII),gain=1e5, psf=psf,
                                       x_qso=c2[0], y_qso=c2[1], annulus_width=2.5, skybox_size=32, petro_extent_cas=1.5)
     morph = source_morphs[0]
-    # plt.figure()
-    # plt.imshow(morph._segmap_shape_asym, origin='lower', cmap='gray')
-    # plt.show()
-    # raise Exception('segmap')
 
-
-    A_ZQL = CalculateAsymmetry(image=morph._segmap_shape_asym, mask=morph._mask_stamp, center=c2, type='shape')
-    A_ZQL_2 = CalculateAsymmetry(image=morph._cutout_stamp_maskzeroed_no_bg, mask=morph._mask_stamp, center=c2,
-                                 sky_asymmetry=morph._sky_asymmetry, type='standard')
+    A_ZQL = CalculateAsymmetry(image=morph._segmap_shape_asym, mask=morph._mask_stamp,
+                               center=morph._asymmetry_center, type='shape')
+    A_ZQL_2 = CalculateAsymmetry(image=morph._cutout_stamp_maskzeroed_no_bg, mask=morph._mask_stamp,
+                                 center=morph._asymmetry_center, sky_asymmetry=morph._sky_asymmetry, type='standard')
     seg_OII_cutout = np.where(morph._cutout_stamp_maskzeroed_no_bg == 0, morph._cutout_stamp_maskzeroed_no_bg, 1)
-    A_ZQL_3 = CalculateAsymmetry(image=seg_OII_cutout, mask=morph._mask_stamp, center=c2, type='shape')
+    A_ZQL_3 = CalculateAsymmetry(image=seg_OII_cutout, mask=morph._mask_stamp, center=morph._asymmetry_center, type='shape')
 
     # plt.figure()
     # plt.imshow(seg_OII_cutout, origin='lower', cmap='gray')
@@ -176,9 +146,9 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], select_seg=False):
     # raise Exception('segmap')
 
     # Print the asymmetry values
-    print('A_ZQL_given seg', A_ZQL)
+    print('A_ZQL_shape_ori', A_ZQL)
     print('A_ZQL_standard', A_ZQL_2)
-    print('A_ZQL_my own seg', A_ZQL_3)
+    print('A_ZQL_shape', A_ZQL_3)
     print('A =', morph.asymmetry)
     print('A_rms =', morph.rms_asymmetry2)
     print('A_outer =', morph.outer_asymmetry)
@@ -193,19 +163,99 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], select_seg=False):
     else:
         t = Table(names=('cubename', 'A', 'A_rms', 'A_outer', 'A_shape', 'A_ZQL', 'A_shape_ZQL'),
                   dtype=('S15', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
-    t.add_row((cubename, morph.asymmetry, morph.rms_asymmetry2, morph.outer_asymmetry, morph.shape_asymmetry,
-               A_ZQL_2, A_ZQL_3))
+
+    if cubename in t['cubename']:
+        index = np.where(t['cubename'] == cubename)[0][0]
+        t['A'][index] = morph.asymmetry
+        t['A_rms'][index] = morph.rms_asymmetry2
+        t['A_outer'][index] = morph.outer_asymmetry
+        t['A_shape'][index] = morph.shape_asymmetry
+        t['A_ZQL'][index] = A_ZQL_2
+        t['A_shape_ZQL'][index] = A_ZQL_3
+    else:
+        t.add_row((cubename, morph.asymmetry, morph.rms_asymmetry2, morph.outer_asymmetry, morph.shape_asymmetry,
+                   A_ZQL_2, A_ZQL_3))
     t.write(path_OII_asymmetry, format='ascii.fixed_width', overwrite=True)
 
     fig = make_figure(morph)
-    plt.savefig(path_savefig_OII_morph, dpi=300, bbox_inches='tight')
+    fig.savefig(path_savefig_OII_morph, dpi=300, bbox_inches='tight')
 
-    # OIII SB
-    # if os.path.exists(path_SB_OIII):
+    if os.path.exists(path_SB_OIII_kin):
+        # Analyze asymetry and kinematics
+        SB_OIII = fits.open(path_SB_OIII_kin)[1].data
+        SB_OIII = np.where(center_mask, SB_OIII, np.nan)
 
-# AnalyzeMorphology(cubename='HE0435-5304', nums_seg_OII=[1])
+        seg_OIII = fits.open(path_3Dseg_OIII)[1].data
+        seg_OIII = np.where(center_mask, seg_OIII, 0)
+        if select_seg_OIII:
+            nums_seg_OIII = np.setdiff1d(np.arange(1, np.max(seg_OIII) + 1), nums_seg_OIII)
+        seg_OIII_mask = np.where(~np.isin(seg_OIII, nums_seg_OIII), seg_OIII, -1)
+        seg_OIII = np.where(~np.isin(seg_OIII, nums_seg_OII), seg_OIII, 0)
+        seg_OIII = np.where(seg_OIII == 0, seg_OIII, 1)
+
+        bkgrd_OIII = np.where(seg_OIII_mask == 0, SB_OIII, np.nan)
+        bkgrd_OIII_random = np.random.choice(bkgrd_OIII.flatten()[~np.isnan(bkgrd_OIII.flatten())],
+                                            bkgrd_OIII.shape, replace=True).reshape(bkgrd_OIII.shape)
+        SB_OIII = np.where(seg_OIII_mask != -1, SB_OIII, bkgrd_OIII_random)
+
+        source_morphs = source_morphology(SB_OIII, seg_OIII, mask=np.isnan(SB_OIII), gain=1e5, psf=psf,
+                                          x_qso=c2[0], y_qso=c2[1], annulus_width=2.5, skybox_size=32,
+                                          petro_extent_cas=1.5)
+        morph = source_morphs[0]
+
+        A_ZQL = CalculateAsymmetry(image=morph._segmap_shape_asym, mask=morph._mask_stamp,
+                                   center=morph._asymmetry_center, type='shape')
+        A_ZQL_2 = CalculateAsymmetry(image=morph._cutout_stamp_maskzeroed_no_bg, mask=morph._mask_stamp,
+                                     center=morph._asymmetry_center, sky_asymmetry=morph._sky_asymmetry,
+                                     type='standard')
+        seg_OIII_cutout = np.where(morph._cutout_stamp_maskzeroed_no_bg == 0, morph._cutout_stamp_maskzeroed_no_bg, 1)
+        A_ZQL_3 = CalculateAsymmetry(image=seg_OIII_cutout, mask=morph._mask_stamp, center=morph._asymmetry_center,
+                                     type='shape')
+
+        # plt.figure()
+        # plt.imshow(seg_OIII_cutout, origin='lower', cmap='gray')
+        # plt.plot(morph._asymmetry_center[0], morph._asymmetry_center[1], 'ro', markersize=5)
+        # plt.show()
+        # raise Exception('segmap')
+
+        # Print the asymmetry values
+        print('A_ZQL_shape_ori', A_ZQL)
+        print('A_ZQL_standard', A_ZQL_2)
+        print('A_ZQL_shape', A_ZQL_3)
+        print('A =', morph.asymmetry)
+        print('A_rms =', morph.rms_asymmetry2)
+        print('A_outer =', morph.outer_asymmetry)
+        print('A_shape=', morph.shape_asymmetry)
+
+        # Save the asymmetry values
+        path_OIII_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_OIII_asymmetry.txt'
+
+        if os.path.exists(path_OIII_asymmetry):
+            t = Table.read(path_OIII_asymmetry, format='ascii.fixed_width')
+        else:
+            t = Table(names=('cubename', 'A', 'A_rms', 'A_outer', 'A_shape', 'A_ZQL', 'A_shape_ZQL'),
+                      dtype=('S15', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
+
+        if cubename in t['cubename']:
+            index = np.where(t['cubename'] == cubename)[0][0]
+            t['A'][index] = morph.asymmetry
+            t['A_rms'][index] = morph.rms_asymmetry2
+            t['A_outer'][index] = morph.outer_asymmetry
+            t['A_shape'][index] = morph.shape_asymmetry
+            t['A_ZQL'][index] = A_ZQL_2
+            t['A_shape_ZQL'][index] = A_ZQL_3
+        else:
+            t.add_row((cubename, morph.asymmetry, morph.rms_asymmetry2, morph.outer_asymmetry, morph.shape_asymmetry,
+                       A_ZQL_2, A_ZQL_3))
+        t.write(path_OIII_asymmetry, format='ascii.fixed_width', overwrite=True)
+
+        fig = make_figure(morph)
+        fig.savefig(path_savefig_OIII_morph, dpi=300, bbox_inches='tight')
+
+
+# AnalyzeMorphology(cubename='HE0435-5304', nums_seg_OII=[1], nums_seg_OIII=[1])
 # AnalyzeMorphology(cubename='HE0153-4520')
-# AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
 # AnalyzeMorphology(cubename='PKS0405-123', nums_seg_OII=[5, 7, 10, 11, 13, 16, 17, 20])
 # AnalyzeMorphology(cubename='HE0238-1904', nums_seg_OII=[1, 6, 12, 13, 17, 19], select_seg=True)
 # AnalyzeMorphology(cubename='3C57', nums_seg_OII=[2])
@@ -233,6 +283,6 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], select_seg=False):
 # AnalyzeMorphology(cubename='Q1354+048', nums_seg_OII=[1, 2])  # large difference between A and A_shape
 # AnalyzeMorphology(cubename='J0154-0712', nums_seg_OII=[5])  # large difference between A and A_shape
 # AnalyzeMorphology(cubename='LBQS1435-0134', nums_seg_OII=[1, 3, 7], select_seg=True)
-# AnalyzeMorphology(cubename='PG1522+101', nums_seg_OII=[2, 3, 8, 11], select_seg=True)
+# AnalyzeMorphology(cubename='PG1522+101', nums_seg_OII=[2, 3, 8, 11], select_seg_OII=True)
 # AnalyzeMorphology(cubename='HE2336-5540')
 # AnalyzeMorphology(cubename='PKS0232-04', nums_seg_OII=[2, 4, 5, 7])
