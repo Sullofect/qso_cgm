@@ -101,7 +101,7 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     w = WCS(fits.open(path_SB_OII_kin)[1].header, naxis=2)  # OII_kin is already in gaia coordinate
     center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
     c2 = w.world_to_pixel(center_qso)
-    print('QSO centroid initial', c2)
+
     # Mask the centroid
     x, y = np.meshgrid(np.arange(SB_OII.shape[0]), np.arange(SB_OII.shape[1]))
     x, y = x.flatten(), y.flatten()
@@ -142,7 +142,7 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     source_morphs = source_morphology(SB_OII, seg_OII, mask=np.isnan(SB_OII),gain=1e5, psf=psf,
                                       x_qso=c2[0], y_qso=c2[1], annulus_width=2.5, skybox_size=32, petro_extent_cas=1.5)
     morph = source_morphs[0]
-    print('QSO centroid', c2)
+
     A_ZQL = CalculateAsymmetry(image=morph._segmap_shape_asym, mask=morph._mask_stamp,
                                center=morph._asymmetry_center, type='shape')
     A_ZQL_2 = CalculateAsymmetry(image=morph._cutout_stamp_maskzeroed_no_bg, mask=morph._mask_stamp,
@@ -152,6 +152,7 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
 
     # plt.figure()
     # plt.imshow(seg_OII_cutout, origin='lower', cmap='gray')
+    # plt.plot(c2[0], c2[1], 'r+', markersize=10)
     # plt.show()
     # raise Exception('segmap')
 
@@ -187,8 +188,8 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
                    A_ZQL_2, A_ZQL_3))
     t.write(path_OII_asymmetry, format='ascii.fixed_width', overwrite=True)
 
-    # fig = make_figure(morph)
-    # fig.savefig(path_savefig_OII_morph, dpi=300, bbox_inches='tight')
+    fig = make_figure(morph)
+    fig.savefig(path_savefig_OII_morph, dpi=300, bbox_inches='tight')
 
     # OIII
     if os.path.exists(path_SB_OIII_kin):
@@ -209,15 +210,11 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
                                             bkgrd_OIII.shape, replace=True).reshape(bkgrd_OIII.shape)
         SB_OIII = np.where(seg_OIII_mask != -1, SB_OIII, bkgrd_OIII_random)
 
-        # c3 = [62.10229258, 65.00307991]
-        c3 = c2
+        c3 = w.world_to_pixel(center_qso)  # Sometimes the center is changed after running source_morphology
         source_morphs = source_morphology(SB_OIII, seg_OIII, mask=np.isnan(SB_OIII), gain=1e5, psf=psf,
                                           x_qso=c3[0], y_qso=c3[1], annulus_width=2.5, skybox_size=32,
                                           petro_extent_cas=1.5)
         morph = source_morphs[0]
-
-        print('QSO_centroid', c3)
-        print(morph.x_qso, morph.y_qso)
 
         A_ZQL = CalculateAsymmetry(image=morph._segmap_shape_asym, mask=morph._mask_stamp,
                                    center=morph._asymmetry_center, type='shape')
@@ -234,7 +231,7 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
         # plt.plot(morph._asymmetry_center[0], morph._asymmetry_center[1], 'ro', markersize=5)
         # print('QSO_centroid', c3)
         # plt.plot(c2[0], c2[1], 'ro', markersize=5)
-        # plt.plot(c3[0], c3[1], 'go', markersize=10)
+        # # plt.plot(c3[0], c3[1], 'go', markersize=10)
         # plt.show()
         # raise Exception('segmap')
 
@@ -278,14 +275,17 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
 # AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
 #                   nums_seg_OIII=[1, 5, 6, 8, 9, 10, 11, 16, 19])
 # AnalyzeMorphology(cubename='PKS0405-123', nums_seg_OII=[5, 7, 10, 11, 13, 16, 17, 20], nums_seg_OIII=[15])
-AnalyzeMorphology(cubename='HE0238-1904', nums_seg_OII=[1, 6, 12, 13, 17, 19], select_seg_OII=True,
-                  nums_seg_OIII=[1, 2, 4, 9, 13, 15, 17, 20], select_seg_OIII=True)
+# AnalyzeMorphology(cubename='HE0238-1904', nums_seg_OII=[1, 6, 12, 13, 17, 19], select_seg_OII=True,
+#                   nums_seg_OIII=[1, 2, 4, 9, 13, 15, 17, 20], select_seg_OIII=True)
 # AnalyzeMorphology(cubename='3C57', nums_seg_OII=[2], nums_seg_OIII=[])
-# AnalyzeMorphology(cubename='PKS0552-640', nums_seg_OII=[2, 3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18])
-# AnalyzeMorphology(cubename='J0110-1648', nums_seg_OII=[1])
-# AnalyzeMorphology(cubename='J0454-6116', nums_seg_OII=[2, 3, 4, 5, 6, 8, 11, 12, 13, 15, 17, 18])
-# AnalyzeMorphology(cubename='J2135-5316', nums_seg_OII=[2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19])
-# AnalyzeMorphology(cubename='J0119-2010', nums_seg_OII=[3, 4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20])
+# AnalyzeMorphology(cubename='PKS0552-640', nums_seg_OII=[2, 3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+#                   nums_seg_OIII=[5, 6, 7, 8, 12, 15, 16, 17, 18, 20])
+# AnalyzeMorphology(cubename='J0110-1648', nums_seg_OII=[1], nums_seg_OIII=[2])
+# AnalyzeMorphology(cubename='J0454-6116', nums_seg_OII=[2, 3, 4, 5, 6, 8, 11, 12, 13, 15, 17, 18], nums_seg_OIII=[2, 7, 9, 10, 18, 19])
+# AnalyzeMorphology(cubename='J2135-5316', nums_seg_OII=[2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19],
+#                   nums_seg_OIII=[4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+# AnalyzeMorphology(cubename='J0119-2010', nums_seg_OII=[3, 4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20],
+#                   nums_seg_OIII=[7, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20])
 # AnalyzeMorphology(cubename='HE0246-4101', nums_seg_OII=[1], select_seg=True) # 0.7 difference between A and A_shape
 # AnalyzeMorphology(cubename='J0028-3305', nums_seg_OII=[2], select_seg=True) # 0.7 difference between A and A_shape
 # AnalyzeMorphology(cubename='HE0419-5657', nums_seg_OII=[2, 4, 5], select_seg=True) # 0.7 difference between A and A_shape
