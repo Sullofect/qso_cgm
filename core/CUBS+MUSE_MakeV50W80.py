@@ -439,8 +439,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 # MakeV50W80(cubename='PKS0552-640', v_max=300, sigma_max=300, contour_level_OII=0.3, contour_level_OIII=0.3,
 #            nums_seg_OII=[2, 7, 9, 14, 18], nums_seg_OIII=[12, 17])
 # MakeV50W80(cubename='J0110-1648', v_max=300, sigma_max=300, rmbkgResidue=True)
-MakeV50W80(cubename='J0454-6116', v_max=500, sigma_max=400, nums_seg_OII=[2, 6, 8, 13, 17, 18],
-           nums_seg_OIII=[2, 9, 10, 18])
+# MakeV50W80(cubename='J0454-6116', v_max=500, sigma_max=400, nums_seg_OII=[2, 6, 8, 13, 17, 18],
+#            nums_seg_OIII=[2, 9, 10, 18])
 # MakeV50W80(cubename='J2135-5316', v_max=300, sigma_max=300, contour_level_OII=0.3,
 #            nums_seg_OII=[3, 4, 10, 12, 13, 14, 16, 17, 18, 19],
 #            nums_seg_OIII=[4, 12, 13, 14, 15, 17, 19, 20], rmbkgResidue=True) # Double component # SNR=5
