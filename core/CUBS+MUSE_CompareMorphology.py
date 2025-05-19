@@ -46,11 +46,15 @@ t_OIII = Table.read(path_OIII_asymmetry, format='ascii.fixed_width')
 path_21cm_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_21cm_asymmetry.txt'
 t_21cm = Table.read(path_21cm_asymmetry, format='ascii.fixed_width')
 
+path_Lya_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_Lya_asymmetry.txt'
+t_Lya = Table.read(path_Lya_asymmetry, format='ascii.fixed_width')
+
 bins = np.linspace(0, 2, 11)
 plt.figure(figsize=(5, 5), dpi=300)
 plt.hist(t_OII['A_shape_ZQL'], bins=bins, color='brown', alpha=0.5, label=r'$\rm [O\,II]$')
 plt.hist(t_OIII['A_shape_ZQL'], bins=bins, color='blue', alpha=0.5, label=r'$\rm [O\,III]$')
 plt.hist(t_21cm['A_shape_ZQL'], bins=bins, color='red', alpha=1.0, label=r'$\rm HI \, 21\,cm$', histtype='step', lw=2)
+plt.hist(t_Lya['A_shape_ZQL'], bins=bins, color='k', alpha=1.0, label=r'$\rm Ly \alpha$', histtype='step', lw=2)
 plt.xlim(0, 2)
 plt.xlabel('Asymmetry', size=20)
 plt.ylabel('N', size=20)
