@@ -392,16 +392,17 @@ def Analyze21cmMorphology(gals, dis):
 def AnalyzeLyaMorphology(cubename=None):
     path_SB_Lya = '../../MUSEQuBES+CUBS/SB_Lya/{}.fits'.format(cubename)
     path_seg_Lya = '../../MUSEQuBES+CUBS/SB_Lya/{}_mask.fits'.format(cubename)
+    path_xyZ_Lya = '../../MUSEQuBES+CUBS/SB_Lya/QSOxyzlist.txt'
     path_savefig_Lya_morph = '../../MUSEQuBES+CUBS/plots/{}_{}_morph.png'.format(cubename, 'Lya')
 
     # Analyze asymetry and kinematics
     SB_Lya = fits.open(path_SB_Lya)[0].data
     seg_Lya = fits.open(path_seg_Lya)[0].data
+    xyZ_Lya = Table.read(path_xyZ_Lya, format='ascii')
+    x, y = xyZ_Lya['X'][xyZ_Lya['QSO'] == cubename][0], xyZ_Lya['Y'][xyZ_Lya['QSO'] == cubename][0]
 
     w = WCS(fits.open(path_SB_Lya)[0].header, naxis=2)
-    # center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
-    # c2 = w.world_to_pixel(center_qso)
-    c2 = np.array([int(SB_Lya.shape[0] / 2), int(SB_Lya.shape[1] / 2)])
+    c2 = np.array([x, y])
 
     # Mask the centroid
     x, y = np.meshgrid(np.arange(SB_Lya.shape[1]), np.arange(SB_Lya.shape[0]))  # need to reverse for asymmetrical array
@@ -525,17 +526,17 @@ def AnalyzeLyaMorphology(cubename=None):
 # Analyze21cmMorphology(['NGC3838'], ['23.5'])
 
 # Lyalpha
-AnalyzeLyaMorphology(cubename="J124957-015928")
-# AnalyzeLyaMorphology(cubename="J133254+005250")
-# AnalyzeLyaMorphology(cubename="J205344-354652")
-# AnalyzeLyaMorphology(cubename="J221527-161133")
-# AnalyzeLyaMorphology(cubename="J230301-093930")
-# AnalyzeLyaMorphology(cubename="J012403+004432")
-# AnalyzeLyaMorphology(cubename="J013724-422417")
-# AnalyzeLyaMorphology(cubename="J015741-010629")
-# AnalyzeLyaMorphology(cubename="J020944+051713")
-# AnalyzeLyaMorphology(cubename="J024401-013403")
-# AnalyzeLyaMorphology(cubename="J033900-013318")
-# AnalyzeLyaMorphology(cubename="J111008+024458")
-# AnalyzeLyaMorphology(cubename="J111113-080401")
-# AnalyzeLyaMorphology(cubename="J123055-113909")
+# AnalyzeLyaMorphology(cubename="J124957-015928")
+AnalyzeLyaMorphology(cubename="J133254+005250")
+AnalyzeLyaMorphology(cubename="J205344-354652")
+AnalyzeLyaMorphology(cubename="J221527-161133")
+AnalyzeLyaMorphology(cubename="J230301-093930")
+AnalyzeLyaMorphology(cubename="J012403+004432")
+AnalyzeLyaMorphology(cubename="J013724-422417")
+AnalyzeLyaMorphology(cubename="J015741-010629")
+AnalyzeLyaMorphology(cubename="J020944+051713")
+AnalyzeLyaMorphology(cubename="J024401-013403")
+AnalyzeLyaMorphology(cubename="J033900-013318")
+AnalyzeLyaMorphology(cubename="J111008+024458")
+AnalyzeLyaMorphology(cubename="J111113-080401")
+AnalyzeLyaMorphology(cubename="J123055-113909")
