@@ -52,6 +52,45 @@ def RecalculateCentroid(cubename=None, deblend_hst=False, thr_hst=3):
     w = WCS(hdul_hst_gaia[1].header)
     c_hst = w.pixel_to_world(x_cen, y_cen)
 
+    fig = plt.figure(figsize=(8, 8), dpi=300)
+    gc = aplpy.FITSFigure(path_hst_gaia, figure=fig, north=True)
+    gc.set_xaxis_coord_type('scalar')
+    gc.set_yaxis_coord_type('scalar')
+
+    #
+    gc.recenter(ra_qso, dec_qso, width=90 / 3600, height=90 / 3600)
+
+    #
+    gc.set_system_latex(True)
+    gc.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
+    gc.add_colorbar()
+    gc.colorbar.set_box([0.15, 0.12, 0.38, 0.02], box_orientation='horizontal')
+    gc.colorbar.hide()
+
+    # Hide ticks
+    gc.ticks.set_length(30)
+    gc.ticks.hide()
+    gc.tick_labels.hide()
+    gc.axis_labels.hide()
+
+    # Markers
+    gc.show_markers(ra_gaia, dec_gaia, facecolors='none', marker='o', c='none',
+                    edgecolors='red', linewidths=0.8, s=140)
+    gc.show_markers(ra_ls, dec_ls, facecolors='none', marker='o', c='none',
+                    edgecolors='blue', linewidths=0.8, s=130)
+    # gc.show_markers(ra_qso, dec_qso, facecolors='none', marker='o', c='none',
+    #                 edgecolors='orange', linewidths=0.8, s=120)
+    # gc.show_markers(ra_gal + np.median(offset_ra_hst), dec_gal + np.median(offset_dec_hst),
+    #                 facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=120)
+    # gc.show_markers(c2_hst.ra.value + np.median(offset_ra_hst), c2_hst.dec.value + np.median(offset_dec_hst),
+    #                 facecolors='none', marker='o', c='none', edgecolors='white', linewidths=0.8, s=100)
+    gc.show_markers(c2_hst.ra.value, c2_hst.dec.value,
+                    facecolors='none', marker='o', c='none', edgecolors='white', linewidths=0.8, s=100)
+
+    # Labels
+    gc.add_label(0.87, 0.97, r'$\mathrm{ACS\!+\!F814W}$', color='k', size=15, relative=True)
+    fig.savefig(path_savefig, bbox_inches='tight')
+
     # idx_hst_muse, d2d_hst_muse, d3d_hst_muse = c2_hst.match_to_catalog_sky(c_muse)
     # sep_constraint = d2d_hst_muse < (0.5 * u.arcsec)
     # c2_hst_muse = c2_hst[sep_constraint]
@@ -70,9 +109,16 @@ def RecalculateCentroid(cubename=None, deblend_hst=False, thr_hst=3):
 
     t.write(filename, format='fits', overwrite=True)
 
-# RecalculateCentroid(cubename='HE0435-5304') # Done
+    #
+    filename_txt = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.dat'.format(cubename)
+    t.write(filename_txt, format='ascii.fixed_width', overwrite=True)
+    raise ValueError("This code is not finished yet.")
+
+# RecalculateCentroid(cubename='HE0435-5304') # Done, check emi/abs done
+# RecalculateCentroid(cubename='HE0153-4520') # no group member, check emi/abs done
+RecalculateCentroid(cubename='HE0226-4110')
 # RecalculateCentroid(cubename='PKS0232-04', deblend_hst=True, thr_hst=1.5) # MUSE centroid is better
-RecalculateCentroid(cubename='Q1354+048', deblend_hst=True, thr_hst=1.5)
+# RecalculateCentroid(cubename='Q1354+048', deblend_hst=True, thr_hst=1.5)
 # RecalculateCentroid(cubename='PKS0405-123', deblend_hst=True, thr_hst=0.1) # not done
 # RecalculateCentroid(cubename='PKS0552-640')  # not done
 # MakeFieldImage(cubename='Q0107-0235')
@@ -80,7 +126,6 @@ RecalculateCentroid(cubename='Q1354+048', deblend_hst=True, thr_hst=1.5)
 # MakeFieldImage(cubename='HE0153-4520')
 # MakeFieldImage(cubename='3C57')
 # MakeFieldImage(cubename='TEX0206-048')
-# MakeFieldImage(cubename='HE0226-4110')
 # MakeFieldImage(cubename='PKS0232-04')
 # MakeFieldImage(cubename='HE0439-5254')
 # MakeFieldImage(cubename='LBQS1435-0134')
