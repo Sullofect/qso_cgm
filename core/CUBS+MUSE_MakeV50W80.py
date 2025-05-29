@@ -74,9 +74,9 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif type == 'GasMap':
         # gc.colorbar.set_ticks([-300, -150, 0, 150, 300])
         gc.colorbar.set_ticks([-300, -200, -100, 0, 100, 200, 300])
-        gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
+        # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v \mathrm{\; [km \, s^{-1}]}$')
         # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v_{50} / v_{max} \mathrm{\; [km \, s^{-1}]}$')
-        # gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v_{50} / v_{\rm max}$')
+        gc.colorbar.set_axis_label_text(r'$\mathrm{\Delta} v_{50} / v_{\rm max}$')
         gc.colorbar.hide()
     elif type == 'GasMap_sigma':
         gc.colorbar.set_ticks([0, 150, 300, 450, 600, 750])
@@ -145,9 +145,9 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
         data_gal = fits.open(path_gal)[1].data
         v_gal = data_gal['v']
         if HSTcentroid:
-            ra_gal, dec_gal = data_gal['ra_HST'], data_gal['dec_HST']
+            ra_gal, dec_gal, type = data_gal['ra_HST'], data_gal['dec_HST'], data_gal['type']
         else:
-            ra_gal, dec_gal = data_gal['ra'], data_gal['dec']
+            ra_gal, dec_gal, type = data_gal['ra'], data_gal['dec'], data_gal['type']
     except FileNotFoundError:
         print('No galaxies info')
         ra_gal, dec_gal, v_gal, ra_hst, dec_hst = [], [], [], [], []
@@ -236,7 +236,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     elif cubename == 'HE0226-4110':
         path_SB_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}_plot.fits'. \
             format(cubename, str_zap, line_OII, *UseSeg)
-
+        path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
+            format(cubename, str_zap, line_OII, *UseSeg)
 
     # Load segmentation
     seg_OII = fits.open(path_3Dseg_OII)[1].data
@@ -356,9 +357,14 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 
 
     gc.add_label(0.05, 0.08, '[{}, {}]'.format(-v_max, v_max), size=30, relative=True, horizontalalignment='left')
-    gc.show_markers(ra_gal, dec_gal, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
-    gc.show_markers(ra_gal, dec_gal, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-    gc.show_markers(ra_gal, dec_gal, marker='o', c=v_gal, linewidths=0.5, s=40, vmin=-v_max, vmax=v_max, cmap='coolwarm')
+    ra_emi, dec_emi, v_emi = ra_gal[type == 'emi'], dec_gal[type == 'emi'], v_gal[type == 'emi']
+    ra_abs, dec_abs, v_abs = ra_gal[type != 'emi'], dec_gal[type != 'emi'], v_gal[type != 'emi']
+    gc.show_markers(ra_emi, dec_emi, facecolor='white', marker='D', c='white', edgecolors='none', linewidths=0.8, s=80)
+    gc.show_markers(ra_emi, dec_emi, facecolor='none', marker='D', c='none', edgecolors='k', linewidths=0.8, s=80)
+    gc.show_markers(ra_emi, dec_emi, marker='D', c=v_emi, linewidths=0.5, s=30, vmin=-v_max, vmax=v_max, cmap='coolwarm')
+    gc.show_markers(ra_abs, dec_abs, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
+    gc.show_markers(ra_abs, dec_abs, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
+    gc.show_markers(ra_abs, dec_abs, marker='o', c=v_abs, linewidths=0.5, s=40, vmin=-v_max, vmax=v_max, cmap='coolwarm')
     fig.savefig(figurename_V50, bbox_inches='tight')
 
     # S80 map converted from W80 to sigma
@@ -429,13 +435,14 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 
 
 
-# MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300)
+# MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300, HSTcentroid=True, rmbkgResidue=True)
 # MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level_OII=0.5, contour_level_OIII=1.0)
-# MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg_OII=[14, 15, 16, 17, 20],
-#            nums_seg_OIII=[5, 11, 16, 19], contour_level_OII=0.1, contour_level_OIII=0.1, rmbkgResidue=True)
-# MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300, contour_level_OIII=0.5, nums_seg_OII=[5], nums_seg_OIII=[15])
-# MakeV50W80(cubename='HE0238-1904', v_max=300, sigma_max=300)
-# MakeV50W80(cubename='3C57', v_max=350, sigma_max=300)
+# MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg_OII=[12, 14, 15, 16, 17, 20],
+#            nums_seg_OIII=[5, 11, 16, 19], contour_level_OII=0.1, contour_level_OIII=0.1, rmbkgResidue=True, HSTcentroid=True)
+MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300, contour_level_OIII=0.5, nums_seg_OII=[5],
+           nums_seg_OIII=[15], HSTcentroid=True)
+# MakeV50W80(cubename='HE0238-1904', v_max=300, sigma_max=300, HSTcentroid=True, rmbkgResidue=False)
+# MakeV50W80(cubename='3C57', v_max=350, sigma_max=300, HSTcentroid=False, rmbkgResidue=True)
 # MakeV50W80(cubename='PKS0552-640', v_max=300, sigma_max=300, contour_level_OII=0.3, contour_level_OIII=0.3,
 #            nums_seg_OII=[2, 7, 9, 14, 18], nums_seg_OIII=[12, 17])
 # MakeV50W80(cubename='J0110-1648', v_max=300, sigma_max=300, rmbkgResidue=True)

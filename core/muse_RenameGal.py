@@ -35,8 +35,7 @@ def ReturnGalLabel(sort_row=False, mode='final', return_HST=False, return_bins=F
     dec_final = dec_final[select_gal]
 
     # Getting photometry zero point
-    path_pho = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'Data', 'CGM', 'config', 'gal_all',
-                            'HE0238-1904_sex_gal_all.fits')
+    path_pho = '../../Data/CGM/config/gal_all/HE0238-1904_sex_gal_all.fits'
     data_pho = fits.getdata(path_pho, 1, ignore_missing_end=True)
     catalog = SkyCoord(data_pho['AlPHAWIN_J2000'], data_pho['DELTAWIN_J2000'], unit="deg")
     c = SkyCoord(ra_final, dec_final, unit="deg")
@@ -120,7 +119,7 @@ def ReturnGalLabel(sort_row=False, mode='final', return_HST=False, return_bins=F
     # print(row_final)
     # print(ID_sep_final)
     if mode == 'final':
-        filename = '/Users/lzq/Dropbox/Data/CGM/GalaxyInfo/gal_info_re.fits'
+        filename = '../../Dropbox/Data/CGM/GalaxyInfo/gal_info_re.fits'
         if os.path.isfile(filename) is not True:
             t = Table()
             t['ra'] = ra_final

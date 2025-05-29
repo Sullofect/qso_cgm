@@ -5,16 +5,16 @@ import astropy.io.fits as fits
 from matplotlib import rc
 from astropy.io import ascii
 from astropy.table import Table
-path_savefig = '/Users/lzq/Dropbox/Data/CGM_plots/'
-path_savetab = '/Users/lzq/Dropbox/Data/CGM_tables/'
+path_savefig = '../../Data/CGM_plots/'
+path_savetab = '../../Data/CGM_tables/'
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 
 
 def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='HE0238-1904'):
-    path_s = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D', cat_sean)
+    path_s = '../../redshifting/ESO_DEEP_offset_zapped_spec1D/{}'.format(cat_sean)
     data_s = fits.getdata(path_s, 1, ignore_missing_end=True)
-    path_w = os.path.join(os.sep, 'Users', 'lzq', 'Dropbox', 'redshifting', 'ESO_DEEP_offset_zapped_spec1D', cat_will)
+    path_w = '../../redshifting/ESO_DEEP_offset_zapped_spec1D/{}'.format(cat_will)
     data_w = fits.getdata(path_w, 1, ignore_missing_end=True)
 
     # Basic information in catalog
@@ -26,7 +26,7 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
     cl_s, cl_w = data_s['class'], data_w['class']
     z_s, z_w = data_s['redshift'], data_w['redshift']
     ct_s, ct_w = data_s['comment'], data_w['comment']
-    cl_s_num, cl_w_num = np.zeros_like(cl_s), np.zeros_like(cl_w)
+    cl_s_num, cl_w_num = np.zeros_like(ql_s), np.zeros_like(ql_w)
 
     # Array manipulation
     classes = ['galaxy', 'star', 'quasar', 'hizgal']
@@ -113,7 +113,7 @@ def compare_z(cat_sean=None, cat_will=None, z_qso=0.6282144177077355, name_qso='
     ra_ggp, dec_ggp = ra_qua[select_v], dec_qua[select_v]
     output = np.array([bins_ggp, row_ggp, ID_ggp, z_ggp, v_ggp, name_ggp, ql_ggp, ra_ggp, dec_ggp], dtype=object)
     #
-    filename = '/Users/lzq/Dropbox/Data/CGM/GalaxyInfo/gal_info.fits'
+    filename = '../../Data/CGM/GalaxyInfo/gal_info.fits'
     if os.path.isfile(filename) is not True:
         t = Table()
         t['row'] = row_ggp
