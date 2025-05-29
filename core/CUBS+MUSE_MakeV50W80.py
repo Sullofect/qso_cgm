@@ -231,8 +231,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     if cubename == 'PKS0552-640':
         path_SB_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}_plot.fits'. \
             format(cubename, str_zap, line_OIII, *UseSeg)
-        # path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
-        #     format(cubename, str_zap, line_OIII, *UseSeg)
+        path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
+            format(cubename, str_zap, line_OIII, *UseSeg)
     elif cubename == 'HE0226-4110':
         path_SB_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}_plot.fits'. \
             format(cubename, str_zap, line_OII, *UseSeg)
@@ -251,6 +251,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     path_OII_contour = path_SB_OII_kin
     SB_OII = fits.open(path_SB_OII)[1].data
     bkgrd_OII = np.where(seg_OII_mask == 0, SB_OII, np.nan)
+    np.random.seed(1)
     bkgrd_OII_random = np.random.choice(bkgrd_OII.flatten()[~np.isnan(bkgrd_OII.flatten())],
                                         bkgrd_OII.shape, replace=True).reshape(bkgrd_OII.shape)
     SB_OII = np.where(seg_OII_mask != -1, SB_OII, bkgrd_OII_random)
@@ -439,12 +440,12 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 # MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level_OII=0.5, contour_level_OIII=1.0)
 # MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg_OII=[12, 14, 15, 16, 17, 20],
 #            nums_seg_OIII=[5, 11, 16, 19], contour_level_OII=0.1, contour_level_OIII=0.1, rmbkgResidue=True, HSTcentroid=True)
-MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300, contour_level_OIII=0.5, nums_seg_OII=[5],
-           nums_seg_OIII=[15], HSTcentroid=True)
+# MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300, contour_level_OIII=0.5, nums_seg_OII=[5],
+#            nums_seg_OIII=[15], HSTcentroid=True)
 # MakeV50W80(cubename='HE0238-1904', v_max=300, sigma_max=300, HSTcentroid=True, rmbkgResidue=False)
 # MakeV50W80(cubename='3C57', v_max=350, sigma_max=300, HSTcentroid=False, rmbkgResidue=True)
-# MakeV50W80(cubename='PKS0552-640', v_max=300, sigma_max=300, contour_level_OII=0.3, contour_level_OIII=0.3,
-#            nums_seg_OII=[2, 7, 9, 14, 18], nums_seg_OIII=[12, 17])
+MakeV50W80(cubename='PKS0552-640', v_max=300, sigma_max=300, contour_level_OII=0.2, contour_level_OIII=0.2,
+           nums_seg_OII=[2, 6, 7, 9, 10, 14, 18], nums_seg_OIII=[7, 9, 12, 19, 20], rmbkgResidue=True)
 # MakeV50W80(cubename='J0110-1648', v_max=300, sigma_max=300, rmbkgResidue=True)
 # MakeV50W80(cubename='J0454-6116', v_max=500, sigma_max=400, nums_seg_OII=[2, 6, 8, 13, 17, 18],
 #            nums_seg_OIII=[2, 9, 10, 18])

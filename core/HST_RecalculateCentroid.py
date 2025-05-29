@@ -160,9 +160,6 @@ def CentroidHE0238(cubename='HE0238-1904'):
         t.write(filename, format='fits', overwrite=True)
         t.write(filename_txt, format='ascii.fixed_width', overwrite=True)
 
-
-
-
 # Remove cosmic rays
 # RemoveCosmicRays(cubename='HE0435-5304')
 # RemoveCosmicRays(cubename='HE0153-4520')
@@ -171,20 +168,17 @@ def CentroidHE0238(cubename='HE0238-1904'):
 # RemoveCosmicRays(cubename='HE0226-4110')
 # RemoveCosmicRays(cubename='LBQS1435-0134')
 
-
-
-
 # RecalculateCentroid(cubename='HE0435-5304', WhichHST='nocr', thr_hst=0.9) # Done, check emi/abs done 1. both 2. emi
 # RecalculateCentroid(cubename='HE0153-4520') # no group member, check emi/abs done
 # RecalculateCentroid(cubename='HE0226-4110', deblend_hst=True, thr_hst=0.9) # check emi/abs done
-RecalculateCentroid(cubename='PKS0405-123', deblend_hst=True, thr_hst=0.1) # check emi/abs done
+# RecalculateCentroid(cubename='PKS0405-123', deblend_hst=True, thr_hst=0.1) # check emi/abs done
 # CentroidHE0238()
 # RecalculateCentroid(cubename='HE0238-1904', deblend_hst=True, thr_hst=0.9) # check emi/abs done
 # RecalculateCentroid(cubename='3C57', deblend_hst=True, thr_hst=1.5)# check emi/abs done
 
+RecalculateCentroid(cubename='PKS0552-640', deblend_hst=True, thr_hst=1.5)
 # RecalculateCentroid(cubename='PKS0232-04', deblend_hst=True, thr_hst=1.5) # MUSE centroid is better
 # RecalculateCentroid(cubename='Q1354+048', deblend_hst=True, thr_hst=1.5)
-# RecalculateCentroid(cubename='PKS0552-640')  # not done
 # MakeFieldImage(cubename='Q0107-0235')
 # MakeFieldImage(cubename='PB6291')
 # MakeFieldImage(cubename='HE0153-4520')
