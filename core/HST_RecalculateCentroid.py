@@ -174,18 +174,15 @@ def CentroidHE0238(cubename='HE0238-1904'):
 # RecalculateCentroid(cubename='PKS0405-123', deblend_hst=True, thr_hst=0.1) # check emi/abs done
 # CentroidHE0238()
 # RecalculateCentroid(cubename='HE0238-1904', deblend_hst=True, thr_hst=0.9) # check emi/abs done
-# RecalculateCentroid(cubename='3C57', deblend_hst=True, thr_hst=1.5)# check emi/abs done
+# RecalculateCentroid(cubename='3C57', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='PKS0552-640', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='PB6291', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='Q0107-0235', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='HE0439-5254', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='HE1003+0149', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='TEX0206-048', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='Q1354+048', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+RecalculateCentroid(cubename='LBQS1435-0134', deblend_hst=True, thr_hst=1.5) # check emi/abs done
 
-RecalculateCentroid(cubename='PKS0552-640', deblend_hst=True, thr_hst=1.5)
-# RecalculateCentroid(cubename='PKS0232-04', deblend_hst=True, thr_hst=1.5) # MUSE centroid is better
-# RecalculateCentroid(cubename='Q1354+048', deblend_hst=True, thr_hst=1.5)
-# MakeFieldImage(cubename='Q0107-0235')
-# MakeFieldImage(cubename='PB6291')
-# MakeFieldImage(cubename='HE0153-4520')
-# MakeFieldImage(cubename='TEX0206-048')
-# MakeFieldImage(cubename='PKS0232-04')
-# MakeFieldImage(cubename='HE0439-5254')
-# MakeFieldImage(cubename='LBQS1435-0134')
-# MakeFieldImage(cubename='PG1522+101')
-# MakeFieldImage(cubename='HE1003+0149')
-# MakeFieldImage(cubename='HE0238-1904')
+# RecalculateCentroid(cubename='PG1522+101', deblend_hst=True, thr_hst=1.5)
+# RecalculateCentroid(cubename='PKS0232-04', deblend_hst=True, thr_hst=1.5)
