@@ -182,7 +182,6 @@ def CentroidHE0238(cubename='HE0238-1904'):
 # RecalculateCentroid(cubename='HE1003+0149', deblend_hst=True, thr_hst=1.5) # check emi/abs done
 # RecalculateCentroid(cubename='TEX0206-048', deblend_hst=True, thr_hst=1.5) # check emi/abs done
 # RecalculateCentroid(cubename='Q1354+048', deblend_hst=True, thr_hst=1.5) # check emi/abs done
-RecalculateCentroid(cubename='LBQS1435-0134', deblend_hst=True, thr_hst=1.5) # check emi/abs done
-
-# RecalculateCentroid(cubename='PG1522+101', deblend_hst=True, thr_hst=1.5)
-# RecalculateCentroid(cubename='PKS0232-04', deblend_hst=True, thr_hst=1.5)
+# RecalculateCentroid(cubename='LBQS1435-0134', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='PG1522+101', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='PKS0232-04', deblend_hst=True, thr_hst=1.5) # check emi/abs done

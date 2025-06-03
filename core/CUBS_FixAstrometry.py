@@ -115,11 +115,6 @@ def FixGalaxyCatalog(cubename=None):
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
     c_kms = 2.998e5
 
-    path_muse = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac.fits'.format(cubename)
-    # Q0119 - 2010
-    # _COMBINED_CUBE_MED_FINAL_vac.fits
-
-
     try:
         name_1, name_2 = cubename.split('-')
     except ValueError:
@@ -142,31 +137,85 @@ def FixGalaxyCatalog(cubename=None):
     elif name_1 == 'HE2336':
         name_1 = 'J2339'
 
+    # Name changes
+    if cubename == 'J0110-1648':
+        cubename_load = 'Q0110-1648'
+    elif cubename == 'J2135-5316':
+        cubename_load = 'Q2135-5316'
+    elif cubename == 'J0119-2010':
+        cubename_load = 'Q0119-2010'
+    elif cubename == 'HE0246-4101':
+        cubename_load = 'Q0248-4048'
+    elif cubename == 'J0028-3305':
+        cubename_load = 'Q0028-3305'
+    elif cubename == 'HE0419-5657':
+        cubename_load = 'Q0420-5650'
+    elif cubename == 'PKS2242-498':
+        cubename_load = 'Q2245-4931'
+    elif cubename == 'PKS0355-483':
+        cubename_load = 'Q0357-4812'
+    elif cubename == 'HE0112-4145':
+        cubename_load = 'Q0114-4129'
+    elif cubename == 'J0111-0316':
+        cubename_load = 'Q0111-0316'
+    elif cubename == 'HE2336-5540':
+        cubename_load = 'Q2339-5523'
+    elif cubename == 'HE2305-5315':
+        cubename_load = 'Q2308-5258'
+    elif cubename == 'J0454-6116':
+        cubename_load = 'Q0454-6116'
+    elif cubename == 'HE0331-4112':
+        cubename_load = 'Q0333-4102'
+    elif cubename == 'J0154-0712':
+        cubename_load = 'Q0154-0712'
+
     path_group = '../../MUSEQuBES+CUBS/group/{}_group.txt'.format(name_1)
     data_group = ascii.read(path_group)
-    ra, dec, z = data_group['col2'], data_group['col3'], data_group['col4']
+    ra, dec, z, path = data_group['col2'], data_group['col3'], data_group['col4'], data_group['col5']
     v = c_kms * (z - z_qso) / (1 + z_qso)
 
+    row_array, ID_array, name_array = [], [], []
+    for path_i in path:
+        last = path_i.split('/')[-1]
+        row, ID, name = int(last.split('_')[0]), int(last.split('_')[1]), last.split('_')[2]
+        row_array.append(row)
+        ID_array.append(ID)
+        name_array.append(name)
+
+    # Load MUSE white header
+    if cubename_load == 'Q2135-5316':
+        path_muse_white_ori = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_FINAL_vac_WHITE.fits'.format(
+            cubename_load)
+    else:
+        path_muse_white_ori = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac_WHITE.fits'.format(cubename_load)
+    path_muse_white_gaia = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac_WHITE_gaia.fits'.format(cubename)
+    c = SkyCoord(ra=ra * u.deg, dec=dec * u.deg, frame='icrs')
+    w = WCS(fits.open(path_muse_white_ori)[1].header, naxis=2)
+    w_gaia = WCS(fits.open(path_muse_white_gaia)[1].header, naxis=2)
+    x, y = w.world_to_pixel(c)
+    c_gaia = w_gaia.pixel_to_world(x, y)
+
     filename = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
-    # if os.path.isfile(filename) is not True:
-    t = Table()
-    # t['row'] = row_ggp
-    t['ra'] = ra
-    t['dec'] = dec
-    # t['ID'] = ID_ggp
-    t['z'] = z
-    t['v'] = v
-    # t['name'] = name_ggp
-    # t['ql'] = ql_ggp
-    t.write(filename, format='fits', overwrite=True)
+    filename_txt = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.dat'.format(cubename)
 
-
-
-
-
-
-    # if cubename == 'HE0238-1904':
-    #     path_group = ''
+    # Rewrite the .fits file to keep it consistent
+    if os.path.exists(filename_txt):
+        t = Table.read(filename_txt, format='ascii.fixed_width')
+        t.write(filename, format='fits', overwrite=True)
+    else:
+        t = Table()
+        t['row'] = row_array
+        t['ID'] = ID_array
+        t['z'] = z
+        t['v'] = v
+        t['name'] = name_array
+        t['ql'] = np.zeros(len(name_array), dtype=int)
+        t['ra'] = ra
+        t['dec'] = dec
+        t['ra_cor'] = c_gaia.ra
+        t['dec_cor'] = c_gaia.dec
+        t.write(filename, format='fits', overwrite=True)
+        t.write(filename_txt, format='ascii.fixed_width', overwrite=True)
 
 
 def FixAstrometrySeb(cubename):
@@ -364,7 +413,7 @@ def GenerateF814WImage(cubename):
 # FixGalaxyCatalog(cubename='J0119-2010')
 # FixGalaxyCatalog(cubename='HE0246-4101')
 # FixGalaxyCatalog(cubename='J0028-3305')
-# FixGalaxyCatalog(cubename='HE0419-5657')
+FixGalaxyCatalog(cubename='HE0419-5657')
 # FixGalaxyCatalog(cubename='PKS2242-498')
 # FixGalaxyCatalog(cubename='PKS0355-483')
 # FixGalaxyCatalog(cubename='HE0112-4145')
@@ -393,18 +442,18 @@ def GenerateF814WImage(cubename):
 # FixAstrometrySeb(cubename='HE0331-4112')
 
 # Generate i-band image
-GenerateF814WImage(cubename='J0110-1648')
-GenerateF814WImage(cubename='J2135-5316')
-GenerateF814WImage(cubename='J0119-2010')
-GenerateF814WImage(cubename='HE0246-4101')
-GenerateF814WImage(cubename='J0028-3305')
-GenerateF814WImage(cubename='HE0419-5657')
-GenerateF814WImage(cubename='PKS2242-498')
-GenerateF814WImage(cubename='PKS0355-483')
-GenerateF814WImage(cubename='HE0112-4145')
-GenerateF814WImage(cubename='J0111-0316')
-GenerateF814WImage(cubename='HE2336-5540')
-GenerateF814WImage(cubename='HE2305-5315')
-GenerateF814WImage(cubename='J0454-6116')
-GenerateF814WImage(cubename='J0154-0712')
-GenerateF814WImage(cubename='HE0331-4112')
+# GenerateF814WImage(cubename='J0110-1648')
+# GenerateF814WImage(cubename='J2135-5316')
+# GenerateF814WImage(cubename='J0119-2010')
+# GenerateF814WImage(cubename='HE0246-4101')
+# GenerateF814WImage(cubename='J0028-3305')
+# GenerateF814WImage(cubename='HE0419-5657')
+# GenerateF814WImage(cubename='PKS2242-498')
+# GenerateF814WImage(cubename='PKS0355-483')
+# GenerateF814WImage(cubename='HE0112-4145')
+# GenerateF814WImage(cubename='J0111-0316')
+# GenerateF814WImage(cubename='HE2336-5540')
+# GenerateF814WImage(cubename='HE2305-5315')
+# GenerateF814WImage(cubename='J0454-6116')
+# GenerateF814WImage(cubename='J0154-0712')
+# GenerateF814WImage(cubename='HE0331-4112')

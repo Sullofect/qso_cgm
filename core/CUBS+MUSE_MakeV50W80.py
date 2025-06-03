@@ -147,7 +147,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
         if HSTcentroid:
             ra_gal, dec_gal, type = data_gal['ra_HST'], data_gal['dec_HST'], data_gal['type']
         else:
-            ra_gal, dec_gal, type = data_gal['ra'], data_gal['dec'], data_gal['type']
+            ra_gal, dec_gal, type = data_gal['ra_cor'], data_gal['dec_cor'], data_gal['type']
     except FileNotFoundError:
         print('No galaxies info')
         ra_gal, dec_gal, v_gal, ra_hst, dec_hst = [], [], [], [], []
@@ -457,7 +457,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 #            rmbkgResidue=True)  # Double component
 # MakeV50W80(cubename='HE0246-4101', v_max=300, sigma_max=300)
 # MakeV50W80(cubename='J0028-3305', v_max=300, sigma_max=300, contour_level_OII=0.3)
-# MakeV50W80(cubename='HE0419-5657', v_max=400, sigma_max=300, nums_seg_OII=[1], rmbkgResidue=True)
+MakeV50W80(cubename='HE0419-5657', v_max=400, sigma_max=300, nums_seg_OII=[1], rmbkgResidue=True)
 # MakeV50W80(cubename='PB6291', v_max=400, sigma_max=300, nums_seg_OII=[3, 5], HSTcentroid=True)
 # MakeV50W80(cubename='Q0107-0235', v_max=400, sigma_max=300, nums_seg_OII=[7], rmbkgResidue=True, HSTcentroid=True)
 # MakeV50W80(cubename='PKS2242-498', v_max=400, sigma_max=300, contour_level_OII=0.3)
@@ -473,7 +473,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 #                                       60, 79, 81, 101, 107, 108, 114, 118, 317, 547, 552]), HSTcentroid=True) # SNR=20
 # MakeV50W80(cubename='Q1354+048', v_max=400, sigma_max=300, rmbkgResidue=True, HSTcentroid=True)
 # MakeV50W80(cubename='J0154-0712', v_max=300, sigma_max=300)
-MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400, HSTcentroid=True)
+# MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400, HSTcentroid=True)
 # MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300, nums_seg_OII=[6, 12], HSTcentroid=True)
 # MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300, nums_seg_OII=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 # MakeV50W80(cubename='PKS0232-04', v_max=400, sigma_max=300, nums_seg_OII=[4, 5, 7], HSTcentroid=True)
