@@ -420,8 +420,8 @@ def GenerateF814WImage(cubename):
 # FixGalaxyCatalog(cubename='J0111-0316')
 # FixGalaxyCatalog(cubename='HE2336-5540')
 # FixGalaxyCatalog(cubename='HE2305-5315')
-FixGalaxyCatalog(cubename='J0454-6116')
-# FixGalaxyCatalog(cubename='J0154-0712')
+# FixGalaxyCatalog(cubename='J0454-6116')
+FixGalaxyCatalog(cubename='J0154-0712')
 # FixGalaxyCatalog(cubename='HE0331-4112')
 
 # Fix Seb+Mandy white light image
