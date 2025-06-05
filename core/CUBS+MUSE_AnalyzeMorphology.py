@@ -58,6 +58,17 @@ def CalculateAsymmetry(image=None, mask=None, center=None, sky_asymmetry=None, t
     elif type == 'standard':
         return (ap_abs_diff - np.nansum(mask) * sky_asymmetry) / ap_abs_sum
 
+def gini(image, segmap):
+    image = image.flatten()
+    segmap = np.asarray(segmap.flatten(), dtype=bool)
+    sorted_pixelvals = np.sort(np.abs(image[segmap]))
+    n = len(sorted_pixelvals)
+    indices = np.arange(1, n+1)  # start at i=1
+    gini = (np.sum((2*indices-n-1) * sorted_pixelvals) /
+            (float(n-1) * np.sum(sorted_pixelvals)))
+    return gini
+
+
 def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_seg_OII=False, select_seg_OIII=False):
     # QSO information
     path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
@@ -88,10 +99,10 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
 
     # Special cases due to sky line
     if cubename == 'PKS0552-640':
-        path_SB_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}_plot.fits'. \
-            format(cubename, str_zap, line_OIII, *UseSeg)
-        # path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
+        # path_SB_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_SB_3DSeg_{}_{}_{}_{}_plot.fits'. \
         #     format(cubename, str_zap, line_OIII, *UseSeg)
+        path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
+            format(cubename, str_zap, line_OIII, *UseSeg)
     elif cubename == 'HE0226-4110':
         path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
             format(cubename, str_zap, line_OII, *UseSeg)
@@ -165,6 +176,13 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     print('A_outer =', morph.outer_asymmetry)
     print('A_shape=', morph.shape_asymmetry)
 
+    # Gini map
+    gini_index = gini(morph._cutout_stamp_maskzeroed_no_bg, seg_OII_cutout)
+    print('Gini index is', gini_index)
+    plt.figure()
+    plt.imshow(seg_OII_cutout, origin='lower', cmap='gray')
+    plt.show()
+    raise ValueError('Check the Gini index calculation')
 
     # Save the asymmetry values
     path_OII_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_OII_asymmetry.txt'
@@ -475,7 +493,7 @@ def AnalyzeLyaMorphology(cubename=None):
 
 
 # CUBS+MUSE
-# AnalyzeMorphology(cubename='HE0435-5304', nums_seg_OII=[1], nums_seg_OIII=[1])
+AnalyzeMorphology(cubename='HE0435-5304', nums_seg_OII=[1], nums_seg_OIII=[1])
 # AnalyzeMorphology(cubename='HE0153-4520')
 # AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
 #                   nums_seg_OIII=[1, 5, 6, 8, 9, 10, 11, 16, 19])
