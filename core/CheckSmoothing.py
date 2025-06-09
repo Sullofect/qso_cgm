@@ -20,6 +20,27 @@ rc('ytick', direction='in')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 
+# Path to Lyalpha data
+object = 'CUBE_PSFSubMask_80_CSub_180_3_Lya_Sel592_828'
+path_Lya = '../../MUSEQuBES+CUBS/SB_Lya/Cubes/{}.fits'.format(object)
+path_Lya_seg = '../../MUSEQuBES+CUBS/SB_Lya/Cubes/{}.Objects_Id1.fits'.format(object)
+
+path_seg = '../../MUSEQuBES+CUBS/SB_Lya/Maps_smoothed_gsm1/{}_mask.fits'.format('J133254+005250')
+seg = fits.open(path_seg)[0].data
+
+kernel = Gaussian2DKernel(x_stddev=1, y_stddev=1.0)
+cube_Lya = fits.open(path_Lya)[0].data
+cube_Lya_seg = fits.open(path_Lya_seg)[0].data
+cube_Lya = convolve(cube_Lya, kernel.array[np.newaxis, :, :])
+SB_Lya = np.nansum(np.where(cube_Lya_seg, cube_Lya, np.nan), axis=0) * 1.25 / 0.2 / 0.2 * 1e-3
+
+
+plt.figure()
+plt.imshow(seg - np.nansum(cube_Lya_seg, axis=0), origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=1)
+plt.show()
+raise ValueError('Check smoothing of Lyalpha nebulae')
+
+
 # QSO information
 # path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
 # data_qso = ascii.read(path_qso, format='fixed_width')
