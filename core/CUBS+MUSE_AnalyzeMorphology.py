@@ -476,27 +476,28 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
                            xyZ_Lya['z'][xyZ_Lya['QSO'] == cubename][0]
     c2 = np.array([x, y])
 
-    path_SB_Lya = '../../MUSEQuBES+CUBS/SB_Lya/Maps_unsmoothed_gsm0/{}.fits'.format(cubename)
+    # path_SB_Lya = '../../MUSEQuBES+CUBS/SB_Lya/Maps_unsmoothed_gsm0/{}.fits'.format(cubename)
     # path_SB_Lya_smoothed = '../../MUSEQuBES+CUBS/SB_Lya/Maps_smoothed_gsm1/{}.fits'.format(cubename)
     path_seg_Lya = '../../MUSEQuBES+CUBS/SB_Lya/Maps_smoothed_gsm1/{}_mask.fits'.format(cubename)
     path_cube_Lya = '../../MUSEQuBES+CUBS/SB_Lya/cubes/{}.fits'.format(cube_Lya_name)
     path_seg_Lya_3D = '../../MUSEQuBES+CUBS/SB_Lya/cubes/{}.Objects_Id1.fits'.format(cube_Lya_name)
     path_savefig_Lya_morph = '../../MUSEQuBES+CUBS/plots/{}_{}_morph.png'.format(cubename, 'Lya')
 
-    # Analyze asymetry and kinematics
-    SB_Lya = fits.open(path_SB_Lya)[0].data * 1e-1 # convert the unit to 1e-17 erg/s/cm^2/arcsec^2
+    # Analyze asymmetry and Gini index
+    # SB_Lya = fits.open(path_SB_Lya)[0].data * 1e-1 # convert the unit to 1e-17 erg/s/cm^2/arcsec^2
     # SB_Lya_smoothed = fits.open(path_SB_Lya_smoothed)[0].data
     seg_Lya = fits.open(path_seg_Lya)[0].data
     cube_Lya = fits.open(path_cube_Lya)[0].data
     cube_Lya_seg = fits.open(path_seg_Lya_3D)[0].data
+    SB_Lya = np.nansum(np.where(cube_Lya_seg, cube_Lya, np.nan), axis=0) * 1.25 / 0.2 / 0.2 * 1e-3
 
     # Match the physical resolution
-    size_max = 10.0  # kpc
+    size_max = 7.3  # kpc
     smooth_std = size_max / (cosmo.angular_diameter_distance(z_qso).value * 1e3) * 206265 / 0.2 / 2.3548  # to pixel
     smooth_std = np.round(smooth_std, 1)  # round to 2 decimal places
     kernel = Gaussian2DKernel(x_stddev=smooth_std, y_stddev=smooth_std)
     kernel_1 = Kernel(kernel.array[np.newaxis, :, :])
-    # cube_Lya = convolve(cube_Lya, kernel_1)
+    cube_Lya = convolve(cube_Lya, kernel_1)
     SB_Lya_smoothed = np.nansum(np.where(cube_Lya_seg, cube_Lya, np.nan), axis=0) * 1.25 / 0.2 / 0.2 * 1e-3
 
     # Mask the centroid
@@ -510,9 +511,10 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
     SB_Lya_smoothed = np.where(center_mask, SB_Lya_smoothed, np.nan)
     seg_Lya = np.where(seg_Lya == 0, seg_Lya, 1)
     seg_Lya = np.where(center_mask, seg_Lya, 0)
+    # SB_Lya = np.where(seg_Lya, SB_Lya, np.nan)
+    # SB_Lya_smoothed = np.where(seg_Lya, SB_Lya_smoothed, np.nan)
 
     # PSF and gain do not matter for asymmetry
-    # kernel = Gaussian2DKernel(x_stddev=1.5, y_stddev=1.5)
     kernel.normalize()
     psf = kernel.array
 
@@ -545,17 +547,16 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
     # print('A_shape=', morph.shape_asymmetry)
 
     # Gini map
-    fig, ax = plt.subplots(1, 2, figsize=(8, 4))
-    ax[0].imshow(SB_Lya_smoothed, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=1)
-    ax[1].imshow(morph._cutout_stamp_maskzeroed_no_bg, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=1)
-    plt.show()
-    SB_Lya = np.where(seg_Lya, SB_Lya, np.nan)
-    # raise ValueError('testing')
+    # fig, ax = plt.subplots(1, 2, figsize=(8, 4))
+    # ax[0].imshow(SB_Lya_smoothed, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=1)
+    # ax[1].imshow(morph._cutout_stamp_maskzeroed_no_bg, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=1)
+    # plt.show()
+    # # raise ValueError('testing')
     Gini = ComputeGini(morph._cutout_stamp_maskzeroed_no_bg, seg_Lya_cutout)
-    Gini_smoothed = ComputeGini(SB_Lya, seg_Lya)
+    Gini_smoothed = ComputeGini(SB_Lya_smoothed, seg_Lya)
     print('Lya Gini index is', Gini)
     print('lya Gini index smoothed is', Gini_smoothed)
-    raise ValueError('testing')
+    # raise ValueError('testing')
 
     # Save the asymmetry values
     path_Lya_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_Lya_asymmetry.txt'
