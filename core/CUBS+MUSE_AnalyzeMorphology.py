@@ -58,7 +58,8 @@ def CalculateAsymmetry(image=None, mask=None, center=None, sky_asymmetry=None, t
 def ComputeGini(image, segmap):
     image = image.flatten()
     segmap = np.asarray(segmap.flatten(), dtype=bool)
-    sorted_pixelvals = np.sort(np.abs(image[segmap]))
+    sorted_pixelvals = np.sort(np.abs(image[segmap])) # note the absolute value
+    # sorted_pixelvals = np.sort(image[segmap])
     n = len(sorted_pixelvals)
     indices = np.arange(1, n+1)  # start at i=1
     gini = (np.sum((2*indices-n-1) * sorted_pixelvals) /
@@ -130,8 +131,6 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     # Analyze asymmetry and kinematics
     seg_OII_3D, seg_OII = fits.open(path_3Dseg_OII)[0].data, fits.open(path_3Dseg_OII)[1].data
     SB_OII = fits.open(path_SB_OII_kin)[1].data
-    # SB_OII_smoothed = np.nansum(np.where(fits.open(path_3Dseg_OII)[0].data != 0,
-    #                                      fits.open(path_cube_OII)[1].data, np.nan), axis=0) * 1.25 / 0.2 / 0.2 * 1e-3
     SB_OII_smoothed = np.nansum(np.where(seg_OII_3D != 0, flux_OII, np.nan), axis=0)
     seg_OII_3D = np.where(seg_OII[np.newaxis, :, :] == 1, seg_OII_3D, 0)
     idx = np.argmax(np.sum(seg_OII_3D, axis=(1, 2)), axis=0)
@@ -171,10 +170,6 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     #                                     bkgrd_OII_smoothed.shape, replace=True).reshape(bkgrd_OII_smoothed.shape)
     # SB_OII_smoothed = np.where(seg_OII_mask != -1, SB_OII_smoothed, bkgrd_OII_smoothed_random)
 
-    # PSF and gain do not matter for asymmetry
-    # kernel = Gaussian2DKernel(x_stddev=1.5, y_stddev=1.5)
-    kernel.normalize()
-    psf = kernel.array
 
     # Test with a circular region at the center and away from center, A_circular = 0, A_side = 2
     # circle = CirclePixelRegion(center=PixCoord(x=c2[0], y=c2[1]), radius=20)
@@ -186,13 +181,10 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     # SB_OII = np.where(center_mask, SB_OII, 3)
     # seg_OII = np.where(center_mask, seg_OII, 1)
 
-    source_morphs = source_morphology(SB_OII, seg_OII, mask=np.isnan(SB_OII),gain=1e5, psf=psf,
+    # PSF and gain do not matter for asymmetry
+    source_morphs = source_morphology(SB_OII, seg_OII, mask=np.isnan(SB_OII),gain=1e5, psf=kernel.array,
                                       x_qso=c2[0], y_qso=c2[1], annulus_width=2.5, skybox_size=32, petro_extent_cas=1.5)
     morph = source_morphs[0]
-    # source_morphs = source_morphology(SB_OII_smoothed, seg_OII, mask=np.isnan(SB_OII_smoothed),gain=1e5, psf=psf,
-    #                                   x_qso=c2[0], y_qso=c2[1], annulus_width=2.5, skybox_size=32, petro_extent_cas=1.5)
-    # morph_smoothed = source_morphs[0]
-
     A_ZQL = CalculateAsymmetry(image=morph._segmap_shape_asym, mask=morph._mask_stamp,
                                center=morph._asymmetry_center, type='shape')
     A_ZQL_2 = CalculateAsymmetry(image=morph._cutout_stamp_maskzeroed_no_bg, mask=morph._mask_stamp,
@@ -278,7 +270,7 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
         # SB_OIII = np.where(seg_OIII_mask != -1, SB_OIII, bkgrd_OIII_random)
 
         c3 = w.world_to_pixel(center_qso)  # Sometimes the center is changed after running source_morphology
-        source_morphs = source_morphology(SB_OIII, seg_OIII, mask=np.isnan(SB_OIII), gain=1e5, psf=psf,
+        source_morphs = source_morphology(SB_OIII, seg_OIII, mask=np.isnan(SB_OIII), gain=1e5, psf=kernel.array,
                                           x_qso=c3[0], y_qso=c3[1], annulus_width=2.5, skybox_size=32,
                                           petro_extent_cas=1.5)
         morph = source_morphs[0]
@@ -489,6 +481,14 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
     seg_Lya = fits.open(path_seg_Lya)[0].data
     cube_Lya = fits.open(path_cube_Lya)[0].data
     cube_Lya_seg = fits.open(path_seg_Lya_3D)[0].data
+
+    # Connect the segmentation
+    # any_true = cube_Lya_seg.any(axis=0)
+    # z_indices = np.arange(cube_Lya_seg.shape[0])[:, None, None]
+    # zmin = np.where(any_true, np.argmax(cube_Lya_seg, axis=0), -1)
+    # zmax = np.where(any_true, cube_Lya_seg.shape[0] - 1 - np.argmax(cube_Lya_seg[::-1], axis=0), -1)
+    # cube_Lya_seg = np.where((z_indices < zmin[np.newaxis, :, :])
+    #                         | (z_indices > zmax[np.newaxis, :, :]), cube_Lya_seg, 1)
     SB_Lya = np.nansum(np.where(cube_Lya_seg, cube_Lya, np.nan), axis=0) * 1.25 / 0.2 / 0.2 * 1e-3
 
     # Match the physical resolution
@@ -511,14 +511,9 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
     SB_Lya_smoothed = np.where(center_mask, SB_Lya_smoothed, np.nan)
     seg_Lya = np.where(seg_Lya == 0, seg_Lya, 1)
     seg_Lya = np.where(center_mask, seg_Lya, 0)
-    # SB_Lya = np.where(seg_Lya, SB_Lya, np.nan)
-    # SB_Lya_smoothed = np.where(seg_Lya, SB_Lya_smoothed, np.nan)
 
     # PSF and gain do not matter for asymmetry
-    kernel.normalize()
-    psf = kernel.array
-
-    source_morphs = source_morphology(SB_Lya, seg_Lya, mask=np.isnan(SB_Lya), gain=1e5, psf=psf,
+    source_morphs = source_morphology(SB_Lya, seg_Lya, mask=np.isnan(SB_Lya), gain=1e5, psf=kernel.array,
                                       x_qso=c2[0], y_qso=c2[1], annulus_width=2.5, skybox_size=32, petro_extent_cas=1.5)
     morph = source_morphs[0]
 
@@ -547,16 +542,10 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
     # print('A_shape=', morph.shape_asymmetry)
 
     # Gini map
-    # fig, ax = plt.subplots(1, 2, figsize=(8, 4))
-    # ax[0].imshow(SB_Lya_smoothed, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=1)
-    # ax[1].imshow(morph._cutout_stamp_maskzeroed_no_bg, origin='lower', cmap='gist_heat_r', vmin=-0.05, vmax=1)
-    # plt.show()
-    # # raise ValueError('testing')
     Gini = ComputeGini(morph._cutout_stamp_maskzeroed_no_bg, seg_Lya_cutout)
     Gini_smoothed = ComputeGini(SB_Lya_smoothed, seg_Lya)
     print('Lya Gini index is', Gini)
     print('lya Gini index smoothed is', Gini_smoothed)
-    # raise ValueError('testing')
 
     # Save the asymmetry values
     path_Lya_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_Lya_asymmetry.txt'
@@ -702,18 +691,18 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
 
 # Lyalpha
 AnalyzeLyaMorphology(cubename="J124957-015928")
-AnalyzeLyaMorphology(cubename="J133254+005250")
-AnalyzeLyaMorphology(cubename="J205344-354652")
-AnalyzeLyaMorphology(cubename="J221527-161133")
-AnalyzeLyaMorphology(cubename="J230301-093930")
-AnalyzeLyaMorphology(cubename="J012403+004432")
-AnalyzeLyaMorphology(cubename="J013724-422417")
-AnalyzeLyaMorphology(cubename="J015741-010629")
-AnalyzeLyaMorphology(cubename="J020944+051713")
-AnalyzeLyaMorphology(cubename="J024401-013403")
-AnalyzeLyaMorphology(cubename="J033900-013318")
-AnalyzeLyaMorphology(cubename="J111008+024458")
-AnalyzeLyaMorphology(cubename="J111113-080401")
-AnalyzeLyaMorphology(cubename="J123055-113909")
+# AnalyzeLyaMorphology(cubename="J133254+005250")
+# AnalyzeLyaMorphology(cubename="J205344-354652")
+# AnalyzeLyaMorphology(cubename="J221527-161133")
+# AnalyzeLyaMorphology(cubename="J230301-093930")
+# AnalyzeLyaMorphology(cubename="J012403+004432")
+# AnalyzeLyaMorphology(cubename="J013724-422417")
+# AnalyzeLyaMorphology(cubename="J015741-010629")
+# AnalyzeLyaMorphology(cubename="J020944+051713")
+# AnalyzeLyaMorphology(cubename="J024401-013403")
+# AnalyzeLyaMorphology(cubename="J033900-013318")
+# AnalyzeLyaMorphology(cubename="J111008+024458")
+# AnalyzeLyaMorphology(cubename="J111113-080401")
+# AnalyzeLyaMorphology(cubename="J123055-113909")
 
 
