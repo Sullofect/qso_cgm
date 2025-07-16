@@ -31,14 +31,17 @@ rc('ytick', direction='in', labelsize=25, right='on')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 
+
+
 class PlotV50W80Profile:
-    def __init__(self, cubename_list=None, width_list=None, height_list=None, angle_list=None, marker_list=None):
+    def __init__(self, cubename_list=None, cubename_label_list=None, width_list=None, height_list=None,
+                 angle_list=None, marker_list=None):
         self.cubename_list = cubename_list
+        self.cubename_label_list = cubename_label_list
         self.width_list = width_list
         self.height_list = height_list
         self.angle_list = angle_list
         self.marker_list = marker_list
-
 
     def Plot(self):
         # Giant plot
@@ -69,8 +72,11 @@ class PlotV50W80Profile:
         # fig.savefig('../../MUSEQuBES+CUBS/fit_kin/CUBS+MUSE_velocity_profile.png', bbox_inches='tight')
 
         # Create main figure
-        fig = plt.figure(figsize=(15, 10), dpi=300)
-        outer_grid = gridspec.GridSpec(2, 3, figure=fig, wspace=0.01, hspace=0.01)
+        fig = plt.figure(figsize=(20, 15), dpi=300)
+        outer_grid = gridspec.GridSpec(3, 4, figure=fig, wspace=0.01, hspace=0.01)
+
+        # Get the ETG kinematics
+        self.LoadETGKin()
 
         # Flatten the 2×3 grid into a 1D list
         for i, outer in enumerate(outer_grid):
@@ -81,36 +87,50 @@ class PlotV50W80Profile:
             ax_top = fig.add_subplot(inner_grid[0])
             ax_bottom = fig.add_subplot(inner_grid[1], sharex=ax_top)
 
-            self.PlaceSudoSlit(cubename=self.cubename_list[i], angle=self.angle_list[i], width=self.width_list[i],
-                               height=self.height_list[i])
-
-            ax_top.scatter(self.d5080_red, self.v50_red_mean, s=20, marker=self.marker_list[0],
-                           edgecolors='k', linewidths=0.5, color='red')
-            ax_top.scatter(self.d5080_blue, self.v50_blue_mean, s=20, marker=self.marker_list[0],
-                           edgecolors='k', linewidths=0.5, color='blue')
-            ax_bottom.scatter(self.d5080_red, self.w80_red_mean, s=20, marker=self.marker_list[0],
-                              edgecolors='k', linewidths=0.5, color='red')
-            ax_bottom.scatter(self.d5080_blue, self.w80_blue_mean, s=20, marker=self.marker_list[0],
-                              edgecolors='k', linewidths=0.5, color='blue')
-
+            # Plot 21cm overlay
+            ax_top.plot(self.dis_red_gal_mean, self.v_red_gal_mean, '-', color='C1', alpha=0.8, lw=2, zorder=-100)
+            ax_top.plot(self.dis_blue_gal_mean, self.v_blue_gal_mean, '-', color='C1', alpha=0.8, lw=2, zorder=-100)
+            ax_bottom.plot(self.dis_red_gal_mean, self.sigma_red_gal_mean, '-', color='C1', alpha=0.8, lw=2, zorder=-100)
+            ax_bottom.plot(self.dis_blue_gal_mean, self.sigma_blue_gal_mean, '-', color='C1', alpha=0.8, lw=2, zorder=-100)
             ax_top.axhline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
             ax_top.axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
             ax_bottom.axvline(0, linestyle='--', color='k', linewidth=1, zorder=-100)
             ax_top.set_xlim(-40, 40)
             ax_top.set_ylim(-450, 450)
-            ax_bottom.set_ylim(0, 200)
+            ax_bottom.set_ylim(0, 400)
 
-            # ax_top.set_xticklabels([])
+            if i == 11:
+                ax_top.fill_between(self.dis_red_gal_mean, self.v_red_gal_min, self.v_red_gal_max, lw=2, color='C1',
+                                    alpha=0.4, edgecolor=None)
+                ax_top.fill_between(self.dis_blue_gal_mean, self.v_blue_gal_min, self.v_blue_gal_max, lw=2, color='C1',
+                                    alpha=0.4, edgecolor=None)
+                ax_bottom.fill_between(self.dis_red_gal_mean, self.sigma_red_gal_min, self.sigma_red_gal_max, lw=2,
+                                       color='C1', alpha=0.4, edgecolor=None)
+                ax_bottom.fill_between(self.dis_blue_gal_mean, self.sigma_blue_gal_min, self.sigma_blue_gal_max, lw=2,
+                                       color='C1', alpha=0.4, edgecolor=None)
+
+            else:
+                self.PlaceSudoSlit(cubename=self.cubename_list[i], angle=self.angle_list[i], width=self.width_list[i],
+                                   height=self.height_list[i])
+
+                ax_top.scatter(self.d5080_red, self.v50_red_mean, s=20, marker=self.marker_list[0],
+                               edgecolors='k', linewidths=0.5, color='red')
+                ax_top.scatter(self.d5080_blue, self.v50_blue_mean, s=20, marker=self.marker_list[0],
+                               edgecolors='k', linewidths=0.5, color='blue')
+                ax_bottom.scatter(self.d5080_red, self.w80_red_mean, s=20, marker=self.marker_list[0],
+                                  edgecolors='k', linewidths=0.5, color='red')
+                ax_bottom.scatter(self.d5080_blue, self.w80_blue_mean, s=20, marker=self.marker_list[0],
+                                  edgecolors='k', linewidths=0.5, color='blue')
 
             # Set labels and ticks
             if i == 0:
-                ax_top.set_ylabel(r'$\rm V_{50} \rm \, [km \, s^{-1}]$', size=25)
-                ax_bottom.set_ylabel(r'$\rm W_{80} \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
-            elif i == 3:
+                ax_top.set_ylabel(r'$ \mathrm{\Delta} v_{50} \rm \, [km \, s^{-1}]$', size=25)
+                ax_bottom.set_ylabel(r'$\rm \sigma_{80} \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
+            elif i == 4 or i == 8:
                 ax_bottom.set_xlabel(r'$\rm Distance \, [pkpc]$', size=25)
-                ax_top.set_ylabel(r'$\rm V_{50} \rm \, [km \, s^{-1}]$', size=25)
-                ax_bottom.set_ylabel(r'$\rm W_{80} \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
-            elif i == 4 or i == 5:
+                ax_top.set_ylabel(r'$\mathrm{\Delta} v_{50} \rm \, [km \, s^{-1}]$', size=25)
+                ax_bottom.set_ylabel(r'$\rm \sigma_{80} \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
+            elif i == 9 or i == 10 or i == 11:
                 ax_bottom.set_xlabel(r'$\rm Distance \, [pkpc]$', size=25)
                 ax_top.set_yticklabels([])
                 ax_bottom.set_yticklabels([])
@@ -119,9 +139,8 @@ class PlotV50W80Profile:
                 ax_bottom.set_xticklabels([])
                 ax_bottom.set_yticklabels([])
             # ax_top.legend(loc='best', fontsize=15)
-            ax_top.set_title(self.cubename_list[i], y=0.75, x=0.75, size=20)
-
-        fig.savefig('../../MUSEQuBES+CUBS/fit_kin/CUBS+MUSE_velocity_profile_all.png', bbox_inches='tight')
+            ax_top.set_title(self.cubename_label_list[i], y=0.75, x=0.75, size=20)
+        fig.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_velocity_profile_all.png', bbox_inches='tight')
 
     def PlaceSudoSlit(self, cubename=None, angle=None, width=None, height=None):
         # QSO information
@@ -166,9 +185,10 @@ class PlotV50W80Profile:
         dis_blue = dis[blue]
 
         # Slit position
-        # fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+        # fig, ax = plt.subplots(1, 1)
         # plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
         # rectangle.plot(ax=ax, facecolor='none', edgecolor='red', lw=2, label='Rectangle')
+        # plt.title('{}'.format(cubename), size=20)
         # plt.show()
 
         # Extract
@@ -197,14 +217,48 @@ class PlotV50W80Profile:
                     z_mean[i], z_max[i], z_min[i] = np.nanmean(z[mask]), np.nanmax(z[mask]), np.nanmin(z[mask])
         return x_mean, y_mean, y_max, y_min, z_mean, z_max, z_min
 
+    def LoadETGKin(self):
+        gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
+        dis_red_all, v_red_all, sigma_red_all = np.array([]), np.array([]), np.array([])
+        dis_blue_all, v_blue_all, sigma_blue_all = np.array([]), np.array([]), np.array([])
+        for jj in range(len(gal_list)):
+            dis_red_gal, dis_blue_gal, v_red_gal, v_blue_gal, \
+            sigma_red_gal, sigma_blue_gal = PlaceSudoSlitOnEachGal(igal=gal_list[jj])
+            dis_red_all = np.hstack((dis_red_all, dis_red_gal))
+            dis_blue_all = np.hstack((dis_blue_all, dis_blue_gal))
+            v_red_all = np.hstack((v_red_all, v_red_gal))
+            v_blue_all = np.hstack((v_blue_all, v_blue_gal))
+            sigma_red_all = np.hstack((sigma_red_all, sigma_red_gal))
+            sigma_blue_all = np.hstack((sigma_blue_all, sigma_blue_gal))
 
-cubename_list = ['HE0435-5304', 'PKS0405-123', 'HE0238-1904', '3C57', 'PKS2242-498', 'HE0112-4145']
-width_list = [50, 50, 30, 50, 50, 30]
-height_list = [5, 5, 5, 5, 5, 5]
-angle_list = [90, -90, 90, -30, 180, 240]
-marker_list = ['o', 's', 'D', '^', 'v', '<']
+        sort = np.argsort(dis_red_all)
+        dis_red_all, v_red_all, sigma_red_all = dis_red_all[sort], v_red_all[sort], sigma_red_all[sort]
+        sort = np.argsort(dis_blue_all)
+        dis_blue_all, v_blue_all, sigma_blue_all = dis_blue_all[sort], v_blue_all[sort], sigma_blue_all[sort]
+        self.dis_red_gal_mean, self.v_red_gal_mean, self.v_red_gal_max, self.v_red_gal_min, \
+        self.sigma_red_gal_mean, self.sigma_red_gal_max, self.sigma_red_gal_min = self.Bin(dis_red_all, v_red_all,
+                                                                                           sigma_red_all, bins=20)
+        self.dis_blue_gal_mean, self.v_blue_gal_mean, self.v_blue_gal_max, self.v_blue_gal_min, \
+        self.sigma_blue_gal_mean, self.sigma_blue_gal_max, self.sigma_blue_gal_min = self.Bin(dis_blue_all, v_blue_all,
+                                                                                              sigma_blue_all, bins=20)
 
 
-func = PlotV50W80Profile(cubename_list=cubename_list, width_list=width_list, height_list=height_list,
+
+cubename_list = ['HE0435-5304', 'PKS0405-123', 'HE0238-1904',
+                 '3C57', 'J0110-1648', 'PKS2242-498',
+                 'HE0112-4145', 'J0154-0712', 'LBQS1435-0134',
+                 'PG1522+101', 'PKS0232-04']
+cubename_label_list = [r'HE\,0435$-$5304', r'PKS\,0405$-$123', r'HE\,0238$-$1904',
+                 r'3C\,57', r'J0110$-$1648', r'PKS\,2242$-$498',
+                 r'HE\,0112$-$4145', r'J0154$-$0712', r'Q1435$-$0134',
+                 r'PG\,1522$+$101', r'PKS\,0232$-$04', r'H\,I 21 cm']
+width_list = [50, 50, 40, 50, 50, 50, 50, 50, 50, 50, 50]
+height_list = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+angle_list = [90, -90, 90, -30, 180, 180, 220, 135, 150, 180, 180]
+marker_list = ['o', 's', 'D', '^', 'v', '<', ]
+
+
+func = PlotV50W80Profile(cubename_list=cubename_list, cubename_label_list=cubename_label_list,
+                         width_list=width_list, height_list=height_list,
                          angle_list=angle_list, marker_list=marker_list)
 func.Plot()

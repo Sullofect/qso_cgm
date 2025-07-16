@@ -8,6 +8,7 @@ from astropy.wcs import WCS
 from regions import PixCoord
 from astropy.io import ascii
 from astropy import units as u
+from astropy.table import Table, join
 from astropy.coordinates import SkyCoord
 from astropy.cosmology import FlatLambdaCDM
 from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
@@ -21,6 +22,22 @@ rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 
 # Testing
+# Construct HI catalogs
+# path_table_gals = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/all_galaxies.dat'
+# path_table_properties = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/HI_Properties.dat'
+# path_HI_table = '../../MUSEQuBES+CUBS/Serra2012_Atlas3D_Paper13/HI_Table.dat'
+# t_g = Table.read(path_table_gals, format='ascii')
+# t_p = Table.read(path_table_properties, format='ascii')
+# merged = join(t_g, t_p, keys='Galaxy', join_type='inner')
+#
+# # Select with detected HI class
+# merged = merged[merged['HI_class'] != '...']
+# merged = merged[merged['HI_class'] != '-']
+# merged.write(path_HI_table, format='ascii.fixed_width', overwrite=True)
+raise ValueError()
+
+
+
 # Lyalpha nebulae
 path_SB = '../../MUSEQuBES+CUBS/SB_Lya/Maps_unsmoothed_gsm0/J111113-080401.fits'
 path_SB_smoothed = '../../MUSEQuBES+CUBS/SB_Lya/Maps_smoothed_gsm1/J111113-080401.fits'

@@ -55,31 +55,47 @@ t_21cm = Table.read(path_21cm_asymmetry, format='ascii.fixed_width')
 path_Lya_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_Lya_asymmetry.txt'
 t_Lya = Table.read(path_Lya_asymmetry, format='ascii.fixed_width')
 
+# Asymmetry Histogram
 bins = np.linspace(0, 2, 11)
-fig, ax = plt.subplots(1, 2, figsize=(10, 5), dpi=300)
+fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
 fig.subplots_adjust(wspace=0.15)
-ax[0].hist(t_OII['A_shape_ZQL'], bins=bins, color='brown', alpha=0.5, label=r'$\rm [O\,II]$')
-ax[0].hist(t_OIII['A_shape_ZQL'], bins=bins, color='blue', alpha=0.5, label=r'$\rm [O\,III]$')
-ax[0].hist(t_OII_plus['A_shape_ZQL'], bins=bins, color='brown', alpha=1.0, histtype='step', lw=2,
-           label=r'$\rm [O\,II]$ plus')
-ax[0].hist(t_OIII_plus['A_shape_ZQL'], bins=bins, color='blue', alpha=1.0, histtype='step', lw=2,
-           label=r'$\rm [O\,III]$ plus')
+ax.hist(t_21cm['A_shape_ZQL'], bins=bins, color='k', alpha=0.7, label=r'$\rm H\,I \, 21cm$', histtype='step', lw=1.2)
+ax.hist(t_OII_plus['A_shape_ZQL'], bins=bins, color='red', alpha=0.45, histtype='stepfilled', lw=1.2,
+           label=r'$\rm [O\,II]$')
+ax.hist(t_Lya['A_shape_ZQL'], bins=bins, color='blue', alpha=0.45, label=r'$\rm Ly \alpha$', histtype='stepfilled', lw=1.2)
+ax.set_xlim(0, 2)
+ax.set_xlabel('Asymmetry', size=20)
+ax.set_ylabel('N', size=20)
+ax.legend(loc='upper right', fontsize=15)
+plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_asymmetry_distribution.png', bbox_inches='tight')
+
+
+# Asymmetry and Gini index histograms
+# bins = np.linspace(0, 2, 11)
+# fig, ax = plt.subplots(1, 2, figsize=(10, 5), dpi=300)
+# fig.subplots_adjust(wspace=0.15)
+# # ax[0].hist(t_OII['A_shape_ZQL'], bins=bins, color='brown', alpha=0.5, label=r'$\rm [O\,II]$')
+# # ax[0].hist(t_OIII['A_shape_ZQL'], bins=bins, color='blue', alpha=0.5, label=r'$\rm [O\,III]$')
+# ax[0].hist(t_OII_plus['A_shape_ZQL'], bins=bins, color='brown', alpha=0.5, histtype='stepfilled', lw=2,
+#            label=r'$\rm [O\,II]$ plus')
+# # ax[0].hist(t_OIII_plus['A_shape_ZQL'], bins=bins, color='blue', alpha=1.0, histtype='step', lw=2,
+# #            label=r'$\rm [O\,III]$ plus')
 # ax[0].hist(t_21cm['A_shape_ZQL'], bins=bins, color='red', alpha=1.0, label=r'$\rm HI \, 21\,cm$', histtype='step', lw=2)
 # ax[0].hist(t_Lya['A_shape_ZQL'], bins=bins, color='k', alpha=1.0, label=r'$\rm Ly \alpha$', histtype='step', lw=2)
-
-bins = np.linspace(0, 1, 6)
-ax[1].hist(t_OII['Gini_smoothed'], bins=bins, color='brown', alpha=0.5, label=r'$\rm [O\,II]$')
-ax[1].hist(t_OIII['Gini_smoothed'], bins=bins, color='blue', alpha=0.5, label=r'$\rm [O\,III]$')
-ax[1].hist(t_OII_plus['Gini_smoothed'], bins=bins, color='brown', alpha=1.0, histtype='step', lw=2, label=r'$\rm [O\,II]$ plus')
-ax[1].hist(t_OIII_plus['Gini_smoothed'], bins=bins, color='blue', alpha=1.0, histtype='step', lw=2, label=r'$\rm [O\,III]$ plus')
+#
+# bins = np.linspace(0, 1, 6)
+# # ax[1].hist(t_OII['Gini_smoothed'], bins=bins, color='brown', alpha=0.5, label=r'$\rm [O\,II]$')
+# # ax[1].hist(t_OIII['Gini_smoothed'], bins=bins, color='blue', alpha=0.5, label=r'$\rm [O\,III]$')
+# ax[1].hist(t_OII_plus['Gini_smoothed'], bins=bins, color='brown', alpha=0.5, histtype='stepfilled', lw=2, label=r'$\rm [O\,II]$ plus')
+# # ax[1].hist(t_OIII_plus['Gini_smoothed'], bins=bins, color='blue', alpha=1.0, histtype='step', lw=2, label=r'$\rm [O\,III]$ plus')
 # ax[1].hist(t_21cm['Gini_smoothed'], bins=bins, color='red', alpha=1.0, label=r'$\rm HI \, 21\,cm$', histtype='step', lw=2)
 # ax[1].hist(t_Lya['Gini_smoothed'], bins=bins, color='k', alpha=1.0, label=r'$\rm Ly \alpha$', histtype='step', lw=2)
-ax[0].set_xlim(0, 2)
-ax[1].set_xlim(0, 1)
-ax[0].set_xlabel('Asymmetry', size=20)
-ax[1].set_xlabel('Gini Index', size=20)
-ax[0].set_ylabel('N', size=20)
-ax[0].legend(loc='upper right', fontsize=15)
-plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_asymmetry_distribution.png', bbox_inches='tight')
+# ax[0].set_xlim(0, 2)
+# ax[1].set_xlim(0, 1)
+# ax[0].set_xlabel('Asymmetry', size=20)
+# ax[1].set_xlabel('Gini Index', size=20)
+# ax[0].set_ylabel('N', size=20)
+# ax[0].legend(loc='upper right', fontsize=15)
+# plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_asymmetry_distribution.png', bbox_inches='tight')
 
 
