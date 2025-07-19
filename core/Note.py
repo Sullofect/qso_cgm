@@ -7,6 +7,13 @@
 # Space complexity: O(logn) to O(n) (worst case)
 
 
+# subseq = [''.join(subseq) for subseq in combinations(s, 5)]
+# Time complexity: O(n^5) for combinations
+# Space complexity: O(n^5) for combinations
+
+# Bit manipulation
+
+
 # Merge Sort
 def merge_sort(arr):
     # Base case: a list of 0 or 1 elements is already sorted
