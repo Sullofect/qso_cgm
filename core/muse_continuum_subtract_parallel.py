@@ -41,8 +41,15 @@ if args.m == args.s:
    sys.exit()
 
 print('Reading in the data cube')
-cube = Cube('{}.fits'.format(args.m))
+cube = Cube('{}.fits'.format(args.m), mask=True)
+# cube = Cube('{}.fits'.format(args.m))
 print(cube)
+
+# import matplotlib.pyplot as plt
+# plt.figure()
+# plt.imshow(cube.data[0, :, :], origin='lower', aspect='auto', interpolation='nearest')
+# plt.show()
+# raise ValueError('Testing')
 
 print('Selecting wavelength region)')
 cube = cube.select_lambda(args.b0, args.r1)
@@ -50,8 +57,8 @@ print(cube)
 
 if (args.ra > 0) & (args.dec > -90) & (args.radius > 0):
    print('Selecting subcub around ra={:0.5f}, dec={:0.5f} with radius r={:0.1f} arcsec'.format(args.ra, args.dec, args.radius))
-   
-   cube = cube.subcube((args.dec, args.ra), args.radius)
+   if args.radius < 60:
+      cube = cube.subcube((args.dec, args.ra), args.radius)
    print(cube)
 
 #print('Creating empty continuum cube')
@@ -96,10 +103,10 @@ def spec_continuumsubtract(sp):
    if len(np.where(sp.mask == False)[0]) > 3:
       co = sp.poly_spec(3, weight=True)
    
-   sp.unmask()
-   co.unmask()
+      sp.unmask()
+      co.unmask()
    
-   sp[:] = sp[:] - co[:]
+      sp[:] = sp[:] - co[:]
    return sp
    
 
