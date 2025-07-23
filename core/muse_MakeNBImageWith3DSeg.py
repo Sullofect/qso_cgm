@@ -79,9 +79,17 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
     filename_3Dseg = cubename + '_3DSeg_{}_{}_{}_{}.fits'.format(smooth_2D, kernel_2D, smooth_1D, kernel_1D)
     filename_smoothed = '{}_{}_{}_{}_{}.fits'.format(cubename, smooth_2D, kernel_2D, smooth_1D, kernel_1D)
     figurename = cubename + '_SB_3DSeg_{}_{}_{}_{}.pdf'.format(smooth_2D, kernel_2D, smooth_1D, kernel_1D)
-    cube = Cube(path_cube)
+    cube = Cube(path_cube, ext=(1,2))
     if SelectLambda is not None:
         cube = cube.select_lambda(SelectLambda[0], SelectLambda[1])
+
+    # Define center of rotation (in pixel or world coordinates)
+    # center = cube.wcs.get_center(unit='deg')
+    # # angle = 45
+    # # rotated_cube = cube.rotate(angle, center=center[:2])
+    # cube = cube.subcube(tuple(center[:2]), size=30)
+
+
     size = np.shape(cube.data)
     wave_vac = pyasl.airtovac2(cube.wave.coord())
     flux = cube.data * 1e-3
@@ -125,8 +133,8 @@ def MakeNBImage_MC(cubename=None, S_N_thr=None, smooth_2D=None, kernel_2D=None, 
         flux_var = np.nanvar(flux_mask, axis=(1, 2))
         flux_var_mean = np.nanmean(flux_err_mask ** 2, axis=(1, 2))
         value_rescale = flux_var / flux_var_mean
-        print('Variance rescaling factor has mean value of {} and std of {}'.format(np.mean(value_rescale),
-                                                                                    np.std(value_rescale)))
+        print('Variance rescaling factor has mean value of {} and std of {}'.format(np.nanmean(value_rescale),
+                                                                                    np.nanstd(value_rescale)))
         flux_err = flux_err * np.sqrt(value_rescale)[:, np.newaxis, np.newaxis]
     cube_smoothed = cube.clone(data_init=np.empty, var_init=np.empty)
     cube_smoothed.data = flux * 1e3
