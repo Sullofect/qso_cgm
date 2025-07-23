@@ -41,8 +41,7 @@ if args.m == args.s:
    sys.exit()
 
 print('Reading in the data cube')
-cube = Cube('{}.fits'.format(args.m), mask=True)
-# cube = Cube('{}.fits'.format(args.m))
+cube = Cube('{}.fits'.format(args.m))
 print(cube)
 
 # import matplotlib.pyplot as plt
@@ -115,19 +114,19 @@ time0 = time.time()
 
 cube = cube.loop_spe_multiprocessing(f=spec_continuumsubtract, verbose=True, cpu=args.cpu)
 
-#for sp in iter_spe(cube):
+# for sp in iter_spe(cube):
 #   if (args.l0 > 0) & (args.l1 > 0):
 #      sp.mask_region(args.l0, args.l1)
-#   
-#   
+#
+#
 #   if len(np.where(sp.mask == False)[0]) > 3:
 #      co = sp.poly_spec(3, weight=True)
-#      
-#   i = 1   
 #
-#   sp.unmask()
-#   co.unmask()
-#   sp[:] = sp[:] - co[:]
+#      i = 1
+#
+#      sp.unmask()
+#      co.unmask()
+#      sp[:] = sp[:] - co[:]
 
 
 time1 = time.time()
