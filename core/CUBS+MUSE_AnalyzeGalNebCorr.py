@@ -110,6 +110,6 @@ def ComputeCorr(cubename=None, HSTcentroid=False, scale_length=None, ):
 
 # ComputeCorr(cubename='HE0226-4110', HSTcentroid=True, scale_length=84)
 # ComputeCorr(cubename='PKS0405-123', HSTcentroid=True, scale_length=130)
-# ComputeCorr(cubename='HE0238-1904', HSTcentroid=True, scale_length=103)
+ComputeCorr(cubename='HE0238-1904', HSTcentroid=True, scale_length=103)
 # ComputeCorr(cubename='PKS0552-640', HSTcentroid=True, scale_length=153)
-ComputeCorr(cubename='3C57', HSTcentroid=True, scale_length=71)
+# ComputeCorr(cubename='3C57', HSTcentroid=True, scale_length=71)
