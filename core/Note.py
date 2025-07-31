@@ -46,9 +46,6 @@ def merge(left, right):
 # In-order Left → Node → Right
 # pre-order Node → Left → Right
 # post-order Left → Right → Node
-
-
-
 result = []
 
 def inorder(root):
