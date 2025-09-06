@@ -42,6 +42,39 @@ sigma_80 = np.array([87,   np.nan, 150, 106, 113, 151, 124,  91, 151, 107,
                      166,   129, 133, 154, 116, 136, 147, 142, 164, 246,
                      np.nan, 208, 196, 194, 123, 137, 261, 132, np.nan, 178], dtype=float)
 
+L = np.array([["HE0226-4110",     150,  84],
+              ["PKS0405-123",     106, 129],
+              ["HE0238-1904",     113, 103],
+              ["PKS0552-640",     124, 153],
+              ["J0454-6116",      151, 102],
+              ["J0119-2010",      166,  96],
+              ["HE0246-4101",     129,  74],
+              ["PKS0355-483",     142,  50],
+              ["HE0439-5254",     246,  47],
+              ["TXS0206-048",     194, 200],
+              ["Q1354+048",       123, 126]], dtype=object)
+
+S_BR = np.array([["HE0435-5304",      87,  55],
+                 ["3C57",            151,  71],
+                 ["J0110-1648",       91,  29],
+                 ["HE0112-4145",     164,  38],
+                 ["J0154-0712",      137,  63],
+                 ["Q1435-0134",      261,  63]], dtype=object)
+
+S = np.array([["J0028-3305",      133,  42],
+              ["HE0419-5657",     154,  35],
+              ["Q0107-025",       116,  28],
+              ["HE1003+0149",     208,  53],
+              ["HE0331-4112",     196,  32]], dtype=object)
+
+A = np.array([["J2135-5316",      107,  83],
+              ["Q0107-0235",      136,  90],
+              ["PKS2242-498",     147,  71],
+              ["PG1522+101",      132,  50],
+              ["PKS0232-04",      178, 116]], dtype=object)
+
+
+
 # Create upper half-circle — do NOT close across the flat side
 a, b = 0.8, 1.0
 theta_upper = np.linspace(0, np.pi, 50)
@@ -55,92 +88,55 @@ verts_lower = np.column_stack([a * np.cos(theta_lower), b * np.sin(theta_lower)]
 codes_lower = [Path.MOVETO] + [Path.LINETO] * (len(verts_lower) - 1)
 lower_half = Path(verts_lower, codes_lower)
 
-# Jellyfish
-# verts = [
-#     # Dome (bell) - upper semi ellipse using Bezier curves
-#     (0.0, 0.5),  # start at top center
-#     (0.3, 0.5),  # control point 1
-#     (0.5, 0.0),  # control point 2
-#     (0.5, -0.3), # end point
-#
-#     (0.5, -0.3), # move down right side
-#     (0.5, -0.5), # control point 3
-#     (0.0, -0.5), # control point 4
-#     (0.0, -0.3), # end bottom middle
-#
-#     (0.0, -0.3), # move down left side
-#     (0.0, -0.5), # control point 5
-#     (-0.5, -0.5),# control point 6
-#     (-0.5, -0.3),# end left bottom
-#
-#     (-0.5, -0.3),# left side up
-#     (-0.5, 0.0), # control point 7
-#     (-0.3, 0.5), # control point 8
-#     (0.0, 0.5),  # back to top center
-#
-#     # Tentacles as curves (just one example tentacle here)
-#     (0.0, -0.3),
-#     (0.1, -0.6),
-#     (0.2, -0.8),
-#     (0.1, -1.0),
-#
-#     (0.0, -0.3),
-#     (-0.1, -0.6),
-#     (-0.2, -0.8),
-#     (-0.1, -1.0),
-# ]
-#
-# codes = [
-#     Path.MOVETO,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#
-#     Path.LINETO,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#
-#     Path.LINETO,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#
-#     Path.LINETO,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#
-#     Path.MOVETO,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#
-#     Path.MOVETO,
-#     Path.CURVE4,
-#     Path.CURVE4,
-#     Path.CURVE4,
-# ]
-# jellyfish_path = Path(verts, codes)
-
 # Quasar nebulae summary figure
 plt.figure(figsize=(5, 5), dpi=300)
-for i in range(len(morphology)):
-    for j in range(len(morphology[i])):
-        morpho = morphology[i][j]
-        if morpho == 'R':
-            plt.scatter(sigma_80[i], size[i], marker=upper_half, color='none', facecolor='blue', edgecolor='blue',
-                        s=60, alpha=0.5)
-            plt.scatter(sigma_80[i], size[i], marker=lower_half, color='none', facecolor='red', edgecolor='red',
-                        s=60, alpha=0.5)
-        elif morpho == 'U':
-            plt.scatter(sigma_80[i], size[i], marker='d', color='none', facecolor='none', edgecolor='black', s=40, alpha=0.7)
-        elif morpho == 'I':
-            plt.scatter(sigma_80[i], size[i], marker='s', color='none', facecolor='none', edgecolor='brown', s=100, alpha=0.8)
-        elif morpho == 'F':
-            plt.scatter(sigma_80[i], size[i], marker='+', color='none', facecolor='purple', edgecolor='black', s=70, alpha=0.8)
-        elif morpho == 'O':
-            plt.scatter(sigma_80[i], size[i], marker='2', color='red', facecolor='red', edgecolor='black', s=50, alpha=0.5)
+
+# for i in range(len(morphology)):
+#     for j in range(len(morphology[i])):
+#         morpho = morphology[i][j]
+#         if morpho == 'R':
+#             plt.scatter(sigma_80[i], size[i], marker=upper_half, color='none', facecolor='blue', edgecolor='blue',
+#                         s=60, alpha=0.5)
+#             plt.scatter(sigma_80[i], size[i], marker=lower_half, color='none', facecolor='red', edgecolor='red',
+#                         s=60, alpha=0.5)
+#         elif morpho == 'U':
+#             plt.scatter(sigma_80[i], size[i], marker='d', color='none', facecolor='none', edgecolor='black', s=40, alpha=0.7)
+#         elif morpho == 'I':
+#             plt.scatter(sigma_80[i], size[i], marker='s', color='none', facecolor='none', edgecolor='brown', s=100, alpha=0.8)
+#         elif morpho == 'F':
+#             plt.scatter(sigma_80[i], size[i], marker='+', color='none', facecolor='purple', edgecolor='black', s=70, alpha=0.8)
+#         elif morpho == 'O':
+#             plt.scatter(sigma_80[i], size[i], marker='2', color='red', facecolor='red', edgecolor='black', s=50, alpha=0.5)
+#
+
+for i in range(len(L)):
+    # BR
+    if L[i][0] == 'PKS0405-123' or L[i][0] == 'HE0238-1904':
+        plt.scatter(L[i][1], L[i][2], marker=upper_half, color='none', facecolor='blue', edgecolor='blue',
+                    s=50, alpha=0.5)
+        plt.scatter(L[i][1], L[i][2], marker=lower_half, color='none', facecolor='red', edgecolor='red',
+                    s=50, alpha=0.5)
+    # Outflow
+    if L[i][0] == 'HE0238-1904' or L[i][0] == 'J0119-2010':
+        plt.scatter(L[i][1], L[i][2], marker='x', color='red', facecolor='red', edgecolor='black', s=50, alpha=0.8)
+    plt.scatter(L[i][1], L[i][2], marker='s', color='none', facecolor='none', edgecolor='black', s=100, alpha=0.8)
+for i in range(len(S_BR)):
+    # Outflow
+    if S_BR[i][0] == '3C57':
+        plt.scatter(S_BR[i][1], S_BR[i][2], marker='x', color='red', facecolor='red', edgecolor='black', s=50, alpha=0.8)
+    plt.scatter(S_BR[i][1], S_BR[i][2], marker=upper_half, color='none', facecolor='blue', edgecolor='blue',
+                s=30, alpha=0.5)
+    plt.scatter(S_BR[i][1], S_BR[i][2], marker=lower_half, color='none', facecolor='red', edgecolor='red',
+                s=30, alpha=0.5)
+    plt.scatter(S_BR[i][1], S_BR[i][2], marker='d', color='none', facecolor='none', edgecolor='black', s=70, alpha=0.7)
+for i in range(len(S)):
+    plt.scatter(S[i][1], S[i][2], marker='d', color='none', facecolor='none', edgecolor='black', s=70, alpha=0.7)
+for i in range(len(A)):
+    # Outflows
+    if A[i][0] == 'J2135-5316':
+        plt.scatter(A[i][1], A[i][2], marker='x', color='red', facecolor='red', edgecolor='black', s=50, alpha=0.8)
+    plt.scatter(A[i][1], A[i][2], marker='p', color='none', facecolor='none', edgecolor='black', s=100, alpha=0.7)
+
 
 
 class SplitCircleLegend:
@@ -166,16 +162,24 @@ class SplitCircleLegend:
         return patch1
 
 # Dummy handle (content doesn't matter)
+ax = plt.gca()
 split_marker = object()
-handles = [split_marker,
-           Line2D([], [], marker='d', color='none', markerfacecolor='none', markeredgecolor='black', alpha=0.7),
-           Line2D([], [], marker='s', color='none', markerfacecolor='none', markeredgecolor='brown', alpha=0.8),
-           Line2D([], [], marker='+', color='none', markerfacecolor='purple', markeredgecolor='purple', alpha=0.8),
-           Line2D([], [], marker='2', color='none', markerfacecolor='red', markeredgecolor='red', alpha=0.5)]
-plt.legend(handles=handles, labels=['R', 'U', ' I', 'F', 'O'],
-           handler_map={split_marker: SplitCircleLegend(upper_half, lower_half)}, loc='upper right', fontsize=15)
-
-plt.xlabel(r'$\sigma_{80} \, \rm [km\,s^{-1}]$', size=25)
+handles = [Line2D([], [], marker='s', color='none', markerfacecolor='none', markeredgecolor='black', alpha=0.7),
+           Line2D([], [], marker='d', color='none', markerfacecolor='none', markeredgecolor='black', alpha=0.8),
+           Line2D([], [], marker='p', color='none', markerfacecolor='none', markeredgecolor='black', alpha=0.8)]
+legend1 = plt.legend(handles=handles, labels=['Large, Irregular', 'Host-Galaxy-Scale', 'Complex Morphology \n '
+                                                                                       'and Kinematics',
+                                              'Blueshifted-Redshifted', 'Outflows'],
+           handler_map={split_marker: SplitCircleLegend(upper_half, lower_half)}, loc='upper left', fontsize=10)
+ax.add_artist(legend1)
+legend2 = plt.legend(handles=[split_marker,
+                              Line2D([], [], marker='x', color='none', markerfacecolor='red', markeredgecolor='red',
+                                     alpha=0.5)],
+                     labels=['Blueshifted-\nRedshifted', 'Outflows'],
+                     handler_map={split_marker: SplitCircleLegend(upper_half, lower_half)}, loc='upper right',
+                     fontsize=10)
+ax.add_artist(legend2)
+plt.xlabel(r'$\sigma \, \rm [km\,s^{-1}]$', size=25)
 plt.ylabel(r'$\rm Size \, [kpc]$', size=25)
 plt.xlim(60, 280)
 plt.ylim(20, 220)

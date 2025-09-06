@@ -74,3 +74,57 @@ def postorder(root):
     postorder(root.right)
     result.append(root.val)
     return result
+
+# Bredth First Search (BFS)
+# core
+queue = deque()
+queue.append(start)
+curr = queue.popleft()
+
+# Heapify
+# Heap.pop/push
+# Time complexity: O(log (n)
+# Space complexity: O(1)
+
+
+# Boyer-Moore Voting Algorithm
+count = 0
+candidate = None
+for num in nums:
+    if count == 0:
+        candidate = num
+    count += 1 if num == candidate else -1
+return candidate
+
+
+### Matrix ###
+# Sudobu
+# ij = i // 3 + (j // 3) * 3
+
+# Spiral matrix
+# m = len(matrix)
+# n = len(matrix[0])
+# direction = 1  # Start off going right
+# i, j = 0, -1
+# output = []
+# while m * n > 0:
+#     for _ in range(n):  # move horizontally
+#         j += direction
+#         output.append(matrix[i][j])
+#     m -= 1
+#     n -= 1
+#     for _ in range(m):  # move vertically
+#         i += direction
+#         output.append(matrix[i][j])
+#     direction *= -1  # flip direction
+# return output
+
+# Rotate image
+# n = len(matrix[0])
+# for i in range(n // 2 + n % 2):
+#     for j in range(n // 2):
+#         tmp = matrix[n - 1 - j][i]
+#         matrix[n - 1 - j][i] = matrix[n - 1 - i][n - j - 1]
+#         matrix[n - 1 - i][n - j - 1] = matrix[j][n - 1 - i]
+#         matrix[j][n - 1 - i] = matrix[i][j]
+#         matrix[i][j] = tmp

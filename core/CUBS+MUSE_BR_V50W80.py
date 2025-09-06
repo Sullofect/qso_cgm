@@ -1,13 +1,7 @@
-import os
-import aplpy
 import numpy as np
-import matplotlib as mpl
-import gala.potential as gp
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from astropy import units as u
-from astropy import stats
 from astropy.io import ascii
 from matplotlib import rc
 from astropy.wcs import WCS
@@ -15,12 +9,7 @@ from astropy.coordinates import SkyCoord
 from regions import PixCoord
 from astropy.cosmology import FlatLambdaCDM
 from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
-from astropy.convolution import convolve, Kernel, Gaussian2DKernel
-from scipy.interpolate import interp1d
 from astropy.coordinates import Angle
-import biconical_outflow_model_3d as bicone
-from mpdaf.obj import Cube, WaveCoord, Image
-from PyAstronomy import pyasl
 from muse_kin_ETP import PlaceSudoSlitOnEachGal
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -241,8 +230,6 @@ class PlotV50W80Profile:
         self.dis_blue_gal_mean, self.v_blue_gal_mean, self.v_blue_gal_max, self.v_blue_gal_min, \
         self.sigma_blue_gal_mean, self.sigma_blue_gal_max, self.sigma_blue_gal_min = self.Bin(dis_blue_all, v_blue_all,
                                                                                               sigma_blue_all, bins=20)
-
-
 
 cubename_list = ['HE0435-5304', 'PKS0405-123', 'HE0238-1904',
                  '3C57', 'J0110-1648', 'PKS2242-498',
