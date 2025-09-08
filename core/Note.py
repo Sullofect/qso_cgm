@@ -128,3 +128,71 @@ return candidate
 #         matrix[n - 1 - i][n - j - 1] = matrix[j][n - 1 - i]
 #         matrix[j][n - 1 - i] = matrix[i][j]
 #         matrix[i][j] = tmp
+
+
+# Frog movement
+# A: right moves, B: up moves, n: max consecutive moves
+def count_paths_no_n_in_a_row(A, B, n):
+    def dp(r, u, last, run):
+        if r == A and u == B:
+            return 1
+        ways = 0
+        # Try R
+        if r < A:
+            if last == 'R':
+                if run < n - 1:
+                    ways += dp(r + 1, u, 'R', run + 1)
+            else:
+                ways += dp(r + 1, u, 'R', 1)
+        # Try U
+        if u < B:
+            if last == 'U':
+                if run < n - 1:
+                    ways += dp(r, u + 1, 'U', run + 1)
+            else:
+                ways += dp(r, u + 1, 'U', 1)
+        return ways
+    return dp(0, 0, None, 0)
+
+# Example: original frog (A=7, B=4) with "no 3 in a row" => n=3
+print(count_paths_no_n_in_a_row(7, 4, 3))  # 30
+
+def count_paths_no_n_in_a_row(A, B, n):
+    dp = [[{'R': [0] * (n-1), 'U': [0] * (n-1)} for _ in range(B+1)] for _ in range(A+1)]
+
+    # Initialize: first step can be R or U (run length = 1)
+    if A >= 1:
+        dp[1][0]['R'][0] = 1
+    if B >= 1:
+        dp[0][1]['U'][0] = 1
+
+    for r in range(A+1):
+        for u in range(B+1):
+            # extend/switch from states that end with R
+            Rruns = dp[r][u]['R']
+            for k, ways in enumerate(Rruns):  # k = run_len-1
+                if ways == 0:
+                    continue
+                # extend R-run if allowed
+                if r+1 <= A and k+1 < n-1:
+                    dp[r+1][u]['R'][k+1] += ways
+                # switch to U (reset run to length 1)
+                if u+1 <= B:
+                    dp[r][u+1]['U'][0] += ways
+
+            # extend/switch from states that end with U
+            Uruns = dp[r][u]['U']
+            for k, ways in enumerate(Uruns):
+                if ways == 0:
+                    continue
+                # extend U-run if allowed
+                if u+1 <= B and k+1 < n-1:
+                    dp[r][u+1]['U'][k+1] += ways
+                # switch to R
+                if r+1 <= A:
+                    dp[r+1][u]['R'][0] += ways
+
+    # sum all ways at destination, regardless of last move or run length
+    return sum(dp[A][B]['R']) + sum(dp[A][B]['U'])
+
+
