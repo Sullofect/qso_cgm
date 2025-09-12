@@ -16,8 +16,8 @@ rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick.minor', size=4, visible=True)
 rc('ytick.minor', size=4, visible=True)
-rc('xtick', direction='in', labelsize=20, top='on')
-rc('ytick', direction='in', labelsize=20, right='on')
+rc('xtick', direction='in', labelsize=25, top='on')
+rc('ytick', direction='in', labelsize=25, right='on')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 
@@ -152,7 +152,7 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
             inside_nebula = False
 
         # Compute the Association
-        nebula_factor = 1.0 if inside_nebula else 0.4
+        nebula_factor = 1.0 if inside_nebula else 0.5
         far_sigma = np.abs(((v_gal[i] - v50.ravel()) / s80.ravel()))
         val = dis_i / scale_length
         val[val >= 0.5] = 0.5
@@ -209,17 +209,18 @@ S = np.array([["J0028-3305",      133,  42, [2], True, [], False],
               ["PB6291",          116,  28, [2, 6, 7], True, [], False],
               ["HE1003+0149",     208,  53, [], False, [], False],
               ["HE0331-4112",     196,  32, [6], True, [], False]], dtype=object)
-A = np.array([["J2135-5316",      107,  83],
-              ["Q0107-0235",      136,  90],
-              ["PKS2242-498",     147,  71],
-              ["PG1522+101",      132,  50],
-              ["PKS0232-04",      178, 116]], dtype=object)
+A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19], False,
+               [4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20], False],
+              ["Q0107-0235",      136,  90, [1, 4, 5, 6], True, [], False],
+              ["PKS2242-498",     147,  71, [1, 2], True, [], False],
+              ["PG1522+101",      132,  50, [2, 3, 8, 11], True, [], False],
+              ["PKS0232-04",      178, 116, [2, 4, 5, 7], False, [], False]], dtype=object)
 
 
 def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
     # Compute association for L Type
-    scale_length_array_L, scale_length_array_S = np.array([]), np.array([])
-    largeThan05_array_L, largeThan05_array_S = np.array([]), np.array([])
+    scale_length_array_L, scale_length_array_S, scale_length_array_A = np.array([]), np.array([]), np.array([])
+    largeThan05_array_L, largeThan05_array_S, largeThan05_array_A = np.array([]), np.array([]), np.array([])
     score_L = np.array([])
     for i in range(len(L)):
         score_array = ComputeCorr(cubename=L[i][0], scale_length=L[i][2],
@@ -251,11 +252,23 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
         largeThan05_array_S = np.hstack((largeThan05_array_S, len(score_array[score_array > 0.2])))
         score_S = np.hstack((score_S, score_array))
     score_S = np.hstack((score_S_BR, score_S))
+
+    score_A = np.array([])
+    for i in range(len(A)):
+        score_array = ComputeCorr(cubename=A[i][0], scale_length=A[i][2],
+                                  nums_seg_OII=A[i][3], select_seg_OII=A[i][4],
+                                  nums_seg_OIII=A[i][5], select_seg_OIII=A[i][6],
+                                  savefig=False)
+        scale_length_array_A = np.hstack((scale_length_array_A, A[i][2]))
+        largeThan05_array_A = np.hstack((largeThan05_array_A, len(score_array[score_array > 0.2])))
+        score_A = np.hstack((score_A, score_array))
+
     print('average L', sum(score_L > 0.5) / len(L))
     print('average S', sum(score_S > 0.5) / (len(S_BR) + len(S)))
 
     score_L = score_L[score_L >= 0.2]
     score_S = score_S[score_S >= 0.2]
+    score_A = score_A[score_A >= 0.2]
 
     # Histogram
     bins = np.linspace(0, 1, 11)
@@ -265,24 +278,32 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
     counts_L = np.append(counts_L, counts_L[-1])
     counts_S, _ = np.histogram(score_S, bins=bins)
     counts_S = np.append(counts_S, counts_S[-1])
+    counts_A, _ = np.histogram(score_A, bins=bins)
+    counts_A = np.append(counts_A, counts_A[-1])
 
-    plt.figure(figsize=(5, 5), dpi=300)
-    plt.step(mid, counts_L, where="mid", alpha=0.8, color="blue", linestyle="-", linewidth=2, label=r'Large, Irregular')
-    plt.step(mid, counts_S, where="mid", alpha=0.8, color="red", linestyle="-", linewidth=2, label=r'Host-Galaxy-Scale')
-    plt.xlim(0.1, 1.0)
-    plt.ylim(0, 14)
-    plt.xlabel(r'Association Score', size=25)
-    plt.ylabel(r'$N$', size=25)
-    plt.legend(loc='upper right', fontsize=15)
+    fig, ax = plt.subplots(figsize=(5, 5), dpi=300, constrained_layout=True)
+    ax.step(mid, counts_L, where="mid", alpha=0.8, color="k", linestyle="-", linewidth=2, label=r'Irregular, large-scale')
+    ax.step(mid, counts_S, where="mid", alpha=0.8, color="red", linestyle="--", linewidth=2, label=r'Host-galaxy-scale')
+    ax.step(mid, counts_A, where="mid", alpha=0.8, color="blue", linestyle=":", linewidth=2, label=r'Complex Morphology')
+    ax.set_xlim(0.1, 1.0)
+    ymax = ax.get_ylim()[1]
+    ax.set_ylim(0, np.ceil(ymax))
+    ax.set_yticks(np.arange(0, ax.get_ylim()[1] + 1, 2))
+    # ax.grid(True, axis="y", linewidth=0.5, alpha=0.25)
+    ax.set_xlabel(r'KAF', size=25)
+    ax.set_ylabel(r'$N$', size=25)
+    ax.legend(loc='upper left', fontsize=13)
     plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_LType.png', bbox_inches='tight')
 
     # Scatter plot
-    plt.figure(figsize=(5, 5), dpi=300)
-    plt.scatter(scale_length_array_L, largeThan05_array_L, s=40, color='blue', label=r'Large, Irregular')
-    plt.scatter(scale_length_array_S, largeThan05_array_S, s=40, color='red', label=r'Host-Galaxy-Scale')
+    plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
+    plt.scatter(scale_length_array_L, largeThan05_array_L, marker="o", alpha=0.8, s=50, color='k')
+    plt.scatter(scale_length_array_S, largeThan05_array_S, marker="s", alpha=0.8, s=50, color='red')
+    plt.scatter(scale_length_array_A, largeThan05_array_A, marker="^", alpha=0.8, s=50, color='blue')
     plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
     plt.ylabel(r'$N_{>\,0.2}$', size=25)
-    plt.legend(loc='upper left', fontsize=10)
+    plt.xlim(20, 225)
+    plt.ylim(-0.5, 9)
     plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
 
 
