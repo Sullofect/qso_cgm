@@ -95,23 +95,35 @@ print(final_scores([1, 6, 5, 4, 3, 2, 1, 10, 5]))
 dic = {0:'0', 1:'1', 2:'2', 3:'3', 4:'4', 5:'5', 6:'6', 7:'7', 8:'8', 9:'9',
        10:'A', 11:'B', 12:'C', 13:'D', 14:'E', 15:'F'}
 def decimal_to_hexspeak(S):
-    int_s = int(S)
+    num = int(S)
+    str = ''
+    while num != 0:
+        num, mod = divmod(num, 16)
+        str = dic[mod] + str
+    str = list(str)
+    if '2' in str or '3' in str or '4' in str or '5' in str or '6' in str or '7' in str or '8' in str or '9' in str:
+        return "Error"
+    else:
+        for i in range(len(str)):
+            if str[i] == '0':
+                str[i] = 'O'
+            elif str[i] == '1':
+                str[i] = 'I'
+        return ''.join(str)
+print(decimal_to_hexspeak("257"))
+print(decimal_to_hexspeak("3"))
+print(decimal_to_hexspeak("507"))
 
-    floor, mod = divmod(int_s, 16)
-    str = "{}".format(floor) + dic[mod]
-
-    for i in range(len(str)):
-        if str[i] == '0':
-            str[i] == 'O'
-        elif cha == '1':
-            str[i] == 'I'
-
-
-    return Error
-
-
-
-
+# Better way
+def toHexSpeak(S: str) -> str:
+    n = int(S)
+    hex_str = hex(n)[2:].upper()
+    hex_str = hex_str.replace("0", "O").replace("1", "I")
+    valid_chars = set("ABCDEFIO")
+    if all(c in valid_chars for c in hex_str):
+        return hex_str
+    else:
+        return "ERROR"
 
 # Question 4
 # There is a box with a capacity of 5000 grams. The box may already contain some items, reducing its capacity.
@@ -130,7 +142,19 @@ def decimal_to_hexspeak(S):
 # Explanation: The box already contains 4650 grams of items, so only 2 more apples of weight 150 would fit
 # (bringing the total weight to 4950, still below the capacity).
 
+def max_apples(A):
+    capacity = 5000
+    current_weight = A[0]
+    apples = sorted(A[1:])
 
+    count = 0
+    for apple in apples:
+        if current_weight + apple <= capacity:
+            current_weight += apple
+            count += 1
+        else:
+            return apples
+print(max_apples([4650, 150, 150, 150]))
 
 
 # Question 5
@@ -144,6 +168,44 @@ def decimal_to_hexspeak(S):
 # Two of "zz",
 # One of "zzz",
 # And one of "y".
+
 # String "k" contains only one such substring: "k".
 #
 # You may assume that the length of S is between 1 and 100, and each character in S is a lowercase letter (a–z).
+
+
+def count_identical_substrings(S):
+    n = len(S)
+    count = n
+
+    # Base case and use sliding window
+    for i in range(n):
+        j = i + 1
+        while j < n and S[j] == S[i]:
+            count += 1
+            j += 1
+    return count
+print(count_identical_substrings("zzzyz"))  # 8 (z,z,z,zz,zz,zzz,y)
+print(count_identical_substrings("k"))      # 1
+print(count_identical_substrings("aaabbb")) # 6 + 6 = 12
+print(count_identical_substrings("abc"))    # 3 (each single letter)
+
+# Better solution
+def count_identical_substrings(S: str) -> int:
+    total = 0
+    run_len = 1
+    for i in range(1, len(S)):
+        if S[i] == S[i-1]:
+            run_len += 1
+        else:
+            total += run_len * (run_len + 1) // 2
+            run_len = 1
+    total += run_len * (run_len + 1) // 2  # last run
+    return total
+
+print(count_identical_substrings("zzzyz"))  # 8 (z,z,z,zz,zz,zzz,y)
+print(count_identical_substrings("k"))      # 1
+print(count_identical_substrings("aaabbb")) # 6 + 6 = 12
+print(count_identical_substrings("abc"))    # 3 (each single letter)
+
+
