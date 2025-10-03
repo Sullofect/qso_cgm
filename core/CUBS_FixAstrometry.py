@@ -330,12 +330,18 @@ def GenerateF814WImage(cubename):
         cubename_load = 'Q0333-4102'
     elif cubename == 'J0154-0712':
         cubename_load = 'Q0154-0712'
+    else:
+        cubename_load = cubename
 
     # Load MUSE cube
     if cubename_load == 'Q2135-5316':
         path_muse = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_FINAL_vac.fits'.format(cubename_load)
+    elif cubename_load == 'HE0226-4110':
+        path_muse = '../../MUSEQuBES+CUBS/CUBS/DATACUBE-RXSJ02282-4057-v01-PROPVAR-ZAP.fits'
+        # DATACUBE-RXSJ02282-4057-v01-PROPVAR.fits
     else:
         path_muse = '../../MUSEQuBES+CUBS/CUBS/{}_COMBINED_CUBE_MED_FINAL_vac.fits'.format(cubename_load)
+
 
     cube = Cube(path_muse)
     wave_vac = cube.wave.coord()  # Already in vacuum wavelength
@@ -421,7 +427,7 @@ def GenerateF814WImage(cubename):
 # FixGalaxyCatalog(cubename='HE2336-5540')
 # FixGalaxyCatalog(cubename='HE2305-5315')
 # FixGalaxyCatalog(cubename='J0454-6116')
-FixGalaxyCatalog(cubename='J0154-0712')
+# FixGalaxyCatalog(cubename='J0154-0712')
 # FixGalaxyCatalog(cubename='HE0331-4112')
 
 # Fix Seb+Mandy white light image
@@ -457,3 +463,6 @@ FixGalaxyCatalog(cubename='J0154-0712')
 # GenerateF814WImage(cubename='J0454-6116')
 # GenerateF814WImage(cubename='J0154-0712')
 # GenerateF814WImage(cubename='HE0331-4112')
+
+# Reveal tidal tail for HE0226-4110
+GenerateF814WImage(cubename='HE0226-4110')

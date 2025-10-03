@@ -185,3 +185,16 @@ def CentroidHE0238(cubename='HE0238-1904'):
 # RecalculateCentroid(cubename='LBQS1435-0134', deblend_hst=True, thr_hst=1.5) # check emi/abs done
 # RecalculateCentroid(cubename='PG1522+101', deblend_hst=True, thr_hst=1.5) # check emi/abs done
 # RecalculateCentroid(cubename='PKS0232-04', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+
+
+# CUBS
+# RecalculateCentroid(cubename='J0454-6116', deblend_hst=True, thr_hst=0.9) # check emi/abs done
+# RecalculateCentroid(cubename='J2135-5316', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='HE0246-4101', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='J0028-3305', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='HE0419-5657', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='PKS2242-498', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='HE2305-5315', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='HE0331-4112', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='J0154-0712', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+

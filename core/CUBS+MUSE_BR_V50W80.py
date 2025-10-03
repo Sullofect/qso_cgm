@@ -89,6 +89,27 @@ class PlotV50W80Profile:
             ax_bottom.set_ylim(0, 400)
 
             if i == 11:
+                ax_top.annotate(r'$\rm H\,I \, 21\,cm$', xy=(0.65, 0.85), xycoords='axes fraction',
+                                size=20, color='C1', alpha=1.0)
+                ax_top.annotate(r'$\rm [O\,II]$', xy=(0.65, 0.65), xycoords='axes fraction',
+                                size=20, color='C5', alpha=1.0)
+                self.LoadNebKin()
+                color, alpha = 'C5', 0.5
+                ax_top.plot(self.dis_red_neb_mean, self.v_red_neb_mean, '-', color=color, alpha=0.8, lw=2, zorder=-100)
+                ax_top.plot(self.dis_blue_neb_mean, self.v_blue_neb_mean, '-', color=color, alpha=0.8, lw=2, zorder=-100)
+                ax_bottom.plot(self.dis_red_neb_mean, self.sigma_red_neb_mean, '-', color=color, alpha=0.8, lw=2,
+                               zorder=-100)
+                ax_bottom.plot(self.dis_blue_neb_mean, self.sigma_blue_neb_mean, '-', color=color, alpha=0.8, lw=2,
+                               zorder=-100)
+                ax_top.fill_between(self.dis_red_neb_mean, self.v_red_neb_min, self.v_red_neb_max, lw=2, color=color,
+                                    alpha=0.25, edgecolor=None)
+                ax_top.fill_between(self.dis_blue_neb_mean, self.v_blue_neb_min, self.v_blue_neb_max, lw=2, color=color,
+                                    alpha=0.25, edgecolor=None)
+                ax_bottom.fill_between(self.dis_red_neb_mean, self.sigma_red_neb_min, self.sigma_red_neb_max, lw=2,
+                                       color=color, alpha=0.25, edgecolor=None)
+                ax_bottom.fill_between(self.dis_blue_neb_mean, self.sigma_blue_neb_min, self.sigma_blue_neb_max, lw=2,
+                                       color=color, alpha=0.25, edgecolor=None)
+
                 ax_top.fill_between(self.dis_red_gal_mean, self.v_red_gal_min, self.v_red_gal_max, lw=2, color='C1',
                                     alpha=0.4, edgecolor=None)
                 ax_top.fill_between(self.dis_blue_gal_mean, self.v_blue_gal_min, self.v_blue_gal_max, lw=2, color='C1',
@@ -97,6 +118,7 @@ class PlotV50W80Profile:
                                        color='C1', alpha=0.4, edgecolor=None)
                 ax_bottom.fill_between(self.dis_blue_gal_mean, self.sigma_blue_gal_min, self.sigma_blue_gal_max, lw=2,
                                        color='C1', alpha=0.4, edgecolor=None)
+
 
             else:
                 self.PlaceSudoSlit(cubename=self.cubename_list[i], angle=self.angle_list[i], width=self.width_list[i],
@@ -114,13 +136,13 @@ class PlotV50W80Profile:
             # Set labels and ticks
             if i == 0:
                 ax_top.set_ylabel(r'$ \mathrm{\Delta} v_{50} \rm \, [km \, s^{-1}]$', size=25)
-                ax_bottom.set_ylabel(r'$\rm \sigma_{80} \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
+                ax_bottom.set_ylabel(r'$\sigma \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
             elif i == 4 or i == 8:
-                ax_bottom.set_xlabel(r'$\rm Distance \, [pkpc]$', size=25)
+                ax_bottom.set_xlabel(r'$\rm Distance \, [kpc]$', size=25)
                 ax_top.set_ylabel(r'$\mathrm{\Delta} v_{50} \rm \, [km \, s^{-1}]$', size=25)
-                ax_bottom.set_ylabel(r'$\rm \sigma_{80} \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
+                ax_bottom.set_ylabel(r'$\sigma \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
             elif i == 9 or i == 10 or i == 11:
-                ax_bottom.set_xlabel(r'$\rm Distance \, [pkpc]$', size=25)
+                ax_bottom.set_xlabel(r'$\rm Distance \, [kpc]$', size=25)
                 ax_top.set_yticklabels([])
                 ax_bottom.set_yticklabels([])
             else:
@@ -131,7 +153,7 @@ class PlotV50W80Profile:
             ax_top.set_title(self.cubename_label_list[i], y=0.75, x=0.75, size=20)
         fig.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_velocity_profile_all.png', bbox_inches='tight')
 
-    def PlaceSudoSlit(self, cubename=None, angle=None, width=None, height=None):
+    def PlaceSudoSlit(self, cubename=None, angle=None, width=None, height=None, mode='single'):
         # QSO information
         path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
         data_qso = ascii.read(path_qso, format='fixed_width')
@@ -184,8 +206,14 @@ class PlotV50W80Profile:
         v50_flatten, s80_flatten = v50.flatten(), s80.flatten()
         v50_blue, v50_red = v50_flatten[mask][blue], v50_flatten[mask][red]
         s80_blue, s80_red = s80_flatten[mask][blue], s80_flatten[mask][red]
-        self.d5080_blue, self.v50_blue_mean, _, _, self.w80_blue_mean, _, _ = self.Bin(dis_blue, v50_blue, s80_blue, bins=20)
-        self.d5080_red, self.v50_red_mean, _, _, self.w80_red_mean, _, _ = self.Bin(dis_red, v50_red, s80_red, bins=20)
+
+        if mode == 'whole':
+            return dis_red, dis_blue, v50_red, v50_blue, s80_red, s80_blue
+        elif mode == 'single':
+            self.d5080_blue, self.v50_blue_mean, _, _, \
+            self.w80_blue_mean, _, _ = self.Bin(dis_blue, v50_blue, s80_blue, bins=20)
+            self.d5080_red, self.v50_red_mean, _, _, \
+            self.w80_red_mean, _, _ = self.Bin(dis_red, v50_red, s80_red, bins=20)
 
     def Bin(self, x, y, z, bins=20):
         n, edges = np.histogram(x, bins=bins)
@@ -231,6 +259,33 @@ class PlotV50W80Profile:
         self.sigma_blue_gal_mean, self.sigma_blue_gal_max, self.sigma_blue_gal_min = self.Bin(dis_blue_all, v_blue_all,
                                                                                               sigma_blue_all, bins=20)
 
+    def LoadNebKin(self):
+        dis_red_all, v_red_all, sigma_red_all = np.array([]), np.array([]), np.array([])
+        dis_blue_all, v_blue_all, sigma_blue_all = np.array([]), np.array([]), np.array([])
+        for i in range(len(cubename_list)):
+            dis_red, dis_blue, v50_red, v50_blue, s80_red, s80_blue = self.PlaceSudoSlit(cubename=self.cubename_list[i],
+                                                                                         angle=self.angle_list[i],
+                                                                                         width=self.width_list[i],
+                                                                                         height=self.height_list[i],
+                                                                                         mode='whole')
+            dis_red_all = np.hstack((dis_red_all, dis_red))
+            dis_blue_all = np.hstack((dis_blue_all, dis_blue))
+            v_red_all = np.hstack((v_red_all, v50_red))
+            v_blue_all = np.hstack((v_blue_all, v50_blue))
+            sigma_red_all = np.hstack((sigma_red_all, s80_red))
+            sigma_blue_all = np.hstack((sigma_blue_all, s80_blue))
+
+        sort = np.argsort(dis_red_all)
+        dis_red_all, v_red_all, sigma_red_all = dis_red_all[sort], v_red_all[sort], sigma_red_all[sort]
+        sort = np.argsort(dis_blue_all)
+        dis_blue_all, v_blue_all, sigma_blue_all = dis_blue_all[sort], v_blue_all[sort], sigma_blue_all[sort]
+        self.dis_red_neb_mean, self.v_red_neb_mean, self.v_red_neb_max, self.v_red_neb_min, \
+        self.sigma_red_neb_mean, self.sigma_red_neb_max, self.sigma_red_neb_min = self.Bin(dis_red_all, v_red_all,
+                                                                                           sigma_red_all, bins=20)
+        self.dis_blue_neb_mean, self.v_blue_neb_mean, self.v_blue_neb_max, self.v_blue_neb_min, \
+        self.sigma_blue_neb_mean, self.sigma_blue_neb_max, self.sigma_blue_neb_min = self.Bin(dis_blue_all, v_blue_all,
+                                                                                              sigma_blue_all, bins=20)
+
 cubename_list = ['HE0435-5304', 'PKS0405-123', 'HE0238-1904',
                  '3C57', 'J0110-1648', 'PKS2242-498',
                  'HE0112-4145', 'J0154-0712', 'LBQS1435-0134',
@@ -238,7 +293,7 @@ cubename_list = ['HE0435-5304', 'PKS0405-123', 'HE0238-1904',
 cubename_label_list = [r'HE\,0435$-$5304', r'PKS\,0405$-$123', r'HE\,0238$-$1904',
                  r'3C\,57', r'J0110$-$1648', r'PKS\,2242$-$498',
                  r'HE\,0112$-$4145', r'J0154$-$0712', r'Q1435$-$0134',
-                 r'PG\,1522$+$101', r'PKS\,0232$-$04', r'H\,I 21 cm']
+                 r'PG\,1522$+$101', r'PKS\,0232$-$04', r'']
 width_list = [50, 50, 40, 50, 50, 50, 50, 50, 50, 50, 50]
 height_list = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
 angle_list = [90, -90, 90, -30, 180, 180, 220, 135, 150, 180, 180]
