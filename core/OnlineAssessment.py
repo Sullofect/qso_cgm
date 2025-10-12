@@ -568,84 +568,6 @@ def count_fancy_via_predecessor(n: int) -> int:
 # are turned into the moving player's color. (For example, if a sequence WBBBW had just added the bolded W, then the
 # three B's would flip to W. However, WBB.W,'B' where. is an empty space, would not.)
 
-# from typing import List, Tuple
-#
-# Cell = str  # '.', 'B', or 'W'
-# Board = List[List[Cell]]
-#
-# DIRECTIONS: List[Tuple[int, int]] = [
-#     (-1, -1), (-1, 0), (-1, +1),
-#     ( 0, -1),          ( 0, +1),
-#     (+1, -1), (+1, 0), (+1, +1),
-# ]
-#
-# def in_bounds(N: int, r: int, c: int) -> bool:
-#     return 0 <= r < N and 0 <= c < N
-#
-# def opponent(p: Cell) -> Cell:
-#     return 'W' if p == 'B' else 'B'
-#
-# def find_flips(board: Board, r: int, c: int, p: Cell) -> List[Tuple[int, int]]:
-#     """
-#     If placing p at (r,c) is legal, return the list of coordinates to flip.
-#     Otherwise return [].
-#     """
-#     if board[r][c] != '.':
-#         return []
-#     N = len(board)
-#     opp = opponent(p)
-#     flips: List[Tuple[int, int]] = []
-#
-#     for dr, dc in DIRECTIONS:
-#         path = []
-#         rr, cc = r + dr, c + dc
-#         # First must see ≥1 opponent disk
-#         if not in_bounds(N, rr, cc) or board[rr][cc] != opp:
-#             continue
-#         # Collect all contiguous opponent disks
-#         while in_bounds(N, rr, cc) and board[rr][cc] == opp:
-#             path.append((rr, cc))
-#             rr += dr
-#             cc += dc
-#         # Now must end on a friendly disk to bound; otherwise no flips
-#         if in_bounds(N, rr, cc) and board[rr][cc] == p and path:
-#             flips.extend(path)
-#
-#     return flips
-#
-# def is_legal_move(board: Board, r: int, c: int, p: Cell) -> bool:
-#     return len(find_flips(board, r, c, p)) > 0
-#
-# def apply_move(board: Board, r: int, c: int, p: Cell) -> bool:
-#     """
-#     Applies move if legal, mutating board; returns True if applied, False otherwise.
-#     """
-#     flips = find_flips(board, r, c, p)
-#     if not flips:
-#         return False
-#     board[r][c] = p
-#     for rr, cc in flips:
-#         board[rr][cc] = p
-#     return True
-#
-# def valid_moves(board: Board, p: Cell) -> List[Tuple[int, int]]:
-#     N = len(board)
-#     res = []
-#     for r in range(N):
-#         for c in range(N):
-#             if is_legal_move(board, r, c, p):
-#                 res.append((r, c))
-#     return res
-#
-# def score(board: Board) -> Tuple[int, int]:
-#     """
-#     Returns (black_count, white_count).
-#     """
-#     b = sum(row.count('B') for row in board)
-#     w = sum(row.count('W') for row in board)
-#     return b, w
-#
-
 DIRS = [(-1,-1), (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]
 
 def apply_move(board, r, c, me):
@@ -681,16 +603,89 @@ def apply_move(board, r, c, me):
     return new
 
 
-board4 = [[".",".",".",".",".","."],
-          [".",".",".",".",".","."],
-          [".","B",".",".",".","."],
-          [".","B",".",".",".","."],
-          [".","W",".",".",".","."],
-          [".",".",".",".",".","."]]
+# board4 = [[".",".",".",".",".","."],
+#           [".",".",".",".",".","."],
+#           [".","B",".",".",".","."],
+#           [".","B",".",".",".","."],
+#           [".","W",".",".",".","."],
+#           [".",".",".",".",".","."]]
+#
+# board5 = [["B",".",".","."],
+#           [".","W",".","."],
+#           [".",".","W","."],
+#           [".",".",".","."]]
+# print('board flip', apply_move(board4, 1, 1, 'W'))
+# print('board flip', apply_move(board5, 3, 3, 'B'))
 
-board5 = [["B",".",".","."],
-          [".","W",".","."],
-          [".",".","W","."],
-          [".",".",".","."]]
-print('board flip', apply_move(board4, 1, 1, 'W'))
-print('board flip', apply_move(board5, 3, 3, 'B'))
+
+
+# Aquatic
+# from collections import defaultdictlist
+# from math import sqrt
+
+# class TempertureMeanStd:
+#     def __init__(selfself, K: int):
+#         self.K = K
+#         self.data = {}
+#         self.dic = defaultdict(list)
+#
+#     def get_stations(self) -> list[str]:
+#         return list(self.stations)
+#
+#     def update(self, station_name: str, temperature: float):
+#         if station_name not in self.dic:
+#             self.dic[station_name] = []
+#         else:
+#             if len(self.dic[station_name]) == self.K:
+#                 self.dic[station_name].pop(0)
+#             self.dic[station_name].append(temperature)
+#
+#     def get(selfself, station_name) -> tuple[float, float]:
+#         arr = self.dic[station_name]
+#         mean = sum(arr) / self.K
+#         std = (sum((arr - mean) ** 2) / (self.K - 1)) ** 0.5
+#         return (mean, std)
+
+
+
+# Akuna
+
+# Tuple sort rule in Python:
+# Python compares tuples element-by-element:
+# First compare the first element.
+# If equal, compare the second element.
+
+# 1. Frequency Sort
+# Given an array of n item values, sort the array in ascending order, first by the frequency of each
+# value, then by the values themselves.
+# Example:
+# n=6
+# items = [4, 5, 6, 5, 4, 3]
+# There are 2
+# values that occur once: [3, 6]
+# There are 2
+# values that occur twice: [4, 4, 5, 5]
+# The array of items sorted by frequency and then by
+# value in ascending order is [3, 6, 4, 4, 5, 5]
+
+
+from collections import Counter
+def itemsSort(items):
+    freq = Counter(items)
+    items.sort(key=lambda x: (freq[x], x))
+    return items
+
+# Example usage
+print(itemsSort([4, 5, 6, 5, 4, 3]))
+
+
+# [["X","O","O","X","X","X","O","X","O","O"],
+#  ["X","O","X","X","X","X","X","X","X","X"],
+#  ["X","X","X","X","O","X","X","X","X","X"],
+#  ["X","O","X","X","X","O","X","X","X","O"],
+#  ["O","X","X","X","O","X","O","X","O","X"],
+#  ["X","X","O","X","X","O","O","X","X","X"],
+#  ["O","X","X","O","O","X","O","X","X","O"],
+#  ["O","X","X","X","X","X","O","X","X","X"],
+#  ["X","O","O","X","X","O","X","X","O","O"],
+#  ["X","X","X","O","O","X","O","X","X","O"]]

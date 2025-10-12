@@ -75,11 +75,41 @@ def postorder(root):
     result.append(root.val)
     return result
 
+
+# Morris inorder
+def morris_inorder(root):
+    cur = root
+    while cur:
+        if not cur.left:
+            print(cur.val)
+            cur = cur.right
+        else:
+            pre = cur.left
+            while pre.right and pre.right != cur:
+                pre = pre.right
+            if not pre.right:
+                pre.right = cur
+                cur = cur.left
+            else:
+                pre.right = None
+                print(cur.val)
+                cur = cur.right
+
 # Bredth First Search (BFS)
 # core
 queue = deque()
 queue.append(start)
 curr = queue.popleft()
+queue.append(curr.left)
+queue.append(curr.right)
+
+# DFS iterative
+# core
+queue = deque()
+queue.append(start)
+curr = queue.pop()
+queue.append(curr.right)
+queue.append(curr.left)
 
 # Heapify
 # Heap.pop/push
@@ -194,5 +224,21 @@ def count_paths_no_n_in_a_row(A, B, n):
 
     # sum all ways at destination, regardless of last move or run length
     return sum(dp[A][B]['R']) + sum(dp[A][B]['U'])
+
+
+
+# Newton's method
+# x^2 = 37
+# Make sure f(x) = 0 = x^2 - 37
+f = lambda x: x**2 - 37
+f_prime = lambda x: 2*x
+def evaluate(f, f_prime, guess, maxiter, tolerance=1e-9):
+    for _ in range(maxiter):
+        x_n = guess - f(guess) / f_prime(guess)
+        if abs(x_n - guess) < tolerance:
+            return x_n
+        guess = x_n
+    return guess
+
 
 
