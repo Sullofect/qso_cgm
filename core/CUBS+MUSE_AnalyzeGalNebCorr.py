@@ -155,7 +155,7 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
         nebula_factor = 1.0 if inside_nebula else 0.5
         far_sigma = np.abs(((v_gal[i] - v50.ravel()) / s80.ravel()))
         val = dis_i / scale_length
-        val[val >= 0.5] = 0.5
+        val[val >= 1.0] = 0.8
         effective_threshold = 2 * (1 - val) * nebula_factor
         within_threshold = far_sigma <= effective_threshold
         ratio = np.sum(within_threshold) / len(v50[~np.isnan(v50)])
@@ -226,7 +226,7 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
         score_array = ComputeCorr(cubename=L[i][0], scale_length=L[i][2],
                                   nums_seg_OII=L[i][3], select_seg_OII=L[i][4],
                                   nums_seg_OIII=L[i][5], select_seg_OIII=L[i][6],
-                                  savefig=False)
+                                  savefig=True)
         scale_length_array_L = np.hstack((scale_length_array_L, L[i][2]))
         largeThan05_array_L = np.hstack((largeThan05_array_L, len(score_array[score_array > 0.2])))
         score_L = np.hstack((score_L, score_array))
@@ -237,7 +237,7 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
         score_array = ComputeCorr(cubename=S_BR[i][0], scale_length=S_BR[i][2],
                                   nums_seg_OII=S_BR[i][3], select_seg_OII=S_BR[i][4],
                                   nums_seg_OIII=S_BR[i][5], select_seg_OIII=S_BR[i][6],
-                                  savefig=False)
+                                  savefig=True)
         scale_length_array_S = np.hstack((scale_length_array_S, S_BR[i][2]))
         largeThan05_array_S = np.hstack((largeThan05_array_S, len(score_array[score_array > 0.2])))
         score_S_BR = np.hstack((score_S_BR, score_array))
@@ -247,7 +247,7 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
         score_array = ComputeCorr(cubename=S[i][0], scale_length=S[i][2],
                                   nums_seg_OII=S[i][3], select_seg_OII=S[i][4],
                                   nums_seg_OIII=S[i][5], select_seg_OIII=S[i][6],
-                                  savefig=False)
+                                  savefig=True)
         scale_length_array_S = np.hstack((scale_length_array_S, S[i][2]))
         largeThan05_array_S = np.hstack((largeThan05_array_S, len(score_array[score_array > 0.2])))
         score_S = np.hstack((score_S, score_array))
@@ -258,7 +258,7 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
         score_array = ComputeCorr(cubename=A[i][0], scale_length=A[i][2],
                                   nums_seg_OII=A[i][3], select_seg_OII=A[i][4],
                                   nums_seg_OIII=A[i][5], select_seg_OIII=A[i][6],
-                                  savefig=False)
+                                  savefig=True)
         scale_length_array_A = np.hstack((scale_length_array_A, A[i][2]))
         largeThan05_array_A = np.hstack((largeThan05_array_A, len(score_array[score_array > 0.2])))
         score_A = np.hstack((score_A, score_array))
@@ -292,7 +292,7 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
     # ax.grid(True, axis="y", linewidth=0.5, alpha=0.25)
     ax.set_xlabel(r'KAF', size=25)
     ax.set_ylabel(r'$N$', size=25)
-    ax.legend(loc='upper left', fontsize=13)
+    ax.legend(loc='upper right', fontsize=20)
     plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_LType.png', bbox_inches='tight')
 
     # Scatter plot

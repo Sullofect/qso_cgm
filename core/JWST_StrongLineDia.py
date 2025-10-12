@@ -88,18 +88,18 @@ y_1_sort, y_2_sort, y_3_sort, y_4_sort = y_1_sort[:, :], y_2_sort[:, :], y_3_sor
 #               color='C7', alpha=0.2)
 # ax[0].fill(np.hstack((x_4_sort[0, :], x_4_sort[1, ::-1])), np.hstack((y_4_sort[0, :], y_4_sort[1, ::-1])),
 #               color='C8', alpha=0.2)
-ax[0].plot(x_1_sort[0, :], y_1_sort[0, :], color='C5', alpha=0.4)
-ax[0].plot(x_1_sort[1, :], y_1_sort[1, :], color='C5', alpha=0.4)
-ax[0].plot(x_1_sort[2, :], y_1_sort[2, :], color='C5', alpha=0.4)
-ax[0].plot(x_2_sort[0, :], y_2_sort[0, :], color='C6', alpha=0.4)
-ax[0].plot(x_2_sort[1, :], y_2_sort[1, :], color='C6', alpha=0.4)
-ax[0].plot(x_2_sort[2, :], y_2_sort[2, :], color='C6', alpha=0.4)
-ax[0].plot(x_3_sort[0, :], y_3_sort[0, :], color='C7', alpha=0.4)
-ax[0].plot(x_3_sort[1, :], y_3_sort[1, :], color='C7', alpha=0.4)
-ax[0].plot(x_3_sort[2, :], y_3_sort[2, :], color='C7', alpha=0.4)
-ax[0].plot(x_4_sort[0, :], y_4_sort[0, :], color='C8', alpha=0.4)
-ax[0].plot(x_4_sort[1, :], y_4_sort[1, :], color='C8', alpha=0.4)
-ax[0].plot(x_4_sort[2, :], y_4_sort[2, :], color='C8', alpha=0.4)
+ax[0].plot(x_1_sort[0, :], y_1_sort[0, :], color='C1', alpha=0.4)
+ax[0].plot(x_1_sort[1, :], y_1_sort[1, :], color='C1', alpha=0.4)
+ax[0].plot(x_1_sort[2, :], y_1_sort[2, :], color='C1', alpha=0.4)
+ax[0].plot(x_2_sort[0, :], y_2_sort[0, :], color='C3', alpha=0.4)
+ax[0].plot(x_2_sort[1, :], y_2_sort[1, :], color='C3', alpha=0.4)
+ax[0].plot(x_2_sort[2, :], y_2_sort[2, :], color='C3', alpha=0.4)
+ax[0].plot(x_3_sort[0, :], y_3_sort[0, :], color='C5', alpha=0.4)
+ax[0].plot(x_3_sort[1, :], y_3_sort[1, :], color='C5', alpha=0.4)
+ax[0].plot(x_3_sort[2, :], y_3_sort[2, :], color='C5', alpha=0.4)
+ax[0].plot(x_4_sort[0, :], y_4_sort[0, :], color='C7', alpha=0.4)
+ax[0].plot(x_4_sort[1, :], y_4_sort[1, :], color='C7', alpha=0.4)
+ax[0].plot(x_4_sort[2, :], y_4_sort[2, :], color='C7', alpha=0.4)
 
 # ax[0].fill(np.hstack((x_1_sort[1, :], x_1_sort[2, ::-1])), np.hstack((y_1_sort[1, :], y_1_sort[2, ::-1])),
 #               color='C5', alpha=0.4)
@@ -120,16 +120,16 @@ ax[0].plot(x_4_sort[2, :], y_4_sort[2, :], color='C8', alpha=0.4)
 
 for i in range(13):
     alpha_i = 0.5 + 0.2 * i / 13
-    ax[0].plot([x_1_sort[0, i], x_1_sort[1, i]], [y_1_sort[0, i], y_1_sort[1, i]], '-', color='C5', alpha=alpha_i)
-    ax[0].plot([x_2_sort[0, i], x_2_sort[1, i]], [y_2_sort[0, i], y_2_sort[1, i]], '-', color='C6', alpha=alpha_i)
-    ax[0].plot([x_1_sort[1, i], x_1_sort[2, i]], [y_1_sort[1, i], y_1_sort[2, i]], '-', color='C5', alpha=alpha_i)
-    ax[0].plot([x_2_sort[1, i], x_2_sort[2, i]], [y_2_sort[1, i], y_2_sort[2, i]], '-', color='C6', alpha=alpha_i)
+    ax[0].plot([x_1_sort[0, i], x_1_sort[1, i]], [y_1_sort[0, i], y_1_sort[1, i]], '-', color='C1', alpha=alpha_i)
+    ax[0].plot([x_1_sort[1, i], x_1_sort[2, i]], [y_1_sort[1, i], y_1_sort[2, i]], '-', color='C1', alpha=alpha_i)
+    ax[0].plot([x_2_sort[0, i], x_2_sort[1, i]], [y_2_sort[0, i], y_2_sort[1, i]], '-', color='C3', alpha=alpha_i)
+    ax[0].plot([x_2_sort[1, i], x_2_sort[2, i]], [y_2_sort[1, i], y_2_sort[2, i]], '-', color='C3', alpha=alpha_i)
     if i < 10:
-        ax[0].plot([x_3_sort[0, i], x_3_sort[1, i]], [y_3_sort[0, i], y_3_sort[1, i]], '-', color='C7', alpha=alpha_i)
-        ax[0].plot([x_3_sort[1, i], x_3_sort[2, i]], [y_3_sort[1, i], y_3_sort[2, i]], '-', color='C7', alpha=alpha_i)
+        ax[0].plot([x_3_sort[0, i], x_3_sort[1, i]], [y_3_sort[0, i], y_3_sort[1, i]], '-', color='C5', alpha=alpha_i)
+        ax[0].plot([x_3_sort[1, i], x_3_sort[2, i]], [y_3_sort[1, i], y_3_sort[2, i]], '-', color='C5', alpha=alpha_i)
     if i < 8:
-        ax[0].plot([x_4_sort[0, i], x_4_sort[1, i]], [y_4_sort[0, i], y_4_sort[1, i]], '-', color='C8', alpha=alpha_i)
-        ax[0].plot([x_4_sort[1, i], x_4_sort[2, i]], [y_4_sort[1, i], y_4_sort[2, i]], '-', color='C8', alpha=alpha_i)
+        ax[0].plot([x_4_sort[0, i], x_4_sort[1, i]], [y_4_sort[0, i], y_4_sort[1, i]], '-', color='C7', alpha=alpha_i)
+        ax[0].plot([x_4_sort[1, i], x_4_sort[2, i]], [y_4_sort[1, i], y_4_sort[2, i]], '-', color='C7', alpha=alpha_i)
 
 for i in range(len(metal[:9]))[::2]:
     print(i)
