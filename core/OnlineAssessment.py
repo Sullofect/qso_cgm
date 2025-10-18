@@ -689,3 +689,76 @@ print(itemsSort([4, 5, 6, 5, 4, 3]))
 #  ["O","X","X","X","X","X","O","X","X","X"],
 #  ["X","O","O","X","X","O","X","X","O","O"],
 #  ["X","X","X","O","O","X","O","X","X","O"]]
+
+
+
+# Bank of America OA
+
+# Number ways of decoding a message
+def num_decodings(s: str) -> int:
+    if not s or s[0] == '0':
+        return 0
+    prev2, prev1 = 1, 1  # dp[0], dp[1]
+    for i in range(2, len(s) + 1):
+        curr = 0
+        # single digit
+        if s[i-1] != '0':
+            curr += prev1
+        # double digit
+        two = int(s[i-2:i])
+        if 10 <= two <= 26:
+            curr += prev2
+        prev2, prev1 = prev1, curr
+    return prev1
+
+
+import sys, math
+
+INF = 10000.0
+def closest(points):
+    pts = [(x, y, i) for i, (x, y) in enumerate(points)]
+    px = sorted(pts)                         # by x
+    py = sorted(pts, key=lambda p: p[1])     # by y
+
+    def d2(a, b):
+        dx, dy = a[0]-b[0], a[1]-b[1]
+        return dx*dx + dy*dy
+
+    def rec(px, py):
+        n = len(px)
+        if n <= 3:
+            best = float('inf')
+            for i in range(n):
+                for j in range(i+1, n):
+                    best = min(best, d2(px[i], px[j]))
+            return best
+        m = n // 2
+        mx = px[m][0]
+        Lx, Rx = px[:m], px[m:]
+        lid = {p[2] for p in Lx}
+        Ly, Ry = [], []
+        for p in py:
+            (Ly if p[2] in lid else Ry).append(p)
+        d = min(rec(Lx, Ly), rec(Rx, Ry))
+        strip = [p for p in py if (p[0] - mx)**2 < d]
+        for i in range(len(strip)):
+            j = i + 1
+            while j < len(strip) and (strip[j][1] - strip[i][1])**2 < d:
+                d = min(d, d2(strip[i], strip[j]))
+                j += 1
+        return d
+
+    return math.sqrt(rec(px, py))
+
+def main():
+    it = iter(sys.stdin.read().split())
+    out = []
+    for n in map(int, it):
+        if n == 0: break
+        pts = [(int(next(it)), int(next(it))) for _ in range(n)]
+        ans = closest(pts)
+        out.append("INFINITY" if ans >= INF else f"{ans:.4f}")
+    print("\n".join(out))
+
+if __name__ == "__main__":
+    main()
