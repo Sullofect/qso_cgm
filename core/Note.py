@@ -42,6 +42,24 @@ def merge(left, right):
     return result
 
 
+def merge(self, left, right):
+    dummy = ListNode(0)
+    curr = dummy
+    while left and right:
+        if left.val > right.val:
+            curr.next = right
+            right = right.next
+        else:
+            curr.next = left
+            left = left.next
+        curr = curr.next
+    if left:
+        curr.next = left
+    if right:
+        curr.next = right
+    return dummy.next
+
+
 # Tree
 # In-order Left → Node → Right
 # pre-order Node → Left → Right
@@ -258,3 +276,45 @@ class TrieNode:
         self.is_end = True
     def is_end(self) -> bool:
         return self.is_end
+
+
+
+# Backtracking
+# Core
+def backtrack(path, choices):
+    if some_end_condition:
+        output.append(path)
+        return
+
+    for choice in choices:
+        # make choice
+        path.append(choice)
+        # explore
+        backtrack(path, updated_choices)
+        # undo choice
+        path.pop()
+
+
+# Manacher's Alogirhtm
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        s_prime = "#" + "#".join(s) + "#"
+        print(s_prime)
+        n = len(s_prime)
+        palindrome_radii = [0] * n
+        center = radius = 0
+        for i in range(n):
+            mirror = 2 * center - i
+            if i < radius:
+                palindrome_radii[i] = min(radius - i, palindrome_radii[mirror])
+            while (i + 1 + palindrome_radii[i] < n and i - 1 - palindrome_radii[i] >= 0
+                   and s_prime[i + 1 + palindrome_radii[i]] == s_prime[i - 1 - palindrome_radii[i]]):
+                palindrome_radii[i] += 1
+            if i + palindrome_radii[i] > radius:
+                center = i
+                radius = i + palindrome_radii[i]
+        max_length = max(palindrome_radii)
+        center_index = palindrome_radii.index(max_length)
+        start_index = (center_index - max_length) // 2
+        longest_palindrome = s[start_index : start_index + max_length]
+        return longest_palindrome
