@@ -50,6 +50,139 @@ area = [2740, 8180, 4820, 5180, 4350, 2250, 3090, 2280, 620, 1310, 970, 2860]
 
 
 
+from numpy import sqrt, log
+# from numpy.special import erf, erfc  # np.erf / np.erfc via numpy.special
+from scipy.special import erf, erfc
+def _Phi(z):
+    # Standard normal CDF via erf (vectorized)
+    return 0.5 * (1.0 + erf(z / np.sqrt(2.0)))
+
+def ovl_gauss(mu1, sigma1, mu2, sigma2, atol=1e-12):
+    """
+    Overlap coefficient between N(mu1, sigma1^2) and N(mu2, sigma2^2),
+    where mu1, sigma1 are arrays (per spaxel) and mu2, sigma2 are scalars.
+
+    Returns an array in [0, 1] with the same shape as mu1/sigma1.
+    """
+    mu1    = np.asarray(mu1,    dtype=float)
+    sigma1 = np.asarray(sigma1, dtype=float)
+
+    if np.any(sigma1 <= 0) or not (sigma2 > 0):
+        raise ValueError("All standard deviations must be positive.")
+
+    out = np.empty_like(mu1, dtype=float)
+
+    # --- Equal-variance branch (per-element mask) ---
+    eq = np.isclose(sigma1, sigma2, atol=atol)
+    if np.any(eq):
+        d = np.abs(mu1[eq] - mu2)
+        # OVL = erfc(|Δμ| / (2√2 σ))  ∈ [0,1]
+        out[eq] = erfc(d / (2.0 * np.sqrt(2.0) * sigma1[eq]))
+
+    # --- Unequal-variance branch ---
+    ne = ~eq
+    if np.any(ne):
+        m1 = mu1[ne]; s1 = sigma1[ne]
+        m2 = float(mu2); s2 = float(sigma2)
+
+        # Quadratic for intersections from log f1 = log f2:
+        a = 0.5 / (s2**2) - 0.5 / (s1**2)                 # shape = (ne)
+        b = m1 / (s1**2) - m2 / (s2**2)
+        c = (m2**2) / (2*s2**2) - (m1**2) / (2*s1**2) + np.log(s2 / s1)
+
+        # Discriminant (should be >=0 for valid normals with s1!=s2)
+        disc  = np.maximum(0.0, b*b - 4*a*c)
+        rdisc = np.sqrt(disc)
+
+        x1 = (-b - rdisc) / (2*a)
+        x2 = (-b + rdisc) / (2*a)
+        x_lo = np.minimum(x1, x2)
+        x_hi = np.maximum(x1, x2)
+
+        # Decide which is wider/narrower at each spaxel
+        wide_is_2 = s2 > s1
+        mu_w   = np.where(wide_is_2, m2, m1)
+        sig_w  = np.where(wide_is_2, s2, s1)
+        mu_n   = np.where(wide_is_2, m1, m2)
+        sig_n  = np.where(wide_is_2, s1, s2)
+
+        # CDFs at the intersections
+        Phi_w_lo = _Phi((x_lo - mu_w) / sig_w)
+        Phi_w_hi = _Phi((x_hi - mu_w) / sig_w)
+        Phi_n_lo = _Phi((x_lo - mu_n) / sig_n)
+        Phi_n_hi = _Phi((x_hi - mu_n) / sig_n)
+
+        # OVL = 1 + (Φ_w(x2)-Φ_w(x1)) + (Φ_n(x1)-Φ_n(x2))
+        out[ne] = 1.0 + (Phi_w_hi - Phi_w_lo) + (Phi_n_lo - Phi_n_hi)
+
+    # Numerical guard (tight noise only)
+    return np.clip(out, 0.0, 1.0)
+
+def gaussian_overlap_3d_safe(spaxel_mus, spaxel_Sigmas, mu_g, Sigma_g, *, bounded=True, jitter=1e-9):
+    """
+    Robust 3D (x,y,v) per-spaxel overlap. Validates/reshapes inputs to prevent
+    'solve1 ... (size N is different from 3)' errors.
+    """
+    # Coerce arrays
+    spaxel_mus = np.asarray(spaxel_mus, float)
+    mu_g       = np.asarray(mu_g, float).reshape(3,)         # (3,)
+    Sigma_g    = np.asarray(Sigma_g, float).reshape(3,3)     # (3,3)
+
+    # Ensure spaxel_mus is (N,3)
+    if spaxel_mus.ndim == 1:
+        # If someone passed a flat array, this will fail loudly
+        raise ValueError(f"spaxel_mus must be (N,3); got (3,) or (N,). Use np.column_stack([x,y,v]).")
+    if spaxel_mus.shape[1] != 3:
+        raise ValueError(f"spaxel_mus must have 3 columns (x,y,v); got shape {spaxel_mus.shape}.")
+
+    N = spaxel_mus.shape[0]
+    d = spaxel_mus - mu_g[None, :]                              # (N,3)
+
+    # Handle Sigma shapes
+    spaxel_Sigmas = np.asarray(spaxel_Sigmas, float)
+    if spaxel_Sigmas.ndim == 2:                                 # shared
+        if spaxel_Sigmas.shape != (3,3):
+            raise ValueError(f"spaxel_Sigmas must be (3,3) or (N,3,3); got {spaxel_Sigmas.shape}.")
+        S = (spaxel_Sigmas + Sigma_g).copy()
+        S.flat[::4] += jitter                                    # diag bump (3x3 stride=4)
+        L = np.linalg.cholesky(S)                                # (3,3)
+
+        # Ensure RHS is (3,N), not (N,)!
+        rhs = d.T.reshape(3, N)                                  # (3,N)
+        y = np.linalg.solve(L, rhs)                              # (3,N)
+        maha2 = np.sum(y*y, axis=0)                              # (N,)
+        A = np.exp(-0.5 * maha2)
+        if bounded:
+            return A
+        log_norm = -0.5 * (3*np.log(2*np.pi) + 2*np.sum(np.log(np.diag(L))))
+        return A * np.exp(log_norm)
+
+    elif spaxel_Sigmas.ndim == 3:
+        if spaxel_Sigmas.shape != (N,3,3):
+            raise ValueError(f"spaxel_Sigmas is 3D but not (N,3,3); got {spaxel_Sigmas.shape}.")
+        out = np.empty(N)
+        for i in range(N):
+            S = (spaxel_Sigmas[i] + Sigma_g).copy()
+            S.flat[::4] += jitter
+            L = np.linalg.cholesky(S)
+            # Ensure RHS is length-3 vector
+            di = d[i].reshape(3,)
+            y  = np.linalg.solve(L, di)
+            m2 = float(y @ y)
+            ai = np.exp(-0.5 * m2)
+            if bounded:
+                out[i] = ai
+            else:
+                log_norm = -0.5 * (3*np.log(2*np.pi) + 2*np.sum(np.diag(L)))
+                out[i] = ai * np.exp(log_norm)
+        return out
+    else:
+        raise ValueError(f"spaxel_Sigmas must be (3,3) or (N,3,3); got ndim={spaxel_Sigmas.ndim}.")
+
+
+
+
+
 # Compute correlation for individual galaxies
 def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_seg_OII=None, select_seg_OII=False,
                 nums_seg_OIII=None, select_seg_OIII=False):
@@ -141,34 +274,91 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
     d_A_kpc = cosmo.angular_diameter_distance(z_qso).value * 1e3
     arcsec = (50 / d_A_kpc) * 206265
 
-    # Specify the threshold
+    # Nebula Remove nan spaxels in nebula
+    v50_flat = v50.ravel()
+    s80_flat = s80.ravel()
+    # valid_indices = ~np.isnan(v50_flat)
+    # x = x[valid_indices]
+    # y = y[valid_indices]
+    # v50_flat = v50_flat[valid_indices]
+    # s80_flat = s80_flat[valid_indices]
+
+    input_neb = np.column_stack([x, y, v50_flat])
+    Sigma_neb = np.zeros((len(s80_flat), 3, 3))
+    sigma_x_neb, sigma_y_neb, sigma_v_neb = 2, 2, s80_flat
+    Sigma_neb[:, 0, 0] = sigma_x_neb ** 2
+    Sigma_neb[:, 1, 1] = sigma_y_neb ** 2
+    Sigma_neb[:, 2, 2] = sigma_v_neb ** 2
+
+    # Test
     for i in range(len(v_gal)):
-        dis_i = np.sqrt((c_gal[0][i] - x) ** 2 + (c_gal[1][i] - y) ** 2) * 0.2 * 50 / arcsec
+        # dis_i = np.sqrt((c_gal[0][i] - x) ** 2 + (c_gal[1][i] - y) ** 2) * 0.2 * 50 / arcsec
 
         # Determine if a galaxy is inside the nebula
-        if 0 <= c_gal[1][i] <= np.shape(v50)[1] and 0 <= c_gal[0][i] <= np.shape(v50)[0]:
-            inside_nebula = ~np.isnan(v50[int(c_gal[1][i]), int(c_gal[0][i])])
-        else:
-            inside_nebula = False
+        # if 0 <= c_gal[1][i] <= np.shape(v50)[1] and 0 <= c_gal[0][i] <= np.shape(v50)[0]:
+        #     inside_nebula = ~np.isnan(v50[int(c_gal[1][i]), int(c_gal[0][i])])
+        # else:
+        #     inside_nebula = False
 
-        # Compute the Association
-        nebula_factor = 1.0 if inside_nebula else 0.5
-        far_sigma = np.abs(((v_gal[i] - v50.ravel()) / s80.ravel()))
-        val = dis_i / scale_length
-        val[val >= 1.0] = 0.8
-        effective_threshold = 2 * (1 - val) * nebula_factor
-        within_threshold = far_sigma <= effective_threshold
-        ratio = np.sum(within_threshold) / len(v50[~np.isnan(v50)])
+        # Galaxy
+        x_gal, y_gal = c_gal[0][i], c_gal[1][i]
+        # input_gal = np.array([x_gal, y_gal, v_gal[i]], dtype=float)  # shape (3,)
+        # sigma_x, sigma_y, sigma_v = 2.0, 2.0, 30.0  # pixel, pixel, km/s
+        # Sigma_gal = np.diag([sigma_x ** 2, sigma_y ** 2, sigma_v ** 2])  # shape (3,3)
 
+        # Calculate overlapping
+        # overlap = gaussian_overlap_3d_safe(input_neb, Sigma_neb, input_gal, Sigma_gal)
+        # ratio = np.average(overlap)
+
+
+        score = np.exp(-0.5 * (((x - c_gal[0][i]) ** 2) / (25.0 ** 2) + ((y - c_gal[1][i]) ** 2) / (25.0 ** 2) +
+                               ((v50_flat - v_gal[i]) ** 2) / (s80_flat ** 2)))
+        score = np.nansum(score) / np.sum(~np.isnan(score))
+
+        # print(np.nanmean(overlap), np.nanmax(overlap), np.nanmin(overlap))
+        # plt.figure()
+        # plt.imshow(score.reshape(150, 150), origin='lower', cmap='viridis')
+        # plt.scatter(c_gal[0][i], c_gal[1][i], marker='o', s=140, c='white', edgecolor='k', facecolor='white', label='Galaxies')
+        # plt.scatter(c_gal[0][i], c_gal[1][i], marker='o', s=120, c='none', edgecolor=plt.cm.coolwarm(norm(v_gal)), facecolor='none', label='Galaxies')
+        # plt.show()
+        # raise ValueError ("Debugging overlapping calculation")
 
         # Compute the ratio
-        if 0 <= c_gal[0][i] <= 150 and 0 <= c_gal[1][i] <= 150:
-            print('Galaxy {}: {:.2f}'.format(i, ratio))
-            score_array.append(ratio)
+        if 0 <= x_gal <= 150 and 0 <= y_gal<= 150:
+            print('Galaxy {}: {:.2f}'.format(i, score))
+            score_array.append(score)
         if savefig:
             if 0 <= c_gal[0][i] <= 150 and 0 <= c_gal[1][i] <=150:
-                plt.text(c_gal[0][i], c_gal[1][i], '{:.2f}'.format(ratio),
+                plt.text(c_gal[0][i], c_gal[1][i], '{:.2f}'.format(score),
                          fontsize=15, color='black', ha='center', va='center')
+
+    # # Specify the threshold
+    # for i in range(len(v_gal)):
+    #     dis_i = np.sqrt((c_gal[0][i] - x) ** 2 + (c_gal[1][i] - y) ** 2) * 0.2 * 50 / arcsec
+    #
+    #     # Determine if a galaxy is inside the nebula
+    #     if 0 <= c_gal[1][i] <= np.shape(v50)[1] and 0 <= c_gal[0][i] <= np.shape(v50)[0]:
+    #         inside_nebula = ~np.isnan(v50[int(c_gal[1][i]), int(c_gal[0][i])])
+    #     else:
+    #         inside_nebula = False
+    #
+    #     # Compute the Association
+    #     nebula_factor = 1.0 if inside_nebula else 0.5
+    #     far_sigma = np.abs(((v_gal[i] - v50.ravel()) / s80.ravel()))
+    #     val = dis_i / scale_length
+    #     val[val >= 1.0] = 0.8
+    #     effective_threshold = 2 * (1 - val) * nebula_factor
+    #     within_threshold = far_sigma <= effective_threshold
+    #     ratio = np.sum(within_threshold) / len(v50[~np.isnan(v50)])
+    #
+    #     # Compute the ratio
+    #     if 0 <= c_gal[0][i] <= 150 and 0 <= c_gal[1][i] <= 150:
+    #         print('Galaxy {}: {:.2f}'.format(i, ratio))
+    #         score_array.append(ratio)
+    #     if savefig:
+    #         if 0 <= c_gal[0][i] <= 150 and 0 <= c_gal[1][i] <=150:
+    #             plt.text(c_gal[0][i], c_gal[1][i], '{:.2f}'.format(ratio),
+    #                      fontsize=15, color='black', ha='center', va='center')
     if savefig:
         plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
         plt.scatter(c_gal[0], c_gal[1], marker='o', s=140, c='white', edgecolor='k', facecolor='white', label='Galaxies')
@@ -311,11 +501,11 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
 
 
 # Test
-# ComputeCorr(cubename='HE0226-4110', HSTcentroid=True, scale_length=84)
+# ComputeCorr(cubename='HE0226-4110', scale_length=84)
 # ComputeCorr(cubename='PKS0405-123', HSTcentroid=True, scale_length=130)
 # ComputeCorr(cubename='HE0238-1904', HSTcentroid=True, scale_length=103)
-# ComputeCorr(cubename='PKS0552-640', HSTcentroid=True, scale_length=153)
-# ComputeCorr(cubename='3C57', HSTcentroid=True, scale_length=71)
+# ComputeCorr(cubename='PKS0552-640', scale_length=153, savefig=True)
+# ComputeCorr(cubename='3C57', scale_length=71)
 # ComputeCorr(cubename='Q0107-0235', HSTcentroid=True, scale_length=90)
 # ComputeCorr(cubename='TEX0206-048', HSTcentroid=True, scale_length=200)
 # ComputeCorr(cubename='PB6291', scale_length=28, savefig=True, nums_seg_OII=[2, 6, 7], select_seg_OII=True)

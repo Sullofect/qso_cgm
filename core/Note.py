@@ -203,7 +203,7 @@ def count_paths_no_n_in_a_row(A, B, n):
     return dp(0, 0, None, 0)
 
 # Example: original frog (A=7, B=4) with "no 3 in a row" => n=3
-print(count_paths_no_n_in_a_row(7, 4, 3))  # 30
+# print(count_paths_no_n_in_a_row(7, 4, 3))  # 30
 
 def count_paths_no_n_in_a_row(A, B, n):
     dp = [[{'R': [0] * (n-1), 'U': [0] * (n-1)} for _ in range(B+1)] for _ in range(A+1)]
@@ -318,3 +318,6 @@ class Solution:
         start_index = (center_index - max_length) // 2
         longest_palindrome = s[start_index : start_index + max_length]
         return longest_palindrome
+
+# Kadane's algorithm
+
