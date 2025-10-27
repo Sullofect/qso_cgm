@@ -49,138 +49,32 @@ area = [2740, 8180, 4820, 5180, 4350, 2250, 3090, 2280, 620, 1310, 970, 2860]
 # fig.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_Ngal_Size.png', bbox_inches='tight')
 
 
+def chol_logdet(M):
+    L = np.linalg.cholesky(M)
+    return L, 2.0 * np.sum(np.log(np.diag(L)))  # log|M|
 
-from numpy import sqrt, log
-# from numpy.special import erf, erfc  # np.erf / np.erfc via numpy.special
-from scipy.special import erf, erfc
-def _Phi(z):
-    # Standard normal CDF via erf (vectorized)
-    return 0.5 * (1.0 + erf(z / np.sqrt(2.0)))
-
-def ovl_gauss(mu1, sigma1, mu2, sigma2, atol=1e-12):
-    """
-    Overlap coefficient between N(mu1, sigma1^2) and N(mu2, sigma2^2),
-    where mu1, sigma1 are arrays (per spaxel) and mu2, sigma2 are scalars.
-
-    Returns an array in [0, 1] with the same shape as mu1/sigma1.
-    """
-    mu1    = np.asarray(mu1,    dtype=float)
-    sigma1 = np.asarray(sigma1, dtype=float)
-
-    if np.any(sigma1 <= 0) or not (sigma2 > 0):
-        raise ValueError("All standard deviations must be positive.")
-
-    out = np.empty_like(mu1, dtype=float)
-
-    # --- Equal-variance branch (per-element mask) ---
-    eq = np.isclose(sigma1, sigma2, atol=atol)
-    if np.any(eq):
-        d = np.abs(mu1[eq] - mu2)
-        # OVL = erfc(|Δμ| / (2√2 σ))  ∈ [0,1]
-        out[eq] = erfc(d / (2.0 * np.sqrt(2.0) * sigma1[eq]))
-
-    # --- Unequal-variance branch ---
-    ne = ~eq
-    if np.any(ne):
-        m1 = mu1[ne]; s1 = sigma1[ne]
-        m2 = float(mu2); s2 = float(sigma2)
-
-        # Quadratic for intersections from log f1 = log f2:
-        a = 0.5 / (s2**2) - 0.5 / (s1**2)                 # shape = (ne)
-        b = m1 / (s1**2) - m2 / (s2**2)
-        c = (m2**2) / (2*s2**2) - (m1**2) / (2*s1**2) + np.log(s2 / s1)
-
-        # Discriminant (should be >=0 for valid normals with s1!=s2)
-        disc  = np.maximum(0.0, b*b - 4*a*c)
-        rdisc = np.sqrt(disc)
-
-        x1 = (-b - rdisc) / (2*a)
-        x2 = (-b + rdisc) / (2*a)
-        x_lo = np.minimum(x1, x2)
-        x_hi = np.maximum(x1, x2)
-
-        # Decide which is wider/narrower at each spaxel
-        wide_is_2 = s2 > s1
-        mu_w   = np.where(wide_is_2, m2, m1)
-        sig_w  = np.where(wide_is_2, s2, s1)
-        mu_n   = np.where(wide_is_2, m1, m2)
-        sig_n  = np.where(wide_is_2, s1, s2)
-
-        # CDFs at the intersections
-        Phi_w_lo = _Phi((x_lo - mu_w) / sig_w)
-        Phi_w_hi = _Phi((x_hi - mu_w) / sig_w)
-        Phi_n_lo = _Phi((x_lo - mu_n) / sig_n)
-        Phi_n_hi = _Phi((x_hi - mu_n) / sig_n)
-
-        # OVL = 1 + (Φ_w(x2)-Φ_w(x1)) + (Φ_n(x1)-Φ_n(x2))
-        out[ne] = 1.0 + (Phi_w_hi - Phi_w_lo) + (Phi_n_lo - Phi_n_hi)
-
-    # Numerical guard (tight noise only)
-    return np.clip(out, 0.0, 1.0)
-
-def gaussian_overlap_3d_safe(spaxel_mus, spaxel_Sigmas, mu_g, Sigma_g, *, bounded=True, jitter=1e-9):
-    """
-    Robust 3D (x,y,v) per-spaxel overlap. Validates/reshapes inputs to prevent
-    'solve1 ... (size N is different from 3)' errors.
-    """
-    # Coerce arrays
-    spaxel_mus = np.asarray(spaxel_mus, float)
-    mu_g       = np.asarray(mu_g, float).reshape(3,)         # (3,)
-    Sigma_g    = np.asarray(Sigma_g, float).reshape(3,3)     # (3,3)
-
-    # Ensure spaxel_mus is (N,3)
-    if spaxel_mus.ndim == 1:
-        # If someone passed a flat array, this will fail loudly
-        raise ValueError(f"spaxel_mus must be (N,3); got (3,) or (N,). Use np.column_stack([x,y,v]).")
-    if spaxel_mus.shape[1] != 3:
-        raise ValueError(f"spaxel_mus must have 3 columns (x,y,v); got shape {spaxel_mus.shape}.")
-
+def bhattacharyya_coefficient(spaxel_mus, spaxel_Sigmas, mu_g, Sigma_g, jitter=1e-12):
     N = spaxel_mus.shape[0]
-    d = spaxel_mus - mu_g[None, :]                              # (N,3)
+    if spaxel_Sigmas.shape != (N, 3, 3):
+        raise ValueError("spaxel_Sigmas is 3D but not (N,3,3).")
 
-    # Handle Sigma shapes
-    spaxel_Sigmas = np.asarray(spaxel_Sigmas, float)
-    if spaxel_Sigmas.ndim == 2:                                 # shared
-        if spaxel_Sigmas.shape != (3,3):
-            raise ValueError(f"spaxel_Sigmas must be (3,3) or (N,3,3); got {spaxel_Sigmas.shape}.")
-        S = (spaxel_Sigmas + Sigma_g).copy()
-        S.flat[::4] += jitter                                    # diag bump (3x3 stride=4)
-        L = np.linalg.cholesky(S)                                # (3,3)
-
-        # Ensure RHS is (3,N), not (N,)!
-        rhs = d.T.reshape(3, N)                                  # (3,N)
-        y = np.linalg.solve(L, rhs)                              # (3,N)
-        maha2 = np.sum(y*y, axis=0)                              # (N,)
-        A = np.exp(-0.5 * maha2)
-        if bounded:
-            return A
-        log_norm = -0.5 * (3*np.log(2*np.pi) + 2*np.sum(np.log(np.diag(L))))
-        return A * np.exp(log_norm)
-
-    elif spaxel_Sigmas.ndim == 3:
-        if spaxel_Sigmas.shape != (N,3,3):
-            raise ValueError(f"spaxel_Sigmas is 3D but not (N,3,3); got {spaxel_Sigmas.shape}.")
-        out = np.empty(N)
-        for i in range(N):
-            S = (spaxel_Sigmas[i] + Sigma_g).copy()
-            S.flat[::4] += jitter
-            L = np.linalg.cholesky(S)
-            # Ensure RHS is length-3 vector
-            di = d[i].reshape(3,)
-            y  = np.linalg.solve(L, di)
-            m2 = float(y @ y)
-            ai = np.exp(-0.5 * m2)
-            if bounded:
-                out[i] = ai
-            else:
-                log_norm = -0.5 * (3*np.log(2*np.pi) + 2*np.sum(np.diag(L)))
-                out[i] = ai * np.exp(log_norm)
-        return out
-    else:
-        raise ValueError(f"spaxel_Sigmas must be (3,3) or (N,3,3); got ndim={spaxel_Sigmas.ndim}.")
-
-
-
+    d = spaxel_mus - mu_g[None, :]  # (N,3)
+    out = np.empty(N)
+    Sg = Sigma_g.copy()
+    # Sg.flat[::4] += jitter
+    _, logdet_Sg = chol_logdet(Sg)
+    for i in range(N):
+        Ss = spaxel_Sigmas[i].copy()
+        # Ss.flat[::4] += jitter
+        Sm = 0.5 * (Sg + Ss)
+        # Sm.flat[::4] += jitter
+        _, logdet_Ss = chol_logdet(Ss)
+        Lm, logdet_Sm = chol_logdet(Sm)
+        y = np.linalg.solve(Lm, d[i])
+        m2 = float(y @ y)
+        log_bc = 0.25 * (logdet_Sg + logdet_Ss) - 0.5 * logdet_Sm - 0.125 * m2
+        out[i] = np.exp(log_bc)
+    return out
 
 
 # Compute correlation for individual galaxies
@@ -277,43 +171,46 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
     # Nebula Remove nan spaxels in nebula
     v50_flat = v50.ravel()
     s80_flat = s80.ravel()
-    # valid_indices = ~np.isnan(v50_flat)
-    # x = x[valid_indices]
-    # y = y[valid_indices]
-    # v50_flat = v50_flat[valid_indices]
-    # s80_flat = s80_flat[valid_indices]
+    valid_indices = ~np.isnan(v50_flat)
+    x = x[valid_indices]
+    y = y[valid_indices]
+    v50_flat = v50_flat[valid_indices]
+    s80_flat = s80_flat[valid_indices]
 
     input_neb = np.column_stack([x, y, v50_flat])
     Sigma_neb = np.zeros((len(s80_flat), 3, 3))
-    sigma_x_neb, sigma_y_neb, sigma_v_neb = 2, 2, s80_flat
+    sigma_x_neb, sigma_y_neb, sigma_v_neb = 10, 10, s80_flat
     Sigma_neb[:, 0, 0] = sigma_x_neb ** 2
     Sigma_neb[:, 1, 1] = sigma_y_neb ** 2
     Sigma_neb[:, 2, 2] = sigma_v_neb ** 2
 
     # Test
     for i in range(len(v_gal)):
-        # dis_i = np.sqrt((c_gal[0][i] - x) ** 2 + (c_gal[1][i] - y) ** 2) * 0.2 * 50 / arcsec
-
-        # Determine if a galaxy is inside the nebula
-        # if 0 <= c_gal[1][i] <= np.shape(v50)[1] and 0 <= c_gal[0][i] <= np.shape(v50)[0]:
-        #     inside_nebula = ~np.isnan(v50[int(c_gal[1][i]), int(c_gal[0][i])])
-        # else:
-        #     inside_nebula = False
-
         # Galaxy
         x_gal, y_gal = c_gal[0][i], c_gal[1][i]
-        # input_gal = np.array([x_gal, y_gal, v_gal[i]], dtype=float)  # shape (3,)
-        # sigma_x, sigma_y, sigma_v = 2.0, 2.0, 30.0  # pixel, pixel, km/s
-        # Sigma_gal = np.diag([sigma_x ** 2, sigma_y ** 2, sigma_v ** 2])  # shape (3,3)
+
+        # Determine if a galaxy is inside the nebula
+        if 0 <= y_gal <= np.shape(v50)[1] and 0 <= x_gal<= np.shape(v50)[0]:
+            inside_nebula = ~np.isnan(v50[int(y_gal), int(x_gal)])
+        else:
+            inside_nebula = False
+
+        sigma_physical = 30 if inside_nebula else 10
+        input_gal = np.array([x_gal, y_gal, v_gal[i]], dtype=float)  # shape (3,)
+        sigma_x, sigma_y, sigma_v = sigma_physical, sigma_physical, 30.0  # pixel, pixel, km/s
+        Sigma_gal = np.diag([sigma_x ** 2, sigma_y ** 2, sigma_v ** 2])  # shape (3,3)
 
         # Calculate overlapping
-        # overlap = gaussian_overlap_3d_safe(input_neb, Sigma_neb, input_gal, Sigma_gal)
-        # ratio = np.average(overlap)
+        overlap = bhattacharyya_coefficient(input_neb, Sigma_neb, input_gal, Sigma_gal)
+        score = np.average(overlap)
 
 
-        score = np.exp(-0.5 * (((x - c_gal[0][i]) ** 2) / (25.0 ** 2) + ((y - c_gal[1][i]) ** 2) / (25.0 ** 2) +
-                               ((v50_flat - v_gal[i]) ** 2) / (s80_flat ** 2)))
-        score = np.nansum(score) / np.sum(~np.isnan(score))
+        # score = np.exp(-0.5 * (((x - c_gal[0][i]) ** 2) / (25.0 ** 2) + ((y - c_gal[1][i]) ** 2) / (25.0 ** 2) +
+        #                        ((v50_flat - v_gal[i]) ** 2) / (s80_flat ** 2)))
+
+        # D2 = (((x - c_gal[0][i]) ** 2) / (10.0 ** 2)) + (((y - c_gal[1][i]) ** 2) / (10.0 ** 2)) + \
+        #         (((v50_flat - v_gal[i]) ** 2) / (s80_flat ** 2))
+        # score = np.nansum(D2 <= 3.665) / np.sum(~np.isnan(D2))
 
         # print(np.nanmean(overlap), np.nanmax(overlap), np.nanmin(overlap))
         # plt.figure()
