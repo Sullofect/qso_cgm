@@ -179,7 +179,7 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
 
     input_neb = np.column_stack([x, y, v50_flat])
     Sigma_neb = np.zeros((len(s80_flat), 3, 3))
-    sigma_x_neb, sigma_y_neb, sigma_v_neb = 10, 10, s80_flat
+    sigma_x_neb, sigma_y_neb, sigma_v_neb = 1.5, 1.5, s80_flat
     Sigma_neb[:, 0, 0] = sigma_x_neb ** 2
     Sigma_neb[:, 1, 1] = sigma_y_neb ** 2
     Sigma_neb[:, 2, 2] = sigma_v_neb ** 2
@@ -195,16 +195,18 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
         else:
             inside_nebula = False
 
-        sigma_physical = 30 if inside_nebula else 10
+        sigma_physical = 1.5 if inside_nebula else 1.5
         input_gal = np.array([x_gal, y_gal, v_gal[i]], dtype=float)  # shape (3,)
         sigma_x, sigma_y, sigma_v = sigma_physical, sigma_physical, 30.0  # pixel, pixel, km/s
         Sigma_gal = np.diag([sigma_x ** 2, sigma_y ** 2, sigma_v ** 2])  # shape (3,3)
 
         # Calculate overlapping
         overlap = bhattacharyya_coefficient(input_neb, Sigma_neb, input_gal, Sigma_gal)
-        score = np.average(overlap)
+        score = np.max(overlap)
 
-
+        # plt.figure()
+        # plt.hist(overlap)
+        # plt.show()
         # score = np.exp(-0.5 * (((x - c_gal[0][i]) ** 2) / (25.0 ** 2) + ((y - c_gal[1][i]) ** 2) / (25.0 ** 2) +
         #                        ((v50_flat - v_gal[i]) ** 2) / (s80_flat ** 2)))
 
