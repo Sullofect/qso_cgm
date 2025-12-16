@@ -438,7 +438,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 # MakeV50W80(cubename='3C57', v_max=350, sigma_max=300, HSTcentroid=True, rmbkgResidue=True)
 # MakeV50W80(cubename='PKS0552-640', v_max=300, sigma_max=300,
 #            nums_seg_OII=[2, 6, 7, 9, 10, 14, 18], nums_seg_OIII=[7, 9, 12, 19, 20], rmbkgResidue=True)
-# MakeV50W80(cubename='J0110-1648', v_max=300, sigma_max=300, rmbkgResidue=True)
+# MakeV50W80(cubename='J0110-1648', v_max=300, sigma_max=300, rmbkgResidue=True, HSTcentroid=True)
 # MakeV50W80(cubename='J0454-6116', v_max=500, sigma_max=400, nums_seg_OII=[2, 6, 8, 13, 17, 18],
 #            nums_seg_OIII=[2, 9, 10, 18], hideColorbar=False, HSTcentroid=True)
 # MakeV50W80(cubename='J2135-5316', v_max=300, sigma_max=300, contour_level_OII=0.3,
@@ -446,15 +446,15 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 #            nums_seg_OIII=[4, 12, 13, 14, 15, 17, 19, 20], rmbkgResidue=True, HSTcentroid=True) # Double component # SNR=5
 # MakeV50W80(cubename='J0119-2010', v_max=500, sigma_max=300, contour_level_OIII=0.5,
 #            nums_seg_OII=[4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20], nums_seg_OIII=[7, 9, 11, 12, 14, 16, 17, 18],
-#            rmbkgResidue=True)  # Double component
+#            rmbkgResidue=True, HSTcentroid=True)  # Double component
 # MakeV50W80(cubename='HE0246-4101', v_max=300, sigma_max=300, HSTcentroid=True)
 # MakeV50W80(cubename='J0028-3305', v_max=300, sigma_max=300, contour_level_OII=0.3, HSTcentroid=True)
 # MakeV50W80(cubename='HE0419-5657', v_max=400, sigma_max=300, nums_seg_OII=[1], rmbkgResidue=True, HSTcentroid=True)
 # MakeV50W80(cubename='PB6291', v_max=400, sigma_max=300, nums_seg_OII=[3, 5], HSTcentroid=True)
 # MakeV50W80(cubename='Q0107-0235', v_max=400, sigma_max=300, nums_seg_OII=[7], rmbkgResidue=True, HSTcentroid=True)
 # MakeV50W80(cubename='PKS2242-498', v_max=400, sigma_max=300, contour_level_OII=0.3, HSTcentroid=True)
-# MakeV50W80(cubename='PKS0355-483', v_max=300, sigma_max=300, nums_seg_OII=[6, 14], rmbkgResidue=True)
-# MakeV50W80(cubename='HE0112-4145', v_max=300, sigma_max=300, rmbkgResidue=True)
+MakeV50W80(cubename='PKS0355-483', v_max=300, sigma_max=300, nums_seg_OII=[6, 14], rmbkgResidue=True, HSTcentroid=True)
+# MakeV50W80(cubename='HE0112-4145', v_max=300, sigma_max=300, rmbkgResidue=True, HSTcentroid=True)
 # MakeV50W80(cubename='HE0439-5254', v_max=500, sigma_max=300, HSTcentroid=True)
 # MakeV50W80(cubename='HE2305-5315', v_max=500, sigma_max=300, nums_seg_OII=[5, 6, 7, 8], HSTcentroid=True)
 # MakeV50W80(cubename='HE1003+0149', v_max=300, sigma_max=300, contour_level_OII=0.3, HSTcentroid=True)

@@ -4,14 +4,13 @@ import numpy as np
 import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
-from astropy import units as u
 from astropy.io import ascii
 from matplotlib import rc
 from astropy.wcs import WCS
 from regions import PixCoord
 from astropy.cosmology import FlatLambdaCDM
-from regions import RectangleSkyRegion, RectanglePixelRegion, CirclePixelRegion
 from astropy.coordinates import SkyCoord
+from CUBS_MUSE_MakeV50W80 import APLpyStyle
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick.minor', size=4, visible=True)
@@ -59,11 +58,13 @@ def bhattacharyya_coefficient(spaxel_mus, spaxel_Sigmas, mu_g, Sigma_g, jitter=1
         raise ValueError("spaxel_Sigmas is 3D but not (N,3,3).")
 
     d = spaxel_mus - mu_g[None, :]  # (N,3)
-    out = np.empty(N)
+    out = np.full(N, np.nan)
     Sg = Sigma_g.copy()
     # Sg.flat[::4] += jitter
     _, logdet_Sg = chol_logdet(Sg)
     for i in range(N):
+        if np.isnan(spaxel_mus[i, 2]):
+            continue
         Ss = spaxel_Sigmas[i].copy()
         # Ss.flat[::4] += jitter
         Sm = 0.5 * (Sg + Ss)
@@ -158,9 +159,9 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
 
     # Compute the velocity score
     score_array = []
+    norm = mpl.colors.Normalize(vmin=-vmax, vmax=vmax)
 
     if savefig:
-        norm = mpl.colors.Normalize(vmin=-vmax, vmax=vmax)
         plt.figure(figsize=(5, 5), dpi=300)
 
     # Compute the physical scale at the redshift of the quasar
@@ -171,11 +172,11 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
     # Nebula Remove nan spaxels in nebula
     v50_flat = v50.ravel()
     s80_flat = s80.ravel()
-    valid_indices = ~np.isnan(v50_flat)
-    x = x[valid_indices]
-    y = y[valid_indices]
-    v50_flat = v50_flat[valid_indices]
-    s80_flat = s80_flat[valid_indices]
+    # valid_indices = ~np.isnan(v50_flat)
+    # x = x[valid_indices]
+    # y = y[valid_indices]
+    # v50_flat = v50_flat[valid_indices]
+    # s80_flat = s80_flat[valid_indices]
 
     input_neb = np.column_stack([x, y, v50_flat])
     Sigma_neb = np.zeros((len(s80_flat), 3, 3))
@@ -185,42 +186,25 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
     Sigma_neb[:, 2, 2] = sigma_v_neb ** 2
 
     # Test
+    score_matrix = np.zeros(np.shape(v50))
     for i in range(len(v_gal)):
         # Galaxy
         x_gal, y_gal = c_gal[0][i], c_gal[1][i]
-
         # Determine if a galaxy is inside the nebula
         if 0 <= y_gal <= np.shape(v50)[1] and 0 <= x_gal<= np.shape(v50)[0]:
             inside_nebula = ~np.isnan(v50[int(y_gal), int(x_gal)])
         else:
             inside_nebula = False
 
-        sigma_physical = 1.5 if inside_nebula else 1.5
+        sigma_physical = 10 if inside_nebula else 10
         input_gal = np.array([x_gal, y_gal, v_gal[i]], dtype=float)  # shape (3,)
-        sigma_x, sigma_y, sigma_v = sigma_physical, sigma_physical, 30.0  # pixel, pixel, km/s
+        sigma_x, sigma_y, sigma_v = sigma_physical, sigma_physical, 20.0  # pixel, pixel, km/s
         Sigma_gal = np.diag([sigma_x ** 2, sigma_y ** 2, sigma_v ** 2])  # shape (3,3)
 
         # Calculate overlapping
         overlap = bhattacharyya_coefficient(input_neb, Sigma_neb, input_gal, Sigma_gal)
-        score = np.max(overlap)
-
-        # plt.figure()
-        # plt.hist(overlap)
-        # plt.show()
-        # score = np.exp(-0.5 * (((x - c_gal[0][i]) ** 2) / (25.0 ** 2) + ((y - c_gal[1][i]) ** 2) / (25.0 ** 2) +
-        #                        ((v50_flat - v_gal[i]) ** 2) / (s80_flat ** 2)))
-
-        # D2 = (((x - c_gal[0][i]) ** 2) / (10.0 ** 2)) + (((y - c_gal[1][i]) ** 2) / (10.0 ** 2)) + \
-        #         (((v50_flat - v_gal[i]) ** 2) / (s80_flat ** 2))
-        # score = np.nansum(D2 <= 3.665) / np.sum(~np.isnan(D2))
-
-        # print(np.nanmean(overlap), np.nanmax(overlap), np.nanmin(overlap))
-        # plt.figure()
-        # plt.imshow(score.reshape(150, 150), origin='lower', cmap='viridis')
-        # plt.scatter(c_gal[0][i], c_gal[1][i], marker='o', s=140, c='white', edgecolor='k', facecolor='white', label='Galaxies')
-        # plt.scatter(c_gal[0][i], c_gal[1][i], marker='o', s=120, c='none', edgecolor=plt.cm.coolwarm(norm(v_gal)), facecolor='none', label='Galaxies')
-        # plt.show()
-        # raise ValueError ("Debugging overlapping calculation")
+        score_matrix += overlap.reshape(np.shape(v50))
+        score = np.nanmax(overlap)
 
         # Compute the ratio
         if 0 <= x_gal <= 150 and 0 <= y_gal<= 150:
@@ -228,8 +212,34 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
             score_array.append(score)
         if savefig:
             if 0 <= c_gal[0][i] <= 150 and 0 <= c_gal[1][i] <=150:
-                plt.text(c_gal[0][i], c_gal[1][i], '{:.2f}'.format(score),
-                         fontsize=15, color='black', ha='center', va='center')
+                plt.text(c_gal[0][i], c_gal[1][i], '{:.2f}'.format(score), fontsize=15, color='black',
+                         ha='center', va='center')
+
+    # score_matrix /= len(score_array)
+    KAF = np.nansum(score_matrix)
+    print('Ratio test: {}, {:.4f}'.format(cubename, KAF))
+
+    # Save KAF as fits
+    path_KAF = '../../MUSEQuBES+CUBS/KAF/{}_KAF.fits'.format(cubename)
+    hdul_KAF = fits.ImageHDU(KAF, header=hdr_v50)
+    hdul_KAF.writeto(path_KAF, overwrite=True)
+
+
+    # # Plot the score matrix
+    fig = plt.figure(figsize=(8, 8), dpi=300)
+    gc = aplpy.FITSFigure(path_KAF, figure=fig, hdu=1)
+    gc.show_colorscale(vmin=0, vmax=1, cmap='viridis')
+    APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
+    # gc.add_label(0.05, 0.08, '[{}, {}]'.format(-v_max, v_max), size=30, relative=True, horizontalalignment='left')
+    plt.savefig('../../MUSEQuBES+CUBS/plots/{}_KAF.png'.format(cubename), bbox_inches='tight')
+
+
+    # plt.figure(figsize=(5, 5), dpi=300)
+    # plt.imshow(score_matrix, origin='lower', cmap='viridis')
+    # plt.colorbar(label='Average Overlap Score')
+    # plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_{}_corr_test.png'.format(cubename), bbox_inches='tight')
+    # # plt.show()
+    # plt.close()
 
     # # Specify the threshold
     # for i in range(len(v_gal)):
@@ -260,8 +270,10 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
     #                      fontsize=15, color='black', ha='center', va='center')
     if savefig:
         plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
-        plt.scatter(c_gal[0], c_gal[1], marker='o', s=140, c='white', edgecolor='k', facecolor='white', label='Galaxies')
-        plt.scatter(c_gal[0], c_gal[1], marker='o', s=120, c='none', edgecolor=plt.cm.coolwarm(norm(v_gal)), facecolor='none', label='Galaxies')
+        plt.scatter(c_gal[0], c_gal[1], marker='o', s=140, c='white', edgecolor='k',
+                    facecolor='white', label='Galaxies')
+        plt.scatter(c_gal[0], c_gal[1], marker='o', s=120, c='none', edgecolor=plt.cm.coolwarm(norm(v_gal)),
+                    facecolor='none', label='Galaxies')
         plt.xlim(0, v50.shape[1])
         plt.ylim(0, v50.shape[0])
         plt.xticks([])
@@ -269,7 +281,7 @@ def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_
         plt.xlabel('')
         plt.ylabel('')
         plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_{}_corr.png'.format(cubename), bbox_inches='tight')
-    return np.asarray(score_array)
+    return KAF
 
 L = np.array([["HE0226-4110",     150,  84, [2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], False,
                [1, 5, 6, 8, 9, 10, 11, 16, 19], False],
@@ -355,12 +367,15 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
     print('average L', sum(score_L > 0.5) / len(L))
     print('average S', sum(score_S > 0.5) / (len(S_BR) + len(S)))
 
-    score_L = score_L[score_L >= 0.2]
-    score_S = score_S[score_S >= 0.2]
-    score_A = score_A[score_A >= 0.2]
+    # score_L = score_L[score_L >= 0.2]
+    # score_S = score_S[score_S >= 0.2]
+    # score_A = score_A[score_A >= 0.2]
 
     # Histogram
-    bins = np.linspace(0, 1, 11)
+    # bins = np.linspace(0, 1, 11)
+    # bins = np.linspace(0, 0.1, 11)
+    bins = np.linspace(0, 0.2, 21)
+
     mid = (bins[1:] + bins[:-1]) / 2
     mid = np.append(mid, mid[-1] + mid[-1] - mid[-2])
     counts_L, _ = np.histogram(score_L, bins=bins)
@@ -374,7 +389,8 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
     ax.step(mid, counts_L, where="mid", alpha=0.8, color="k", linestyle="-", linewidth=2, label=r'Irregular, large-scale')
     ax.step(mid, counts_S, where="mid", alpha=0.8, color="red", linestyle="--", linewidth=2, label=r'Host-galaxy-scale')
     ax.step(mid, counts_A, where="mid", alpha=0.8, color="blue", linestyle=":", linewidth=2, label=r'Complex Morphology')
-    ax.set_xlim(0.1, 1.0)
+    # ax.set_xlim(0.1, 1.0)
+    # ax.set_xlim(0.0, 1.0)
     ymax = ax.get_ylim()[1]
     ax.set_ylim(0, np.ceil(ymax))
     ax.set_yticks(np.arange(0, ax.get_ylim()[1] + 1, 2))
@@ -386,13 +402,15 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
 
     # Scatter plot
     plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
-    plt.scatter(scale_length_array_L, largeThan05_array_L, marker="o", alpha=0.8, s=50, color='k')
-    plt.scatter(scale_length_array_S, largeThan05_array_S, marker="s", alpha=0.8, s=50, color='red')
-    plt.scatter(scale_length_array_A, largeThan05_array_A, marker="^", alpha=0.8, s=50, color='blue')
+    plt.scatter(scale_length_array_L, score_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
+    plt.scatter(scale_length_array_S, score_S, marker="s", alpha=0.8, s=50, color='red', label=r'Host-galaxy-scale')
+    plt.scatter(scale_length_array_A, score_A, marker="^", alpha=0.8, s=50, color='blue', label=r'Complex Morphology')
     plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
-    plt.ylabel(r'$N_{>\,0.2}$', size=25)
+    # plt.ylabel(r'$N_{>\,0.2}$', size=25)
+    plt.ylabel(r'KAF', size=25)
     plt.xlim(20, 225)
-    plt.ylim(-0.5, 9)
+    # plt.ylim(-0.5, 9)
+    plt.legend(loc='upper right', fontsize=20)
     plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
 
 
@@ -401,12 +419,12 @@ def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
 
 # Test
 # ComputeCorr(cubename='HE0226-4110', scale_length=84)
-# ComputeCorr(cubename='PKS0405-123', HSTcentroid=True, scale_length=130)
-# ComputeCorr(cubename='HE0238-1904', HSTcentroid=True, scale_length=103)
-# ComputeCorr(cubename='PKS0552-640', scale_length=153, savefig=True)
+# ComputeCorr(cubename='PKS0405-123', scale_length=130)
+# ComputeCorr(cubename='HE0238-1904', scale_length=103)
+ComputeCorr(cubename='PKS0552-640', scale_length=153)
 # ComputeCorr(cubename='3C57', scale_length=71)
-# ComputeCorr(cubename='Q0107-0235', HSTcentroid=True, scale_length=90)
-# ComputeCorr(cubename='TEX0206-048', HSTcentroid=True, scale_length=200)
+# ComputeCorr(cubename='Q0107-0235', scale_length=90)
+# ComputeCorr(cubename='TEX0206-048', scale_length=200)
 # ComputeCorr(cubename='PB6291', scale_length=28, savefig=True, nums_seg_OII=[2, 6, 7], select_seg_OII=True)
 
-SummarizeCorr(L=L, S_BR=S_BR, S=S, A=A)
+# SummarizeCorr(L=L, S_BR=S_BR, S=S, A=A)
