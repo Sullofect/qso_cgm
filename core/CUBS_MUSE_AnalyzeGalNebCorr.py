@@ -4,12 +4,14 @@ import numpy as np
 import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
-from astropy.io import ascii
+from scipy import stats
 from matplotlib import rc
 from astropy.wcs import WCS
+from astropy.io import ascii
 from regions import PixCoord
+from astropy import units as u
 from astropy.cosmology import FlatLambdaCDM
-from astropy.coordinates import SkyCoord
+from astropy.coordinates import SkyCoord, SkyOffsetFrame
 from CUBS_MUSE_MakeV50W80 import APLpyStyle
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -19,269 +21,413 @@ rc('xtick', direction='in', labelsize=25, top='on')
 rc('ytick', direction='in', labelsize=25, right='on')
 rc('xtick.major', size=8)
 rc('ytick.major', size=8)
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
-# Part 1
-# Nebulae info
-morph = ["I", "R+I", "R+O+I", "I", "I", "O+I", "O+I", "U+I", "U+I", "I", "I", "I"]
-N_gal = [10, 37, 34, 11, 18, 2, 7, 5, 3, 23, 7, 18]
-N_enc = [2, 12, 4, 3, 2, 0, 0, 2, 1, 3, 1, 2]
-size = [84, 129, 103, 153, 102, 83, 96, 74, 35, 50, 47, 126]
-area = [2740, 8180, 4820, 5180, 4350, 2250, 3090, 2280, 620, 1310, 970, 2860]
+# def chol_logdet(M):
+#     L = np.linalg.cholesky(M)
+#     return L, 2.0 * np.sum(np.log(np.diag(L)))  # log|M|
+#
+# def bhattacharyya_coefficient(spaxel_mus, spaxel_Sigmas, mu_g, Sigma_g, jitter=1e-12):
+#     N = spaxel_mus.shape[0]
+#     if spaxel_Sigmas.shape != (N, 3, 3):
+#         raise ValueError("spaxel_Sigmas is 3D but not (N,3,3).")
+#
+#     d = spaxel_mus - mu_g[None, :]  # (N,3)
+#     out = np.full(N, np.nan)
+#     Sg = Sigma_g.copy()
+#     # Sg.flat[::4] += jitter
+#     _, logdet_Sg = chol_logdet(Sg)
+#     for i in range(N):
+#         if np.isnan(spaxel_mus[i, 2]):
+#             continue
+#         Ss = spaxel_Sigmas[i].copy()
+#         # Ss.flat[::4] += jitter
+#         Sm = 0.5 * (Sg + Ss)
+#         # Sm.flat[::4] += jitter
+#         _, logdet_Ss = chol_logdet(Ss)
+#         Lm, logdet_Sm = chol_logdet(Sm)
+#         y = np.linalg.solve(Lm, d[i])
+#         m2 = float(y @ y)
+#         log_bc = 0.25 * (logdet_Sg + logdet_Ss) - 0.5 * logdet_Sm - 0.125 * m2
+#         out[i] = np.exp(log_bc)
+#     return out
 
-# plt.figure(figsize=(5, 5), dpi=300)
-# plt.plot(N_enc, size, 'o', color='k', ms=8)
-# plt.xlabel(r'$N_{\rm enc}$', size=25)
-# plt.ylabel('Size [kpc]', size=25)
-# plt.xlim()
-# plt.ylim(30, 160)
-# plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_Ngal_Size.png', bbox_inches='tight')
 
-# fig, ax = plt.subplots(1, 2, figsize=(10, 5), dpi=300, sharey=True)
-# fig.subplots_adjust(wspace=0.0, hspace=0.0)
-# ax[0].plot(N_gal, size, 'o', color='k', ms=8)
-# ax[1].plot(N_enc, size, 'o', color='k', ms=8)
-# ax[0].set_xlabel(r'$N_{\rm gal}$', size=25)
-# ax[1].set_xlabel(r'$N_{\rm enc}$', size=25)
-# ax[0].set_ylabel('Size [kpc]', size=25)
-# ax[0].set_xlim()
-# ax[0].set_ylim(30, 160)
-# fig.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_Ngal_Size.png', bbox_inches='tight')
+def bhattacharyya_coefficient(mus_neb=None, sigma_x_neb=1.5, sigma_y_neb=1.5, sigma_v_neb=None,
+                              mus_gal=None, sigma_x_gal=None, sigma_y_gal=None, sigma_v_gal=20.0):
+    N, M = mus_neb.shape[0], mus_gal.shape[0]
 
+    # mask invalid spaxels
+    good = np.isfinite(mus_neb[:, 2])
+    out = np.full((N, M), np.nan, dtype=float)
 
-def chol_logdet(M):
-    L = np.linalg.cholesky(M)
-    return L, 2.0 * np.sum(np.log(np.diag(L)))  # log|M|
+    mus = mus_neb[good]       # (Ng,3)
+    svs = sigma_v_neb[good]      # (Ng,)
 
-def bhattacharyya_coefficient(spaxel_mus, spaxel_Sigmas, mu_g, Sigma_g, jitter=1e-12):
-    N = spaxel_mus.shape[0]
-    if spaxel_Sigmas.shape != (N, 3, 3):
-        raise ValueError("spaxel_Sigmas is 3D but not (N,3,3).")
+    # deltas (Ng, G)
+    dx = mus[:, 0:1] - mus_gal[None, :, 0]
+    dy = mus[:, 1:2] - mus_gal[None, :, 1]
+    dv = mus[:, 2:3] - mus_gal[None, :, 2]
 
-    d = spaxel_mus - mu_g[None, :]  # (N,3)
-    out = np.full(N, np.nan)
-    Sg = Sigma_g.copy()
-    # Sg.flat[::4] += jitter
-    _, logdet_Sg = chol_logdet(Sg)
-    for i in range(N):
-        if np.isnan(spaxel_mus[i, 2]):
-            continue
-        Ss = spaxel_Sigmas[i].copy()
-        # Ss.flat[::4] += jitter
-        Sm = 0.5 * (Sg + Ss)
-        # Sm.flat[::4] += jitter
-        _, logdet_Ss = chol_logdet(Ss)
-        Lm, logdet_Sm = chol_logdet(Sm)
-        y = np.linalg.solve(Lm, d[i])
-        m2 = float(y @ y)
-        log_bc = 0.25 * (logdet_Sg + logdet_Ss) - 0.5 * logdet_Sm - 0.125 * m2
-        out[i] = np.exp(log_bc)
+    # x
+    varsum_x = sigma_x_neb ** 2 + sigma_x_gal ** 2
+    pref_x = np.sqrt(2.0 * sigma_x_neb * sigma_x_gal / varsum_x)
+    expo_x = -(dx * dx) / (4.0 * varsum_x)
+
+    # y
+    varsum_y = sigma_y_neb ** 2 + sigma_y_gal ** 2
+    pref_y = np.sqrt(2.0 * sigma_y_neb * sigma_y_gal / varsum_y)
+    expo_y = -(dy * dy) / (4.0 * varsum_y)
+
+    # v
+    varsum_v = svs ** 2 + sigma_v_gal ** 2            # (Ng,)
+    pref_v = np.sqrt(2.0 * svs * sigma_v_gal / varsum_v)  # (Ng,)
+    expo_v = -(dv * dv) / (4.0 * varsum_v[:, None])
+
+    # Result
+    bc_good = (pref_x * pref_y) * pref_v[:, None] * np.exp(expo_x + expo_y + expo_v)  # (Ng,G)
+    out[good, :] = bc_good
     return out
 
+class CalculateGalNebCorr:
+    def __init__(self, L=None, S=None, A=None):
+        path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
+        self.data_qso = ascii.read(path_qso, format='fixed_width')
+        self._qso_index = {str(n): i for i, n in enumerate(self.data_qso['name'])}
+        self.L, self.S , self.A = L, S, A
+        self.cubename_all = np.hstack((L[:, 0], S[:, 0], A[:, 0]))
 
-# Compute correlation for individual galaxies
-def ComputeCorr(cubename=None, scale_length=None, vmax=300, savefig=False, nums_seg_OII=None, select_seg_OII=False,
-                nums_seg_OIII=None, select_seg_OIII=False):
-    # QSO information
-    path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
-    data_qso = ascii.read(path_qso, format='fixed_width')
-    data_qso = data_qso[data_qso['name'] == cubename]
-    ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
+    def ComputeCorr(self, cubename=None, nums_seg_OII=None, select_seg_OII=False, nums_seg_OIII=None,
+                    select_seg_OIII=False):
+        # QSO information
+        i = self._qso_index.get(cubename, None)
+        ra_qso, dec_qso, z_qso = self.data_qso['ra_GAIA'][i], self.data_qso['dec_GAIA'][i], self.data_qso['redshift'][i]
 
-    # V50, S80
-    path_v50_plot = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_plot.fits'.format(cubename)
-    path_s80_plot = '../../MUSEQuBES+CUBS/fit_kin/{}_S80_plot.fits'.format(cubename)
-    v50 = fits.open(path_v50_plot)[1].data
-    s80 = fits.open(path_s80_plot)[1].data
-    hdr_v50 = fits.open(path_v50_plot)[1].header
-    w = WCS(hdr_v50, naxis=2)
-    center_qso = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
-    c2 = w.world_to_pixel(center_qso)
+        # V50, S80
+        path_v50_plot = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_plot.fits'.format(cubename)
+        path_s80_plot = '../../MUSEQuBES+CUBS/fit_kin/{}_S80_plot.fits'.format(cubename)
+        v50 = fits.open(path_v50_plot)[1].data
+        s80 = fits.open(path_s80_plot)[1].data
+        hdr_v50 = fits.open(path_v50_plot)[1].header
+        w = WCS(hdr_v50, naxis=2)
 
-    # Load data
-    UseSeg = (1.5, 'gauss', 1.5, 'gauss')
-    line_OII, line_OIII = 'OII', 'OIII'
+        # Load data
+        UseSeg = (1.5, 'gauss', 1.5, 'gauss')
+        line_OII, line_OIII = 'OII', 'OIII'
 
-    # OII SBs
-    if cubename == 'TEX0206-048':
-        str_zap = '_zapped'
-    else:
-        str_zap = ''
-
-    # Load the segmentation map
-    path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-        format(cubename, str_zap, line_OII, *UseSeg)
-    path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-        format(cubename, str_zap, line_OIII, *UseSeg)
-    if cubename == 'PKS0552-640':
-        path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
-            format(cubename, str_zap, line_OIII, *UseSeg)
-    elif cubename == 'HE0226-4110':
-        path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
-            format(cubename, str_zap, line_OII, *UseSeg)
-
-    seg_OII = fits.open(path_3Dseg_OII)[1].data
-    if select_seg_OII:
-        nums_seg_OII = np.setdiff1d(np.arange(1, np.max(seg_OII) + 1), nums_seg_OII)
-    seg_OII_mask = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, -1)
-
-    # Fix v50 and s80 according to [O II] seg
-    v50 = np.where(seg_OII_mask != -1, v50, np.nan)
-    s80 = np.where(seg_OII_mask != -1, s80, np.nan)
-
-    # Fix v50 and s80 according to [O III] seg
-    if os.path.exists(path_3Dseg_OIII):
-        seg_OIII_3D, seg_OIII = fits.open(path_3Dseg_OIII)[0].data, fits.open(path_3Dseg_OIII)[1].data
-        if select_seg_OIII:
-            nums_seg_OIII = np.setdiff1d(np.arange(1, np.max(seg_OIII) + 1), nums_seg_OIII)
-        seg_OIII_mask = np.where(~np.isin(seg_OIII, nums_seg_OIII), seg_OIII, -1)
-
-        # Fix v50 and s80 accordingly to [O II]
-        v50 = np.where(seg_OIII_mask != -1, v50, np.nan)
-        s80 = np.where(seg_OIII_mask != -1, s80, np.nan)
-
-
-    # Load galaxy information
-    path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
-    try:
-        data_gal = fits.open(path_gal)[1].data
-        v_gal = data_gal['v']
-        try:
-            ra_gal, dec_gal, type = data_gal['ra_HST'], data_gal['dec_HST'], data_gal['type']
-        except KeyError:
-            ra_gal, dec_gal, type = data_gal['ra_cor'], data_gal['dec_cor'], data_gal['type']
-    except FileNotFoundError:
-        print('No galaxies info')
-        ra_gal, dec_gal, v_gal, ra_hst, dec_hst = [], [], [], [], []
-    c_gal = w.world_to_pixel(SkyCoord(ra_gal, dec_gal, unit='deg', frame='icrs'))
-    x, y = np.meshgrid(np.arange(v50.shape[1]), np.arange(v50.shape[0]))
-    x, y = x.flatten(), y.flatten()
-    pixcoord = PixCoord(x=x, y=y)
-
-    # Compute the velocity score
-    score_array = []
-    norm = mpl.colors.Normalize(vmin=-vmax, vmax=vmax)
-
-    if savefig:
-        plt.figure(figsize=(5, 5), dpi=300)
-
-    # Compute the physical scale at the redshift of the quasar
-    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    d_A_kpc = cosmo.angular_diameter_distance(z_qso).value * 1e3
-    arcsec = (50 / d_A_kpc) * 206265
-
-    # Nebula Remove nan spaxels in nebula
-    v50_flat = v50.ravel()
-    s80_flat = s80.ravel()
-    # valid_indices = ~np.isnan(v50_flat)
-    # x = x[valid_indices]
-    # y = y[valid_indices]
-    # v50_flat = v50_flat[valid_indices]
-    # s80_flat = s80_flat[valid_indices]
-
-    input_neb = np.column_stack([x, y, v50_flat])
-    Sigma_neb = np.zeros((len(s80_flat), 3, 3))
-    sigma_x_neb, sigma_y_neb, sigma_v_neb = 1.5, 1.5, s80_flat
-    Sigma_neb[:, 0, 0] = sigma_x_neb ** 2
-    Sigma_neb[:, 1, 1] = sigma_y_neb ** 2
-    Sigma_neb[:, 2, 2] = sigma_v_neb ** 2
-
-    # Test
-    score_matrix = np.zeros(np.shape(v50))
-    for i in range(len(v_gal)):
-        # Galaxy
-        x_gal, y_gal = c_gal[0][i], c_gal[1][i]
-        # Determine if a galaxy is inside the nebula
-        if 0 <= y_gal <= np.shape(v50)[1] and 0 <= x_gal<= np.shape(v50)[0]:
-            inside_nebula = ~np.isnan(v50[int(y_gal), int(x_gal)])
+        # OII SBs
+        if cubename == 'TEX0206-048':
+            str_zap = '_zapped'
         else:
-            inside_nebula = False
+            str_zap = ''
 
-        sigma_physical = 10 if inside_nebula else 10
-        input_gal = np.array([x_gal, y_gal, v_gal[i]], dtype=float)  # shape (3,)
-        sigma_x, sigma_y, sigma_v = sigma_physical, sigma_physical, 20.0  # pixel, pixel, km/s
-        Sigma_gal = np.diag([sigma_x ** 2, sigma_y ** 2, sigma_v ** 2])  # shape (3,3)
+        # Load the segmentation map
+        path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
+            format(cubename, str_zap, line_OII, *UseSeg)
+        path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+            format(cubename, str_zap, line_OIII, *UseSeg)
+        if cubename == 'PKS0552-640':
+            path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
+                format(cubename, str_zap, line_OIII, *UseSeg)
+        elif cubename == 'HE0226-4110':
+            path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
+                format(cubename, str_zap, line_OII, *UseSeg)
+
+        seg_OII = fits.open(path_3Dseg_OII)[1].data
+        if select_seg_OII:
+            nums_seg_OII = np.setdiff1d(np.arange(1, np.max(seg_OII) + 1), nums_seg_OII)
+        seg_OII_mask = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, -1)
+
+        # Fix v50 and s80 according to [O II] seg
+        v50 = np.where(seg_OII_mask != -1, v50, np.nan)
+        s80 = np.where(seg_OII_mask != -1, s80, np.nan)
+
+        # Fix v50 and s80 according to [O III] seg
+        if os.path.exists(path_3Dseg_OIII):
+            seg_OIII_3D, seg_OIII = fits.open(path_3Dseg_OIII)[0].data, fits.open(path_3Dseg_OIII)[1].data
+            if select_seg_OIII:
+                nums_seg_OIII = np.setdiff1d(np.arange(1, np.max(seg_OIII) + 1), nums_seg_OIII)
+            seg_OIII_mask = np.where(~np.isin(seg_OIII, nums_seg_OIII), seg_OIII, -1)
+
+            # Fix v50 and s80 accordingly to [O II]
+            v50 = np.where(seg_OIII_mask != -1, v50, np.nan)
+            s80 = np.where(seg_OIII_mask != -1, s80, np.nan)
+
+        # Load galaxy information
+        path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+        data_gal = fits.open(path_gal)[1].data
+        v_gal, ra_gal, dec_gal, type = data_gal['v'], data_gal['ra_HST'], data_gal['dec_HST'], data_gal['type']
+        c_gal = w.world_to_pixel(SkyCoord(ra_gal, dec_gal, unit='deg', frame='icrs'))
+
+        # Compute the physical scale at the redshift of the quasar
+        d_A_kpc = cosmo.angular_diameter_distance(z_qso).value * 1e3
+        sigma_physical = (10 / d_A_kpc) * 206265 / 0.2  # Convert 10 kpc to pixel scale
+        print('physical scale (pixel) = ', sigma_physical)
+
+        # Start
+        x, y = np.meshgrid(np.arange(v50.shape[1]), np.arange(v50.shape[0]))
+        x, y = x.ravel(), y.ravel()
+        v50_flat = v50.ravel()
+        s80_flat = s80.ravel()
+
+        # Nebular spaxels
+        input_neb = np.column_stack([x, y, v50_flat])
+        sigma_v_neb = s80_flat
+
+        # Galaxys
+        gal_mus_all = np.column_stack([c_gal[0], c_gal[1], v_gal]).astype(float)  # (G,3)
+        sigma_x_gal = sigma_physical  # pixel
+        sigma_y_gal = sigma_physical  # pixel
+        sigma_v_gal = 20.0  # km/s
 
         # Calculate overlapping
-        overlap = bhattacharyya_coefficient(input_neb, Sigma_neb, input_gal, Sigma_gal)
-        score_matrix += overlap.reshape(np.shape(v50))
-        score = np.nanmax(overlap)
+        # batch = 256
+        # KAF_flat = np.zeros(input_neb.shape[0], dtype=float)  # (N,)
+        # for j0 in range(0, gal_mus_all.shape[0], batch):
+        #     j1 = min(j0 + batch, gal_mus_all.shape[0])
+        #     gal_mus_batch = gal_mus_all[j0:j1]  # (B,3)
+        overlap = bhattacharyya_coefficient(mus_neb=input_neb, sigma_x_neb=1.5,
+                                            sigma_y_neb=1.5, sigma_v_neb=sigma_v_neb,
+                                            mus_gal=gal_mus_all, sigma_x_gal=sigma_x_gal,
+                                            sigma_y_gal=sigma_y_gal, sigma_v_gal=sigma_v_gal)
+        KAF_flat = np.sum(overlap, axis=1)
+        KAF = KAF_flat.reshape(v50.shape)
+        CKAF = np.nansum(KAF)
 
-        # Compute the ratio
-        if 0 <= x_gal <= 150 and 0 <= y_gal<= 150:
-            print('Galaxy {}: {:.2f}'.format(i, score))
-            score_array.append(score)
-        if savefig:
-            if 0 <= c_gal[0][i] <= 150 and 0 <= c_gal[1][i] <=150:
-                plt.text(c_gal[0][i], c_gal[1][i], '{:.2f}'.format(score), fontsize=15, color='black',
-                         ha='center', va='center')
+        # Save KAF as fits
+        path_KAF = '../../MUSEQuBES+CUBS/KAF/{}_KAF.fits'.format(cubename)
+        hdul_KAF = fits.ImageHDU(KAF, header=hdr_v50)
+        hdul_KAF.writeto(path_KAF, overwrite=True)
 
-    # score_matrix /= len(score_array)
-    KAF = np.nansum(score_matrix)
-    print('Ratio test: {}, {:.4f}'.format(cubename, KAF))
+        # Plot the score matrix
+        fig = plt.figure(figsize=(8, 8), dpi=300)
+        gc = aplpy.FITSFigure(path_KAF, figure=fig, hdu=1)
+        gc.show_colorscale(vmin=1e-3, vmax=0.5, cmap='viridis', stretch='log')
+        APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso, addName=True)
 
-    # Save KAF as fits
-    path_KAF = '../../MUSEQuBES+CUBS/KAF/{}_KAF.fits'.format(cubename)
-    hdul_KAF = fits.ImageHDU(KAF, header=hdr_v50)
-    hdul_KAF.writeto(path_KAF, overwrite=True)
+        # Set colorbar
+        if cubename == "J2135-5316" or cubename == "Q0107-0235" or cubename == "PKS2242-498" or \
+                cubename == "PG1522+101" or cubename == "PKS0232-04":
+            gc.colorbar.set_ticks([1e-2, 1e-1, 0.5])
+            gc.colorbar._colorbar.set_ticklabels([1e-2, 1e-1, 0.5])
+            tick_labels = gc.colorbar._colorbar.ax.get_xticklabels()
+            tick_labels[0].set_ha('right')
+            gc.colorbar.set_location('bottom')
+            gc.colorbar.set_axis_label_text(r'KAF')
+            gc.colorbar._colorbar.minorticks_off()
+        plt.savefig('../../MUSEQuBES+CUBS/plots/{}_KAF.png'.format(cubename), bbox_inches='tight')
+        plt.close()
 
+        return CKAF
 
-    # # Plot the score matrix
-    fig = plt.figure(figsize=(8, 8), dpi=300)
-    gc = aplpy.FITSFigure(path_KAF, figure=fig, hdu=1)
-    gc.show_colorscale(vmin=0, vmax=1, cmap='viridis')
-    APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
-    # gc.add_label(0.05, 0.08, '[{}, {}]'.format(-v_max, v_max), size=30, relative=True, horizontalalignment='left')
-    plt.savefig('../../MUSEQuBES+CUBS/plots/{}_KAF.png'.format(cubename), bbox_inches='tight')
+    def ComputeCorrControl(self, cubename=None, nums_seg_OII=None, select_seg_OII=False,
+                           nums_seg_OIII=None, select_seg_OIII=False):
+        # QSO information
+        i = self._qso_index.get(cubename, None)
+        ra_qso, dec_qso, z_qso = self.data_qso['ra_GAIA'][i], self.data_qso['dec_GAIA'][i], self.data_qso['redshift'][i]
 
+        # V50, S80
+        path_v50_plot = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_plot.fits'.format(cubename)
+        path_s80_plot = '../../MUSEQuBES+CUBS/fit_kin/{}_S80_plot.fits'.format(cubename)
+        v50 = fits.open(path_v50_plot)[1].data
+        s80 = fits.open(path_s80_plot)[1].data
+        hdr_v50 = fits.open(path_v50_plot)[1].header
+        w = WCS(hdr_v50, naxis=2)
 
-    # plt.figure(figsize=(5, 5), dpi=300)
-    # plt.imshow(score_matrix, origin='lower', cmap='viridis')
-    # plt.colorbar(label='Average Overlap Score')
-    # plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_{}_corr_test.png'.format(cubename), bbox_inches='tight')
-    # # plt.show()
-    # plt.close()
+        # Load data
+        UseSeg = (1.5, 'gauss', 1.5, 'gauss')
+        line_OII, line_OIII = 'OII', 'OIII'
 
-    # # Specify the threshold
-    # for i in range(len(v_gal)):
-    #     dis_i = np.sqrt((c_gal[0][i] - x) ** 2 + (c_gal[1][i] - y) ** 2) * 0.2 * 50 / arcsec
-    #
-    #     # Determine if a galaxy is inside the nebula
-    #     if 0 <= c_gal[1][i] <= np.shape(v50)[1] and 0 <= c_gal[0][i] <= np.shape(v50)[0]:
-    #         inside_nebula = ~np.isnan(v50[int(c_gal[1][i]), int(c_gal[0][i])])
-    #     else:
-    #         inside_nebula = False
-    #
-    #     # Compute the Association
-    #     nebula_factor = 1.0 if inside_nebula else 0.5
-    #     far_sigma = np.abs(((v_gal[i] - v50.ravel()) / s80.ravel()))
-    #     val = dis_i / scale_length
-    #     val[val >= 1.0] = 0.8
-    #     effective_threshold = 2 * (1 - val) * nebula_factor
-    #     within_threshold = far_sigma <= effective_threshold
-    #     ratio = np.sum(within_threshold) / len(v50[~np.isnan(v50)])
-    #
-    #     # Compute the ratio
-    #     if 0 <= c_gal[0][i] <= 150 and 0 <= c_gal[1][i] <= 150:
-    #         print('Galaxy {}: {:.2f}'.format(i, ratio))
-    #         score_array.append(ratio)
-    #     if savefig:
-    #         if 0 <= c_gal[0][i] <= 150 and 0 <= c_gal[1][i] <=150:
-    #             plt.text(c_gal[0][i], c_gal[1][i], '{:.2f}'.format(ratio),
-    #                      fontsize=15, color='black', ha='center', va='center')
-    if savefig:
-        plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-300, vmax=300)
-        plt.scatter(c_gal[0], c_gal[1], marker='o', s=140, c='white', edgecolor='k',
-                    facecolor='white', label='Galaxies')
-        plt.scatter(c_gal[0], c_gal[1], marker='o', s=120, c='none', edgecolor=plt.cm.coolwarm(norm(v_gal)),
-                    facecolor='none', label='Galaxies')
-        plt.xlim(0, v50.shape[1])
-        plt.ylim(0, v50.shape[0])
-        plt.xticks([])
-        plt.yticks([])
-        plt.xlabel('')
-        plt.ylabel('')
-        plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_{}_corr.png'.format(cubename), bbox_inches='tight')
-    return KAF
+        # OII SBs
+        if cubename == 'TEX0206-048':
+            str_zap = '_zapped'
+        else:
+            str_zap = ''
+
+        # Load the segmentation map
+        path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'.\
+            format(cubename, str_zap, line_OII, *UseSeg)
+        path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+            format(cubename, str_zap, line_OIII, *UseSeg)
+        if cubename == 'PKS0552-640':
+            path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
+                format(cubename, str_zap, line_OIII, *UseSeg)
+        elif cubename == 'HE0226-4110':
+            path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}_plot.fits'. \
+                format(cubename, str_zap, line_OII, *UseSeg)
+
+        seg_OII = fits.open(path_3Dseg_OII)[1].data
+        if select_seg_OII:
+            nums_seg_OII = np.setdiff1d(np.arange(1, np.max(seg_OII) + 1), nums_seg_OII)
+        seg_OII_mask = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, -1)
+
+        # Fix v50 and s80 according to [O II] seg
+        v50 = np.where(seg_OII_mask != -1, v50, np.nan)
+        s80 = np.where(seg_OII_mask != -1, s80, np.nan)
+
+        # Fix v50 and s80 according to [O III] seg
+        if os.path.exists(path_3Dseg_OIII):
+            seg_OIII_3D, seg_OIII = fits.open(path_3Dseg_OIII)[0].data, fits.open(path_3Dseg_OIII)[1].data
+            if select_seg_OIII:
+                nums_seg_OIII = np.setdiff1d(np.arange(1, np.max(seg_OIII) + 1), nums_seg_OIII)
+            seg_OIII_mask = np.where(~np.isin(seg_OIII, nums_seg_OIII), seg_OIII, -1)
+
+            # Fix v50 and s80 accordingly to [O II]
+            v50 = np.where(seg_OIII_mask != -1, v50, np.nan)
+            s80 = np.where(seg_OIII_mask != -1, s80, np.nan)
+
+        # Compute the physical scale at the redshift of the quasar
+        d_A_kpc = cosmo.angular_diameter_distance(z_qso).value * 1e3
+        sigma_physical = (10 / d_A_kpc) * 206265 / 0.2  # Convert 10 kpc to pixel scale
+        print('physical scale (pixel) = ', sigma_physical)
+
+        # Monte Carlo samples from fitted 4D Gaussian
+        path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+        Ngal = len(fits.open(path_gal)[1].data)
+
+        # Start the process
+        Ntrial = 1000
+        mu_mle, Sigma_mle = self.Derive3DDist_xyv()
+        rng = np.random.default_rng(0)
+        Nsamp = Ntrial * Ngal
+        Xs = rng.multivariate_normal(mu_mle, Sigma_mle, size=Nsamp)
+        x_kpc_gal, y_kpc_gal, v_gal = Xs[:, 0], Xs[:, 1], Xs[:, 2]
+
+        # Convert back to ra, dec
+        dlon = np.arctan2(x_kpc_gal, d_A_kpc)  # east
+        dlat = np.arctan2(y_kpc_gal, d_A_kpc)  # north
+        center = SkyCoord(ra_qso * u.deg, dec_qso * u.deg, frame="icrs")
+        off_frame = SkyOffsetFrame(origin=center)
+        gal_off = SkyCoord(lon=dlon * u.rad, lat=dlat * u.rad, frame=off_frame)
+        gal_icrs = gal_off.transform_to("icrs")
+        c_gal = w.world_to_pixel(SkyCoord(gal_icrs.ra.deg, gal_icrs.dec.deg, unit='deg', frame='icrs'))
+
+        # Check galaxy locations
+        idx = 10
+        idx_start, idx_end = idx * Ngal, (idx + 1) * Ngal
+        plt.figure()
+        plt.scatter(c_gal[0][idx_start:idx_end], c_gal[1][idx_start:idx_end], c=v_gal[idx_start:idx_end],
+                    s=20, vmin=-1000, vmax=1000, cmap='coolwarm')
+        plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-1000, vmax=1000)
+        plt.xlim(-300, 300)
+        plt.ylim(-300, 300)
+        plt.colorbar(label='v50 (km/s)')
+        plt.title('Check galaxy positions')
+        plt.xlabel('X (pixel)')
+        plt.ylabel('Y (pixel)')
+        plt.show()
+
+        # Start
+        x, y = np.meshgrid(np.arange(v50.shape[1]), np.arange(v50.shape[0]))
+        x, y = x.ravel(), y.ravel()
+        v50_flat = v50.ravel()
+        s80_flat = s80.ravel()
+
+        # Nebular spaxels
+        input_neb = np.column_stack([x, y, v50_flat])
+        sigma_v_neb = s80_flat
+
+        # Galaxys
+        gal_mus_all = np.column_stack([c_gal[0], c_gal[1], v_gal]).astype(float)  # (G,3)
+        sigma_x_gal = sigma_physical  # pixel
+        sigma_y_gal = sigma_physical  # pixel
+        sigma_v_gal = 20.0  # km/s
+
+        # Calculate overlapping with batch
+        CKAF_array = []
+        for i in range(Ntrial):
+            j0 = i * Ngal
+            j1 = (i + 1) * Ngal
+            gal_mus_batch = gal_mus_all[j0:j1]  # (B,3)
+            overlap = bhattacharyya_coefficient(mus_neb=input_neb, sigma_x_neb=1.5,
+                                                sigma_y_neb=1.5, sigma_v_neb=sigma_v_neb,
+                                                mus_gal=gal_mus_batch, sigma_x_gal=sigma_x_gal,
+                                                sigma_y_gal=sigma_y_gal, sigma_v_gal=sigma_v_gal)
+            KAF_flat = np.sum(overlap, axis=1)
+            CKAF_array.append(np.nansum(KAF_flat))
+
+        plt.figure()
+        plt.hist(CKAF_array, bins='auto', histtype='step', color='black')
+        plt.xlabel('CKAF')
+        plt.ylabel('Number of trials')
+        plt.show()
+        print(np.mean(CKAF_array))
+        return CKAF_array
+
+    def Derive3DDist_xyv(self):
+        # Stack everything
+        x_kpc_array = np.array([])
+        y_kpc_array = np.array([])
+        v_gal_array = np.array([])
+        for cubename in self.cubename_all:
+            # QSO information
+            i = self._qso_index.get(cubename, None)
+            ra_qso, dec_qso, z_qso = self.data_qso['ra_GAIA'][i], self.data_qso['dec_GAIA'][i], \
+                                     self.data_qso['redshift'][i]
+
+            # Load galaxy information
+            path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+            data_gal = fits.open(path_gal)[1].data
+            v_gal, ra_gal, dec_gal, type = data_gal['v'], data_gal['ra_HST'], data_gal['dec_HST'], data_gal['type']
+
+            # Convert to radial profile
+            center = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
+            target = SkyCoord(ra_gal, dec_gal, unit='deg', frame='icrs')
+            sep = center.separation(target).to(u.rad).value  # in arcsec
+            pa = center.position_angle(target).to(u.rad).value  # in rad
+            d_A_kpc = cosmo.angular_diameter_distance(z_qso).value * 1e3
+            r_kpc = sep * d_A_kpc  # in kpc
+
+            # Cartesian
+            x_kpc = r_kpc * np.sin(pa)
+            y_kpc = r_kpc * np.cos(pa)
+
+            # Append to array
+            x_kpc_array = np.hstack((x_kpc_array, x_kpc))
+            y_kpc_array = np.hstack((y_kpc_array, y_kpc))
+            v_gal_array = np.hstack((v_gal_array, v_gal))
+
+        # Fit a 3D Gaussian to it
+        X = np.column_stack([x_kpc_array, y_kpc_array, v_gal_array])
+        mu_mle = X.mean(axis=0)
+        Sigma_mle = np.cov(X, rowvar=False, bias=True)  # <-- MLE (divide by N)
+        return mu_mle, Sigma_mle
+
+    def SummarizeCorr(self):
+        # Compute association for L Type
+        CKAF_L, CKAF_S, CKAF_A = np.array([]), np.array([]), np.array([])
+        for i in range(len(self.L)):
+            CKAF = self.ComputeCorr(cubename=self.L[i][0], nums_seg_OII=self.L[i][3], select_seg_OII=self.L[i][4],
+                                    nums_seg_OIII=self.L[i][5], select_seg_OIII=self.L[i][6])
+            CKAF_L = np.hstack((CKAF_L, CKAF))
+
+        for i in range(len(self.S)):
+            CKAF = self.ComputeCorr(cubename=self.S[i][0], nums_seg_OII=self.S[i][3], select_seg_OII=self.S[i][4],
+                                    nums_seg_OIII=self.S[i][5], select_seg_OIII=self.S[i][6])
+            CKAF_S = np.hstack((CKAF_S, CKAF))
+
+        for i in range(len(self.A)):
+            CKAF = self.ComputeCorr(cubename=self.A[i][0], nums_seg_OII=self.A[i][3], select_seg_OII=self.A[i][4],
+                                    nums_seg_OIII=self.A[i][5], select_seg_OIII=self.A[i][6])
+            CKAF_A = np.hstack((CKAF_A, CKAF))
+
+        # Scatter plot
+        scale_length_array = np.hstack((self.L[:, 2], self.S[:, 2], self.A[:, 2]))
+        CKAF_array = np.hstack((CKAF_L, CKAF_S, CKAF_A))
+        res = stats.pearsonr(scale_length_array, CKAF_array)
+
+        plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
+        plt.scatter(self.L[:, 2], CKAF_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
+        plt.scatter(self.S[:, 2], CKAF_S, marker="s", alpha=0.8, s=50, color='red', label=r'Host-galaxy-scale')
+        plt.scatter(self.A[:, 2], CKAF_A, marker="^", alpha=0.8, s=50, color='blue', label=r'Complex Morphology')
+        plt.annotate(f'Pearson $r$ = {res[0]:.3f} \n p-value = {res[1]:.3f}', xy=(0.05, 0.95), xycoords='axes fraction',
+                     fontsize=15, ha='left', va='top', bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5))
+        plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
+        plt.ylabel(r'CKAF', size=25)
+        plt.xlim(20, 225)
+        plt.legend(loc='best', fontsize=20)
+        plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
+
 
 L = np.array([["HE0226-4110",     150,  84, [2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], False,
                [1, 5, 6, 8, 9, 10, 11, 16, 19], False],
@@ -299,17 +445,18 @@ L = np.array([["HE0226-4110",     150,  84, [2, 3, 10, 11, 12, 13, 14, 15, 16, 1
               ["TEX0206-048",     194, 200, [1, 8, 12, 13, 15, 20, 23, 26, 27, 28, 34, 57, 60, 79, 81,
                                              101, 107, 108, 114, 118, 317, 547, 552], True, [], False],
               ["Q1354+048",       123, 126, [1, 2], False, [], False]], dtype=object)
-S_BR = np.array([["HE0435-5304",      87,  55, [1], False, [1], False],
-                 ["3C57",            151,  71, [2], False, [], False],
-                 ["J0110-1648",       91,  29, [1], False, [2], False],
-                 ["HE0112-4145",     164,  38, [], False, [], False],
-                 ["J0154-0712",      137,  63, [5], False, [], False],
-                 ["LBQS1435-0134",    261,  63, [1, 3, 7], True, [], False ]], dtype=object)
-S = np.array([["J0028-3305",      133,  42, [2], True, [], False],
+S = np.array([["HE0435-5304",      87,  55, [1], False, [1], False],
+              ["3C57",            151,  71, [2], False, [], False],
+              ["J0110-1648",       91,  29, [1], False, [2], False],
+              ["HE0112-4145",     164,  38, [], False, [], False],
+              ["J0154-0712",      137,  63, [5], False, [], False],
+              ["LBQS1435-0134",    261,  63, [1, 3, 7], True, [], False ],
+              ["J0028-3305",      133,  42, [2], True, [], False],
               ["HE0419-5657",     154,  35, [2, 4, 5], True, [], False],
               ["PB6291",          116,  28, [2, 6, 7], True, [], False],
               ["HE1003+0149",     208,  53, [], False, [], False],
               ["HE0331-4112",     196,  32, [6], True, [], False]], dtype=object)
+
 A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19], False,
                [4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20], False],
               ["Q0107-0235",      136,  90, [1, 4, 5, 6], True, [], False],
@@ -318,113 +465,18 @@ A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17,
               ["PKS0232-04",      178, 116, [2, 4, 5, 7], False, [], False]], dtype=object)
 
 
-def SummarizeCorr(L=None, S_BR=None, S=None, A=None):
-    # Compute association for L Type
-    scale_length_array_L, scale_length_array_S, scale_length_array_A = np.array([]), np.array([]), np.array([])
-    largeThan05_array_L, largeThan05_array_S, largeThan05_array_A = np.array([]), np.array([]), np.array([])
-    score_L = np.array([])
-    for i in range(len(L)):
-        score_array = ComputeCorr(cubename=L[i][0], scale_length=L[i][2],
-                                  nums_seg_OII=L[i][3], select_seg_OII=L[i][4],
-                                  nums_seg_OIII=L[i][5], select_seg_OIII=L[i][6],
-                                  savefig=True)
-        scale_length_array_L = np.hstack((scale_length_array_L, L[i][2]))
-        largeThan05_array_L = np.hstack((largeThan05_array_L, len(score_array[score_array > 0.2])))
-        score_L = np.hstack((score_L, score_array))
-
-    # Compute association for S Type
-    score_S_BR = np.array([])
-    for i in range(len(S_BR)):
-        score_array = ComputeCorr(cubename=S_BR[i][0], scale_length=S_BR[i][2],
-                                  nums_seg_OII=S_BR[i][3], select_seg_OII=S_BR[i][4],
-                                  nums_seg_OIII=S_BR[i][5], select_seg_OIII=S_BR[i][6],
-                                  savefig=True)
-        scale_length_array_S = np.hstack((scale_length_array_S, S_BR[i][2]))
-        largeThan05_array_S = np.hstack((largeThan05_array_S, len(score_array[score_array > 0.2])))
-        score_S_BR = np.hstack((score_S_BR, score_array))
-
-    score_S = np.array([])
-    for i in range(len(S)):
-        score_array = ComputeCorr(cubename=S[i][0], scale_length=S[i][2],
-                                  nums_seg_OII=S[i][3], select_seg_OII=S[i][4],
-                                  nums_seg_OIII=S[i][5], select_seg_OIII=S[i][6],
-                                  savefig=True)
-        scale_length_array_S = np.hstack((scale_length_array_S, S[i][2]))
-        largeThan05_array_S = np.hstack((largeThan05_array_S, len(score_array[score_array > 0.2])))
-        score_S = np.hstack((score_S, score_array))
-    score_S = np.hstack((score_S_BR, score_S))
-
-    score_A = np.array([])
-    for i in range(len(A)):
-        score_array = ComputeCorr(cubename=A[i][0], scale_length=A[i][2],
-                                  nums_seg_OII=A[i][3], select_seg_OII=A[i][4],
-                                  nums_seg_OIII=A[i][5], select_seg_OIII=A[i][6],
-                                  savefig=True)
-        scale_length_array_A = np.hstack((scale_length_array_A, A[i][2]))
-        largeThan05_array_A = np.hstack((largeThan05_array_A, len(score_array[score_array > 0.2])))
-        score_A = np.hstack((score_A, score_array))
-
-    print('average L', sum(score_L > 0.5) / len(L))
-    print('average S', sum(score_S > 0.5) / (len(S_BR) + len(S)))
-
-    # score_L = score_L[score_L >= 0.2]
-    # score_S = score_S[score_S >= 0.2]
-    # score_A = score_A[score_A >= 0.2]
-
-    # Histogram
-    # bins = np.linspace(0, 1, 11)
-    # bins = np.linspace(0, 0.1, 11)
-    bins = np.linspace(0, 0.2, 21)
-
-    mid = (bins[1:] + bins[:-1]) / 2
-    mid = np.append(mid, mid[-1] + mid[-1] - mid[-2])
-    counts_L, _ = np.histogram(score_L, bins=bins)
-    counts_L = np.append(counts_L, counts_L[-1])
-    counts_S, _ = np.histogram(score_S, bins=bins)
-    counts_S = np.append(counts_S, counts_S[-1])
-    counts_A, _ = np.histogram(score_A, bins=bins)
-    counts_A = np.append(counts_A, counts_A[-1])
-
-    fig, ax = plt.subplots(figsize=(5, 5), dpi=300, constrained_layout=True)
-    ax.step(mid, counts_L, where="mid", alpha=0.8, color="k", linestyle="-", linewidth=2, label=r'Irregular, large-scale')
-    ax.step(mid, counts_S, where="mid", alpha=0.8, color="red", linestyle="--", linewidth=2, label=r'Host-galaxy-scale')
-    ax.step(mid, counts_A, where="mid", alpha=0.8, color="blue", linestyle=":", linewidth=2, label=r'Complex Morphology')
-    # ax.set_xlim(0.1, 1.0)
-    # ax.set_xlim(0.0, 1.0)
-    ymax = ax.get_ylim()[1]
-    ax.set_ylim(0, np.ceil(ymax))
-    ax.set_yticks(np.arange(0, ax.get_ylim()[1] + 1, 2))
-    # ax.grid(True, axis="y", linewidth=0.5, alpha=0.25)
-    ax.set_xlabel(r'KAF', size=25)
-    ax.set_ylabel(r'$N$', size=25)
-    ax.legend(loc='upper right', fontsize=20)
-    plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_LType.png', bbox_inches='tight')
-
-    # Scatter plot
-    plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
-    plt.scatter(scale_length_array_L, score_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
-    plt.scatter(scale_length_array_S, score_S, marker="s", alpha=0.8, s=50, color='red', label=r'Host-galaxy-scale')
-    plt.scatter(scale_length_array_A, score_A, marker="^", alpha=0.8, s=50, color='blue', label=r'Complex Morphology')
-    plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
-    # plt.ylabel(r'$N_{>\,0.2}$', size=25)
-    plt.ylabel(r'KAF', size=25)
-    plt.xlim(20, 225)
-    # plt.ylim(-0.5, 9)
-    plt.legend(loc='upper right', fontsize=20)
-    plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
-
-
-
-
-
 # Test
 # ComputeCorr(cubename='HE0226-4110', scale_length=84)
 # ComputeCorr(cubename='PKS0405-123', scale_length=130)
 # ComputeCorr(cubename='HE0238-1904', scale_length=103)
-ComputeCorr(cubename='PKS0552-640', scale_length=153)
+# ComputeCorr(cubename='PKS0552-640', scale_length=153)
 # ComputeCorr(cubename='3C57', scale_length=71)
 # ComputeCorr(cubename='Q0107-0235', scale_length=90)
 # ComputeCorr(cubename='TEX0206-048', scale_length=200)
 # ComputeCorr(cubename='PB6291', scale_length=28, savefig=True, nums_seg_OII=[2, 6, 7], select_seg_OII=True)
-
 # SummarizeCorr(L=L, S_BR=S_BR, S=S, A=A)
+
+func = CalculateGalNebCorr(L=L, S=S, A=A)
+# func.SummarizeCorr()
+# func.ComputeCorrControl(cubename='PKS0405-123')
+# func.ComputeCorrControl(cubename='Q0107-0235')

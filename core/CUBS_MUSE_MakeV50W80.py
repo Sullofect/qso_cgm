@@ -29,7 +29,7 @@ wave_Hbeta_vac = 4862.721
 wave_OIII5008_vac = 5008.239
 
 
-def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None):
+def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=None, addName=False):
     # 3C57 paper
     # gc.recenter(ra_qso, dec_qso, width=15 / 3600, height=15 / 3600)
 
@@ -86,7 +86,7 @@ def APLpyStyle(gc, type=None, cubename=None, ra_qso=None, dec_qso=None, z_qso=No
     elif cubename == 'PB6291':
         cubename = 'Q0107-025'
 
-    if type == 'HST':
+    if type == 'HST' or addName:
         if cubename == '3C57':
             gc.add_label(0.98, 0.95, r'$\rm 3C\,57$', size=35, relative=True, horizontalalignment='right')
         else:
@@ -453,7 +453,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 # MakeV50W80(cubename='PB6291', v_max=400, sigma_max=300, nums_seg_OII=[3, 5], HSTcentroid=True)
 # MakeV50W80(cubename='Q0107-0235', v_max=400, sigma_max=300, nums_seg_OII=[7], rmbkgResidue=True, HSTcentroid=True)
 # MakeV50W80(cubename='PKS2242-498', v_max=400, sigma_max=300, contour_level_OII=0.3, HSTcentroid=True)
-MakeV50W80(cubename='PKS0355-483', v_max=300, sigma_max=300, nums_seg_OII=[6, 14], rmbkgResidue=True, HSTcentroid=True)
+# MakeV50W80(cubename='PKS0355-483', v_max=300, sigma_max=300, nums_seg_OII=[6, 14], rmbkgResidue=True, HSTcentroid=True)
 # MakeV50W80(cubename='HE0112-4145', v_max=300, sigma_max=300, rmbkgResidue=True, HSTcentroid=True)
 # MakeV50W80(cubename='HE0439-5254', v_max=500, sigma_max=300, HSTcentroid=True)
 # MakeV50W80(cubename='HE2305-5315', v_max=500, sigma_max=300, nums_seg_OII=[5, 6, 7, 8], HSTcentroid=True)
