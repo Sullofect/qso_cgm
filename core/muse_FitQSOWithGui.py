@@ -255,11 +255,9 @@ class PlotWindow(QMainWindow):
             mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
             flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
             flux_err_seg_OII, flux_err_seg_OIII = flux_err_OII * seg_3D_OII_ori, flux_err_OIII * seg_3D_OIII_ori
-            S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0)
-            S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0)
-            # self.S_N = np.nansum(np.dstack((S_N_OII, S_N_OIII)), axis=2) / 2
-            self.S_N = np.sqrt(S_N_OII ** 2 + S_N_OIII ** 2)
-
+            S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0).filled(np.nan)
+            S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0).filled(np.nan)
+            self.S_N = np.sqrt(np.nan_to_num(S_N_OII, nan=0.0)**2 + np.nan_to_num(S_N_OIII, nan=0.0)**2)
 
             # Extend over
             if extend_over:
