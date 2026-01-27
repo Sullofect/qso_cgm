@@ -1,14 +1,13 @@
 import os
+import h5py
 import aplpy
 import numpy as np
-import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 from scipy import stats
 from matplotlib import rc
 from astropy.wcs import WCS
 from astropy.io import ascii
-from regions import PixCoord
 from astropy import units as u
 from astropy.cosmology import FlatLambdaCDM
 from astropy.coordinates import SkyCoord, SkyOffsetFrame
@@ -208,8 +207,8 @@ class CalculateGalNebCorr:
         # Set colorbar
         if cubename == "J2135-5316" or cubename == "Q0107-0235" or cubename == "PKS2242-498" or \
                 cubename == "PG1522+101" or cubename == "PKS0232-04":
-            gc.colorbar.set_ticks([1e-2, 1e-1, 0.5])
-            gc.colorbar._colorbar.set_ticklabels([1e-2, 1e-1, 0.5])
+            gc.colorbar.set_ticks([1e-2, 1e-1, 0.25])
+            gc.colorbar._colorbar.set_ticklabels([1e-2, 1e-1, 0.25])
             tick_labels = gc.colorbar._colorbar.ax.get_xticklabels()
             tick_labels[0].set_ha('right')
             gc.colorbar.set_location('bottom')
@@ -221,7 +220,7 @@ class CalculateGalNebCorr:
         return CKAF
 
     def ComputeCorrControl(self, cubename=None, nums_seg_OII=None, select_seg_OII=False,
-                           nums_seg_OIII=None, select_seg_OIII=False):
+                           nums_seg_OIII=None, select_seg_OIII=False, Ntrial=1000):
         # QSO information
         i = self._qso_index.get(cubename, None)
         ra_qso, dec_qso, z_qso = self.data_qso['ra_GAIA'][i], self.data_qso['dec_GAIA'][i], self.data_qso['redshift'][i]
@@ -286,7 +285,6 @@ class CalculateGalNebCorr:
         Ngal = len(fits.open(path_gal)[1].data)
 
         # Start the process
-        Ntrial = 1000
         mu_mle, Sigma_mle = self.Derive3DDist_xyv()
         rng = np.random.default_rng(0)
         Nsamp = Ntrial * Ngal
@@ -303,19 +301,19 @@ class CalculateGalNebCorr:
         c_gal = w.world_to_pixel(SkyCoord(gal_icrs.ra.deg, gal_icrs.dec.deg, unit='deg', frame='icrs'))
 
         # Check galaxy locations
-        idx = 10
-        idx_start, idx_end = idx * Ngal, (idx + 1) * Ngal
-        plt.figure()
-        plt.scatter(c_gal[0][idx_start:idx_end], c_gal[1][idx_start:idx_end], c=v_gal[idx_start:idx_end],
-                    s=20, vmin=-1000, vmax=1000, cmap='coolwarm')
-        plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-1000, vmax=1000)
-        plt.xlim(-300, 300)
-        plt.ylim(-300, 300)
-        plt.colorbar(label='v50 (km/s)')
-        plt.title('Check galaxy positions')
-        plt.xlabel('X (pixel)')
-        plt.ylabel('Y (pixel)')
-        plt.show()
+        # idx = 10
+        # idx_start, idx_end = idx * Ngal, (idx + 1) * Ngal
+        # plt.figure()
+        # plt.scatter(c_gal[0][idx_start:idx_end], c_gal[1][idx_start:idx_end], c=v_gal[idx_start:idx_end],
+        #             s=20, vmin=-1000, vmax=1000, cmap='coolwarm')
+        # plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-1000, vmax=1000)
+        # plt.xlim(-300, 300)
+        # plt.ylim(-300, 300)
+        # plt.colorbar(label='v50 (km/s)')
+        # plt.title('Check galaxy positions')
+        # plt.xlabel('X (pixel)')
+        # plt.ylabel('Y (pixel)')
+        # plt.show()
 
         # Start
         x, y = np.meshgrid(np.arange(v50.shape[1]), np.arange(v50.shape[0]))
@@ -346,12 +344,12 @@ class CalculateGalNebCorr:
             KAF_flat = np.sum(overlap, axis=1)
             CKAF_array.append(np.nansum(KAF_flat))
 
-        plt.figure()
-        plt.hist(CKAF_array, bins='auto', histtype='step', color='black')
-        plt.xlabel('CKAF')
-        plt.ylabel('Number of trials')
-        plt.show()
-        print(np.mean(CKAF_array))
+        # plt.figure()
+        # plt.hist(CKAF_array, bins='auto', histtype='step', color='black')
+        # plt.xlabel('CKAF')
+        # plt.ylabel('Number of trials')
+        # plt.show()
+        # print(np.mean(CKAF_array))
         return CKAF_array
 
     def Derive3DDist_xyv(self):
@@ -394,7 +392,7 @@ class CalculateGalNebCorr:
         return mu_mle, Sigma_mle
 
     def SummarizeCorr(self):
-        # Compute association for L Type
+        # Compute association for each Type
         CKAF_L, CKAF_S, CKAF_A = np.array([]), np.array([]), np.array([])
         for i in range(len(self.L)):
             CKAF = self.ComputeCorr(cubename=self.L[i][0], nums_seg_OII=self.L[i][3], select_seg_OII=self.L[i][4],
@@ -427,6 +425,36 @@ class CalculateGalNebCorr:
         plt.xlim(20, 225)
         plt.legend(loc='best', fontsize=20)
         plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
+
+    def CalculateCorrControl(self, Ntrial=5000):
+        # Compute association for each Type
+        allType = np.vstack((self.L, self.S, self.A))
+
+        for i in range(len(allType)):
+            outfile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(allType[i][0], Ntrial)
+
+            if os.path.exists(outfile):
+                print(f"{outfile} already exists. Skipping computation.")
+                continue
+            CKAF_array = self.ComputeCorrControl(cubename=allType[i][0], nums_seg_OII=allType[i][3],
+                                                 select_seg_OII=allType[i][4], nums_seg_OIII=allType[i][5],
+                                                 select_seg_OIII=allType[i][6], Ntrial=Ntrial)
+            # Save the result
+            with h5py.File(outfile, 'w') as f:
+                f.create_dataset('CKAF_array', data=CKAF_array)
+
+            # Plot histogram
+            plt.figure(figsize=(5, 5), )
+            plt.hist(CKAF_array, bins='auto', histtype='step', color='black')
+            mean_CKAF = np.mean(CKAF_array)
+            sigma_CKAF = np.std(CKAF_array)
+            plt.axvline(mean_CKAF, color='red', linestyle='dashed', linewidth=1,
+                        label='Mean = {:.3f}\nSigma = {:.3f}'.format(mean_CKAF, sigma_CKAF))
+            plt.legend()
+            plt.xlabel('CKAF')
+            plt.ylabel('Number of trials')
+            plt.savefig('../../MUSEQuBES+CUBS/plots/Control_{}_CKAF_Hist.png'.format(allType[i][0]),
+                        bbox_inches='tight')
 
 
 L = np.array([["HE0226-4110",     150,  84, [2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], False,
@@ -477,6 +505,7 @@ A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17,
 # SummarizeCorr(L=L, S_BR=S_BR, S=S, A=A)
 
 func = CalculateGalNebCorr(L=L, S=S, A=A)
-# func.SummarizeCorr()
+func.SummarizeCorr()
+# func.CalculateCorrControl()
 # func.ComputeCorrControl(cubename='PKS0405-123')
 # func.ComputeCorrControl(cubename='Q0107-0235')
