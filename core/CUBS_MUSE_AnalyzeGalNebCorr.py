@@ -89,11 +89,13 @@ def bhattacharyya_coefficient(mus_neb=None, sigma_x_neb=1.5, sigma_y_neb=1.5, si
     return out
 
 class CalculateGalNebCorr:
-    def __init__(self, L=None, S=None, A=None):
+    def __init__(self, L=None, S=None, A=None, Ntrial=5000):
         path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
         self.data_qso = ascii.read(path_qso, format='fixed_width')
         self._qso_index = {str(n): i for i, n in enumerate(self.data_qso['name'])}
         self.L, self.S , self.A = L, S, A
+        self.allType = np.vstack((L, S, A))
+        self.Ntrial = Ntrial
         self.cubename_all = np.hstack((L[:, 0], S[:, 0], A[:, 0]))
 
     def ComputeCorr(self, cubename=None, nums_seg_OII=None, select_seg_OII=False, nums_seg_OIII=None,
@@ -394,25 +396,54 @@ class CalculateGalNebCorr:
     def SummarizeCorr(self):
         # Compute association for each Type
         CKAF_L, CKAF_S, CKAF_A = np.array([]), np.array([]), np.array([])
+        control_mean_L, control_mean_S, control_mean_A = np.array([]), np.array([]), np.array([])
+        control_sigma_L, control_sigma_S, control_sigma_A = np.array([]), np.array([]), np.array([])
         for i in range(len(self.L)):
             CKAF = self.ComputeCorr(cubename=self.L[i][0], nums_seg_OII=self.L[i][3], select_seg_OII=self.L[i][4],
                                     nums_seg_OIII=self.L[i][5], select_seg_OIII=self.L[i][6])
             CKAF_L = np.hstack((CKAF_L, CKAF))
+            infile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.L[i][0], self.Ntrial)
+            with h5py.File(infile, 'r') as f:
+                CKAF_array = f['CKAF_array'][:]
+            control_mean_L = np.hstack((control_mean_L, np.mean(CKAF_array)))
+            control_sigma_L = np.hstack((control_sigma_L, np.std(CKAF_array)))
+
 
         for i in range(len(self.S)):
             CKAF = self.ComputeCorr(cubename=self.S[i][0], nums_seg_OII=self.S[i][3], select_seg_OII=self.S[i][4],
                                     nums_seg_OIII=self.S[i][5], select_seg_OIII=self.S[i][6])
             CKAF_S = np.hstack((CKAF_S, CKAF))
+            infile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.S[i][0], self.Ntrial)
+            with h5py.File(infile, 'r') as f:
+                CKAF_array = f['CKAF_array'][:]
+            print(self.S[i][0], CKAF, np.mean(CKAF_array), np.std(CKAF_array))
+            control_mean_S = np.hstack((control_mean_S, np.mean(CKAF_array)))
+            control_sigma_S = np.hstack((control_sigma_S, np.std(CKAF_array)))
 
         for i in range(len(self.A)):
             CKAF = self.ComputeCorr(cubename=self.A[i][0], nums_seg_OII=self.A[i][3], select_seg_OII=self.A[i][4],
                                     nums_seg_OIII=self.A[i][5], select_seg_OIII=self.A[i][6])
             CKAF_A = np.hstack((CKAF_A, CKAF))
+            infile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.A[i][0], self.Ntrial)
+            with h5py.File(infile, 'r') as f:
+                CKAF_array = f['CKAF_array'][:]
+            control_mean_A = np.hstack((control_mean_A, np.mean(CKAF_array)))
+            control_sigma_A = np.hstack((control_sigma_A, np.std(CKAF_array)))
 
         # Scatter plot
-        scale_length_array = np.hstack((self.L[:, 2], self.S[:, 2], self.A[:, 2]))
         CKAF_array = np.hstack((CKAF_L, CKAF_S, CKAF_A))
-        res = stats.pearsonr(scale_length_array, CKAF_array)
+        res = stats.pearsonr(self.allType[:, 2], CKAF_array)
+
+        plt.figure(figsize=(5, 5), dpi=100, constrained_layout=True)
+        plt.scatter(self.L[:, 2], (CKAF_L - control_mean_L) / control_sigma_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
+        plt.scatter(self.S[:, 2], (CKAF_S - control_mean_S) / control_sigma_S, marker="s", alpha=0.8, s=50, color='red', label=r'Host-galaxy-scale')
+        plt.scatter(self.A[:, 2], (CKAF_A - control_mean_A) / control_sigma_A, marker="^", alpha=0.8, s=50, color='blue', label=r'Associated')
+        plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
+        plt.ylabel(r'CKAF', size=25)
+        plt.xlim(20, 225)
+        # plt.legend(loc='best', fontsize=20)
+        # plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
+        plt.show()
 
         plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
         plt.scatter(self.L[:, 2], CKAF_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
@@ -426,19 +457,17 @@ class CalculateGalNebCorr:
         plt.legend(loc='best', fontsize=20)
         plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
 
-    def CalculateCorrControl(self, Ntrial=5000):
+    def CalculateCorrControl(self):
         # Compute association for each Type
-        allType = np.vstack((self.L, self.S, self.A))
-
-        for i in range(len(allType)):
-            outfile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(allType[i][0], Ntrial)
+        for i in range(len(self.allType)):
+            outfile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.allType[i][0], self.Ntrial)
 
             if os.path.exists(outfile):
                 print(f"{outfile} already exists. Skipping computation.")
                 continue
-            CKAF_array = self.ComputeCorrControl(cubename=allType[i][0], nums_seg_OII=allType[i][3],
-                                                 select_seg_OII=allType[i][4], nums_seg_OIII=allType[i][5],
-                                                 select_seg_OIII=allType[i][6], Ntrial=Ntrial)
+            CKAF_array = self.ComputeCorrControl(cubename=self.allType[i][0], nums_seg_OII=self.allType[i][3],
+                                                 select_seg_OII=self.allType[i][4], nums_seg_OIII=self.allType[i][5],
+                                                 select_seg_OIII=self.allType[i][6], Ntrial=self.Ntrial)
             # Save the result
             with h5py.File(outfile, 'w') as f:
                 f.create_dataset('CKAF_array', data=CKAF_array)
@@ -453,7 +482,7 @@ class CalculateGalNebCorr:
             plt.legend()
             plt.xlabel('CKAF')
             plt.ylabel('Number of trials')
-            plt.savefig('../../MUSEQuBES+CUBS/plots/Control_{}_CKAF_Hist.png'.format(allType[i][0]),
+            plt.savefig('../../MUSEQuBES+CUBS/plots/Control_{}_CKAF_Hist.png'.format(self.allType[i][0]),
                         bbox_inches='tight')
 
 
