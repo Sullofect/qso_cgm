@@ -10,6 +10,8 @@ from astropy.wcs import WCS
 from astropy.io import ascii
 from astropy import units as u
 from astropy.cosmology import FlatLambdaCDM
+from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
 from astropy.coordinates import SkyCoord, SkyOffsetFrame
 from CUBS_MUSE_MakeV50W80 import APLpyStyle
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
@@ -97,6 +99,9 @@ class CalculateGalNebCorr:
         self.allType = np.vstack((L, S, A))
         self.Ntrial = Ntrial
         self.cubename_all = np.hstack((L[:, 0], S[:, 0], A[:, 0]))
+
+        # Fit the distribution
+        self.Derive3DDist_xyv()
 
     def ComputeCorr(self, cubename=None, nums_seg_OII=None, select_seg_OII=False, nums_seg_OIII=None,
                     select_seg_OIII=False):
@@ -222,7 +227,7 @@ class CalculateGalNebCorr:
         return CKAF
 
     def ComputeCorrControl(self, cubename=None, nums_seg_OII=None, select_seg_OII=False,
-                           nums_seg_OIII=None, select_seg_OIII=False, Ntrial=1000):
+                           nums_seg_OIII=None, select_seg_OIII=False, Ntrial=5000):
         # QSO information
         i = self._qso_index.get(cubename, None)
         ra_qso, dec_qso, z_qso = self.data_qso['ra_GAIA'][i], self.data_qso['dec_GAIA'][i], self.data_qso['redshift'][i]
@@ -287,11 +292,11 @@ class CalculateGalNebCorr:
         Ngal = len(fits.open(path_gal)[1].data)
 
         # Start the process
-        mu_mle, Sigma_mle = self.Derive3DDist_xyv()
-        rng = np.random.default_rng(0)
-        Nsamp = Ntrial * Ngal
-        Xs = rng.multivariate_normal(mu_mle, Sigma_mle, size=Nsamp)
-        x_kpc_gal, y_kpc_gal, v_gal = Xs[:, 0], Xs[:, 1], Xs[:, 2]
+        # mu_mle, Sigma_mle = self.Derive3DDist_xyv()
+        # rng = np.random.default_rng(0)
+        # Nsamp = Ntrial * Ngal
+        # self.Xs = rng.multivariate_normal(mu_mle, Sigma_mle, size=Nsamp)
+        x_kpc_gal, y_kpc_gal, v_gal = self.Xs[:, 0], self.Xs[:, 1], self.Xs[:, 2]
 
         # Convert back to ra, dec
         dlon = np.arctan2(x_kpc_gal, d_A_kpc)  # east
@@ -303,19 +308,20 @@ class CalculateGalNebCorr:
         c_gal = w.world_to_pixel(SkyCoord(gal_icrs.ra.deg, gal_icrs.dec.deg, unit='deg', frame='icrs'))
 
         # Check galaxy locations
-        # idx = 10
-        # idx_start, idx_end = idx * Ngal, (idx + 1) * Ngal
-        # plt.figure()
+        idx = 20
+        idx_start, idx_end = idx * Ngal, (idx + 1) * Ngal
+        plt.figure()
         # plt.scatter(c_gal[0][idx_start:idx_end], c_gal[1][idx_start:idx_end], c=v_gal[idx_start:idx_end],
         #             s=20, vmin=-1000, vmax=1000, cmap='coolwarm')
-        # plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-1000, vmax=1000)
-        # plt.xlim(-300, 300)
-        # plt.ylim(-300, 300)
-        # plt.colorbar(label='v50 (km/s)')
-        # plt.title('Check galaxy positions')
-        # plt.xlabel('X (pixel)')
-        # plt.ylabel('Y (pixel)')
-        # plt.show()
+        plt.scatter(c_gal[0], c_gal[1], c=v_gal, s=3, vmin=-1000, vmax=1000, cmap='coolwarm')
+        plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-1000, vmax=1000)
+        plt.xlim(-300, 300)
+        plt.ylim(-300, 300)
+        plt.colorbar(label='v50 (km/s)')
+        plt.title('Check galaxy positions')
+        plt.xlabel('X (pixel)')
+        plt.ylabel('Y (pixel)')
+        plt.show()
 
         # Start
         x, y = np.meshgrid(np.arange(v50.shape[1]), np.arange(v50.shape[0]))
@@ -346,12 +352,13 @@ class CalculateGalNebCorr:
             KAF_flat = np.sum(overlap, axis=1)
             CKAF_array.append(np.nansum(KAF_flat))
 
-        # plt.figure()
-        # plt.hist(CKAF_array, bins='auto', histtype='step', color='black')
-        # plt.xlabel('CKAF')
-        # plt.ylabel('Number of trials')
-        # plt.show()
-        # print(np.mean(CKAF_array))
+        print(np.sum(CKAF_array == 0.0), len(CKAF_array))
+        plt.figure()
+        plt.hist(CKAF_array, bins='auto', histtype='step', color='black')
+        plt.xlabel('CKAF')
+        plt.ylabel('Number of trials')
+        plt.show()
+        print(np.mean(CKAF_array))
         return CKAF_array
 
     def Derive3DDist_xyv(self):
@@ -389,15 +396,25 @@ class CalculateGalNebCorr:
 
         # Fit a 3D Gaussian to it
         X = np.column_stack([x_kpc_array, y_kpc_array, v_gal_array])
-        mu_mle = X.mean(axis=0)
-        Sigma_mle = np.cov(X, rowvar=False, bias=True)  # <-- MLE (divide by N)
-        return mu_mle, Sigma_mle
+        # mu_mle = X.mean(axis=0)
+        # Sigma_mle = np.cov(X, rowvar=False, bias=True)  # <-- MLE (divide by N)
+        # return mu_mle, Sigma_mle
 
+        # Gaussian Mixture Model
+        scaler = StandardScaler()
+        Xz = scaler.fit_transform(X)
+        gmm = GaussianMixture(n_components=1, covariance_type="full", reg_covar=1e-4, n_init=10, random_state=1)
+        gmm.fit(Xz)
+        Zs, labels = gmm.sample(self.Ntrial * 37)
+        self.Xs = scaler.inverse_transform(Zs)
+        # self.Xs, labels = gmm.sample(self.Ntrial * 37)
+    #
     def SummarizeCorr(self):
         # Compute association for each Type
         CKAF_L, CKAF_S, CKAF_A = np.array([]), np.array([]), np.array([])
         control_mean_L, control_mean_S, control_mean_A = np.array([]), np.array([]), np.array([])
         control_sigma_L, control_sigma_S, control_sigma_A = np.array([]), np.array([]), np.array([])
+        percent_L, percent_S, percent_A = np.array([]), np.array([]), np.array([])
         for i in range(len(self.L)):
             CKAF = self.ComputeCorr(cubename=self.L[i][0], nums_seg_OII=self.L[i][3], select_seg_OII=self.L[i][4],
                                     nums_seg_OIII=self.L[i][5], select_seg_OIII=self.L[i][6])
@@ -407,7 +424,8 @@ class CalculateGalNebCorr:
                 CKAF_array = f['CKAF_array'][:]
             control_mean_L = np.hstack((control_mean_L, np.mean(CKAF_array)))
             control_sigma_L = np.hstack((control_sigma_L, np.std(CKAF_array)))
-
+            # p_value = (np.sum(CKAF_mc >= CKAF_obs) + 1) / (len(CKAF_mc) + 1)
+            percent_L = np.hstack((percent_L, np.sum(CKAF_array < CKAF) / self.Ntrial * 100))
 
         for i in range(len(self.S)):
             CKAF = self.ComputeCorr(cubename=self.S[i][0], nums_seg_OII=self.S[i][3], select_seg_OII=self.S[i][4],
@@ -419,6 +437,7 @@ class CalculateGalNebCorr:
             print(self.S[i][0], CKAF, np.mean(CKAF_array), np.std(CKAF_array))
             control_mean_S = np.hstack((control_mean_S, np.mean(CKAF_array)))
             control_sigma_S = np.hstack((control_sigma_S, np.std(CKAF_array)))
+            percent_S = np.hstack((percent_S, np.sum(CKAF_array < CKAF) / self.Ntrial * 100))
 
         for i in range(len(self.A)):
             CKAF = self.ComputeCorr(cubename=self.A[i][0], nums_seg_OII=self.A[i][3], select_seg_OII=self.A[i][4],
@@ -429,21 +448,21 @@ class CalculateGalNebCorr:
                 CKAF_array = f['CKAF_array'][:]
             control_mean_A = np.hstack((control_mean_A, np.mean(CKAF_array)))
             control_sigma_A = np.hstack((control_sigma_A, np.std(CKAF_array)))
+            percent_A = np.hstack((percent_A, np.sum(CKAF_array < CKAF) / self.Ntrial * 100))
+
+
+        plt.figure(figsize=(5, 5), dpi=100, constrained_layout=True)
+        plt.scatter(self.L[:, 2], percent_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
+        plt.scatter(self.S[:, 2], percent_S, marker="s", alpha=0.8, s=50, color='red', label=r'Host-galaxy-scale')
+        plt.scatter(self.A[:, 2], percent_A, marker="^", alpha=0.8, s=50, color='blue', label=r'Associated')
+        plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
+        plt.ylabel(r'CKAF', size=25)
+        plt.xlim(20, 225)
+        plt.show()
 
         # Scatter plot
         CKAF_array = np.hstack((CKAF_L, CKAF_S, CKAF_A))
         res = stats.pearsonr(self.allType[:, 2], CKAF_array)
-
-        plt.figure(figsize=(5, 5), dpi=100, constrained_layout=True)
-        plt.scatter(self.L[:, 2], (CKAF_L - control_mean_L) / control_sigma_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
-        plt.scatter(self.S[:, 2], (CKAF_S - control_mean_S) / control_sigma_S, marker="s", alpha=0.8, s=50, color='red', label=r'Host-galaxy-scale')
-        plt.scatter(self.A[:, 2], (CKAF_A - control_mean_A) / control_sigma_A, marker="^", alpha=0.8, s=50, color='blue', label=r'Associated')
-        plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
-        plt.ylabel(r'CKAF', size=25)
-        plt.xlim(20, 225)
-        # plt.legend(loc='best', fontsize=20)
-        # plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
-        plt.show()
 
         plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
         plt.scatter(self.L[:, 2], CKAF_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
@@ -465,6 +484,7 @@ class CalculateGalNebCorr:
             if os.path.exists(outfile):
                 print(f"{outfile} already exists. Skipping computation.")
                 continue
+            # Conduct the fit
             CKAF_array = self.ComputeCorrControl(cubename=self.allType[i][0], nums_seg_OII=self.allType[i][3],
                                                  select_seg_OII=self.allType[i][4], nums_seg_OIII=self.allType[i][5],
                                                  select_seg_OIII=self.allType[i][6], Ntrial=self.Ntrial)
@@ -534,7 +554,7 @@ A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17,
 # SummarizeCorr(L=L, S_BR=S_BR, S=S, A=A)
 
 func = CalculateGalNebCorr(L=L, S=S, A=A)
-func.SummarizeCorr()
+# func.SummarizeCorr()
 # func.CalculateCorrControl()
-# func.ComputeCorrControl(cubename='PKS0405-123')
+func.ComputeCorrControl(cubename='PKS0405-123')
 # func.ComputeCorrControl(cubename='Q0107-0235')

@@ -10,8 +10,10 @@ from astropy.wcs import WCS
 from astropy.io import ascii
 from regions import PixCoord
 from astropy import units as u
-from astropy.cosmology import FlatLambdaCDM
 from astropy.coordinates import SkyCoord
+from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
+from astropy.cosmology import FlatLambdaCDM
 from CUBS_MUSE_MakeV50W80 import APLpyStyle
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -187,22 +189,44 @@ def Derive3DDist_xyv():
         v_gal_array = np.hstack((v_gal_array, v_gal))
 
     # Check
-    fig, ax = plt.subplots(1, 1, figsize=(8, 8))
-    sc = ax.scatter(x_kpc_array, y_kpc_array, c=v_gal_array, cmap='coolwarm', s=50, vmin=-1500, vmax=1500)
-    plt.colorbar(sc, ax=ax, pad=0.1, label="velocity")
-    plt.gca().invert_xaxis()
-    ax.grid(True)
-    plt.show()
+    # fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+    # sc = ax.scatter(x_kpc_array, y_kpc_array, c=v_gal_array, cmap='coolwarm', s=50, vmin=-1500, vmax=1500)
+    # plt.colorbar(sc, ax=ax, pad=0.1, label="velocity")
+    # plt.gca().invert_xaxis()
+    # ax.grid(True)
+    # plt.show()
 
     # Fit a 3D Gaussian to it
     X = np.column_stack([x_kpc_array, y_kpc_array, v_gal_array])
-    mu_mle = X.mean(axis=0)
-    Sigma_mle = np.cov(X, rowvar=False, bias=True)  # <-- MLE (divide by N)
+    scaler = StandardScaler()
+    Xz = scaler.fit_transform(X)
+    # mu_mle = X.mean(axis=0)
+    # Sigma_mle = np.cov(X, rowvar=False, bias=True)  # <-- MLE (divide by N)
+
+
+    # Try Gaussian mixturem models
+    gmm = GaussianMixture(n_components=5, covariance_type="diag", reg_covar=1e-4, n_init=10, random_state=1)
+    gmm.fit(Xz)
+    print(gmm.converged_)
 
     # --- Monte Carlo samples from fitted 4D Gaussian
     rng = np.random.default_rng(0)
     Nsamp = 5000
-    Xs = rng.multivariate_normal(mu_mle, Sigma_mle, size=Nsamp)
+    # Xs = rng.multivariate_normal(mu_mle, Sigma_mle, size=Nsamp)
+    Zs, labels = gmm.sample(Nsamp)
+    Xs = scaler.inverse_transform(Zs)
+
+
+    # Sanity Check
+    pairs = [(0, 1), (0, 2), (1, 2)]
+    for a, b in pairs:
+        plt.figure()
+        plt.scatter(X[:, a], X[:, b], s=10, alpha=1, label="data")
+        plt.scatter(Xs[:, a], Xs[:, b], s=5, alpha=0.3, label="gmm samp")
+        plt.xlabel(f"dim {a}");
+        plt.ylabel(f"dim {b}")
+        plt.legend()
+        plt.show()
 
     # Comparison plots
     x_m = Xs[:, 0]
@@ -214,9 +238,11 @@ def Derive3DDist_xyv():
 
     x_lo, x_hi = np.nanpercentile(x_kpc_array, [0.5, 99.5])
     y_lo, y_hi = np.nanpercentile(y_kpc_array, [0.5, 99.5])
+    print("x range: ", x_lo, x_hi)
+    print("y range: ", y_lo, y_hi)
 
-    bins1 = np.arange(-250, 300, 50)
-    bins2 = np.arange(-250, 300, 50)
+    bins1 = np.arange(-300, 350, 50)
+    bins2 = np.arange(-300, 350, 50)
     bins3 = np.arange(-1500, 1750, 250)
 
     fig, axes = plt.subplots(1, 3, figsize=(12, 4), constrained_layout=True)
