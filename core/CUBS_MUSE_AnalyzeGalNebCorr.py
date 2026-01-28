@@ -403,9 +403,9 @@ class CalculateGalNebCorr:
         # Gaussian Mixture Model
         scaler = StandardScaler()
         Xz = scaler.fit_transform(X)
-        gmm = GaussianMixture(n_components=1, covariance_type="full", reg_covar=1e-4, n_init=10, random_state=1)
+        gmm = GaussianMixture(n_components=5, covariance_type="diag", reg_covar=1e-4, n_init=10, random_state=1)
         gmm.fit(Xz)
-        Zs, labels = gmm.sample(self.Ntrial * 37)
+        Zs, labels = gmm.sample(self.Ntrial * 32)
         self.Xs = scaler.inverse_transform(Zs)
         # self.Xs, labels = gmm.sample(self.Ntrial * 37)
     #
@@ -556,5 +556,7 @@ A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17,
 func = CalculateGalNebCorr(L=L, S=S, A=A)
 # func.SummarizeCorr()
 # func.CalculateCorrControl()
-func.ComputeCorrControl(cubename='PKS0405-123')
+# func.ComputeCorrControl(cubename='PKS0405-123')
 # func.ComputeCorrControl(cubename='Q0107-0235')
+# func.ComputeCorrControl(cubename='3C57')
+func.ComputeCorrControl(cubename='TEX0206-048')
