@@ -467,5 +467,6 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 # MakeV50W80(cubename='J0154-0712', v_max=300, sigma_max=300, HSTcentroid=True)
 # MakeV50W80(cubename='LBQS1435-0134', v_max=400, sigma_max=400, HSTcentroid=True, hideColorbar=False)
 # MakeV50W80(cubename='PG1522+101', v_max=300, sigma_max=300, nums_seg_OII=[6, 12], HSTcentroid=True)
-# MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300, nums_seg_OII=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+# MakeV50W80(cubename='HE2336-5540', v_max=300, sigma_max=300, nums_seg_OII=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+#            HSTcentroid=True, hideColorbar=False)
 # MakeV50W80(cubename='PKS0232-04', v_max=400, sigma_max=300, nums_seg_OII=[4, 5, 7], HSTcentroid=True)

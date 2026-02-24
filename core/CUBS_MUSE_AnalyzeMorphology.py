@@ -640,7 +640,7 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
 # AnalyzeMorphology(cubename='HE0112-4145')
 # AnalyzeMorphology(cubename='HE0439-5254')
 # # AnalyzeMorphology(cubename='HE2305-5315')
-# AnalyzeMorphology(cubename='HE1003+0149')
+# AnalyzeMorphology(cubename='HE1003+0149', nums_seg_OII=[3])
 # AnalyzeMorphology(cubename='HE0331-4112', nums_seg_OII=[6], select_seg_OII=True)
 # AnalyzeMorphology(cubename='TEX0206-048', nums_seg_OII=[1, 8, 12, 13, 15, 20, 23, 26, 27, 28, 34, 57, 60, 79, 81,
 #                                                         101, 107, 108, 114, 118, 317, 547, 552],
@@ -711,7 +711,7 @@ gal_list = ['NGC0680', 'NGC1023', 'NGC2594', 'NGC2685', 'NGC2764', 'NGC2768',
             'NGC5631', 'NGC6798', 'NGC7280', 'NGC7465',
             'PGC028887', 'UGC03960', 'UGC05408', 'UGC06176', 'UGC09519',]
 
-Analyze21cmMorphology(gal_list)
+# Analyze21cmMorphology(gal_list)
 # Analyze21cmMorphology(['NGC3619'])
 
 # Lyalpha

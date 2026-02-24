@@ -9,11 +9,13 @@ from matplotlib import rc
 from astropy.wcs import WCS
 from astropy.io import ascii
 from astropy import units as u
+from matplotlib.lines import Line2D
 from astropy.cosmology import FlatLambdaCDM
 from sklearn.mixture import GaussianMixture
-from sklearn.preprocessing import StandardScaler
-from astropy.coordinates import SkyCoord, SkyOffsetFrame
 from CUBS_MUSE_MakeV50W80 import APLpyStyle
+from sklearn.preprocessing import StandardScaler
+from matplotlib.legend_handler import HandlerTuple
+from astropy.coordinates import SkyCoord, SkyOffsetFrame
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick.minor', size=4, visible=True)
@@ -98,10 +100,10 @@ class CalculateGalNebCorr:
         self.L, self.S , self.A = L, S, A
         self.allType = np.vstack((L, S, A))
         self.Ntrial = Ntrial
-        self.cubename_all = np.hstack((L[:, 0], S[:, 0], A[:, 0]))
 
         # Fit the distribution
         self.Derive3DDist_xyv()
+        self.DrawRaDecV()
 
     def ComputeCorr(self, cubename=None, nums_seg_OII=None, select_seg_OII=False, nums_seg_OIII=None,
                     select_seg_OIII=False):
@@ -187,11 +189,6 @@ class CalculateGalNebCorr:
         sigma_v_gal = 20.0  # km/s
 
         # Calculate overlapping
-        # batch = 256
-        # KAF_flat = np.zeros(input_neb.shape[0], dtype=float)  # (N,)
-        # for j0 in range(0, gal_mus_all.shape[0], batch):
-        #     j1 = min(j0 + batch, gal_mus_all.shape[0])
-        #     gal_mus_batch = gal_mus_all[j0:j1]  # (B,3)
         overlap = bhattacharyya_coefficient(mus_neb=input_neb, sigma_x_neb=1.5,
                                             sigma_y_neb=1.5, sigma_v_neb=sigma_v_neb,
                                             mus_gal=gal_mus_all, sigma_x_gal=sigma_x_gal,
@@ -288,15 +285,27 @@ class CalculateGalNebCorr:
         print('physical scale (pixel) = ', sigma_physical)
 
         # Monte Carlo samples from fitted 4D Gaussian
-        path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
-        Ngal = len(fits.open(path_gal)[1].data)
+        # path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+        # Ngal = len(fits.open(path_gal)[1].data)
+        #
+        # # Start the process
+        # # mu_mle, Sigma_mle = self.Derive3DDist_xyv()
+        # # rng = np.random.default_rng(0)
+        # # Nsamp = Ntrial * Ngal
+        # # self.Xs = rng.multivariate_normal(mu_mle, Sigma_mle, size=Nsamp)
+        # Zs, labels = self.gmm.sample(self.Ntrial * Ngal)
+        # Xs = self.scaler.inverse_transform(Zs)
+        # x_kpc_gal, y_kpc_gal, v_gal = Xs[:, 0], Xs[:, 1], Xs[:, 2]
+        #
 
-        # Start the process
-        # mu_mle, Sigma_mle = self.Derive3DDist_xyv()
-        # rng = np.random.default_rng(0)
-        # Nsamp = Ntrial * Ngal
-        # self.Xs = rng.multivariate_normal(mu_mle, Sigma_mle, size=Nsamp)
-        x_kpc_gal, y_kpc_gal, v_gal = self.Xs[:, 0], self.Xs[:, 1], self.Xs[:, 2]
+        # Draw from parent sample
+        parent = self.X[self.X[:, 0] != cubename][:, 1:4].astype(float)
+        Ngal = np.sum(self.X[:, 0] == cubename)
+        rng = np.random.default_rng(0)
+        samples = np.array([rng.choice(len(parent), size=Ngal, replace=False) for _ in range(self.Ntrial)])
+        samples = parent[samples]
+        samples = samples.reshape(-1, parent.shape[1])
+        x_kpc_gal, y_kpc_gal, v_gal = samples[:, 0], samples[:, 1], samples[:, 2]
 
         # Convert back to ra, dec
         dlon = np.arctan2(x_kpc_gal, d_A_kpc)  # east
@@ -307,21 +316,23 @@ class CalculateGalNebCorr:
         gal_icrs = gal_off.transform_to("icrs")
         c_gal = w.world_to_pixel(SkyCoord(gal_icrs.ra.deg, gal_icrs.dec.deg, unit='deg', frame='icrs'))
 
+
         # Check galaxy locations
-        idx = 20
-        idx_start, idx_end = idx * Ngal, (idx + 1) * Ngal
-        plt.figure()
-        # plt.scatter(c_gal[0][idx_start:idx_end], c_gal[1][idx_start:idx_end], c=v_gal[idx_start:idx_end],
-        #             s=20, vmin=-1000, vmax=1000, cmap='coolwarm')
-        plt.scatter(c_gal[0], c_gal[1], c=v_gal, s=3, vmin=-1000, vmax=1000, cmap='coolwarm')
-        plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-1000, vmax=1000)
-        plt.xlim(-300, 300)
-        plt.ylim(-300, 300)
-        plt.colorbar(label='v50 (km/s)')
-        plt.title('Check galaxy positions')
-        plt.xlabel('X (pixel)')
-        plt.ylabel('Y (pixel)')
-        plt.show()
+        # idx = 20
+        # idx_start, idx_end = idx * Ngal, (idx + 1) * Ngal
+        # plt.figure()
+        # # plt.scatter(c_gal[0][idx_start:idx_end], c_gal[1][idx_start:idx_end], c=v_gal[idx_start:idx_end],
+        # #             s=20, vmin=-1000, vmax=1000, cmap='coolwarm')
+        # plt.scatter(c_gal[0], c_gal[1], c=v_gal, s=3, vmin=-1000, vmax=1000, cmap='coolwarm')
+        # plt.imshow(v50, origin='lower', cmap='coolwarm', vmin=-1000, vmax=1000)
+        # plt.xlim(-300, 300)
+        # plt.ylim(-300, 300)
+        # plt.colorbar(label='v50 (km/s)')
+        # plt.title('Check galaxy positions')
+        # plt.xlabel('X (pixel)')
+        # plt.ylabel('Y (pixel)')
+        # plt.show()
+        # raise ValueError('Check galaxy positions!')
 
         # Start
         x, y = np.meshgrid(np.arange(v50.shape[1]), np.arange(v50.shape[0]))
@@ -352,13 +363,13 @@ class CalculateGalNebCorr:
             KAF_flat = np.sum(overlap, axis=1)
             CKAF_array.append(np.nansum(KAF_flat))
 
-        print(np.sum(CKAF_array == 0.0), len(CKAF_array))
-        plt.figure()
-        plt.hist(CKAF_array, bins='auto', histtype='step', color='black')
-        plt.xlabel('CKAF')
-        plt.ylabel('Number of trials')
-        plt.show()
-        print(np.mean(CKAF_array))
+        # print(np.sum(CKAF_array == 0.0), len(CKAF_array))
+        # plt.figure()
+        # plt.hist(CKAF_array, bins='auto', histtype='step', color='black')
+        # plt.xlabel('CKAF')
+        # plt.ylabel('Number of trials')
+        # plt.show()
+        # print(np.mean(CKAF_array))
         return CKAF_array
 
     def Derive3DDist_xyv(self):
@@ -366,7 +377,7 @@ class CalculateGalNebCorr:
         x_kpc_array = np.array([])
         y_kpc_array = np.array([])
         v_gal_array = np.array([])
-        for cubename in self.cubename_all:
+        for cubename in self.allType[:, 0]:
             # QSO information
             i = self._qso_index.get(cubename, None)
             ra_qso, dec_qso, z_qso = self.data_qso['ra_GAIA'][i], self.data_qso['dec_GAIA'][i], \
@@ -401,82 +412,182 @@ class CalculateGalNebCorr:
         # return mu_mle, Sigma_mle
 
         # Gaussian Mixture Model
-        scaler = StandardScaler()
-        Xz = scaler.fit_transform(X)
-        gmm = GaussianMixture(n_components=5, covariance_type="diag", reg_covar=1e-4, n_init=10, random_state=1)
-        gmm.fit(Xz)
-        Zs, labels = gmm.sample(self.Ntrial * 32)
-        self.Xs = scaler.inverse_transform(Zs)
-        # self.Xs, labels = gmm.sample(self.Ntrial * 37)
-    #
+        self.scaler = StandardScaler()
+        Xz = self.scaler.fit_transform(X)
+        self.gmm = GaussianMixture(n_components=2, covariance_type="full", reg_covar=1e-4, n_init=10, random_state=1)
+        self.gmm.fit(Xz)
+
+    def DrawRaDecV(self):
+        # Stack everything
+        name_array = np.array([])
+        x_kpc_array = np.array([])
+        y_kpc_array = np.array([])
+        v_gal_array = np.array([])
+        for cubename in self.allType[:, 0]:
+            # QSO information
+            i = self._qso_index.get(cubename, None)
+            ra_qso, dec_qso, z_qso = self.data_qso['ra_GAIA'][i], self.data_qso['dec_GAIA'][i], \
+                                     self.data_qso['redshift'][i]
+
+            # Load galaxy information
+            path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
+            data_gal = fits.open(path_gal)[1].data
+            v_gal, ra_gal, dec_gal, type = data_gal['v'], data_gal['ra_HST'], data_gal['dec_HST'], data_gal['type']
+
+            # Convert to radial profile
+            center = SkyCoord(ra_qso, dec_qso, unit='deg', frame='icrs')
+            target = SkyCoord(ra_gal, dec_gal, unit='deg', frame='icrs')
+            sep = center.separation(target).to(u.rad).value  # in arcsec
+            pa = center.position_angle(target).to(u.rad).value  # in rad
+            d_A_kpc = cosmo.angular_diameter_distance(z_qso).value * 1e3
+            r_kpc = sep * d_A_kpc  # in kpc
+
+            # Cartesian
+            x_kpc = r_kpc * np.sin(pa)
+            y_kpc = r_kpc * np.cos(pa)
+
+            # Append to array
+            name_array = np.hstack((name_array, np.array([cubename]*len(x_kpc))))
+            x_kpc_array = np.hstack((x_kpc_array, x_kpc))
+            y_kpc_array = np.hstack((y_kpc_array, y_kpc))
+            v_gal_array = np.hstack((v_gal_array, v_gal))
+
+        # Fit a 3D Gaussian to it
+        self.X = np.column_stack([name_array, x_kpc_array, y_kpc_array, v_gal_array])
+
     def SummarizeCorr(self):
         # Compute association for each Type
         CKAF_L, CKAF_S, CKAF_A = np.array([]), np.array([]), np.array([])
         control_mean_L, control_mean_S, control_mean_A = np.array([]), np.array([]), np.array([])
         control_sigma_L, control_sigma_S, control_sigma_A = np.array([]), np.array([]), np.array([])
         percent_L, percent_S, percent_A = np.array([]), np.array([]), np.array([])
-        for i in range(len(self.L)):
-            CKAF = self.ComputeCorr(cubename=self.L[i][0], nums_seg_OII=self.L[i][3], select_seg_OII=self.L[i][4],
-                                    nums_seg_OIII=self.L[i][5], select_seg_OIII=self.L[i][6])
-            CKAF_L = np.hstack((CKAF_L, CKAF))
-            infile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.L[i][0], self.Ntrial)
+
+        for i in range(len(self.allType)):
+            path = "../../MUSEQuBES+CUBS/KAF/{}_KAF.fits".format(self.allType[i][0])
+            if os.path.exists(path):
+                CKAF = np.nansum(fits.open(path)[1].data)
+            else:
+                CKAF = self.ComputeCorr(cubename=self.allType[i][0], nums_seg_OII=self.allType[i][3],
+                                        select_seg_OII=self.allType[i][4], nums_seg_OIII=self.allType[i][5],
+                                        select_seg_OIII=self.allType[i][6])
+            infile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.allType[i][0], self.Ntrial)
             with h5py.File(infile, 'r') as f:
                 CKAF_array = f['CKAF_array'][:]
-            control_mean_L = np.hstack((control_mean_L, np.mean(CKAF_array)))
-            control_sigma_L = np.hstack((control_sigma_L, np.std(CKAF_array)))
-            # p_value = (np.sum(CKAF_mc >= CKAF_obs) + 1) / (len(CKAF_mc) + 1)
-            percent_L = np.hstack((percent_L, np.sum(CKAF_array < CKAF) / self.Ntrial * 100))
+            p = np.sum(CKAF_array > CKAF) / self.Ntrial
+            print("{}: CKAF = {:.0f}, P-value={:.2f}".format(self.allType[i][0], CKAF, p))
 
-        for i in range(len(self.S)):
-            CKAF = self.ComputeCorr(cubename=self.S[i][0], nums_seg_OII=self.S[i][3], select_seg_OII=self.S[i][4],
-                                    nums_seg_OIII=self.S[i][5], select_seg_OIII=self.S[i][6])
-            CKAF_S = np.hstack((CKAF_S, CKAF))
-            infile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.S[i][0], self.Ntrial)
-            with h5py.File(infile, 'r') as f:
-                CKAF_array = f['CKAF_array'][:]
-            print(self.S[i][0], CKAF, np.mean(CKAF_array), np.std(CKAF_array))
-            control_mean_S = np.hstack((control_mean_S, np.mean(CKAF_array)))
-            control_sigma_S = np.hstack((control_sigma_S, np.std(CKAF_array)))
-            percent_S = np.hstack((percent_S, np.sum(CKAF_array < CKAF) / self.Ntrial * 100))
+            if i <= 10:  # L
+                CKAF_L = np.hstack((CKAF_L, CKAF))
+                percent_L = np.hstack((percent_L, p))
+                control_mean_L = np.hstack((control_mean_L, np.mean(CKAF_array)))
+                control_sigma_L = np.hstack((control_sigma_L, np.std(CKAF_array)))
+            elif 11 <= i < 22:
+                CKAF_S = np.hstack((CKAF_S, CKAF))
+                percent_S = np.hstack((percent_S, p))
+                control_mean_S = np.hstack((control_mean_S, np.mean(CKAF_array)))
+                control_sigma_S = np.hstack((control_sigma_S, np.std(CKAF_array)))
+            else:
+                CKAF_A = np.hstack((CKAF_A, CKAF))
+                percent_A = np.hstack((percent_A, p))
+                control_mean_A = np.hstack((control_mean_A, np.mean(CKAF_array)))
+                control_sigma_A = np.hstack((control_sigma_A, np.std(CKAF_array)))
 
-        for i in range(len(self.A)):
-            CKAF = self.ComputeCorr(cubename=self.A[i][0], nums_seg_OII=self.A[i][3], select_seg_OII=self.A[i][4],
-                                    nums_seg_OIII=self.A[i][5], select_seg_OIII=self.A[i][6])
-            CKAF_A = np.hstack((CKAF_A, CKAF))
-            infile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.A[i][0], self.Ntrial)
-            with h5py.File(infile, 'r') as f:
-                CKAF_array = f['CKAF_array'][:]
-            control_mean_A = np.hstack((control_mean_A, np.mean(CKAF_array)))
-            control_sigma_A = np.hstack((control_sigma_A, np.std(CKAF_array)))
-            percent_A = np.hstack((percent_A, np.sum(CKAF_array < CKAF) / self.Ntrial * 100))
-
-
-        plt.figure(figsize=(5, 5), dpi=100, constrained_layout=True)
-        plt.scatter(self.L[:, 2], percent_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
-        plt.scatter(self.S[:, 2], percent_S, marker="s", alpha=0.8, s=50, color='red', label=r'Host-galaxy-scale')
-        plt.scatter(self.A[:, 2], percent_A, marker="^", alpha=0.8, s=50, color='blue', label=r'Associated')
+        # Scatter plot
+        plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
+        plt.scatter(self.L[:, 2], np.abs(CKAF_L - control_mean_L) / control_sigma_L, marker="o", alpha=0.8, s=50,
+                    color='k', label=r'Irregular, large-scale')
+        plt.scatter(self.S[:, 2], np.abs(CKAF_S - control_mean_S) / control_sigma_S, marker="s", alpha=0.8, s=50,
+                    color='red', label=r'Host-galaxy-scale')
+        plt.scatter(self.A[:, 2], np.abs(CKAF_A - control_mean_A) / control_sigma_A, marker="^", alpha=0.8, s=50,
+                    color='blue', label=r'Complex morphology and kinematics')
+        # plt.yscale('log')
         plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
-        plt.ylabel(r'CKAF', size=25)
-        plt.xlim(20, 225)
-        plt.show()
+        plt.ylabel(r'$\rm |CKAF - CKAF_{mean}| / CKAF_{sigma}$', size=25)
+        plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CKAF_P-value.png', bbox_inches='tight')
 
         # Scatter plot
         CKAF_array = np.hstack((CKAF_L, CKAF_S, CKAF_A))
         res = stats.pearsonr(self.allType[:, 2], CKAF_array)
 
-        plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
-        plt.scatter(self.L[:, 2], CKAF_L, marker="o", alpha=0.8, s=50, color='k', label=r'Irregular, large-scale')
-        plt.scatter(self.S[:, 2], CKAF_S, marker="s", alpha=0.8, s=50, color='red', label=r'Host-galaxy-scale')
-        plt.scatter(self.A[:, 2], CKAF_A, marker="^", alpha=0.8, s=50, color='blue', label=r'Complex Morphology')
-        plt.annotate(f'Pearson $r$ = {res[0]:.3f} \n p-value = {res[1]:.3f}', xy=(0.05, 0.95), xycoords='axes fraction',
-                     fontsize=15, ha='left', va='top', bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5))
+        def pval_to_size(p):
+            sizes = np.full_like(p, 30.0)  # p >= 0.05 → small
+            sizes[p < 0.05] = 80.0  # 0.01 ≤ p < 0.05 → medium
+            sizes[p < 0.01] = 150.0  # p < 0.01 → large
+            return sizes
+
+        s_L = pval_to_size(percent_L)
+        s_S = pval_to_size(percent_S)
+        s_A = pval_to_size(percent_A)
+
+        plt.figure(figsize=(6, 5), dpi=300)
+        plt.scatter(self.L[:, 2], CKAF_L, marker="o", c='k', edgecolor='k', s=s_L, alpha=0.8,
+                    label=r'Irregular, large-scale')
+        plt.scatter(self.S[:, 2], CKAF_S, marker="s", c='red', edgecolor='k', s=s_S, alpha=0.8,
+                    label=r'Host-galaxy-scale')
+        plt.scatter(self.A[:, 2], CKAF_A, marker="^", c='blue', edgecolor='k', s=s_A, alpha=0.8,
+                    label=r'Complex morphology\\ and kinematics')
+
+        pop_handles = [Line2D([], [], linestyle="none", marker="o",
+                              markerfacecolor="k", markeredgecolor="k",
+                              markersize=8, label=r'Irregular, large-scale'),
+                       Line2D([], [], linestyle="none", marker="s",
+                              markerfacecolor="red", markeredgecolor="k",
+                              markersize=8, label=r'Host-galaxy-scale'),
+                       Line2D([], [], linestyle="none", marker="^",
+                              markerfacecolor="blue", markeredgecolor="k",
+                              markersize=8, label=r'Complex morphology \\ and kinematics'),]
+        leg1 = plt.legend(handles=pop_handles, loc="upper right", bbox_to_anchor=(0.45, 1.32), frameon=True, fontsize=15)
+
+        ms_small, ms_mid, ms_big = 6, 9, 11.5
+        h_p_large = (
+            Line2D([], [], linestyle="none", marker="o", markersize=ms_small,
+                   markerfacecolor="k", alpha=0.8, markeredgecolor="k"),
+            Line2D([], [], linestyle="none", marker="s", markersize=ms_small,
+                   markerfacecolor="red", alpha=0.8, markeredgecolor="k"),
+            Line2D([], [], linestyle="none", marker="^", markersize=ms_small,
+                   markerfacecolor="blue", alpha=0.8, markeredgecolor="k"),
+        )
+
+        h_p_mid = (
+            Line2D([], [], linestyle="none", marker="o", markersize=ms_mid,
+                   markerfacecolor="k", alpha=0.8, markeredgecolor="k"),
+            Line2D([], [], linestyle="none", marker="s", markersize=ms_mid,
+                   markerfacecolor="red", alpha=0.8, markeredgecolor="k"),
+            Line2D([], [], linestyle="none", marker="^", markersize=ms_mid,
+                   markerfacecolor="blue", alpha=0.8, markeredgecolor="k"),
+        )
+
+        h_p_small = (
+            Line2D([], [], linestyle="none", marker="o", markersize=ms_big,
+                   markerfacecolor="k", alpha=0.8, markeredgecolor="k"),
+            Line2D([], [], linestyle="none", marker="s", markersize=ms_big,
+                   markerfacecolor="red", alpha=0.8, markeredgecolor="k"),
+            Line2D([], [], linestyle="none", marker="^", markersize=ms_big,
+                   markerfacecolor="blue", alpha=0.8, markeredgecolor="k"),
+        )
+
+        leg2 = plt.legend(
+            handles=[h_p_large, h_p_mid, h_p_small],
+            labels=[
+                r"$p \ge 0.05$",
+                r"$0.01 < p < 0.05$",
+                r"$p \le 0.01$",
+            ],
+            handler_map={tuple: HandlerTuple(ndivide=None, pad=0.6)},
+            title="P-value",
+            loc="lower right",
+            bbox_to_anchor=(1.02, 0.98),
+            frameon=True,
+            fontsize=15,
+        )
+
+        plt.gca().add_artist(leg1)
         plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
         plt.ylabel(r'CKAF', size=25)
         plt.xlim(20, 225)
-        plt.legend(loc='best', fontsize=20)
         plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
 
-    def CalculateCorrControl(self):
+    def SummarizeCorrControl(self):
         # Compute association for each Type
         for i in range(len(self.allType)):
             outfile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.allType[i][0], self.Ntrial)
@@ -531,7 +642,7 @@ S = np.array([["HE0435-5304",      87,  55, [1], False, [1], False],
               ["J0028-3305",      133,  42, [2], True, [], False],
               ["HE0419-5657",     154,  35, [2, 4, 5], True, [], False],
               ["PB6291",          116,  28, [2, 6, 7], True, [], False],
-              ["HE1003+0149",     208,  53, [], False, [], False],
+              ["HE1003+0149",     208,  53, [3], False, [], False],
               ["HE0331-4112",     196,  32, [6], True, [], False]], dtype=object)
 
 A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19], False,
@@ -553,10 +664,10 @@ A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17,
 # ComputeCorr(cubename='PB6291', scale_length=28, savefig=True, nums_seg_OII=[2, 6, 7], select_seg_OII=True)
 # SummarizeCorr(L=L, S_BR=S_BR, S=S, A=A)
 
-func = CalculateGalNebCorr(L=L, S=S, A=A)
-# func.SummarizeCorr()
-# func.CalculateCorrControl()
+func = CalculateGalNebCorr(L=L, S=S, A=A, Ntrial=11000)
+func.SummarizeCorr()
+# func.SummarizeCorrControl()
 # func.ComputeCorrControl(cubename='PKS0405-123')
 # func.ComputeCorrControl(cubename='Q0107-0235')
 # func.ComputeCorrControl(cubename='3C57')
-func.ComputeCorrControl(cubename='TEX0206-048')
+# func.ComputeCorrControl(cubename='TEX0206-048')

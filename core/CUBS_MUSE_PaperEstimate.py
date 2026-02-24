@@ -74,9 +74,9 @@ def EstimateKinematics(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_
     v50_flatten, s80_flatten = v50.ravel(), s80.ravel()
     v50_flatten = v50_flatten[~np.isnan(v50_flatten)]
     s80_flatten = s80_flatten[~np.isnan(s80_flatten)]
-    v50_5, v50_95 = np.percentile(v50_flatten, [5, 95])
-    s80_mean = np.mean(s80_flatten)
-    print(cubename, v50_5, v50_95, s80_mean)
+    v50_25, v50_975 = np.percentile(v50_flatten, [2.5, 97.5])
+    s_median = np.median(s80_flatten)
+    print(cubename, v50_25, v50_975, s_median)
     # print(cubename, mad_std(v50_flatten), mad_std(s80_flatten))
 
     # plt.figure()
@@ -111,15 +111,14 @@ def EstimateKinematics(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_
     if os.path.exists(path_kinematics):
         t = Table.read(path_kinematics, format='ascii.fixed_width')
     else:
-        t = Table(names=('cubename', 'V_5', 'V_95', 'S_80'),
-                  dtype=('S15', 'f8', 'f8', 'f8'))
+        t = Table(names=('cubename', 'V_2.5', 'V_97.5', 'S_80'), dtype=('S15', 'f8', 'f8', 'f8'))
     if cubename in t['cubename']:
         index = np.where(t['cubename'] == cubename)[0][0]
-        t['V_5'][index] = np.round(v50_5, 0)
-        t['V_95'][index] = np.round(v50_95, 0)
-        t['S_80'][index] = np.round(s80_mean, 0)
+        t['V_2.5'][index] = np.round(v50_25, 0)
+        t['V_97.5'][index] = np.round(v50_975, 0)
+        t['S_80'][index] = np.round(s_median, 0)
     else:
-        t.add_row((cubename, np.round(v50_5, 0), np.round(v50_95, 0), np.round(s80_mean, 0)))
+        t.add_row((cubename, np.round(v50_25, 0), np.round(v50_975, 0), np.round(s_median, 0)))
     t.write(path_kinematics, format='ascii.fixed_width', overwrite=True)
 
     # OIII
@@ -159,43 +158,43 @@ def EstimateKinematics(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_
 
 
 # CUBS+MUSE host nebula itself
-EstimateKinematics(cubename='HE0435-5304', nums_seg_OII=[1], nums_seg_OIII=[1])
-# EstimateKinematics(cubename='HE0153-4520')
-EstimateKinematics(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-                  nums_seg_OIII=[1, 5, 6, 8, 9, 10, 11, 16, 19])
-EstimateKinematics(cubename='PKS0405-123', nums_seg_OII=[5, 7, 10, 11, 13, 16, 17, 20], nums_seg_OIII=[15])
-EstimateKinematics(cubename='HE0238-1904', nums_seg_OII=[1, 6, 12, 13, 17, 19], select_seg_OII=True,
-                  nums_seg_OIII=[1, 2, 4, 9, 13, 15, 17, 20], select_seg_OIII=True)
-EstimateKinematics(cubename='3C57', nums_seg_OII=[2], nums_seg_OIII=[])
-EstimateKinematics(cubename='PKS0552-640', nums_seg_OII=[2, 3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-                  nums_seg_OIII=[5, 6, 7, 8, 12, 15, 16, 17, 18, 20])
-EstimateKinematics(cubename='J0110-1648', nums_seg_OII=[1], nums_seg_OIII=[2])
-EstimateKinematics(cubename='J0454-6116', nums_seg_OII=[2, 3, 4, 5, 6, 8, 11, 12, 13, 15, 17, 18], nums_seg_OIII=[2, 7, 9, 10, 18, 19])
-EstimateKinematics(cubename='J2135-5316', nums_seg_OII=[2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19],
-                  nums_seg_OIII=[4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20])
-EstimateKinematics(cubename='J0119-2010', nums_seg_OII=[3, 4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20],
-                  nums_seg_OIII=[7, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20])
-EstimateKinematics(cubename='HE0246-4101', nums_seg_OII=[1], select_seg_OII=True)
-EstimateKinematics(cubename='J0028-3305', nums_seg_OII=[2], select_seg_OII=True)
-EstimateKinematics(cubename='HE0419-5657', nums_seg_OII=[2, 4, 5], select_seg_OII=True)
-EstimateKinematics(cubename='PB6291', nums_seg_OII=[2, 6, 7], select_seg_OII=True)
-EstimateKinematics(cubename='Q0107-0235', nums_seg_OII=[1, 4, 5, 6], select_seg_OII=True)
-EstimateKinematics(cubename='PKS2242-498', nums_seg_OII=[1, 2], select_seg_OII=True)
-EstimateKinematics(cubename='PKS0355-483', nums_seg_OII=[2, 3, 4, 8, 9, 10, 11], select_seg_OII=True)
-EstimateKinematics(cubename='HE0112-4145')
-EstimateKinematics(cubename='HE0439-5254')
-# EstimateKinematics(cubename='HE2305-5315')
-EstimateKinematics(cubename='HE1003+0149')
-EstimateKinematics(cubename='HE0331-4112', nums_seg_OII=[6], select_seg_OII=True)
-EstimateKinematics(cubename='TEX0206-048', nums_seg_OII=[1, 8, 12, 13, 15, 20, 23, 26, 27, 28, 34, 57, 60, 79, 81,
-                                                        101, 107, 108, 114, 118, 317, 547, 552],
-                                                        select_seg_OII=True)
-EstimateKinematics(cubename='Q1354+048', nums_seg_OII=[1, 2])
-EstimateKinematics(cubename='J0154-0712', nums_seg_OII=[5])
-EstimateKinematics(cubename='LBQS1435-0134', nums_seg_OII=[1, 3, 7], select_seg_OII=True)
-EstimateKinematics(cubename='PG1522+101', nums_seg_OII=[2, 3, 8, 11], select_seg_OII=True)
-# EstimateKinematics(cubename='HE2336-5540')
-EstimateKinematics(cubename='PKS0232-04', nums_seg_OII=[2, 4, 5, 7])
+# EstimateKinematics(cubename='HE0435-5304', nums_seg_OII=[1], nums_seg_OIII=[1])
+# # EstimateKinematics(cubename='HE0153-4520')
+# EstimateKinematics(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+#                   nums_seg_OIII=[1, 5, 6, 8, 9, 10, 11, 16, 19])
+# EstimateKinematics(cubename='PKS0405-123', nums_seg_OII=[5, 7, 10, 11, 13, 16, 17, 20], nums_seg_OIII=[15])
+# EstimateKinematics(cubename='HE0238-1904', nums_seg_OII=[1, 6, 12, 13, 17, 19], select_seg_OII=True,
+#                   nums_seg_OIII=[1, 2, 4, 9, 13, 15, 17, 20], select_seg_OIII=True)
+# EstimateKinematics(cubename='3C57', nums_seg_OII=[2], nums_seg_OIII=[])
+# EstimateKinematics(cubename='PKS0552-640', nums_seg_OII=[2, 3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+#                   nums_seg_OIII=[5, 6, 7, 8, 12, 15, 16, 17, 18, 20])
+# EstimateKinematics(cubename='J0110-1648', nums_seg_OII=[1], nums_seg_OIII=[2])
+# EstimateKinematics(cubename='J0454-6116', nums_seg_OII=[2, 3, 4, 5, 6, 8, 11, 12, 13, 15, 17, 18], nums_seg_OIII=[2, 7, 9, 10, 18, 19])
+# EstimateKinematics(cubename='J2135-5316', nums_seg_OII=[2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19],
+#                   nums_seg_OIII=[4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+# EstimateKinematics(cubename='J0119-2010', nums_seg_OII=[3, 4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20],
+#                   nums_seg_OIII=[7, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20])
+# EstimateKinematics(cubename='HE0246-4101', nums_seg_OII=[1], select_seg_OII=True)
+# EstimateKinematics(cubename='J0028-3305', nums_seg_OII=[2], select_seg_OII=True)
+# EstimateKinematics(cubename='HE0419-5657', nums_seg_OII=[2, 4, 5], select_seg_OII=True)
+# EstimateKinematics(cubename='PB6291', nums_seg_OII=[2, 6, 7], select_seg_OII=True)
+# EstimateKinematics(cubename='Q0107-0235', nums_seg_OII=[1, 4, 5, 6], select_seg_OII=True)
+# EstimateKinematics(cubename='PKS2242-498', nums_seg_OII=[1, 2], select_seg_OII=True)
+# EstimateKinematics(cubename='PKS0355-483', nums_seg_OII=[2, 3, 4, 8, 9, 10, 11], select_seg_OII=True)
+# EstimateKinematics(cubename='HE0112-4145')
+# EstimateKinematics(cubename='HE0439-5254')
+# # EstimateKinematics(cubename='HE2305-5315')
+# EstimateKinematics(cubename='HE1003+0149', nums_seg_OII=[3])
+# EstimateKinematics(cubename='HE0331-4112', nums_seg_OII=[6], select_seg_OII=True)
+# EstimateKinematics(cubename='TEX0206-048', nums_seg_OII=[1, 8, 12, 13, 15, 20, 23, 26, 27, 28, 34, 57, 60, 79, 81,
+#                                                         101, 107, 108, 114, 118, 317, 547, 552],
+#                                                         select_seg_OII=True)
+# EstimateKinematics(cubename='Q1354+048', nums_seg_OII=[1, 2])
+# EstimateKinematics(cubename='J0154-0712', nums_seg_OII=[5])
+# EstimateKinematics(cubename='LBQS1435-0134', nums_seg_OII=[1, 3, 7], select_seg_OII=True)
+# EstimateKinematics(cubename='PG1522+101', nums_seg_OII=[2, 3, 8, 11], select_seg_OII=True)
+# # EstimateKinematics(cubename='HE2336-5540')
+# EstimateKinematics(cubename='PKS0232-04', nums_seg_OII=[2, 4, 5, 7])
 
 # CUBS+MUSE host nebula plus galaxies
 # EstimateKinematics(cubename='HE0435-5304', addon='_plus_galaxies')
@@ -239,5 +238,42 @@ EstimateKinematics(cubename='PKS0232-04', nums_seg_OII=[2, 4, 5, 7])
 
 
 
+# Calculate stellar-to-halo mass function
+from scipy.interpolate import interp1d
+log_epsilon = -1.618
+M_solar = 1.989e30
+log_M_1 = 11.39
+alpha = -1.795
+delta = 4.345
+gamma = 0.619
+Omega_b = 0.0469
+Omega_m = 0.27
+
+def f(x):
+    return -np.log10(10 ** (alpha * x) + 1) + delta * ((np.log10(1 + np.exp(x)) ** gamma) / (1 + np.exp(10 ** -x)))
+
+def logM_stellar(M_h):
+    return log_epsilon + log_M_1 + f(np.log10(M_h) - log_M_1) - f(0)
+
+M_h_array = np.logspace(10, 15, 100)
+M_stellar = 10 ** logM_stellar(M_h_array)
+ratio = (M_stellar / M_h_array) / (Omega_b / Omega_m)
+
+# Plot the stellar-to-halo mass ratio
+# Interpolate
+f = interp1d(M_stellar, M_h_array, kind='cubic')
+print(np.log10(f(10 ** 10.3)))
+print(np.log10(f(10 ** 11.0)))
+
+
+plt.figure(figsize=(5, 5))
+plt.plot(M_h_array, ratio, '-')
+plt.xscale('log')
+plt.yscale('log')
+plt.xlabel('M_h (M_solar)')
+plt.ylabel('M_stellar / M_h / (Omega_b / Omega_m)')
+plt.xlim(1e10, 1e15)
+plt.ylim(2e-3, 1)
+plt.show()
 
 

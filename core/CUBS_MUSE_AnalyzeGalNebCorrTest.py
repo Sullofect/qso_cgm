@@ -203,9 +203,8 @@ def Derive3DDist_xyv():
     # mu_mle = X.mean(axis=0)
     # Sigma_mle = np.cov(X, rowvar=False, bias=True)  # <-- MLE (divide by N)
 
-
     # Try Gaussian mixturem models
-    gmm = GaussianMixture(n_components=5, covariance_type="diag", reg_covar=1e-4, n_init=10, random_state=1)
+    gmm = GaussianMixture(n_components=5, covariance_type="full", reg_covar=1e-4, n_init=10, random_state=1)
     gmm.fit(Xz)
     print(gmm.converged_)
 
@@ -213,9 +212,8 @@ def Derive3DDist_xyv():
     rng = np.random.default_rng(0)
     Nsamp = 5000
     # Xs = rng.multivariate_normal(mu_mle, Sigma_mle, size=Nsamp)
-    Zs, labels = gmm.sample(Nsamp)
+    Zs, labels = gmm.sample(Nsamp * 5)
     Xs = scaler.inverse_transform(Zs)
-
 
     # Sanity Check
     pairs = [(0, 1), (0, 2), (1, 2)]
