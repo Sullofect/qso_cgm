@@ -131,8 +131,12 @@ queue.append(curr.left)
 
 # Heapify
 # Heap.pop/push
-# Time complexity: O(log (n)
+# Time complexity: O(log (n))
 # Space complexity: O(1)
+
+# Building a heap
+# Inserting n elements one by one: O(n log n)
+# Optimal method (heapify): O(n)
 
 
 # Boyer-Moore Voting Algorithm
@@ -321,3 +325,55 @@ class Solution:
 
 # Kadane's algorithm
 
+max_sum = float('-inf')
+curr_sum = 0
+
+for i in range(len(nums)):
+    curr_sum += nums[i]
+    if curr_sum > max_sum:
+        max_sum = curr_sum
+    if curr_sum < 0:
+        curr_sum = 0
+
+
+# Quick Select, Hoare's selection algorithm
+
+
+
+
+# Binary search
+# Exact match
+l, r = 0, len(nums) - 1
+while l <= r:
+    mid = (l + r) // 2
+    if nums[mid] == target:
+        return mid
+    elif nums[mid] < target:
+        l = mid + 1
+    else:
+        r = mid - 1
+return -1
+
+# Left boundary (first True / lower_bound)
+l, r = 0, len(nums)
+while l < r:
+    mid = (l + r) // 2
+    if nums[mid] < target:
+        l = mid + 1
+    else:
+        r = mid
+return l
+
+# Right boundary (last True / upper_bound-1)
+l, r = 0, len(nums)
+while l < r:
+    mid = (l + r) // 2
+    if nums[mid] <= target:
+        l = mid + 1
+    else:
+        r = mid
+return l - 1
+
+
+# if l = mid use mid = (l + r + 1) // 2 to avoid infinite loop
+# if r = mid use normal mid = (l + r) // 2

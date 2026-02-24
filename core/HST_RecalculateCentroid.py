@@ -203,5 +203,6 @@ def CentroidHE0238(cubename='HE0238-1904'):
 # Auto correction from STScI
 # RecalculateCentroid(cubename='HE2336-5540', deblend_hst=True, thr_hst=1.5) # check emi/abs done
 # RecalculateCentroid(cubename='J0119-2010', deblend_hst=True, thr_hst=1.5) # check emi/abs done
-RecalculateCentroid(cubename='PKS0355-483', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+# RecalculateCentroid(cubename='PKS0355-483', deblend_hst=True, thr_hst=1.5) # check emi/abs done
 # RecalculateCentroid(cubename='HE0112-4145', deblend_hst=True, thr_hst=1.5) # check emi/abs done
+
