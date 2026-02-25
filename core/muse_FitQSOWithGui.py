@@ -364,8 +364,6 @@ class PlotWindow(QMainWindow):
                 wave_OIII_min, wave_OIII_max = np.min(self.wave_OIII_vac), np.max(self.wave_OIII_vac)
                 z_lb, z_ub = wave_OIII_min / wave_OIII5008_vac - 1, wave_OIII_max / wave_OIII5008_vac - 1
 
-
-
         # Mask
         self.mask_OII, self.mask_OII_ori = mask_seg_OII, mask_seg_OII
         self.mask_OIII, self.mask_OIII_ori = mask_seg_OIII, mask_seg_OIII
@@ -587,6 +585,7 @@ class PlotWindow(QMainWindow):
 
         # Buttons
         self.state = 0
+        self.N_current = 1
         btn_11 = QPushButton("Refit")
         btn_12 = QPushButton("Fit region")
         btn_13 = QPushButton("only OII")
@@ -710,7 +709,7 @@ class PlotWindow(QMainWindow):
 
         # Default to S_N = 15 and gaussian componenet = 1
         self.re_mask()
-        self.N_1()
+        self.set_num_components(self.N_current)
 
     def calculate_iniguess(self):
         # Moments
@@ -774,7 +773,7 @@ class PlotWindow(QMainWindow):
 
     def fit(self):
         # Make inital condition
-        self.N_1()
+        self.set_num_components(1)
 
         header = fits.open(self.path_cube_hdr)[1].header
         header['WCSAXES'] = 2
@@ -953,10 +952,10 @@ class PlotWindow(QMainWindow):
             self.param['r_3='] = '{:.4f}'.format(self.r[2, i, j])
 
             # Update the parameter display if N=2 or 3 but N from previous fit=1
-            if self.parameters['OII'].value == 2 and np.isnan(self.param['v_2=']):
-                self.N_2()
-            elif self.parameters['OII'].value == 3 and np.isnan(self.param['v_3=']):
-                self.N_3()
+            if self.N_current == 2 and np.isnan(self.param['v_2=']):
+                self.set_num_components(self.N_current)
+            elif self.N_current == 3 and np.isnan(self.param['v_3=']):
+                self.set_num_components(self.N_current)
 
             # Draw points
             self.scatter_1.addPoints([j + 0.5], [i + 0.5])
@@ -1010,12 +1009,15 @@ class PlotWindow(QMainWindow):
                                + self.b_OIII[i, j] + self.a_OIII[i, j] * self.wave_OIII_exp, pen='r')
 
     def N_1(self):
+        self.N_current = 1
         self.set_num_components(1)
 
     def N_2(self):
+        self.N_current = 2
         self.set_num_components(2)
 
     def N_3(self):
+        self.N_current = 3
         self.set_num_components(3)
 
     def set_num_components(self, N):
