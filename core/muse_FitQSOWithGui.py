@@ -377,7 +377,6 @@ class PlotWindow(QMainWindow):
         self.path_fit = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}{}_{}_{}_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line, NLR, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
         redshift_guess, sigma_kms_guess, flux_guess, r_OII3729_3727_guess = self.z_qso, 200.0, 1.0, 1.0
-        # self.model = model_OII_OIII
         self.spec_model = lmfit.Model(model_OII_OIII, missing='drop')
         self.parameters = lmfit.Parameters()
         self.parameters.add_many(('z_1', redshift_guess, True, z_lb, z_ub, None),
@@ -553,7 +552,7 @@ class PlotWindow(QMainWindow):
 
         # Set param
         self.paramSpec = [dict(name='Select 3rd panel', type='list', values=['chi^2', 'N_comp'], value='chi^2'),
-                          dict(name='S_N=', type='float', value=10, dec=False, readonly=False),
+                          dict(name='S_N=', type='float', value=15, dec=False, readonly=False),
                           dict(name='Fitting ranges', type='group', children=[
                               dict(name='OII', type='group', children=[
                                   dict(name='enabled', type='bool', value=False),
@@ -640,7 +639,6 @@ class PlotWindow(QMainWindow):
         self.layout.addWidget(self.widget4, 1, 0, 1, 1)
         self.layout.addWidget(self.widget5, 1, 1, 1, 1)
         self.layout.addLayout(layout_RHS, 1, 2, 1, 1)
-        # self.layout.addWidget(self.tree, 1, 2, 1, 1)
 
         # Plot the 2D map in the first plot
         self.v_map = pg.ImageItem()
@@ -653,7 +651,6 @@ class PlotWindow(QMainWindow):
                               orientation='horizontal', limits=(-1500, 1500))
         self.v_map.updateImage(image=self.v50.T)
         bar.setImageItem(self.v_map, insert_in=self.widget1_plot)
-        # bar.setLevels(low=-350, high=350)
 
         # Plot the 2D map in the second plot
         self.sigma_map = pg.ImageItem()
@@ -711,7 +708,7 @@ class PlotWindow(QMainWindow):
         self.x1, self.y1 = None, None
         self.x2, self.y2 = None, None
 
-        # Default to S_N = 10 and gaussian componenet = 1
+        # Default to S_N = 15 and gaussian componenet = 1
         self.re_mask()
         self.N_1()
 
@@ -925,9 +922,7 @@ class PlotWindow(QMainWindow):
         if event.double():
             # Get pixel coordinates
             pos = event.pos()
-            # pos = self.widget1_plot.vb.mapSceneToView(pos)
             pos = self.v_map.mapFromScene(pos)
-            # print(pos.x(), pos.y())
             self.xpixel, self.ypixel = int(np.floor(pos.x() + 1)), int(np.floor(pos.y()))
 
             self.show_fit()
@@ -957,6 +952,12 @@ class PlotWindow(QMainWindow):
             self.param['OIII_3='] = '{:.4f}'.format(self.flux_OIII_fit[2, i, j])
             self.param['r_3='] = '{:.4f}'.format(self.r[2, i, j])
 
+            # Update the parameter display if N=2 or 3 but N from previous fit=1
+            if self.parameters['OII'].value == 2 and np.isnan(self.param['v_2=']):
+                self.N_2()
+            elif self.parameters['OII'].value == 3 and np.isnan(self.param['v_3=']):
+                self.N_3()
+
             # Draw points
             self.scatter_1.addPoints([j + 0.5], [i + 0.5])
             self.scatter_2.addPoints([j + 0.5], [i + 0.5])
@@ -975,7 +976,7 @@ class PlotWindow(QMainWindow):
     def plot_OII(self):
         i, j = self.ypixel, self.xpixel
         self.widget4_plot.clear()
-        # if self.mask_OII[i, j]:
+
         # Plot the data
         self.widget4_plot.plot(self.wave_OII_vac, self.flux_OII[:, i, j], pen='k')
         self.widget4_plot.plot(self.wave_OII_vac, self.flux_err_OII[:, i, j], pen='g')
@@ -993,7 +994,7 @@ class PlotWindow(QMainWindow):
     def plot_OIII(self):
         i, j = self.ypixel, self.xpixel
         self.widget5_plot.clear()
-        # if self.mask_OIII[i, j]:
+
         # Plot the data and the fit
         self.widget5_plot.plot(self.wave_OIII_vac, self.flux_OIII[:, i, j], pen='k')
         self.widget5_plot.plot(self.wave_OIII_vac, self.flux_err_OIII[:, i, j], pen='g')
@@ -1009,102 +1010,52 @@ class PlotWindow(QMainWindow):
                                + self.b_OIII[i, j] + self.a_OIII[i, j] * self.wave_OIII_exp, pen='r')
 
     def N_1(self):
-        self.parameters['OII'].value = 1
-        self.parameters['OIII'].value = 1
-        self.parameters['z_2'].value = np.nan
-        self.parameters['z_2'].vary = False
-        self.parameters['z_3'].value = np.nan
-        self.parameters['z_3'].vary = False
-        self.parameters['sigma_kms_2'].value = np.nan
-        self.parameters['sigma_kms_2'].vary = False
-        self.parameters['sigma_kms_3'].value = np.nan
-        self.parameters['sigma_kms_3'].vary = False
-        self.parameters['flux_OII_2'].value = np.nan
-        self.parameters['flux_OII_2'].vary = False
-        self.parameters['flux_OII_3'].value = np.nan
-        self.parameters['flux_OII_3'].vary = False
-        self.parameters['r_OII3729_3727_2'].value = np.nan
-        self.parameters['r_OII3729_3727_2'].vary = False
-        self.parameters['r_OII3729_3727_3'].value = np.nan
-        self.parameters['r_OII3729_3727_3'].vary = False
-        self.parameters['flux_OIII5008_2'].value = np.nan
-        self.parameters['flux_OIII5008_2'].vary = False
-        self.parameters['flux_OIII5008_3'].value = np.nan
-        self.parameters['flux_OIII5008_3'].vary = False
-
-        # Remove OIII if OIII is not present
-        if self.line == 'OII':
-            self.only_OII()
+        self.set_num_components(1)
 
     def N_2(self):
-        if np.isnan(self.param['v_2=']):
-            self.param['v_2='] = 0
-            self.param['sigma_2='] = 0
-            self.param['r_2='] = 0
-        self.parameters['OII'].value = 2
-        self.parameters['OIII'].value = 2
-        self.parameters['z_2'].value = self.z_qso
-        self.parameters['z_2'].vary = True
-        self.parameters['z_3'].value = np.nan
-        self.parameters['z_3'].vary = False
-        self.parameters['sigma_kms_2'].value = 200
-        self.parameters['sigma_kms_2'].vary = True
-        self.parameters['sigma_kms_3'].value = np.nan
-        self.parameters['sigma_kms_3'].vary = False
-        self.parameters['flux_OII_2'].value = 1
-        self.parameters['flux_OII_2'].vary = True
-        self.parameters['flux_OII_3'].value = np.nan
-        self.parameters['flux_OII_3'].vary = False
-        self.parameters['r_OII3729_3727_2'].value = 1
-        self.parameters['r_OII3729_3727_2'].vary = True
-        self.parameters['r_OII3729_3727_3'].value = np.nan
-        self.parameters['r_OII3729_3727_3'].vary = False
-        self.parameters['flux_OIII5008_2'].value = 1
-        self.parameters['flux_OIII5008_2'].vary = True
-        self.parameters['flux_OIII5008_3'].value = np.nan
-        self.parameters['flux_OIII5008_3'].vary = False
-
-        # Remove OIII if OIII is not present
-        if self.line == 'OII':
-            self.only_OII()
+        self.set_num_components(2)
 
     def N_3(self):
-        if np.isnan(self.param['v_3=']):
-            self.param['v_2='] = 0
-            self.param['sigma_2='] = 0
-            self.param['r_2='] = 0
-            self.param['v_3='] = 0
-            self.param['sigma_3='] = 0
-            self.param['r_3='] = 0
-        self.parameters['OII'].value = 3
-        self.parameters['OIII'].value = 3
-        self.parameters['z_2'].value = self.z_qso
-        self.parameters['z_2'].vary = True
-        self.parameters['z_3'].value = self.z_qso
-        self.parameters['z_3'].vary = True
-        self.parameters['sigma_kms_2'].value = 200
-        self.parameters['sigma_kms_2'].vary = True
-        self.parameters['sigma_kms_3'].value = 200
-        self.parameters['sigma_kms_3'].vary = True
-        self.parameters['flux_OII_2'].value = 1
-        self.parameters['flux_OII_2'].vary = True
-        self.parameters['flux_OII_3'].value = 1
-        self.parameters['flux_OII_3'].vary = True
-        self.parameters['r_OII3729_3727_2'].value = 1
-        self.parameters['r_OII3729_3727_2'].vary = True
-        self.parameters['r_OII3729_3727_3'].value = 1
-        self.parameters['r_OII3729_3727_3'].vary = True
-        self.parameters['flux_OIII5008_2'].value = 1
-        self.parameters['flux_OIII5008_2'].vary = True
-        self.parameters['flux_OIII5008_3'].value = 1
-        self.parameters['flux_OIII5008_3'].vary = True
+        self.set_num_components(3)
 
-        # Remove OIII if OIII is not present
+    def set_num_components(self, N):
+        self.parameters['OII'].value = N
+        self.parameters['OIII'].value = N
+
+        for k in [1, 2, 3]:
+            active = k <= N
+            self._reset_ties_if_inactive(k, np.isnan(self.param[f'v_{k}=']))
+            self._set_component_active(k, active)
+
         if self.line == 'OII':
             self.only_OII()
 
+    def _set_component_active(self, k, active):
+        suffix = f"_{k}"
+
+        for p in [
+            f'z{suffix}',
+            f'sigma_kms{suffix}',
+            f'flux_OII{suffix}',
+            f'r_OII3729_3727{suffix}',
+            f'flux_OIII5008{suffix}'
+        ]:
+            self.parameters[p].vary = active
+            self.parameters[p].value = (
+                self.z_qso if 'z' in p and active else
+                200 if 'sigma' in p and active else
+                1 if active else np.nan
+            )
+
+    def _reset_ties_if_inactive(self, k, is_nan):
+        if not is_nan:
+            return
+
+        # GUI tie flags (if they exist)
+        for tie in ['v', 'sigma', 'r']:
+            self.param[f"{tie}_{k}="] = 0
+
     def only_OII(self):
-        # something is wrong
         self.parameters['OIII'].value = 0
         self.parameters['flux_OIII5008_1'].value = np.nan
         self.parameters['flux_OIII5008_1'].vary = False
@@ -1138,7 +1089,7 @@ class PlotWindow(QMainWindow):
             self.parameters['r_OII3729_3727_1'].vary = False
             self.parameters['r_OII3729_3727_2'].vary = False
             self.parameters['r_OII3729_3727_3'].vary = False
-            self.state += 1
+            self.state = not self.state
         elif self.state == 1:
             print('OII ratio is unfixed')
             self.parameters['r_OII3729_3727_1'].vary = True
@@ -1147,7 +1098,7 @@ class PlotWindow(QMainWindow):
             elif self.parameters['OII'].value == 3:
                 self.parameters['r_OII3729_3727_2'].vary = True
                 self.parameters['r_OII3729_3727_3'].vary = True
-            self.state -= 1
+            self.state = not self.state
 
     def compute_v50w80(self, i, j):
         flux_OII_ij = model_OII(self.wave_OII_exp[:, np.newaxis], self.z[:, i, j], self.sigma[:, i, j],
@@ -1221,32 +1172,21 @@ class PlotWindow(QMainWindow):
 
 
         # Fit
-        flux_ij = self.flux[:, i, j]
-        flux_err_ij = self.flux_err[:, i, j]
+        mask_spec_OII = np.ones(len(self.wave_vac[0]), dtype=bool)
+        mask_spec_OIII = np.ones(len(self.wave_vac[1]), dtype=bool)
 
         # If select wavelength is enabled
-        if self.param['Fitting ranges', 'OII', 'enabled'] or self.param['Fitting ranges', 'OIII', 'enabled']:
-            if self.param['Fitting ranges', 'OII', 'enabled']:
-                mask_spec_OII = (self.wave_vac[0] >= self.param['Fitting ranges', 'OII', 'min']) \
-                                & (self.wave_vac[0] <= self.param['Fitting ranges', 'OII', 'max'])
-            else:
-                mask_spec_OII = np.array([True] * len(self.wave_vac[0]))
+        if self.param['Fitting ranges', 'OII', 'enabled']:
+            mask_spec_OII = (self.wave_vac[0] >= self.param['Fitting ranges', 'OII', 'min']) \
+                            & (self.wave_vac[0] <= self.param['Fitting ranges', 'OII', 'max'])
+        if self.param['Fitting ranges', 'OIII', 'enabled']:
+            mask_spec_OIII = (self.wave_vac[1] >= self.param['Fitting ranges', 'OIII', 'min']) \
+                            & (self.wave_vac[1] <= self.param['Fitting ranges', 'OIII', 'max'])
+        mask_spec = np.hstack((mask_spec_OII, mask_spec_OIII))
+        wave_vac_mask_spec = np.array([self.wave_vac[0][mask_spec_OII], self.wave_vac[1][mask_spec_OIII]], dtype='object')
 
-            if self.param['Fitting ranges', 'OIII', 'enabled']:
-                mask_spec_OIII = (self.wave_vac[1] >= self.param['Fitting ranges', 'OIII', 'min']) \
-                                & (self.wave_vac[1] <= self.param['Fitting ranges', 'OIII', 'max'])
-            else:
-                mask_spec_OIII = np.array([True] * len(self.wave_vac[1]))
-            mask_spec = np.hstack((mask_spec_OII, mask_spec_OIII))
-            wave_fit_OII = np.array([self.wave_vac[0][mask_spec_OII], self.wave_vac[1][mask_spec_OIII]], dtype='object')
-
-            result = self.spec_model.fit(flux_ij[mask_spec], wave_vac=wave_fit_OII,
-                                    params=self.parameters, weights=1 / flux_err_ij[mask_spec])
-
-        else:
-            result = self.spec_model.fit(flux_ij, wave_vac=self.wave_vac, params=self.parameters, weights=1 / flux_err_ij)
-
-
+        result = self.spec_model.fit(self.flux[:, i, j][mask_spec], wave_vac=wave_vac_mask_spec, params=self.parameters,
+                                     weights=1 / self.flux_err[:, i, j][mask_spec])
         self.fs[i, j] = result.success
         self.chisqr[i, j], self.redchi[i, j] = result.chisqr, result.redchi
         self.redchi_show[i, j] = result.redchi
@@ -1365,7 +1305,6 @@ class PlotWindow(QMainWindow):
             self.chi_map.updateImage(image=self.redchi_show.T)
         elif self.param['Select 3rd panel'] == 'N_comp':
             self.chi_map.updateImage(image=self.num_comp_show.T)
-
 
 
 if __name__ == '__main__':
