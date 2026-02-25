@@ -20,7 +20,6 @@ from astropy.coordinates import SkyCoord
 from photutils.background import Background2D, MedianBackground
 from photutils.segmentation import detect_sources, SourceCatalog, deblend_sources
 from astropy.convolution import Kernel, convolve, Gaussian2DKernel
-
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 mpl.rcParams['xtick.direction'] = 'in'
@@ -464,5 +463,5 @@ def GenerateF814WImage(cubename):
 # GenerateF814WImage(cubename='J0154-0712')
 # GenerateF814WImage(cubename='HE0331-4112')
 
-# Reveal tidal tail for HE0226-4110
+# Reveal tidal tail for HE0226-4110 which is a MUSE CUBE
 GenerateF814WImage(cubename='HE0226-4110')
