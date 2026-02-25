@@ -377,7 +377,8 @@ class PlotWindow(QMainWindow):
         self.path_fit = '../../MUSEQuBES+CUBS/fit_kin/{}{}_fit_{}{}_{}_{}_{}_{}_{}_{}.fits'.\
             format(cubename, str_zap, line, NLR, fit_param['ResolveOII'], int(fit_param['OII_center']), *UseDataSeg)
         redshift_guess, sigma_kms_guess, flux_guess, r_OII3729_3727_guess = self.z_qso, 200.0, 1.0, 1.0
-        self.model = model_OII_OIII
+        # self.model = model_OII_OIII
+        self.spec_model = lmfit.Model(model_OII_OIII, missing='drop')
         self.parameters = lmfit.Parameters()
         self.parameters.add_many(('z_1', redshift_guess, True, z_lb, z_ub, None),
                                  ('z_2', redshift_guess, True, z_lb, z_ub, None),
@@ -553,6 +554,16 @@ class PlotWindow(QMainWindow):
         # Set param
         self.paramSpec = [dict(name='Select 3rd panel', type='list', values=['chi^2', 'N_comp'], value='chi^2'),
                           dict(name='S_N=', type='float', value=10, dec=False, readonly=False),
+                          dict(name='Fitting ranges', type='group', children=[
+                              dict(name='OII', type='group', children=[
+                                  dict(name='enabled', type='bool', value=False),
+                                  dict(name='min', type='float', value=self.wave_OII_vac.min(), step=1.0),
+                                  dict(name='max', type='float', value=self.wave_OII_vac.max(), step=1.0)]),
+                              dict(name='OIII', type='group', children=[
+                                  dict(name='enabled', type='bool', value=False),
+                                  dict(name='min', type='float', value=self.wave_OIII_vac.min(), step=1.0),
+                                  dict(name='max', type='float', value=self.wave_OIII_vac.max(), step=1.0)]),
+                          ]),
                           dict(name='AIC, BIC=', type='str', value='', readonly=False),
                           dict(name='chi=', type='float', value=0, dec=False, readonly=False),
                           dict(name='v_1=', type='float', value=0, dec=False, readonly=False),
@@ -811,8 +822,8 @@ class PlotWindow(QMainWindow):
 
                     flux_ij = self.flux[:, i, j]
                     flux_err_ij = self.flux_err[:, i, j]
-                    spec_model = lmfit.Model(self.model, missing='drop')
-                    result = spec_model.fit(flux_ij, wave_vac=self.wave_vac, params=self.parameters,
+                    # spec_model = lmfit.Model(self.model, missing='drop')
+                    result = self.spec_model.fit(flux_ij, wave_vac=self.wave_vac, params=self.parameters,
                                             weights=1 / flux_err_ij)
                     fs[i, j] = result.success
                     chisqr[i, j], redchi[i, j] = result.chisqr, result.redchi
@@ -1208,11 +1219,34 @@ class PlotWindow(QMainWindow):
             self.parameters['sigma_kms_3'].min = 30
             self.parameters['r_OII3729_3727_3'].value = self.param['r_3=']
 
-        #
+
+        # Fit
         flux_ij = self.flux[:, i, j]
         flux_err_ij = self.flux_err[:, i, j]
-        spec_model = lmfit.Model(self.model, missing='drop')
-        result = spec_model.fit(flux_ij, wave_vac=self.wave_vac, params=self.parameters, weights=1 / flux_err_ij)
+
+        # If select wavelength is enabled
+        if self.param['Fitting ranges', 'OII', 'enabled'] or self.param['Fitting ranges', 'OIII', 'enabled']:
+            if self.param['Fitting ranges', 'OII', 'enabled']:
+                mask_spec_OII = (self.wave_vac[0] >= self.param['Fitting ranges', 'OII', 'min']) \
+                                & (self.wave_vac[0] <= self.param['Fitting ranges', 'OII', 'max'])
+            else:
+                mask_spec_OII = np.array([True] * len(self.wave_vac[0]))
+
+            if self.param['Fitting ranges', 'OIII', 'enabled']:
+                mask_spec_OIII = (self.wave_vac[1] >= self.param['Fitting ranges', 'OIII', 'min']) \
+                                & (self.wave_vac[1] <= self.param['Fitting ranges', 'OIII', 'max'])
+            else:
+                mask_spec_OIII = np.array([True] * len(self.wave_vac[1]))
+            mask_spec = np.hstack((mask_spec_OII, mask_spec_OIII))
+            wave_fit_OII = np.array([self.wave_vac[0][mask_spec_OII], self.wave_vac[1][mask_spec_OIII]], dtype='object')
+
+            result = self.spec_model.fit(flux_ij[mask_spec], wave_vac=wave_fit_OII,
+                                    params=self.parameters, weights=1 / flux_err_ij[mask_spec])
+
+        else:
+            result = self.spec_model.fit(flux_ij, wave_vac=self.wave_vac, params=self.parameters, weights=1 / flux_err_ij)
+
+
         self.fs[i, j] = result.success
         self.chisqr[i, j], self.redchi[i, j] = result.chisqr, result.redchi
         self.redchi_show[i, j] = result.redchi
@@ -1331,6 +1365,8 @@ class PlotWindow(QMainWindow):
             self.chi_map.updateImage(image=self.redchi_show.T)
         elif self.param['Select 3rd panel'] == 'N_comp':
             self.chi_map.updateImage(image=self.num_comp_show.T)
+
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
