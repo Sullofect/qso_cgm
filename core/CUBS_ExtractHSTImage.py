@@ -100,7 +100,7 @@ def extract_hst_image(cubename=None, deblend_hst=True, thr_hst=1):
     table_hst.write(path_cat_hst, format='ascii.fixed_width', overwrite=True)
 
 
-def CompareObjectFiles(cubename=None):
+def MergeObjectFiles(cubename=None):
     # Name changes
     if cubename == 'J0110-1648':
         cubename_load = 'Q0110-1648'
@@ -140,34 +140,61 @@ def CompareObjectFiles(cubename=None):
 
     path_cat_muse = '../../MUSEQuBES+CUBS/CUBS_dats/{}_muse_cat.dat'.format(cubename_load)
     cat_muse = Table.read(path_cat_muse, format='ascii.fixed_width')
-    row_muse, id_muse = cat_muse['row'], cat_muse['id']
+    row_muse, id_muse, name_muse = cat_muse['row'], cat_muse['id'], cat_muse['name']
     c_muse = SkyCoord(ra=cat_muse['ra'] * u.degree, dec=cat_muse['dec'] * u.degree, frame='icrs')
 
     # Compare two catalogs and find the common objects within a certain radius (e.g., 1 arcsec)
     idx_muse_hst, d2d_muse_hst, _ = c_muse.match_to_catalog_sky(c_hst)
-    sep_constraint = d2d_muse_hst < (0.5 * u.arcsec)
+    sep_constraint = d2d_muse_hst < (0.7 * u.arcsec)
 
-    # Keep the common one use MUSE info and the different one use HST info
-    c_common = c_muse[sep_constraint]
-    c_unique_hst = c_hst[~idx_muse_hst[sep_constraint]]
+    # HST indices that have a MUSE match
+    matched_hst_indices = np.unique(idx_muse_hst[sep_constraint])
+
+    # Build mask in HST space
+    hst_mask = np.ones(len(c_hst), dtype=bool)
+    hst_mask[matched_hst_indices] = False
+
+    # Unique HST sources (not matched by MUSE)
+    c_unique_hst = c_hst[hst_mask]
 
     # Get the name for the unique hst objects
-    ra_str = c_unique_hst.ra.to_string(unit=u.hour, sep=':', precision=2, pad=True)
-    dec_str = c_unique_hst.dec.to_string(unit=u.deg, sep=':', precision=2, alwayssign=True, pad=True)
+    ra_str = c_unique_hst.ra.to_string(unit=u.hour, sep='', precision=2, pad=True)
+    dec_str = c_unique_hst.dec.to_string(unit=u.deg, sep='', precision=2, alwayssign=True, pad=True)
     name_str = np.array([f"J{r}{d}" for r, d in zip(ra_str, dec_str)])
 
     # Combine them to a new catalog and save it
-    c_combined = SkyCoord(ra=np.concatenate((c_common.ra.value, c_unique_hst.ra.value)) * u.degree,
-                            dec=np.concatenate((c_common.dec.value, c_unique_hst.dec.value)) * u.degree, frame='icrs')
+    c_combined = SkyCoord(ra=np.concatenate((c_muse.ra.value, c_unique_hst.ra.value)) * u.degree,
+                          dec=np.concatenate((c_muse.dec.value, c_unique_hst.dec.value)) * u.degree, frame='icrs')
 
     # Save the result to a new catalog
     path_cat_combined = '../../MUSEQuBES+CUBS/CUBS_dats/{}_combined_cat.dat'.format(cubename)
-    rows = np.concatenate((row_muse[sep_constraint], np.arange(len(c_unique_hst)) + len(row_muse)))
-    ids = np.concatenate((id_muse[sep_constraint], np.array([f'HST_{i}' for i in range(len(c_unique_hst))])))
-    names = np.concatenate((cat_muse['name'][sep_constraint], name_str))
-    table_combined = Table([rows, ids, names, c_combined.ra.value, c_combined.dec.value, np.full(len(c_combined), 0.6)],
-                           names=['row', 'id', 'name', 'ra', 'dec', 'radius'])
+    rows = np.concatenate((row_muse, len(row_muse) + 1 + np.arange(len(c_unique_hst))))
+    ids = np.concatenate((id_muse, np.array([f'{i}' for i in range(50000, 50000 + len(c_unique_hst))])))
+    names = np.concatenate((name_muse, name_str))
+    ras, decs = np.round(c_combined.ra.value, 6), np.round(c_combined.dec.value, 6)
+    radii = np.full(len(c_combined), 0.6)
+    table_combined = Table([rows, ids, names, ras, decs, radii], names=['row', 'id', 'name', 'ra', 'dec', 'radius'])
     table_combined.write(path_cat_combined, format='ascii.fixed_width', overwrite=True)
+
+    # Also save as a region file for visualization in DS9
+    path_cat_combined_reg = '../../MUSEQuBES+CUBS/CUBS_dats/{}_combined_cat.reg'.format(cubename)
+    with open(path_cat_combined_reg, 'w') as f:
+        f.write('# Region file format: DS9 version 4.1\n')
+        f.write('global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 highlite=1 '
+                'dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1\n')
+        f.write('fk5\n')
+        i = 0
+
+        # MUSE objects are marked with green and HST unique objects are marked with red
+        # Text their row number in the combined catalog for more info
+        for row, ra, dec, radius in zip(rows, ras, decs, radii):
+            color = 'green' if i < len(c_unique_hst) else 'red'
+            f.write(f'circle({ra}, {dec}, {radius}") # color={color} text={{{row}}}\n')
+            i += 1
+
+
+
+
 
 
 
@@ -192,6 +219,22 @@ def CompareObjectFiles(cubename=None):
 # extract_hst_image(cubename='HE0331-4112')
 # extract_hst_image(cubename='J0119-2010') # have no sci exposure
 
-
 # Merge the HST and MUSE catalogs for CUBS fields besides J0119-2010
-CompareObjectFiles(cubename='J0110-1648')
+# MergeObjectFiles(cubename='J0110-1648')
+MergeObjectFiles(cubename='J2135-5316')
+MergeObjectFiles(cubename='HE0246-4101')
+MergeObjectFiles(cubename='J0028-3305')
+MergeObjectFiles(cubename='HE0419-5657')
+MergeObjectFiles(cubename='PKS2242-498')
+MergeObjectFiles(cubename='PKS0355-483')
+MergeObjectFiles(cubename='HE0112-4145')
+MergeObjectFiles(cubename='J0111-0316')
+MergeObjectFiles(cubename='HE2336-5540')
+MergeObjectFiles(cubename='HE2305-5315')
+MergeObjectFiles(cubename='J0454-6116')
+MergeObjectFiles(cubename='J0154-0712')
+MergeObjectFiles(cubename='HE0331-4112')
+# extract_hst_image(cubename='J0119-2010') # have no sci exposure
+
+
+# Regenerate .dat files after visually inspecting the combined catalogs and removing some spurious sources in DS9
