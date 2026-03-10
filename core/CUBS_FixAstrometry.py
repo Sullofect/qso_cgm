@@ -36,7 +36,6 @@ def FixCubeHeader(cubename=None):
     hdul_muse_white.writeto(path_muse_white, overwrite=True)
 
 
-
 def FixAstrometry(cubename, str_zap=''):
     # Will be replaced by a table
     path_subcube = '../../MUSEQuBES+CUBS/gal_info/subcubes.dat'

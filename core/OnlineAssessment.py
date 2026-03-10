@@ -648,6 +648,58 @@ def apply_move(board, r, c, me):
 
 
 
+# HRT Small
+
+
+# Line formatting
+def solution(paragraphs, aligns, width):
+    lines = []
+
+    for i, words in enumerate(paragraphs):
+        align = aligns[i]
+        current = []
+        current_len = 0
+
+        for word in words:
+            # Check if adding the word exceeds width
+            if current_len + len(word) + len(current) > width:
+                line = " ".join(current)
+                spaces = width - len(line)
+                if align == "LEFT":
+                    line = line + " " * spaces
+                else:  # RIGHT
+                    line = " " * spaces + line
+                lines.append(line)
+                current = []
+                current_len = 0
+
+            current.append(word)
+            current_len += len(word)
+
+        # Handle last line in paragraph
+        if current:
+            line = " ".join(current)
+            spaces = width - len(line)
+            if align == "LEFT":
+                line = line + " " * spaces
+            else:
+                line = " " * spaces + line
+            lines.append(line)
+
+    # Add border
+    border = "*" * (width + 2)
+    result = [border]
+    for line in lines:
+        result.append("*" + line + "*")
+    result.append(border)
+
+    return result
+
+
+
+
+
+
 # Akuna
 
 # Tuple sort rule in Python:

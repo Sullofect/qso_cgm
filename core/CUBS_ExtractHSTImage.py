@@ -14,6 +14,7 @@ from astropy.io import ascii
 from regions import Regions
 from astropy import units as u
 from astropy.wcs import WCS
+from astropy.nddata import Cutout2D
 from mpdaf.obj import Cube, WaveCoord, Image
 from astropy.coordinates import SkyCoord
 from photutils.background import Background2D, MedianBackground
@@ -53,10 +54,47 @@ def ConvertObjtoDat(cubename=None):
 # ConvertObjtoDat(cubename='J0420-5650')
 # ConvertObjtoDat(cubename='J0248-4048')
 
+def FixHeader(cubename='J0454-6116'):
+    #
+    path_hst_gaia_astro = '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci_astro.fits'.format(cubename)
+    hdul_hst_gaia_astro = fits.open(path_hst_gaia_astro)
+
+    path_hst_gaia = '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci.fits'.format(cubename)
+    path_hst_gaia_new = '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci_new.fits'.format(cubename)
+    hdul_hst_gaia = fits.open(path_hst_gaia)
+
+
+    try:
+        print(hdul_hst_gaia_astro[1].header['PC2_1'])
+    except KeyError:
+        print('no rotation copying PC1_1 to PC2_2')
+        hdul_hst_gaia_astro[1].header.append('PC2_1', 'PC1_2', 'PC2_2')
+        hdul_hst_gaia_astro[1].header['PC2_1'] = 0
+        hdul_hst_gaia_astro[1].header['PC1_2'] = 0
+        hdul_hst_gaia_astro[1].header['PC2_2'] = -1 * hdul_hst_gaia_astro[1].header['PC1_1']
+
+    hdul_hst_gaia[1].header['CD1_1'] = hdul_hst_gaia_astro[1].header['PC1_1'] * hdul_hst_gaia_astro[1].header['CDELT1']
+    hdul_hst_gaia[1].header['CD2_1'] = hdul_hst_gaia_astro[1].header['PC2_1'] * hdul_hst_gaia_astro[1].header['CDELT2']
+    hdul_hst_gaia[1].header['CD1_2'] = hdul_hst_gaia_astro[1].header['PC1_2'] * hdul_hst_gaia_astro[1].header['CDELT1']
+    hdul_hst_gaia[1].header['CD2_2'] = hdul_hst_gaia_astro[1].header['PC2_2'] * hdul_hst_gaia_astro[1].header['CDELT2']
+
+    hdul_hst_gaia[1].header['CRVAL1'] = hdul_hst_gaia_astro[1].header['CRVAL1']
+    hdul_hst_gaia[1].header['CRVAL2'] = hdul_hst_gaia_astro[1].header['CRVAL2']
+    hdul_hst_gaia[1].header['CRPIX1'] = hdul_hst_gaia_astro[1].header['CRPIX1']
+    hdul_hst_gaia[1].header['CRPIX2'] = hdul_hst_gaia_astro[1].header['CRPIX2']
+
+    # Save the result
+    hdul_hst_gaia.writeto(path_hst_gaia_new, overwrite=True)
+
+# Only need to use once
+# FixHeader(cubename='J0454-6116')
 
 def extract_hst_image(cubename=None, deblend_hst=True, thr_hst=1):
     # Load HST_MUSE_which should be sci
-    path_hst_gaia = '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci.fits'.format(cubename)
+    if cubename == "J0119-2010":
+        path_hst_gaia = '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia.fits'.format(cubename)
+    else:
+        path_hst_gaia = '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci.fits'.format(cubename)
     hdul_hst_gaia = fits.open(path_hst_gaia)
     data_hst_gaia = hdul_hst_gaia[1].data
 
@@ -85,6 +123,13 @@ def extract_hst_image(cubename=None, deblend_hst=True, thr_hst=1):
         segment_map = deblend_sources(convolved_data, segment_map, npixels=3, nlevels=32, contrast=0.001)
     cat_hb = SourceCatalog(convolved_data, segment_map)
     x_cen, y_cen = cat_hb.xcentroid, cat_hb.ycentroid
+
+    if cubename == "J0119-2010":
+        # Select range 1743: 3321, 1409: 3017
+        mask = (y_cen > 1743) & (y_cen < 3321) & (x_cen > 1409) & (x_cen < 3017)
+        x_cen = x_cen[mask]
+        y_cen = y_cen[mask]
+
     w = WCS(hdul_hst_gaia[1].header)
     c_hst = w.pixel_to_world(x_cen, y_cen)
     gc.show_markers(c_hst.ra.value, c_hst.dec.value, facecolors='none', marker='o', c='none', edgecolors='red',
@@ -188,19 +233,104 @@ def MergeObjectFiles(cubename=None):
         # MUSE objects are marked with green and HST unique objects are marked with red
         # Text their row number in the combined catalog for more info
         for row, ra, dec, radius in zip(rows, ras, decs, radii):
-            color = 'green' if i < len(c_unique_hst) else 'red'
+            color = 'green' if i < len(c_muse) else 'red'
             f.write(f'circle({ra}, {dec}, {radius}") # color={color} text={{{row}}}\n')
             i += 1
 
 
+def UpdateDatFromRegion(cubename=None):
+    path_cat_reg_ac = '../../MUSEQuBES+CUBS/CUBS_dats/{}_combined_cat_ac.reg'.format(cubename)
+    regions = Regions.read(path_cat_reg_ac, format='ds9')
+    data = []
+    for r in regions:
+        ra = r.center.ra.deg
+        dec = r.center.dec.deg
+        radius = r.radius.to("arcsec").value
+        label = int(r.meta.get("text"))
+        data.append([label, ra, dec, radius])
+    data = np.array(data)
+
+    # catalog path
+    path_cat = '../../MUSEQuBES+CUBS/CUBS_dats/{}_combined_cat.dat'.format(cubename)
+    cat = Table.read(path_cat, format='ascii.fixed_width')
+    row, id, name, radius = cat['row'], cat['id'], cat['name'], cat['radius']
+
+    # match with the same row number and use updated positions and radii from the region file
+    idx_cat = np.isin(row, data[:, 0])
+    row_updated = 1 + np.arange(len(row[idx_cat]))
+    id_updated = id[idx_cat]
+    ra_updated = np.round(data[:, 1], 6)
+    dec_updated = np.round(data[:, 2], 6)
+    radius_updated = radius[idx_cat]
+
+    # Recalculate name given the coordinates
+    c_updated = SkyCoord(ra=ra_updated * u.degree, dec=dec_updated * u.degree, frame='icrs')
+    ra_str = c_updated.ra.to_string(unit=u.hour, sep='', precision=2, pad=True)
+    dec_str = c_updated.dec.to_string(unit=u.deg, sep='', precision=2, alwayssign=True, pad=True)
+    name_updated = np.array([f"J{r}{d}" for r, d in zip(ra_str, dec_str)])
+
+    # Determine which name to use
+
+    if cubename == 'J2135-5316':
+        cubename_save = 'Q2135-5316'
+    elif cubename == 'J0454-6116':
+        cubename_save = 'Q0454-6116'
+    elif cubename == 'J0119-2010':
+        cubename_save = 'Q0119-2010'
+    elif cubename == 'HE0246-4101':
+        cubename_save = 'Q0248-4048'
+    elif cubename == 'HE2336-5540':
+        cubename_save = 'Q2339-5523'
+    else:
+        cubename_save = cubename
+
+    # Generate .dat files
+    path_cat_updated = '../../MUSEQuBES+CUBS/CUBS_dats/{}_eso_coadd_nosky_sub_ZAP.dat'.format(cubename_save)
+    table_updated = Table([row_updated, id_updated, name_updated, ra_updated, dec_updated, radius_updated],
+                            names=['row', 'id', 'name', 'ra', 'dec', 'radius'])
+    table_updated.write(path_cat_updated, format='ascii.fixed_width', overwrite=True)
+
+
+def CopyObjectFile(cubename=None):
+    # Copy the object file to the CUBS_dats folder for easier access
+    path_obj_src = '../../MUSEQuBES+CUBS/CUBS_redshifting_galaxies/{}/{}_COMBINED_CUBE_MED_FINAL_vac_spec1D' \
+                   '/{}_COMBINED_CUBE_MED_FINAL_vac_objects.fits'.format(cubename, cubename, cubename)
+
+    path_obj_dst = '../../MUSEQuBES+CUBS/CUBS_cubes/{}_eso_coadd_nosky_sub_ZAP_spec1D/' \
+                   '{}_eso_coadd_nosky_sub_ZAP_objects.fits'.format(cubename, cubename)
+
+    # path_obj_test = '../../MUSEQuBES+CUBS/CUBS_cubes/{}_eso_coadd_nosky_sub_ZAP_spec1D/' \
+    #                '{}_eso_coadd_nosky_sub_ZAP_objects_test.fits'.format(cubename, cubename)
+
+    # Load two .fits file
+    hdul_src = fits.open(path_obj_src)
+    hdul_dst = fits.open(path_obj_dst)
+
+    # find the rows with the same id and same name
+    id_src = hdul_src[1].data['id']
+    name_src = hdul_src[1].data['name']
+    id_dst = hdul_dst[1].data['id']
+    name_dst = hdul_dst[1].data['name']
+
+    # build keys (pairing id+name row-by-row)
+    key_src = np.array([f"{i}||{n}" for i, n in zip(id_src, name_src)])
+    key_dst = np.array([f"{i}||{n}" for i, n in zip(id_dst, name_dst)])
+
+    # aligned matches
+    # row numbers (aligned)
+    _, idx_src, idx_dst = np.intersect1d(key_src, key_dst, return_indices=True)
+
+    # copy rows (row-by-row avoids the FITS_rec bulk-assignment TypeError)
+    for s, d in zip(idx_src, idx_dst):
+        hdul_dst[1].data[d] = hdul_src[1].data[s]
+
+    # Save the updated destination file
+    hdul_dst.writeto(path_obj, overwrite=True)
 
 
 
 
 
-
-
-# def ConvertRegion
 
 # Continuum detections on HST images for CUBS fields besides J0119-2010
 # extract_hst_image(cubename='J0110-1648')
@@ -217,24 +347,46 @@ def MergeObjectFiles(cubename=None):
 # extract_hst_image(cubename='J0454-6116')
 # extract_hst_image(cubename='J0154-0712')
 # extract_hst_image(cubename='HE0331-4112')
-# extract_hst_image(cubename='J0119-2010') # have no sci exposure
+# extract_hst_image(cubename='J0119-2010', thr_hst=1) # have no sci exposure
 
 # Merge the HST and MUSE catalogs for CUBS fields besides J0119-2010
 # MergeObjectFiles(cubename='J0110-1648')
-MergeObjectFiles(cubename='J2135-5316')
-MergeObjectFiles(cubename='HE0246-4101')
-MergeObjectFiles(cubename='J0028-3305')
-MergeObjectFiles(cubename='HE0419-5657')
-MergeObjectFiles(cubename='PKS2242-498')
-MergeObjectFiles(cubename='PKS0355-483')
-MergeObjectFiles(cubename='HE0112-4145')
-MergeObjectFiles(cubename='J0111-0316')
-MergeObjectFiles(cubename='HE2336-5540')
-MergeObjectFiles(cubename='HE2305-5315')
-MergeObjectFiles(cubename='J0454-6116')
-MergeObjectFiles(cubename='J0154-0712')
-MergeObjectFiles(cubename='HE0331-4112')
-# extract_hst_image(cubename='J0119-2010') # have no sci exposure
-
+# MergeObjectFiles(cubename='J2135-5316')
+# MergeObjectFiles(cubename='HE0246-4101')
+# MergeObjectFiles(cubename='J0028-3305')
+# MergeObjectFiles(cubename='HE0419-5657')
+# MergeObjectFiles(cubename='PKS2242-498')
+# MergeObjectFiles(cubename='PKS0355-483')
+# MergeObjectFiles(cubename='HE0112-4145')
+# MergeObjectFiles(cubename='J0111-0316')
+# MergeObjectFiles(cubename='HE2336-5540')
+# MergeObjectFiles(cubename='HE2305-5315')
+# MergeObjectFiles(cubename='J0454-6116')
+# MergeObjectFiles(cubename='J0154-0712')
+# MergeObjectFiles(cubename='HE0331-4112')
+# MergeObjectFiles(cubename='J0119-2010') # have no sci exposure
 
 # Regenerate .dat files after visually inspecting the combined catalogs and removing some spurious sources in DS9
+# Only need to run one time after the visual inspection and cleaning
+# UpdateDatFromRegion(cubename='J0110-1648')
+
+#
+# UpdateDatFromRegion(cubename='J2135-5316')
+# UpdateDatFromRegion(cubename='HE0246-4101')
+# UpdateDatFromRegion(cubename='J0028-3305')
+# UpdateDatFromRegion(cubename='HE0419-5657')
+# UpdateDatFromRegion(cubename='PKS2242-498')
+# UpdateDatFromRegion(cubename='PKS0355-483')
+# UpdateDatFromRegion(cubename='HE0112-4145')
+# UpdateDatFromRegion(cubename='J0111-0316')
+# UpdateDatFromRegion(cubename='HE2336-5540')
+# UpdateDatFromRegion(cubename='HE2305-5315')
+# UpdateDatFromRegion(cubename='J0454-6116')
+# UpdateDatFromRegion(cubename='J0154-0712')
+# UpdateDatFromRegion(cubename='HE0331-4112')
+# UpdateDatFromRegion(cubename='J0119-2010')
+
+
+# Copy the object file to the CUBS_dats folder for easier access
+# Only need to run one time
+# CopyObjectFile(cubename='J0110-1648')

@@ -377,3 +377,51 @@ return l - 1
 
 # if l = mid use mid = (l + r + 1) // 2 to avoid infinite loop
 # if r = mid use normal mid = (l + r) // 2
+
+
+# ART Advisor
+# Linear Interpolator
+class LinearInterpolator:
+    def __init__(self, xs, ys):
+        self.xs = xs
+        self.ys = ys
+
+    def interpolate(self, x):
+        for i in range(len(self.xs) - 1):
+            x1, x2 = self.xs[i], self.xs[i+1]
+            y1, y2 = self.ys[i], self.ys[i+1]
+
+            if x1 <= x <= x2:
+                return y1 + (y2 - y1) * (x - x1) / (x2 - x1)
+
+        return None  # if outside range
+
+
+# Check Convergence
+def simulate(r, x0, steps):
+    x = x0
+    for _ in range(steps):
+        x = r * x * (1 - x)
+        print(x)
+
+def check_convergence(r, x0, steps=1000, tol=1e-6):
+    x = x0
+    for _ in range(steps):
+        x_new = r * x * (1 - x)
+
+        if abs(x_new - x) < tol:
+            return True
+
+        x = x_new
+
+    return False
+
+def chaos_test(r, x0):
+    x1 = x0
+    x2 = x0 + 1e-8
+
+    for _ in range(50):
+        x1 = r * x1 * (1 - x1)
+        x2 = r * x2 * (1 - x2)
+
+    print(abs(x1 - x2))
