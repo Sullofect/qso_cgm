@@ -316,12 +316,59 @@ def UpdateDatFromRegion(cubename=None):
 
 
 def CopyObjectFile(cubename=None):
+    # Determine which name to use
+    if cubename == 'J2135-5316':
+        cubename_load = 'J2135-5316'
+        cubename_save = 'Q2135-5316'
+    elif cubename == 'J0454-6116':
+        cubename_load = 'J0454-6116'
+        cubename_save = 'Q0454-6116'
+    elif cubename == 'J0119-2010':
+        cubename_load = 'J0119-2010'
+        cubename_save = 'Q0119-2010'
+    elif cubename == 'HE0246-4101':
+        cubename_load = 'J0248-4048'
+        cubename_save = 'Q0248-4048'
+    elif cubename == 'HE2336-5540':
+        cubename_load = 'J2339-5523'
+        cubename_save = 'Q2339-5523'
+    elif cubename == 'J0454-6116':
+        cubename_load = 'J0454-6116'
+        cubename_save = 'Q0454-6116'
+    elif cubename == 'HE0419-5657':
+        cubename_load = 'J0420-5650'
+        cubename_save = 'J0420-5650'
+    elif cubename == 'PKS2242-498':
+        cubename_load = 'J2245-4931'
+        cubename_save = 'J2245-4931'
+    elif cubename == 'PKS0355-483':
+        cubename_load = 'J0357-4812'
+        cubename_save = 'J0357-4812'
+    elif cubename == 'HE0112-4145':
+        cubename_load = 'J0114-4129'
+        cubename_save = 'J0114-4129'
+    elif cubename == 'HE2305-5315':
+        cubename_load = 'J2308-5258'
+        cubename_save = 'J2308-5258'
+    elif cubename == 'HE0331-4112':
+        cubename_load = 'J0333-4102'
+        cubename_save = 'J0333-4102'
+    else:
+        cubename_load = cubename
+        cubename_save = cubename
+
+
     # Copy the object file to the CUBS_dats folder for easier access
     path_obj_src = '../../MUSEQuBES+CUBS/CUBS_redshifting_galaxies/{}/{}_COMBINED_CUBE_MED_FINAL_vac_spec1D' \
-                   '/{}_COMBINED_CUBE_MED_FINAL_vac_objects.fits'.format(cubename, cubename, cubename)
+                   '/{}_COMBINED_CUBE_MED_FINAL_vac_objects.fits'.format(cubename_load, cubename_load, cubename_load)
 
-    path_obj_dst = '../../MUSEQuBES+CUBS/CUBS_cubes/{}_eso_coadd_nosky_sub_ZAP_spec1D/' \
-                   '{}_eso_coadd_nosky_sub_ZAP_objects.fits'.format(cubename, cubename)
+    if cubename_save == 'Q0454-6116':
+        path_obj_dst = '../../MUSEQuBES+CUBS/CUBS_cubes/{}_eso_coadd_nc_nosky_sub_ZAP_spec1D/' \
+                       '{}_eso_coadd_nc_nosky_sub_ZAP_objects.fits'.format(cubename_save, cubename_save)
+    else:
+        path_obj_dst = '../../MUSEQuBES+CUBS/CUBS_cubes/{}_eso_coadd_nosky_sub_ZAP_spec1D/' \
+                       '{}_eso_coadd_nosky_sub_ZAP_objects.fits'.format(cubename_save, cubename_save)
+
 
     # path_obj_test = '../../MUSEQuBES+CUBS/CUBS_cubes/{}_eso_coadd_nosky_sub_ZAP_spec1D/' \
     #                '{}_eso_coadd_nosky_sub_ZAP_objects_test.fits'.format(cubename, cubename)
@@ -349,7 +396,7 @@ def CopyObjectFile(cubename=None):
         hdul_dst[1].data[d] = hdul_src[1].data[s]
 
     # Save the updated destination file
-    hdul_dst.writeto(path_obj, overwrite=True)
+    hdul_dst.writeto(path_obj_dst, overwrite=True)
 
 
 
@@ -412,3 +459,17 @@ def CopyObjectFile(cubename=None):
 # Copy the object file to the CUBS_dats folder for easier access
 # Only need to run one time
 # CopyObjectFile(cubename='J0110-1648')
+# CopyObjectFile(cubename='J2135-5316')
+# CopyObjectFile(cubename='HE0246-4101')
+# CopyObjectFile(cubename='J0028-3305')
+# CopyObjectFile(cubename='HE0419-5657')
+# CopyObjectFile(cubename='PKS2242-498')
+# CopyObjectFile(cubename='PKS0355-483')
+# CopyObjectFile(cubename='HE0112-4145')
+# CopyObjectFile(cubename='J0111-0316')
+# CopyObjectFile(cubename='HE2336-5540')
+# CopyObjectFile(cubename='HE2305-5315')
+# CopyObjectFile(cubename='J0454-6116')
+# CopyObjectFile(cubename='J0154-0712')
+# CopyObjectFile(cubename='HE0331-4112')
+# CopyObjectFile(cubename='J0119-2010')
