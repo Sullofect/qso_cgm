@@ -116,6 +116,9 @@ def extract_hst_image(cubename=None, deblend_hst=True, thr_hst=1):
     bkg = Background2D(data_hst_gaia, (200, 200), filter_size=(3, 3), bkg_estimator=bkg_estimator)
     data_bkg = data_hst_gaia - bkg.background
     threshold = thr_hst * bkg.background_rms
+    print('shape {}'.format(np.shape(bkg.background_rms)))
+    print('5-sigma threshold: {} in count/s'.format(5 * np.median(bkg.background_rms)))
+    raise ValueError('Check the threshold for HST segmentation')
     kernel = Gaussian2DKernel(3)
     convolved_data = convolve(data_bkg, kernel)
     segment_map = detect_sources(convolved_data, threshold, npixels=3)
@@ -124,8 +127,8 @@ def extract_hst_image(cubename=None, deblend_hst=True, thr_hst=1):
     cat_hb = SourceCatalog(convolved_data, segment_map)
     x_cen, y_cen = cat_hb.xcentroid, cat_hb.ycentroid
 
+    # Select range 1743: 3321, 1409: 3017
     if cubename == "J0119-2010":
-        # Select range 1743: 3321, 1409: 3017
         mask = (y_cen > 1743) & (y_cen < 3321) & (x_cen > 1409) & (x_cen < 3017)
         x_cen = x_cen[mask]
         y_cen = y_cen[mask]
@@ -248,20 +251,28 @@ def UpdateDatFromRegion(cubename=None):
         radius = r.radius.to("arcsec").value
         label = int(r.meta.get("text"))
         data.append([label, ra, dec, radius])
-    data = np.array(data)
+    data = np.asarray(data)
+    data_row = data[:, 0].astype(int)
 
-    # catalog path
+    # Catalog path
     path_cat = '../../MUSEQuBES+CUBS/CUBS_dats/{}_combined_cat.dat'.format(cubename)
     cat = Table.read(path_cat, format='ascii.fixed_width')
     row, id, name, radius = cat['row'], cat['id'], cat['name'], cat['radius']
 
     # match with the same row number and use updated positions and radii from the region file
-    idx_cat = np.isin(row, data[:, 0])
-    row_updated = 1 + np.arange(len(row[idx_cat]))
-    id_updated = id[idx_cat]
+    row_updated = 1 + np.arange(len(data))
     ra_updated = np.round(data[:, 1], 6)
     dec_updated = np.round(data[:, 2], 6)
-    radius_updated = radius[idx_cat]
+    radius_updated = data[:, 3]
+
+    # Match to original catalog by row number
+    idx_cat = np.isin(data_row, row)
+    row_to_id = dict(zip(row, id))
+
+    # Updated IDs
+    id_updated = np.empty(len(data), dtype=object)
+    id_updated[idx_cat] = [row_to_id[r] for r in data_row[idx_cat]]
+    id_updated[~idx_cat] = [60000 + i for i in range(np.sum(~idx_cat))]  # Some manually added sources
 
     # Recalculate name given the coordinates
     c_updated = SkyCoord(ra=ra_updated * u.degree, dec=dec_updated * u.degree, frame='icrs')
@@ -270,7 +281,6 @@ def UpdateDatFromRegion(cubename=None):
     name_updated = np.array([f"J{r}{d}" for r, d in zip(ra_str, dec_str)])
 
     # Determine which name to use
-
     if cubename == 'J2135-5316':
         cubename_save = 'Q2135-5316'
     elif cubename == 'J0454-6116':
@@ -281,13 +291,27 @@ def UpdateDatFromRegion(cubename=None):
         cubename_save = 'Q0248-4048'
     elif cubename == 'HE2336-5540':
         cubename_save = 'Q2339-5523'
+    elif cubename == 'J0454-6116':
+        cubename_save = 'Q0454-6116'
+    elif cubename == 'HE0419-5657':
+        cubename_save = 'J0420-5650'
+    elif cubename == 'PKS2242-498':
+        cubename_save = 'J2245-4931'
+    elif cubename == 'PKS0355-483':
+        cubename_save = 'J0357-4812'
+    elif cubename == 'HE0112-4145':
+        cubename_save = 'J0114-4129'
+    elif cubename == 'HE2305-5315':
+        cubename_save = 'J2308-5258'
+    elif cubename == 'HE0331-4112':
+        cubename_save = 'J0333-4102'
     else:
         cubename_save = cubename
 
     # Generate .dat files
     path_cat_updated = '../../MUSEQuBES+CUBS/CUBS_dats/{}_eso_coadd_nosky_sub_ZAP.dat'.format(cubename_save)
     table_updated = Table([row_updated, id_updated, name_updated, ra_updated, dec_updated, radius_updated],
-                            names=['row', 'id', 'name', 'ra', 'dec', 'radius'])
+                          names=['row', 'id', 'name', 'ra', 'dec', 'radius'])
     table_updated.write(path_cat_updated, format='ascii.fixed_width', overwrite=True)
 
 
@@ -317,7 +341,7 @@ def CopyObjectFile(cubename=None):
     key_dst = np.array([f"{i}||{n}" for i, n in zip(id_dst, name_dst)])
 
     # aligned matches
-    # row numbers (aligned)
+    # Row numbers (aligned)
     _, idx_src, idx_dst = np.intersect1d(key_src, key_dst, return_indices=True)
 
     # copy rows (row-by-row avoids the FITS_rec bulk-assignment TypeError)
@@ -369,8 +393,6 @@ def CopyObjectFile(cubename=None):
 # Regenerate .dat files after visually inspecting the combined catalogs and removing some spurious sources in DS9
 # Only need to run one time after the visual inspection and cleaning
 # UpdateDatFromRegion(cubename='J0110-1648')
-
-#
 # UpdateDatFromRegion(cubename='J2135-5316')
 # UpdateDatFromRegion(cubename='HE0246-4101')
 # UpdateDatFromRegion(cubename='J0028-3305')
