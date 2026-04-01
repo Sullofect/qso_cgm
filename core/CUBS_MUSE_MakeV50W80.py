@@ -266,7 +266,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     gc.show_contour(path_OII_contour, levels=[contour_level_OII], colors='black', linewidths=2,
                     smooth=5, kernel='box', hdu=1)
     APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
-    if cubename == 'HE0226-4110':
+    if cubename == 'HE0226-4110' or cubename == 'J2135-5316' or cubename == 'J0119-2010' or cubename == 'HE0435-5304' \
+            or cubename == 'HE0153-4520':
         gc.add_label(0.03, 0.08, r'$\rm [O\,II]$', color='black', size=40, relative=True, horizontalalignment='left')
     if hideColorbar:
         gc.colorbar.hide()
@@ -318,7 +319,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
         gc.show_contour(path_OIII_contour, levels=[contour_level_OIII], colors='black', linewidths=2,
                         smooth=5, kernel='box', hdu=1)
         APLpyStyle(gc, type='NarrowBand', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso)
-        if cubename == 'HE0226-4110':
+        if cubename == 'HE0226-4110' or cubename == 'J2135-5316' or cubename == 'J0119-2010' or cubename == 'HE0435-5304' \
+                or cubename == 'HE0153-4520':
             gc.add_label(0.03, 0.08, r'$\rm [O\,III]$', color='black', size=40, relative=True, horizontalalignment='left')
         if hideColorbar:
             gc.colorbar.hide()
@@ -395,7 +397,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
                             smooth=5, kernel='box', hdu=1)
 
         # labels
-        if cubename == 'HE0226-4110':
+        if cubename == 'HE0226-4110' or cubename == 'J2135-5316' or cubename == 'J0119-2010' or cubename == 'HE0435-5304'\
+                or cubename == 'HE0153-4520':
             gc.add_label(0.62, 0.13, r'$\rm MUSE \, [O\,II]$', color='blue', size=30,
                          relative=True, horizontalalignment='left')
             gc.add_label(0.62, 0.05, r'$\rm MUSE \, [O\,III]$', color='red', size=30,
@@ -428,10 +431,11 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 
 
 
-# MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300, HSTcentroid=True, rmbkgResidue=True)
-# MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level_OII=0.5, contour_level_OIII=1.0)
+MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300, HSTcentroid=True, rmbkgResidue=True)
+MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level_OII=0.5, contour_level_OIII=1.0)
 # MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg_OII=[12, 14, 15, 16, 17, 20],
-#            nums_seg_OIII=[5, 11, 16, 19], contour_level_OII=0.1, contour_level_OIII=0.1, rmbkgResidue=True, HSTcentroid=True)
+#            nums_seg_OIII=[5, 11, 16, 19], contour_level_OII=0.1, contour_level_OIII=0.1, rmbkgResidue=True,
+#            HSTcentroid=True)
 # MakeV50W80(cubename='PKS0405-123', v_max=800, sigma_max=300, contour_level_OIII=0.5, nums_seg_OII=[5],
 #            nums_seg_OIII=[15], HSTcentroid=True)
 # MakeV50W80(cubename='HE0238-1904', v_max=300, sigma_max=300, HSTcentroid=True, rmbkgResidue=False)
