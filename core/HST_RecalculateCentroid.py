@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib as mpl
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
-import lacosmic
+# import lacosmic
 from matplotlib import rc
 from astropy.wcs import WCS
 from scipy.stats import norm

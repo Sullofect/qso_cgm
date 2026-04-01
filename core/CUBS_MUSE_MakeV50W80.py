@@ -134,6 +134,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
         format(cubename, line, True, 3728, *UseDataSeg)
     figurename_S80 = '../../MUSEQuBES+CUBS/fit_kin/{}_S80_{}_{}_{}_{}_{}_{}_{}.png'. \
         format(cubename, line, True, 3728, *UseDataSeg)
+
+    # Load Galaxy information
     path_gal = '../../MUSEQuBES+CUBS/gal_info/{}_gal_info_gaia.fits'.format(cubename)
     try:
         data_gal = fits.open(path_gal)[1].data
@@ -144,7 +146,7 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
             ra_gal, dec_gal, type = data_gal['ra_cor'], data_gal['dec_cor'], data_gal['type']
     except FileNotFoundError:
         print('No galaxies info')
-        ra_gal, dec_gal, v_gal, ra_hst, dec_hst = [], [], [], [], []
+        ra_gal, dec_gal, v_gal, ra_hst, dec_hst, type = [], [], [], [], [], []
 
     # V50, S80
     path_v50 = '../../MUSEQuBES+CUBS/fit_kin/{}_V50.fits'.format(cubename)
@@ -354,16 +356,16 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
     #
     # # For HST proposal
     # gc.colorbar.set_ticks([-600, -400, -200, 0, 200, 400, 600])
-
     gc.add_label(0.05, 0.08, '[{}, {}]'.format(-v_max, v_max), size=30, relative=True, horizontalalignment='left')
-    ra_emi, dec_emi, v_emi = ra_gal[type == 'emi'], dec_gal[type == 'emi'], v_gal[type == 'emi']
-    ra_abs, dec_abs, v_abs = ra_gal[type != 'emi'], dec_gal[type != 'emi'], v_gal[type != 'emi']
-    gc.show_markers(ra_emi, dec_emi, facecolor='white', marker='D', c='white', edgecolors='none', linewidths=0.8, s=80)
-    gc.show_markers(ra_emi, dec_emi, facecolor='none', marker='D', c='none', edgecolors='k', linewidths=0.8, s=80)
-    gc.show_markers(ra_emi, dec_emi, marker='D', c=v_emi, linewidths=0.5, s=30, vmin=-v_max, vmax=v_max, cmap='coolwarm')
-    gc.show_markers(ra_abs, dec_abs, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
-    gc.show_markers(ra_abs, dec_abs, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
-    gc.show_markers(ra_abs, dec_abs, marker='o', c=v_abs, linewidths=0.5, s=40, vmin=-v_max, vmax=v_max, cmap='coolwarm')
+    if len(type) > 0:
+        ra_emi, dec_emi, v_emi = ra_gal[type == 'emi'], dec_gal[type == 'emi'], v_gal[type == 'emi']
+        ra_abs, dec_abs, v_abs = ra_gal[type != 'emi'], dec_gal[type != 'emi'], v_gal[type != 'emi']
+        gc.show_markers(ra_emi, dec_emi, facecolor='white', marker='D', c='white', edgecolors='none', linewidths=0.8, s=80)
+        gc.show_markers(ra_emi, dec_emi, facecolor='none', marker='D', c='none', edgecolors='k', linewidths=0.8, s=80)
+        gc.show_markers(ra_emi, dec_emi, marker='D', c=v_emi, linewidths=0.5, s=30, vmin=-v_max, vmax=v_max, cmap='coolwarm')
+        gc.show_markers(ra_abs, dec_abs, facecolor='white', marker='o', c='white', edgecolors='none', linewidths=0.8, s=100)
+        gc.show_markers(ra_abs, dec_abs, facecolor='none', marker='o', c='none', edgecolors='k', linewidths=0.8, s=100)
+        gc.show_markers(ra_abs, dec_abs, marker='o', c=v_abs, linewidths=0.5, s=40, vmin=-v_max, vmax=v_max, cmap='coolwarm')
     fig.savefig(figurename_V50, bbox_inches='tight')
 
     # S80 map converted from W80 to sigma
@@ -431,8 +433,8 @@ def MakeV50W80(cubename=None, v_max=300, sigma_max=300, contour_level_OII=0.2, c
 
 
 
-MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300, HSTcentroid=True, rmbkgResidue=True)
-MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level_OII=0.5, contour_level_OIII=1.0)
+# MakeV50W80(cubename='HE0435-5304', v_max=100, sigma_max=300, HSTcentroid=True, rmbkgResidue=True)
+# MakeV50W80(cubename='HE0153-4520', v_max=300, sigma_max=300, contour_level_OII=0.5, contour_level_OIII=1.0)
 # MakeV50W80(cubename='HE0226-4110', v_max=300, sigma_max=300, nums_seg_OII=[12, 14, 15, 16, 17, 20],
 #            nums_seg_OIII=[5, 11, 16, 19], contour_level_OII=0.1, contour_level_OIII=0.1, rmbkgResidue=True,
 #            HSTcentroid=True)
