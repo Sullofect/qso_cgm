@@ -481,7 +481,7 @@ class CalculateGalNebCorr:
                 percent_L = np.hstack((percent_L, p))
                 control_mean_L = np.hstack((control_mean_L, np.mean(CKAF_array)))
                 control_sigma_L = np.hstack((control_sigma_L, np.std(CKAF_array)))
-            elif 11 <= i < 22:
+            elif 11 <= i < 23:
                 CKAF_S = np.hstack((CKAF_S, CKAF))
                 percent_S = np.hstack((percent_S, p))
                 control_mean_S = np.hstack((control_mean_S, np.mean(CKAF_array)))
@@ -536,7 +536,7 @@ class CalculateGalNebCorr:
                        Line2D([], [], linestyle="none", marker="^",
                               markerfacecolor="blue", markeredgecolor="k",
                               markersize=8, label=r'Complex morphology \\ and kinematics'),]
-        leg1 = plt.legend(handles=pop_handles, loc="upper right", bbox_to_anchor=(0.45, 1.32), frameon=True, fontsize=15)
+        leg1 = plt.legend(handles=pop_handles, loc="upper right", bbox_to_anchor=(0.445, 1.32), frameon=True, fontsize=15)
 
         ms_small, ms_mid, ms_big = 6, 9, 11.5
         h_p_large = (
@@ -576,7 +576,7 @@ class CalculateGalNebCorr:
             handler_map={tuple: HandlerTuple(ndivide=None, pad=0.6)},
             title="P-value",
             loc="lower right",
-            bbox_to_anchor=(1.02, 0.98),
+            bbox_to_anchor=(1.025, 0.98),
             frameon=True,
             fontsize=15,
         )
@@ -626,7 +626,7 @@ L = np.array([["HE0226-4110",     150,  84, [2, 3, 10, 11, 12, 13, 14, 15, 16, 1
               ["J0454-6116",      151, 102, [2, 3, 4, 5, 6, 8, 11, 12, 13, 15, 17, 18], False,
                [2, 7, 9, 10, 18, 19], False],
               ["J0119-2010",      166,  96, [3, 4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20], False,
-               [7, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20], False],
+               [2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20], False],
               ["HE0246-4101",     129,  74, [1], True, [], False],
               ["PKS0355-483",     142,  50, [2, 3, 4, 8, 9, 10, 11], True, [], False],
               ["HE0439-5254",     246,  47, [], False, [], False],
@@ -639,6 +639,7 @@ S = np.array([["HE0435-5304",      87,  55, [1], False, [1], False],
               ["HE0112-4145",     164,  38, [], False, [], False],
               ["J0154-0712",      137,  63, [5], False, [], False],
               ["LBQS1435-0134",    261,  63, [1, 3, 7], True, [], False ],
+              ["PG1522+101", 132, 50, [2, 3, 8, 11], True, [], False],
               ["J0028-3305",      133,  42, [2], True, [], False],
               ["HE0419-5657",     154,  35, [2, 4, 5], True, [], False],
               ["PB6291",          116,  28, [2, 6, 7], True, [], False],
@@ -649,7 +650,6 @@ A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17,
                [4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20], False],
               ["Q0107-0235",      136,  90, [1, 4, 5, 6], True, [], False],
               ["PKS2242-498",     147,  71, [1, 2], True, [], False],
-              ["PG1522+101",      132,  50, [2, 3, 8, 11], True, [], False],
               ["PKS0232-04",      178, 116, [2, 4, 5, 7], False, [], False]], dtype=object)
 
 
