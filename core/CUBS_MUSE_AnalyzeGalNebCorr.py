@@ -2,8 +2,10 @@ import os
 import h5py
 import aplpy
 import numpy as np
+import matplotlib.cm as cm
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from scipy import stats
 from matplotlib import rc
 from astropy.wcs import WCS
@@ -13,6 +15,7 @@ from matplotlib.lines import Line2D
 from astropy.cosmology import FlatLambdaCDM
 from sklearn.mixture import GaussianMixture
 from CUBS_MUSE_MakeV50W80 import APLpyStyle
+from matplotlib.patches import Wedge, Circle, Polygon
 from sklearn.preprocessing import StandardScaler
 from matplotlib.legend_handler import HandlerTuple
 from astropy.coordinates import SkyCoord, SkyOffsetFrame
@@ -55,6 +58,205 @@ cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 #         out[i] = np.exp(log_bc)
 #     return out
 
+
+def radec_to_pixel(header, ra, dec):
+    wcs = WCS(header)
+    xpix, ypix = wcs.wcs_world2pix(ra, dec, 0)
+    return xpix, ypix
+
+def show_bicolored_velocity_circles_pix(gc, xpix, ypix, v_left, v_right, v_max,
+                                        radius_pix=6,
+                                        cmap='coolwarm',
+                                        edgecolor='k',
+                                        linewidth=0.8,
+                                        nan_color='white',
+                                        zorder=6):
+    """
+    Draw split circles in pixel coordinates on an APLpy axis.
+    """
+    ax = gc.ax
+    norm = mcolors.Normalize(vmin=-v_max, vmax=v_max)
+    cmap = cm.get_cmap(cmap)
+
+    for x, y, vl, vr in zip(xpix, ypix, v_left, v_right):
+        if not (np.isfinite(x) and np.isfinite(y)):
+            continue
+
+        cl = nan_color if not np.isfinite(vl) else cmap(norm(vl))
+        cr = nan_color if not np.isfinite(vr) else cmap(norm(vr))
+
+        # left half
+        ax.add_patch(Wedge((x, y), radius_pix, 90, 270,
+                           facecolor=cl, edgecolor='none', zorder=zorder))
+
+        # right half
+        ax.add_patch(Wedge((x, y), radius_pix, -90, 90,
+                           facecolor=cr, edgecolor='none', zorder=zorder))
+
+        # outline
+        # ax.add_patch(Circle((x, y), radius_pix,
+        #                     facecolor='none', edgecolor=edgecolor,
+        #                     linewidth=linewidth, zorder=zorder + 0.1))
+
+
+def show_bicolored_velocity_diamonds_pix(gc, xpix, ypix, v_left, v_right, v_max,
+                                         radius_pix=6,
+                                         cmap='coolwarm',
+                                         edgecolor='k',
+                                         linewidth=0.8,
+                                         nan_color='white',
+                                         zorder=6):
+    """
+    Draw split diamonds in pixel coordinates on an APLpy axis.
+    Left half = v_left, right half = v_right
+    """
+    ax = gc.ax
+    norm = mcolors.Normalize(vmin=-v_max, vmax=v_max)
+    cmap = cm.get_cmap(cmap)
+
+    for x, y, vl, vr in zip(xpix, ypix, v_left, v_right):
+        if not (np.isfinite(x) and np.isfinite(y)):
+            continue
+
+        cl = nan_color if not np.isfinite(vl) else cmap(norm(vl))
+        cr = nan_color if not np.isfinite(vr) else cmap(norm(vr))
+
+        top = (x, y + radius_pix)
+        right = (x + radius_pix, y)
+        bottom = (x, y - radius_pix)
+        left = (x - radius_pix, y)
+
+        # left half
+        ax.add_patch(Polygon([top, left, bottom],
+                             closed=True, facecolor=cl, edgecolor='none',
+                             zorder=zorder))
+
+        # right half
+        ax.add_patch(Polygon([top, right, bottom],
+                             closed=True, facecolor=cr, edgecolor='none',
+                             zorder=zorder))
+
+        # # outline
+        # ax.add_patch(Polygon([top, right, bottom, left],
+        #                      closed=True, facecolor='none',
+        #                      edgecolor=edgecolor, linewidth=linewidth,
+        #                      zorder=zorder + 0.1))
+
+def show_bicolored_velocity_diamonds(gc, ra, dec, v_left, v_right, v_max,
+                                     radius_deg=0.30/3600.,
+                                     cmap='coolwarm',
+                                     edgecolor='k',
+                                     linewidth=0.8,
+                                     nan_color='white',
+                                     zorder=6):
+    """
+    Draw split diamonds on an APLpy figure.
+
+    Left half  = v_left color
+    Right half = v_right color
+    """
+    ax = gc.ax
+    norm = mcolors.Normalize(vmin=-v_max, vmax=v_max)
+    cmap = cm.get_cmap(cmap)
+    trans = ax.get_transform('world')
+
+    for x, y, vl, vr in zip(ra, dec, v_left, v_right):
+        cl = nan_color if not np.isfinite(vl) else cmap(norm(vl))
+        cr = nan_color if not np.isfinite(vr) else cmap(norm(vr))
+
+        top = (x, y + radius_deg)
+        right = (x + radius_deg, y)
+        bottom = (x, y - radius_deg)
+        left = (x - radius_deg, y)
+
+        # left half
+        ax.add_patch(Polygon(
+            [top, left, bottom],
+            closed=True,
+            facecolor=cl,
+            edgecolor='none',
+            transform=trans,
+            zorder=zorder
+        ))
+
+        # right half
+        ax.add_patch(Polygon(
+            [top, right, bottom],
+            closed=True,
+            facecolor=cr,
+            edgecolor='none',
+            transform=trans,
+            zorder=zorder
+        ))
+
+        # # outline
+        # ax.add_patch(Polygon(
+        #     [top, right, bottom, left],
+        #     closed=True,
+        #     facecolor='none',
+        #     edgecolor=edgecolor,
+        #     linewidth=linewidth,
+        #     transform=trans,
+        #     zorder=zorder + 0.1
+        # ))
+
+
+def show_bicolored_velocity_circles(gc, ra, dec, v_left, v_right, v_max,
+                                    radius_deg=0.25/3600.,
+                                    cmap='coolwarm',
+                                    edgecolor='k',
+                                    linewidth=0.8,
+                                    zorder=6):
+    """
+    Draw semi-filled circles on an APLpy figure.
+
+    Parameters
+    ----------
+    gc : aplpy.FITSFigure
+        APLpy figure object.
+    ra, dec : array-like
+        Coordinates in degrees.
+    v_left : array-like
+        Velocity for left semicircle.
+    v_right : array-like
+        Velocity for right semicircle.
+    v_max : float
+        Symmetric velocity scale: [-v_max, v_max].
+    radius_deg : float
+        Circle radius in degrees.
+    cmap : str or Colormap
+        Matplotlib colormap.
+    edgecolor : str
+        Circle outline color.
+    linewidth : float
+        Outline width.
+    zorder : float
+        Drawing order.
+    """
+    ax = gc.ax
+    norm = mcolors.Normalize(vmin=-v_max, vmax=v_max)
+    cmap = cm.get_cmap(cmap)
+    trans = ax.get_transform('world')
+
+    for x, y, vl, vr in zip(ra, dec, v_left, v_right):
+        cl = cmap(norm(vl))
+        cr = cmap(norm(vr))
+
+        # left half: galaxy velocity
+        ax.add_patch(Wedge((x, y), radius_deg, 90, 270,
+                           facecolor=cl, edgecolor='none',
+                           transform=trans, zorder=zorder))
+
+        # right half: nebula velocity
+        ax.add_patch(Wedge((x, y), radius_deg, -90, 90,
+                           facecolor=cr, edgecolor='none',
+                           transform=trans, zorder=zorder))
+
+        # outline
+        # ax.add_patch(Circle((x, y), radius_deg + 0.05 / 3600,
+        #                     facecolor='none', edgecolor=edgecolor,
+        #                     linewidth=linewidth,
+        #                     transform=trans, zorder=zorder + 0.1))
 
 def bhattacharyya_coefficient(mus_neb=None, sigma_x_neb=1.5, sigma_y_neb=1.5, sigma_v_neb=None,
                               mus_gal=None, sigma_x_gal=None, sigma_y_gal=None, sigma_v_gal=20.0):
@@ -106,7 +308,7 @@ class CalculateGalNebCorr:
         self.DrawRaDecV()
 
     def ComputeCorr(self, cubename=None, nums_seg_OII=None, select_seg_OII=False, nums_seg_OIII=None,
-                    select_seg_OIII=False):
+                    select_seg_OIII=False, v_max=None):
         # QSO information
         i = self._qso_index.get(cubename, None)
         ra_qso, dec_qso, z_qso = self.data_qso['ra_GAIA'][i], self.data_qso['dec_GAIA'][i], self.data_qso['redshift'][i]
@@ -208,9 +410,122 @@ class CalculateGalNebCorr:
         gc.show_colorscale(vmin=1e-3, vmax=0.5, cmap='viridis', stretch='log')
         APLpyStyle(gc, type='GasMap', cubename=cubename, ra_qso=ra_qso, dec_qso=dec_qso, z_qso=z_qso, addName=True)
 
+        # Show
+        ra_emi, dec_emi, v_emi = ra_gal[type == 'emi'], dec_gal[type == 'emi'], v_gal[type == 'emi']
+        ra_abs, dec_abs, v_abs = ra_gal[type != 'emi'], dec_gal[type != 'emi'], v_gal[type != 'emi']
+        gc.show_markers(ra_emi, dec_emi, facecolor='white', marker='D', c='white',
+                        edgecolors='none', linewidths=0.8, s=80)
+        gc.show_markers(ra_emi, dec_emi, facecolor='none', marker='D', c='none',
+                        edgecolors='k', linewidths=0.8, s=80)
+        gc.show_markers(ra_abs, dec_abs, facecolor='white', marker='o', c='white',
+                        edgecolors='none', linewidths=0.8, s=100)
+        gc.show_markers(ra_abs, dec_abs, facecolor='none', marker='o', c='none',
+                        edgecolors='k', linewidths=0.8, s=100)
+
+        # Add the galaxy location and velocity
+        xpix_gal, ypix_gal = radec_to_pixel(hdr_v50, ra_gal, dec_gal)
+        is_emi = (type == 'emi')
+        is_abs = ~is_emi
+        xpix_emi, ypix_emi = xpix_gal[is_emi], ypix_gal[is_emi]
+        xpix_abs, ypix_abs = xpix_gal[is_abs], ypix_gal[is_abs]
+        v_emi, v_abs = v_gal[is_emi], v_gal[is_abs]
+
+        # Select Nebular velocities
+        xpix_i = np.round(xpix_gal).astype(int)
+        ypix_i = np.round(ypix_gal).astype(int)
+
+        good = (np.isfinite(xpix_i) & np.isfinite(ypix_i) &
+                (xpix_i >= 0) & (xpix_i < v50.shape[1]) &
+                (ypix_i >= 0) & (ypix_i < v50.shape[0]))
+
+        v_neb_spaxel = np.full(len(ra_gal), np.nan)
+        v_neb_spaxel[good] = v50[ypix_i[good], xpix_i[good]]
+
+        # nebula velocity sampled at galaxy positions
+        v_neb_emi = v_neb_spaxel[is_emi]
+        v_neb_abs = v_neb_spaxel[is_abs]
+
+        # emi: split diamonds
+        show_bicolored_velocity_diamonds_pix(
+            gc,
+            xpix_emi, ypix_emi,
+            v_left=v_emi,
+            v_right=v_neb_emi,
+            v_max=v_max,
+            radius_pix=1.5
+        )
+
+        # abs: split circles
+        show_bicolored_velocity_circles_pix(
+            gc,
+            xpix_abs, ypix_abs,
+            v_left=v_abs,
+            v_right=v_neb_abs,
+            v_max=v_max,
+            radius_pix=1.4
+        )
+
+
+
+
+        # ra_emi, dec_emi, v_emi = ra_gal[type == 'emi'], dec_gal[type == 'emi'], v_gal[type == 'emi']
+        # ra_abs, dec_abs, v_abs = ra_gal[type != 'emi'], dec_gal[type != 'emi'], v_gal[type != 'emi']
+        #
+        # # nearest-pixel sampling
+        # xpix, ypix = w.wcs_world2pix(ra_gal, dec_gal, 0)
+        # xpix_i = np.round(xpix).astype(int)
+        # ypix_i = np.round(ypix).astype(int)
+        #
+        # good = (np.isfinite(xpix_i) & np.isfinite(ypix_i) &
+        #         (xpix_i >= 0) & (xpix_i < v50.shape[1]) &
+        #         (ypix_i >= 0) & (ypix_i < v50.shape[0]))
+        #
+        # v_neb_spaxel = np.full(len(ra_gal), np.nan)
+        # v_neb_spaxel[good] = v50[ypix_i[good], xpix_i[good]]
+        #
+        # # nebula velocity sampled at galaxy positions
+        # v_neb_emi = v_neb_spaxel[type == 'emi']
+        # v_neb_abs = v_neb_spaxel[type != 'emi']
+        #
+        # # emission systems: keep diamonds if you want
+        # gc.show_markers(ra_emi, dec_emi, facecolor='white', marker='D', c='white',
+        #                 edgecolors='none', linewidths=0.8, s=80)
+        # gc.show_markers(ra_emi, dec_emi, facecolor='none', marker='D', c='none',
+        #                 edgecolors='k', linewidths=0.8, s=80)
+        # gc.show_markers(ra_abs, dec_abs, facecolor='white', marker='o', c='white',
+        #                 edgecolors='none', linewidths=0.8, s=100)
+        # gc.show_markers(ra_abs, dec_abs, facecolor='none', marker='o', c='none',
+        #                 edgecolors='k', linewidths=0.8, s=100)
+        #
+        # # absorption systems: semi-filled circles
+        # show_bicolored_velocity_circles(
+        #     gc,
+        #     ra_abs,
+        #     dec_abs,
+        #     v_left=v_abs,  # galaxy velocity
+        #     v_right=v_neb_abs,  # nebula velocity at that spaxel
+        #     v_max=v_max,
+        #     radius_deg=0.25 / 3600.,  # tune by eye
+        #     cmap='coolwarm',
+        #     edgecolor='k',
+        #     linewidth=0.8
+        # )
+        #
+        # show_bicolored_velocity_diamonds(
+        #     gc,
+        #     ra_emi,
+        #     dec_emi,
+        #     v_left=v_emi,
+        #     v_right=v_neb_emi,
+        #     v_max=v_max,
+        #     radius_deg=0.30 / 3600.,  # tune by eye
+        #     cmap='coolwarm',
+        #     edgecolor='k',
+        #     linewidth=0.8
+        # )
+
         # Set colorbar
-        if cubename == "J2135-5316" or cubename == "Q0107-0235" or cubename == "PKS2242-498" or \
-                cubename == "PG1522+101" or cubename == "PKS0232-04":
+        if cubename == "J2135-5316" or cubename == "Q0107-0235" or cubename == "PKS2242-498" or cubename == "PKS0232-04":
             gc.colorbar.set_ticks([1e-2, 1e-1, 0.25])
             gc.colorbar._colorbar.set_ticklabels([1e-2, 1e-1, 0.25])
             tick_labels = gc.colorbar._colorbar.ax.get_xticklabels()
@@ -469,7 +784,7 @@ class CalculateGalNebCorr:
             else:
                 CKAF = self.ComputeCorr(cubename=self.allType[i][0], nums_seg_OII=self.allType[i][3],
                                         select_seg_OII=self.allType[i][4], nums_seg_OIII=self.allType[i][5],
-                                        select_seg_OIII=self.allType[i][6])
+                                        select_seg_OIII=self.allType[i][6], v_max=self.allType[i][7])
             infile = "../../MUSEQuBES+CUBS/KAF/{}_CKAF_results_N={}.h5".format(self.allType[i][0], self.Ntrial)
             with h5py.File(infile, 'r') as f:
                 CKAF_array = f['CKAF_array'][:]
@@ -618,39 +933,39 @@ class CalculateGalNebCorr:
 
 
 L = np.array([["HE0226-4110",     150,  84, [2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], False,
-               [1, 5, 6, 8, 9, 10, 11, 16, 19], False],
-              ["PKS0405-123",     106, 129, [5, 7, 10, 11, 13, 16, 17, 20], False, [15], False],
-              ["HE0238-1904",     113, 103, [1, 6, 12, 13, 17, 19], True, [1, 2, 4, 9, 13, 15, 17, 20], True],
+               [1, 5, 6, 8, 9, 10, 11, 16, 19], False, 300],
+              ["PKS0405-123",     106, 129, [5, 7, 10, 11, 13, 16, 17, 20], False, [15], False, 800],
+              ["HE0238-1904",     113, 103, [1, 6, 12, 13, 17, 19], True, [1, 2, 4, 9, 13, 15, 17, 20], True, 300],
               ["PKS0552-640",     124, 153, [2, 3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], False,
-               [5, 6, 7, 8, 12, 15, 16, 17, 18, 20], False],
+               [5, 6, 7, 8, 12, 15, 16, 17, 18, 20], False, 300],
               ["J0454-6116",      151, 102, [2, 3, 4, 5, 6, 8, 11, 12, 13, 15, 17, 18], False,
-               [2, 7, 9, 10, 18, 19], False],
+               [2, 7, 9, 10, 18, 19], False, 500],
               ["J0119-2010",      166,  96, [3, 4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20], False,
-               [2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20], False],
-              ["HE0246-4101",     129,  74, [1], True, [], False],
-              ["PKS0355-483",     142,  50, [2, 3, 4, 8, 9, 10, 11], True, [], False],
-              ["HE0439-5254",     246,  47, [], False, [], False],
+               [2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20], False, 500],
+              ["HE0246-4101",     129,  74, [1], True, [], False, 300],
+              ["PKS0355-483",     142,  50, [2, 3, 4, 8, 9, 10, 11], True, [], False, 300],
+              ["HE0439-5254",     246,  47, [], False, [], False, 500],
               ["TEX0206-048",     194, 200, [1, 8, 12, 13, 15, 20, 23, 26, 27, 28, 34, 57, 60, 79, 81,
-                                             101, 107, 108, 114, 118, 317, 547, 552], True, [], False],
-              ["Q1354+048",       123, 126, [1, 2], False, [], False]], dtype=object)
-S = np.array([["HE0435-5304",      87,  55, [1], False, [1], False],
-              ["3C57",            151,  71, [2], False, [], False],
-              ["J0110-1648",       91,  29, [1], False, [2], False],
-              ["HE0112-4145",     164,  38, [], False, [], False],
-              ["J0154-0712",      137,  63, [5], False, [], False],
-              ["LBQS1435-0134",    261,  63, [1, 3, 7], True, [], False ],
-              ["PG1522+101", 132, 50, [2, 3, 8, 11], True, [], False],
-              ["J0028-3305",      133,  42, [2], True, [], False],
-              ["HE0419-5657",     154,  35, [2, 4, 5], True, [], False],
-              ["PB6291",          116,  28, [2, 6, 7], True, [], False],
-              ["HE1003+0149",     208,  53, [3], False, [], False],
-              ["HE0331-4112",     196,  32, [6], True, [], False]], dtype=object)
+                                             101, 107, 108, 114, 118, 317, 547, 552], True, [], False, 600],
+              ["Q1354+048",       123, 126, [1, 2], False, [], False, 400]], dtype=object)
+S = np.array([["HE0435-5304",      87,  55, [1], False, [1], False, 100],
+              ["3C57",            151,  71, [2], False, [], False, 350],
+              ["J0110-1648",       91,  29, [1], False, [2], False, 300],
+              ["HE0112-4145",     164,  38, [], False, [], False, 300],
+              ["J0154-0712",      137,  63, [5], False, [], False, 300],
+              ["LBQS1435-0134",    261,  63, [1, 3, 7], True, [], False, 400],
+              ["PG1522+101", 132, 50, [2, 3, 8, 11], True, [], False, 300],
+              ["J0028-3305",      133,  42, [2], True, [], False, 300],
+              ["HE0419-5657",     154,  35, [2, 4, 5], True, [], False, 400],
+              ["PB6291",          116,  28, [2, 6, 7], True, [], False, 400],
+              ["HE1003+0149",     208,  53, [3], False, [], False, 300],
+              ["HE0331-4112",     196,  32, [6], True, [], False, 500]], dtype=object)
 
 A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19], False,
-               [4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20], False],
-              ["Q0107-0235",      136,  90, [1, 4, 5, 6], True, [], False],
-              ["PKS2242-498",     147,  71, [1, 2], True, [], False],
-              ["PKS0232-04",      178, 116, [2, 4, 5, 7], False, [], False]], dtype=object)
+               [4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20], False, 300],
+              ["Q0107-0235",      136,  90, [1, 4, 5, 6], True, [], False, 400],
+              ["PKS2242-498",     147,  71, [1, 2], True, [], False, 400],
+              ["PKS0232-04",      178, 116, [2, 4, 5, 7], False, [], False, 400]], dtype=object)
 
 
 # Test
