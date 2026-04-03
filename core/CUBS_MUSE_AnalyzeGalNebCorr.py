@@ -15,9 +15,9 @@ from matplotlib.lines import Line2D
 from astropy.cosmology import FlatLambdaCDM
 from sklearn.mixture import GaussianMixture
 from CUBS_MUSE_MakeV50W80 import APLpyStyle
-from matplotlib.patches import Wedge, Circle, Polygon
 from sklearn.preprocessing import StandardScaler
 from matplotlib.legend_handler import HandlerTuple
+from matplotlib.patches import Wedge, Circle, Polygon
 from astropy.coordinates import SkyCoord, SkyOffsetFrame
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
@@ -141,122 +141,6 @@ def show_bicolored_velocity_diamonds_pix(gc, xpix, ypix, v_left, v_right, v_max,
         #                      closed=True, facecolor='none',
         #                      edgecolor=edgecolor, linewidth=linewidth,
         #                      zorder=zorder + 0.1))
-
-def show_bicolored_velocity_diamonds(gc, ra, dec, v_left, v_right, v_max,
-                                     radius_deg=0.30/3600.,
-                                     cmap='coolwarm',
-                                     edgecolor='k',
-                                     linewidth=0.8,
-                                     nan_color='white',
-                                     zorder=6):
-    """
-    Draw split diamonds on an APLpy figure.
-
-    Left half  = v_left color
-    Right half = v_right color
-    """
-    ax = gc.ax
-    norm = mcolors.Normalize(vmin=-v_max, vmax=v_max)
-    cmap = cm.get_cmap(cmap)
-    trans = ax.get_transform('world')
-
-    for x, y, vl, vr in zip(ra, dec, v_left, v_right):
-        cl = nan_color if not np.isfinite(vl) else cmap(norm(vl))
-        cr = nan_color if not np.isfinite(vr) else cmap(norm(vr))
-
-        top = (x, y + radius_deg)
-        right = (x + radius_deg, y)
-        bottom = (x, y - radius_deg)
-        left = (x - radius_deg, y)
-
-        # left half
-        ax.add_patch(Polygon(
-            [top, left, bottom],
-            closed=True,
-            facecolor=cl,
-            edgecolor='none',
-            transform=trans,
-            zorder=zorder
-        ))
-
-        # right half
-        ax.add_patch(Polygon(
-            [top, right, bottom],
-            closed=True,
-            facecolor=cr,
-            edgecolor='none',
-            transform=trans,
-            zorder=zorder
-        ))
-
-        # # outline
-        # ax.add_patch(Polygon(
-        #     [top, right, bottom, left],
-        #     closed=True,
-        #     facecolor='none',
-        #     edgecolor=edgecolor,
-        #     linewidth=linewidth,
-        #     transform=trans,
-        #     zorder=zorder + 0.1
-        # ))
-
-
-def show_bicolored_velocity_circles(gc, ra, dec, v_left, v_right, v_max,
-                                    radius_deg=0.25/3600.,
-                                    cmap='coolwarm',
-                                    edgecolor='k',
-                                    linewidth=0.8,
-                                    zorder=6):
-    """
-    Draw semi-filled circles on an APLpy figure.
-
-    Parameters
-    ----------
-    gc : aplpy.FITSFigure
-        APLpy figure object.
-    ra, dec : array-like
-        Coordinates in degrees.
-    v_left : array-like
-        Velocity for left semicircle.
-    v_right : array-like
-        Velocity for right semicircle.
-    v_max : float
-        Symmetric velocity scale: [-v_max, v_max].
-    radius_deg : float
-        Circle radius in degrees.
-    cmap : str or Colormap
-        Matplotlib colormap.
-    edgecolor : str
-        Circle outline color.
-    linewidth : float
-        Outline width.
-    zorder : float
-        Drawing order.
-    """
-    ax = gc.ax
-    norm = mcolors.Normalize(vmin=-v_max, vmax=v_max)
-    cmap = cm.get_cmap(cmap)
-    trans = ax.get_transform('world')
-
-    for x, y, vl, vr in zip(ra, dec, v_left, v_right):
-        cl = cmap(norm(vl))
-        cr = cmap(norm(vr))
-
-        # left half: galaxy velocity
-        ax.add_patch(Wedge((x, y), radius_deg, 90, 270,
-                           facecolor=cl, edgecolor='none',
-                           transform=trans, zorder=zorder))
-
-        # right half: nebula velocity
-        ax.add_patch(Wedge((x, y), radius_deg, -90, 90,
-                           facecolor=cr, edgecolor='none',
-                           transform=trans, zorder=zorder))
-
-        # outline
-        # ax.add_patch(Circle((x, y), radius_deg + 0.05 / 3600,
-        #                     facecolor='none', edgecolor=edgecolor,
-        #                     linewidth=linewidth,
-        #                     transform=trans, zorder=zorder + 0.1))
 
 def bhattacharyya_coefficient(mus_neb=None, sigma_x_neb=1.5, sigma_y_neb=1.5, sigma_v_neb=None,
                               mus_gal=None, sigma_x_gal=None, sigma_y_gal=None, sigma_v_gal=20.0):
@@ -462,73 +346,17 @@ class CalculateGalNebCorr:
             v_left=v_abs,
             v_right=v_neb_abs,
             v_max=v_max,
-            radius_pix=1.4
+            radius_pix=1.30
         )
-
-
-
-
-        # ra_emi, dec_emi, v_emi = ra_gal[type == 'emi'], dec_gal[type == 'emi'], v_gal[type == 'emi']
-        # ra_abs, dec_abs, v_abs = ra_gal[type != 'emi'], dec_gal[type != 'emi'], v_gal[type != 'emi']
-        #
-        # # nearest-pixel sampling
-        # xpix, ypix = w.wcs_world2pix(ra_gal, dec_gal, 0)
-        # xpix_i = np.round(xpix).astype(int)
-        # ypix_i = np.round(ypix).astype(int)
-        #
-        # good = (np.isfinite(xpix_i) & np.isfinite(ypix_i) &
-        #         (xpix_i >= 0) & (xpix_i < v50.shape[1]) &
-        #         (ypix_i >= 0) & (ypix_i < v50.shape[0]))
-        #
-        # v_neb_spaxel = np.full(len(ra_gal), np.nan)
-        # v_neb_spaxel[good] = v50[ypix_i[good], xpix_i[good]]
-        #
-        # # nebula velocity sampled at galaxy positions
-        # v_neb_emi = v_neb_spaxel[type == 'emi']
-        # v_neb_abs = v_neb_spaxel[type != 'emi']
-        #
-        # # emission systems: keep diamonds if you want
-        # gc.show_markers(ra_emi, dec_emi, facecolor='white', marker='D', c='white',
-        #                 edgecolors='none', linewidths=0.8, s=80)
-        # gc.show_markers(ra_emi, dec_emi, facecolor='none', marker='D', c='none',
-        #                 edgecolors='k', linewidths=0.8, s=80)
-        # gc.show_markers(ra_abs, dec_abs, facecolor='white', marker='o', c='white',
-        #                 edgecolors='none', linewidths=0.8, s=100)
-        # gc.show_markers(ra_abs, dec_abs, facecolor='none', marker='o', c='none',
-        #                 edgecolors='k', linewidths=0.8, s=100)
-        #
-        # # absorption systems: semi-filled circles
-        # show_bicolored_velocity_circles(
-        #     gc,
-        #     ra_abs,
-        #     dec_abs,
-        #     v_left=v_abs,  # galaxy velocity
-        #     v_right=v_neb_abs,  # nebula velocity at that spaxel
-        #     v_max=v_max,
-        #     radius_deg=0.25 / 3600.,  # tune by eye
-        #     cmap='coolwarm',
-        #     edgecolor='k',
-        #     linewidth=0.8
-        # )
-        #
-        # show_bicolored_velocity_diamonds(
-        #     gc,
-        #     ra_emi,
-        #     dec_emi,
-        #     v_left=v_emi,
-        #     v_right=v_neb_emi,
-        #     v_max=v_max,
-        #     radius_deg=0.30 / 3600.,  # tune by eye
-        #     cmap='coolwarm',
-        #     edgecolor='k',
-        #     linewidth=0.8
-        # )
 
         # Set colorbar
         if cubename == "J2135-5316" or cubename == "Q0107-0235" or cubename == "PKS2242-498" or cubename == "PKS0232-04":
             gc.colorbar.set_ticks([1e-2, 1e-1, 0.25])
             gc.colorbar._colorbar.set_ticklabels([1e-2, 1e-1, 0.25])
             tick_labels = gc.colorbar._colorbar.ax.get_xticklabels()
+            # gc.colorbar.set_pad(0.5)
+            # gc.colorbar.set_box([0.10, 0.06, 1.50, 0.01], box_orientation='horizontal')
+
             tick_labels[0].set_ha('right')
             gc.colorbar.set_location('bottom')
             gc.colorbar.set_axis_label_text(r'KAF')
