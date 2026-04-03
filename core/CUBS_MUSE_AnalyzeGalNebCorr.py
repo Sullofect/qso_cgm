@@ -727,7 +727,7 @@ class CalculateGalNebCorr:
         plt.gca().add_artist(leg1)
         plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
         plt.ylabel(r'CKAF', size=25)
-        plt.xlim(20, 225)
+        plt.xlim(0, 225)
         plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_CorrScore_ScaleLength.png', bbox_inches='tight')
 
     def SummarizeCorrControl(self):
