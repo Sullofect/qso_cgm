@@ -350,9 +350,9 @@ CUBS_list = ['J0110-1648', 'J0454-6116', 'J2135-5316', 'J0119-2010', 'HE0246-410
              'J0028-3305', 'HE0419-5657', 'PKS2242-498', 'PKS0355-483', 'HE0112-4145',
              'HE2305-5315', 'HE0331-4112', 'J0111-0316',  'J0154-0712', 'HE2336-5540']
 
-# ShowCUBSAbsorptionSpectra(CUBS_list)
+ShowCUBSAbsorptionSpectra(CUBS_list)
 
 MUSE_list = ['HE0435-5304', 'HE0153-4520', 'HE0226-4110', 'PKS0405-123', 'HE0238-1904',
              '3C57', 'PKS0552-640', 'PB6291', 'Q0107-0235', 'HE0439-5254', 'HE1003+0149',
              'TEX0206-048', 'Q1354+048', 'LBQS1435-0134', 'PG1522+101', 'PKS0232-04']
-ShowMUSEAbsorptionSpectra(MUSE_list)
+# ShowMUSEAbsorptionSpectra(MUSE_list)
