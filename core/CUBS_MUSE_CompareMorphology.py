@@ -93,8 +93,10 @@ plt.step(mid, counts1, where="mid", alpha=0.8, color="blue", linestyle="--", lin
 plt.step(mid, counts2, where="mid", alpha=0.8, color="red", linestyle="--", linewidth=2, label=r'$\rm Ly \alpha$')
 ax.set_xlim(0, 2)
 ax.set_xlabel('Asymmetry', size=25)
-ax.set_ylabel(r'$N$', size=25)
+ax.set_ylabel(r'Fraction', size=25)
 ax.legend(loc='upper right', fontsize=15)
+for x in bins:
+    ax.axvline(x, color='0.85', lw=0.8, zorder=0)
 plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_asymmetry_distribution.png', bbox_inches='tight')
 
 

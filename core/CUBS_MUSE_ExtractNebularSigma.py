@@ -126,7 +126,7 @@ def ExtractRadialProfile(allFields=None):
     sigma_RL_stack, sigma_RQ_stack, sigma_RJ_stack = [], [], []
 
     # Figure
-    fig, ax = plt.subplots(1, 3, figsize=(15, 5), dpi=300, sharey=True, sharex=True)
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5), dpi=300, sharey=True, sharex=True)
     plt.subplots_adjust(wspace=0.00)
     for i, cubename in enumerate(allFields[:, 0]):
         RL = False
@@ -224,17 +224,17 @@ def ExtractRadialProfile(allFields=None):
         r_kpc = rp.radius * 0.2 * d_A_kpc / 206265 # Convert from pixel to kpc using the WCS information
         profile = rp.profile
 
-        color = 'black'
-        if RL:
-            if jet:
-                ax[0].plot(r_kpc, profile, '--', color=color, linewidth=1.5, alpha=0.3)
-            else:
-                ax[0].plot(r_kpc, profile, '-', color=color, linewidth=1.5, alpha=0.3)
-        else:
-            ax[1].plot(r_kpc, profile, '-', color=color, linewidth=1.5, alpha=0.3)
+        color = 'grey'
+        # if RL:
+        #     if jet:
+        #         ax[0].plot(r_kpc, profile, '--', color=color, linewidth=1.5, alpha=0.2)
+        #     else:
+        #         ax[0].plot(r_kpc, profile, '-', color=color, linewidth=1.5, alpha=0.2)
+        # else:
+        #     ax[0].plot(r_kpc, profile, '-', color='brown', linewidth=1.5, alpha=0.2)
 
         # Convert unit from pixel to kpc for stacking
-        r_kpc_data = rp.data_radius * 0.2 * d_A_kpc / 206265  # Convert from pixel to kpc using the WCS information
+        # r_kpc_data = rp.data_radius * 0.2 * d_A_kpc / 206265  # Convert from pixel to kpc using the WCS information
 
         # Stack all of them
         r_stack.extend(r_kpc)
@@ -262,8 +262,6 @@ def ExtractRadialProfile(allFields=None):
             r_RQ_stack.extend(r_kpc)
             sigma_RQ_stack.extend(profile)
 
-
-
     # Compute the mean and median
     r_stack, sigma_stack = np.asarray(r_stack), np.asarray(sigma_stack)
     r_L_stack, r_S_stack, r_A_stack = np.asarray(r_L_stack), np.asarray(r_S_stack), np.asarray(r_A_stack)
@@ -284,33 +282,45 @@ def ExtractRadialProfile(allFields=None):
     r_RQ_mean, sigma_RQ_mean, sigma_RQ_max, sigma_RQ_min = Bin(r_RQ_stack, sigma_RQ_stack, bins=edge_radii)
     r_RJ_mean, sigma_RJ_mean, sigma_RJ_max, sigma_RJ_min = Bin(r_RJ_stack, sigma_RJ_stack, bins=edge_radii)
 
+    palette = {
+        "blue": "#3B5BDB",  # strong but restrained
+        "red": "#C92A2A",  # muted deep red
+        "green": "#2B8A3E",  # forest green
+        "orange": "#E67700",  # warm but not too bright
+        "purple": "#7B2CBF",  # good aggregate / special sample
+        "brown": "#8D6E63",  # useful neutral secondary class
+        "gray": "#495057",  # dark neutral
+    }
+
 
     # Plot the mean profiles
-    ax[2].plot(r_mean, sigma_mean, '-', color='purple', alpha=0.6, linewidth=2, label='All')
-    ax[2].plot(r_L_mean, sigma_L_mean, '-', color='k', alpha=0.7, linewidth=2, label='Irregular, large-scale')
-    ax[2].plot(r_S_mean, sigma_S_mean, '-', color='red', alpha=0.7, linewidth=2, label='Host-galaxy-scale')
-    ax[2].plot(r_A_mean, sigma_A_mean, '-', color='blue', alpha=0.6, linewidth=2, label='Complex morphology \n and kinematics')
+    ax[1].plot(r_mean, sigma_mean, '-', color='#7d3c98', alpha=0.8, linewidth=2.0, label='All')
+    ax[1].plot(r_L_mean, sigma_L_mean, '-', color='k', alpha=0.8, linewidth=1.7, label='Irregular, large-scale')
+    ax[1].plot(r_S_mean, sigma_S_mean, '-', color=palette['red'], alpha=0.8, linewidth=1.7, label='Host-galaxy-scale')
+    ax[1].plot(r_A_mean, sigma_A_mean, '-', color=palette['blue'], alpha=0.8, linewidth=1.7,
+               label='Complex morphology \n and kinematics')
 
     # ax[2].plot(r_RL_mean, sigma_RL_mean, '--', color='orange', markersize=15)
     # ax[2].plot(r_RQ_mean, sigma_RQ_mean, '-.', color='orange', markersize=15)
     # ax[2].plot(r_RJ_mean, sigma_RJ_mean, '-', color='orange', markersize=15)
 
-    ax[0].plot(r_RL_mean, sigma_RL_mean, '-', color='k', linewidth=2)
-    ax[0].plot(r_RJ_mean, sigma_RJ_mean, '--', color='k', linewidth=2)
-    ax[1].plot(r_RQ_mean, sigma_RQ_mean, '-', color='k', linewidth=2)
+    ax[0].plot(r_mean, sigma_mean, '-', color='#7d3c98', alpha=0.8, linewidth=2.0, label='All')
+    ax[0].plot(r_RL_mean, sigma_RL_mean, '-', color='darkred', alpha=0.8, linewidth=1.7, label='Radio-loud')
+    ax[0].plot(r_RJ_mean, sigma_RJ_mean, '--', color='darkred', alpha=0.8, linewidth=1.7, label='Radio-loud with jet')
+    ax[0].plot(r_RQ_mean, sigma_RQ_mean, '-.', color='darkred', alpha=0.8, linewidth=1.7, label='Radio-quiet')
 
 
     # Figure
-    ax[0].set_title('Radio-loud', size=25, x=0.5, y=0.85)
-    ax[1].set_title('Radio-quiet', size=25, x=0.5, y=0.85)
+    ax[0].set_title('Radio Classes', size=25, x=0.5, y=0.05)
+    ax[1].set_title('Morphological Classes', size=25, x=0.5, y=0.05)
     ax[0].set_xlabel('Radius [kpc]', size=25)
     ax[1].set_xlabel('Radius [kpc]', size=25)
-    ax[2].set_xlabel('Radius [kpc]', size=25)
-    ax[0].set_xlim(0, 110)
-    ax[0].set_ylabel(r'$\sigma \rm \, [km \, s^{-1}]$', size=25)
-    # ax[0].legend(loc='upper right', fontsize=15)
-    # ax[1].legend(loc='upper right', fontsize=15)
-    ax[2].legend(loc='upper right', fontsize=15)
+    ax[0].set_xlim(0, 120)
+    ax[0].set_ylim(0, 300)
+    ax[0].set_ylabel(r'$\rm{Radial \ Profile \ of} \ \sigma \rm \, [km \, s^{-1}]$', size=25)
+    ax[0].legend(loc='upper right', fontsize=15)
+    ax[1].legend(loc='upper right', fontsize=15)
+    # ax[2].legend(loc='best', fontsize=10)
     plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_SigmaProfile.png', bbox_inches='tight')
 
 L = np.array([["HE0226-4110",     150,  84, [2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], False,
@@ -322,7 +332,7 @@ L = np.array([["HE0226-4110",     150,  84, [2, 3, 10, 11, 12, 13, 14, 15, 16, 1
               ["J0454-6116",      151, 102, [2, 3, 4, 5, 6, 8, 11, 12, 13, 15, 17, 18], False,
                [2, 7, 9, 10, 18, 19], False],
               ["J0119-2010",      166,  96, [3, 4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20], False,
-               [7, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20], False],
+               [2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20], False],
               ["HE0246-4101",     129,  74, [1], True, [], False],
               ["PKS0355-483",     142,  50, [2, 3, 4, 8, 9, 10, 11], True, [], False],
               ["HE0439-5254",     246,  47, [], False, [], False],
@@ -335,6 +345,7 @@ S = np.array([["HE0435-5304",      87,  55, [1], False, [1], False],
               ["HE0112-4145",     164,  38, [], False, [], False],
               ["J0154-0712",      137,  63, [5], False, [], False],
               ["LBQS1435-0134",    261,  63, [1, 3, 7], True, [], False ],
+              ["PG1522+101",       132, 50, [2, 3, 8, 11], True, [], False],
               ["J0028-3305",      133,  42, [2], True, [], False],
               ["HE0419-5657",     154,  35, [2, 4, 5], True, [], False],
               ["PB6291",          116,  28, [2, 6, 7], True, [], False],
@@ -345,7 +356,6 @@ A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17,
                [4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20], False],
               ["Q0107-0235",      136,  90, [1, 4, 5, 6], True, [], False],
               ["PKS2242-498",     147,  71, [1, 2], True, [], False],
-              ["PG1522+101",      132,  50, [2, 3, 8, 11], True, [], False],
               ["PKS0232-04",      178, 116, [2, 4, 5, 7], False, [], False]], dtype=object)
 allType = np.vstack((L, S, A))
 

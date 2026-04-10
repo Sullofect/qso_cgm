@@ -91,7 +91,7 @@ class PlotV50W80Profile:
             if i == 11:
                 ax_top.annotate(r'$\rm H\,I \, 21\,cm$', xy=(0.65, 0.85), xycoords='axes fraction',
                                 size=20, color='C1', alpha=1.0)
-                ax_top.annotate(r'$\rm [O\,II]$', xy=(0.65, 0.65), xycoords='axes fraction',
+                ax_top.annotate(r'$\rm This \, work$', xy=(0.65, 0.65), xycoords='axes fraction',
                                 size=20, color='C5', alpha=1.0)
                 self.LoadNebKin()
                 color, alpha = 'C5', 0.5
@@ -128,18 +128,18 @@ class PlotV50W80Profile:
                                edgecolors='k', linewidths=0.5, color='red')
                 ax_top.scatter(self.d5080_blue, self.v50_blue_mean, s=20, marker=self.marker_list[0],
                                edgecolors='k', linewidths=0.5, color='blue')
-                ax_bottom.scatter(self.d5080_red, self.w80_red_mean, s=20, marker=self.marker_list[0],
+                ax_bottom.scatter(self.d5080_red, self.s80_red_mean, s=20, marker=self.marker_list[0],
                                   edgecolors='k', linewidths=0.5, color='red')
-                ax_bottom.scatter(self.d5080_blue, self.w80_blue_mean, s=20, marker=self.marker_list[0],
+                ax_bottom.scatter(self.d5080_blue, self.s80_blue_mean, s=20, marker=self.marker_list[0],
                                   edgecolors='k', linewidths=0.5, color='blue')
 
             # Set labels and ticks
             if i == 0:
-                ax_top.set_ylabel(r'$ \mathrm{\Delta} v_{50} \rm \, [km \, s^{-1}]$', size=25)
+                ax_top.set_ylabel(r'$v_{50} \rm \, [km \, s^{-1}]$', size=25)
                 ax_bottom.set_ylabel(r'$\sigma \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
             elif i == 4 or i == 8:
                 ax_bottom.set_xlabel(r'$\rm Distance \, [kpc]$', size=25)
-                ax_top.set_ylabel(r'$\mathrm{\Delta} v_{50} \rm \, [km \, s^{-1}]$', size=25)
+                ax_top.set_ylabel(r'$v_{50} \rm \, [km \, s^{-1}]$', size=25)
                 ax_bottom.set_ylabel(r'$\sigma \rm \, [km \, s^{-1}]$', size=25, labelpad=20)
             elif i == 9 or i == 10 or i == 11:
                 ax_bottom.set_xlabel(r'$\rm Distance \, [kpc]$', size=25)
@@ -210,13 +210,22 @@ class PlotV50W80Profile:
         if mode == 'whole':
             return dis_red, dis_blue, v50_red, v50_blue, s80_red, s80_blue
         elif mode == 'single':
-            self.d5080_blue, self.v50_blue_mean, _, _, \
-            self.w80_blue_mean, _, _ = self.Bin(dis_blue, v50_blue, s80_blue, bins=20)
             self.d5080_red, self.v50_red_mean, _, _, \
-            self.w80_red_mean, _, _ = self.Bin(dis_red, v50_red, s80_red, bins=20)
+            self.s80_red_mean, _, _ = self.Bin(dis_red, v50_red, s80_red)
 
-    def Bin(self, x, y, z, bins=20):
-        n, edges = np.histogram(x, bins=bins)
+            self.d5080_blue, self.v50_blue_mean, _, _, \
+            self.s80_blue_mean, _, _ = self.Bin(dis_blue, v50_blue, s80_blue)
+
+            return self.d5080_red, self.d5080_blue, self.v50_red_mean, self.v50_blue_mean, \
+                   self.s80_red_mean, self.s80_blue_mean,
+
+    def Bin(self, x, y, z):
+        if x[-1] < 0:
+            edge_radii = np.arange(-55, 2.5, 2.5)  # -55 kpc to 0 kpc with a step of 2.5 kpc
+        else:
+            edge_radii = np.arange(0, 57.5, 2.5)   # 0 kpc to 55 kpc with a step of 2.5 kpc
+        bins = len(edge_radii) - 1
+        n, edges = np.histogram(x, bins=edge_radii)
         y_mean, y_max, y_min = np.zeros(bins), np.zeros(bins), np.zeros(bins)
         z_mean, z_max, z_min = np.zeros(bins), np.zeros(bins), np.zeros(bins)
         x_mean = (edges[:-1] + edges[1:]) / 2
@@ -235,18 +244,35 @@ class PlotV50W80Profile:
         return x_mean, y_mean, y_max, y_min, z_mean, z_max, z_min
 
     def LoadETGKin(self):
-        gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
+        # gal_list = np.array(['NGC2685', 'NGC3941', 'NGC3945', 'NGC4262', 'NGC5582', 'NGC6798', 'UGC06176'])
+        gal_list = np.array(['NGC2594', 'NGC2685', 'NGC2764', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941',
+                             'NGC3945', 'NGC4203', 'NGC4262', 'NGC5582', 'NGC5631', 'NGC6798', 'UGC06176', 'UGC09519'])
         dis_red_all, v_red_all, sigma_red_all = np.array([]), np.array([]), np.array([])
         dis_blue_all, v_blue_all, sigma_blue_all = np.array([]), np.array([]), np.array([])
         for jj in range(len(gal_list)):
             dis_red_gal, dis_blue_gal, v_red_gal, v_blue_gal, \
             sigma_red_gal, sigma_blue_gal = PlaceSudoSlitOnEachGal(igal=gal_list[jj])
-            dis_red_all = np.hstack((dis_red_all, dis_red_gal))
-            dis_blue_all = np.hstack((dis_blue_all, dis_blue_gal))
-            v_red_all = np.hstack((v_red_all, v_red_gal))
-            v_blue_all = np.hstack((v_blue_all, v_blue_gal))
-            sigma_red_all = np.hstack((sigma_red_all, sigma_red_gal))
-            sigma_blue_all = np.hstack((sigma_blue_all, sigma_blue_gal))
+
+            # Stacking method # 1
+            # dis_red_all = np.hstack((dis_red_all, dis_red_gal))
+            # dis_blue_all = np.hstack((dis_blue_all, dis_blue_gal))
+            # v_red_all = np.hstack((v_red_all, v_red_gal))
+            # v_blue_all = np.hstack((v_blue_all, v_blue_gal))
+            # sigma_red_all = np.hstack((sigma_red_all, sigma_red_gal))
+            # sigma_blue_all = np.hstack((sigma_blue_all, sigma_blue_gal))
+
+            # Stacking method # 2
+            dis_red_gal_mean, v_red_gal_mean, _, _, \
+            sigma_red_gal_mean, _, _ = self.Bin(dis_red_gal, v_red_gal, sigma_red_gal)
+            dis_blue_gal_mean, v_blue_gal_mean, _, _, \
+            sigma_blue_gal_mean, _, _ = self.Bin(dis_blue_gal, v_blue_gal, sigma_blue_gal)
+
+            dis_red_all = np.hstack((dis_red_all, dis_red_gal_mean))
+            dis_blue_all = np.hstack((dis_blue_all, dis_blue_gal_mean))
+            v_red_all = np.hstack((v_red_all, v_red_gal_mean))
+            v_blue_all = np.hstack((v_blue_all, v_blue_gal_mean))
+            sigma_red_all = np.hstack((sigma_red_all, sigma_red_gal_mean))
+            sigma_blue_all = np.hstack((sigma_blue_all, sigma_blue_gal_mean))
 
         sort = np.argsort(dis_red_all)
         dis_red_all, v_red_all, sigma_red_all = dis_red_all[sort], v_red_all[sort], sigma_red_all[sort]
@@ -254,10 +280,10 @@ class PlotV50W80Profile:
         dis_blue_all, v_blue_all, sigma_blue_all = dis_blue_all[sort], v_blue_all[sort], sigma_blue_all[sort]
         self.dis_red_gal_mean, self.v_red_gal_mean, self.v_red_gal_max, self.v_red_gal_min, \
         self.sigma_red_gal_mean, self.sigma_red_gal_max, self.sigma_red_gal_min = self.Bin(dis_red_all, v_red_all,
-                                                                                           sigma_red_all, bins=20)
+                                                                                           sigma_red_all)
         self.dis_blue_gal_mean, self.v_blue_gal_mean, self.v_blue_gal_max, self.v_blue_gal_min, \
         self.sigma_blue_gal_mean, self.sigma_blue_gal_max, self.sigma_blue_gal_min = self.Bin(dis_blue_all, v_blue_all,
-                                                                                              sigma_blue_all, bins=20)
+                                                                                              sigma_blue_all)
 
     def LoadNebKin(self):
         dis_red_all, v_red_all, sigma_red_all = np.array([]), np.array([]), np.array([])
@@ -281,22 +307,23 @@ class PlotV50W80Profile:
         dis_blue_all, v_blue_all, sigma_blue_all = dis_blue_all[sort], v_blue_all[sort], sigma_blue_all[sort]
         self.dis_red_neb_mean, self.v_red_neb_mean, self.v_red_neb_max, self.v_red_neb_min, \
         self.sigma_red_neb_mean, self.sigma_red_neb_max, self.sigma_red_neb_min = self.Bin(dis_red_all, v_red_all,
-                                                                                           sigma_red_all, bins=20)
+                                                                                           sigma_red_all)
         self.dis_blue_neb_mean, self.v_blue_neb_mean, self.v_blue_neb_max, self.v_blue_neb_min, \
         self.sigma_blue_neb_mean, self.sigma_blue_neb_max, self.sigma_blue_neb_min = self.Bin(dis_blue_all, v_blue_all,
-                                                                                              sigma_blue_all, bins=20)
+                                                                                              sigma_blue_all)
 
-cubename_list = ['HE0435-5304', 'PKS0405-123', 'HE0238-1904',
-                 '3C57', 'J0110-1648', 'PKS2242-498',
-                 'HE0112-4145', 'J0154-0712', 'LBQS1435-0134',
-                 'PG1522+101', 'PKS0232-04']
-cubename_label_list = [r'HE\,0435$-$5304', r'PKS\,0405$-$123', r'HE\,0238$-$1904',
-                 r'3C\,57', r'J0110$-$1648', r'PKS\,2242$-$498',
-                 r'HE\,0112$-$4145', r'J0154$-$0712', r'Q1435$-$0134',
-                 r'PG\,1522$+$101', r'PKS\,0232$-$04', r'']
-width_list = [50, 50, 40, 50, 50, 50, 50, 50, 50, 50, 50]
+cubename_list = ['PKS0405-123', 'HE0238-1904','HE0435-5304',
+                 '3C57', 'J0110-1648', 'HE0112-4145',
+                 'J0154-0712', 'LBQS1435-0134', 'PG1522+101',
+                 'PKS2242-498', 'PKS0232-04']
+
+cubename_label_list = [r'PKS\,0405$-$123', r'HE\,0238$-$1904', r'HE\,0435$-$5304',
+                       r'3C\,57', r'J0110$-$1648', r'HE\,0112$-$4145',
+                       r'J0154$-$0712', r'Q1435$-$0134', r'PG\,1522$+$101',
+                       r'PKS\,2242$-$498', r'PKS\,0232$-$04', r'']
+width_list = [40, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
 height_list = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-angle_list = [90, -90, 90, -30, 180, 180, 220, 135, 150, 180, 180]
+angle_list = [-90, 90, 90, -30, 180, 220, 135, 150, 180, 180, 180]
 marker_list = ['o', 's', 'D', '^', 'v', '<', ]
 
 
