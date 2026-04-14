@@ -19,7 +19,6 @@ from photutils.segmentation import detect_threshold, detect_sources
 from astropy.coordinates import SkyCoord
 from astropy.convolution import convolve, Kernel, Gaussian1DKernel, Gaussian2DKernel, Box2DKernel, Box1DKernel
 from image_diagnostics import make_figure
-
 rc('font', **{'family': 'serif', 'serif': ['Times New Roman']})
 rc('text', usetex=True)
 rc('xtick', direction='in')
@@ -693,6 +692,8 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
 # AnalyzeMorphology(cubename='PKS0232-04', nums_seg_OII=[4, 5, 7], addon='_plus_galaxies')
 
 # HI 21 cm
+# Parent galaxy list for HI 21 cm analysis, which is a subset of the full galaxy list in the paper.
+# The full list is in the paper, and this is just for the HI 21 cm analysis.
 # gal_list = ['NGC0680', 'NGC1023', 'NGC2594', 'NGC2685', 'NGC2764', 'NGC2768',
 #             'NGC2824', 'NGC2859', 'NGC3032', 'NGC3073', 'NGC3182', 'NGC3193',
 #             'NGC3384', 'NGC3414', 'NGC3457', 'NGC3489', 'NGC3499', 'NGC3522',
@@ -702,14 +703,14 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
 #             'NGC5103', 'NGC5173', 'NGC5198', 'NGC5422', 'NGC5557', 'NGC5582',
 #             'NGC5631', 'NGC5866', 'NGC6798', 'NGC7280', 'NGC7332', 'NGC7465',
 #             'PGC028887', 'UGC03960', 'UGC05408', 'UGC06176', 'UGC09519',]
-gal_list = ['NGC0680', 'NGC1023', 'NGC2594', 'NGC2685', 'NGC2764', 'NGC2768',
-            'NGC2859', 'NGC3032', 'NGC3073', 'NGC3457',
-            'NGC3522', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941', 'NGC3945',
-            'NGC3998', 'NGC4026', 'NGC4036', 'NGC4111', 'NGC4203',
-            'NGC4262', 'NGC4278', 'NGC4694',
-            'NGC5103', 'NGC5173', 'NGC5198', 'NGC5582',
-            'NGC5631', 'NGC6798', 'NGC7280', 'NGC7465',
-            'PGC028887', 'UGC03960', 'UGC05408', 'UGC06176', 'UGC09519',]
+# gal_list = ['NGC0680', 'NGC1023', 'NGC2594', 'NGC2685', 'NGC2764', 'NGC2768',
+#             'NGC2859', 'NGC3032', 'NGC3073', 'NGC3457',
+#             'NGC3522', 'NGC3619', 'NGC3626', 'NGC3838', 'NGC3941', 'NGC3945',
+#             'NGC3998', 'NGC4026', 'NGC4036', 'NGC4111', 'NGC4203',
+#             'NGC4262', 'NGC4278', 'NGC4694',
+#             'NGC5103', 'NGC5173', 'NGC5198', 'NGC5582',
+#             'NGC5631', 'NGC6798', 'NGC7280', 'NGC7465',
+#             'PGC028887', 'UGC03960', 'UGC05408', 'UGC06176', 'UGC09519',]
 
 # Analyze21cmMorphology(gal_list)
 # Analyze21cmMorphology(['NGC3619'])

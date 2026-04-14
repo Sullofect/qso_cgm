@@ -74,14 +74,6 @@ def quasar_centered_morphology_pa(image, qso_xy):
     yy, xx = np.nonzero(valid)
     flux = img[yy, xx]
 
-    # valid = np.isfinite(image) & (image > 0)
-    # plt.figure(figsize=(6, 6))
-    # plt.imshow(image, origin='lower', cmap='gray')
-    # plt.imshow(np.where(valid, 1.0, np.nan), origin='lower', alpha=0.5, cmap='spring')
-    # plt.plot(qso_xy[0], qso_xy[1], 'w*', ms=12)
-    # plt.title("Pixels actually used in moment calculation")
-    # plt.show()
-
     xq, yq = qso_xy
     dx = xx.astype(float) - xq
     dy = yy.astype(float) - yq
@@ -142,31 +134,23 @@ def nebula_radio_axis_compare(cubename, str_zap="", line="OIII", npixels=20, nsi
     # --------------------------------------------------------
     # Mask emission map
     # --------------------------------------------------------
-    # Load the segmentation map
     i = np.where(allType[:, 0] == cubename)[0][0]
-    nums_seg_OII = allType[i, 3]
-    select_seg_OII = allType[i, 4]
-    nums_seg_OIII = allType[i, 5]
-    select_seg_OIII = allType[i, 6]
+    if line == 'OII':
+        nums_seg = allType[i, 3]
+        select_seg = allType[i, 4]
+    else:
+        nums_seg = allType[i, 5]
+        select_seg = allType[i, 6]
 
-    line_OII, line_OIII = 'OII', 'OIII'
-    path_3Dseg_OII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-        format(cubename, str_zap, line_OII, *UseSeg)
-    path_3Dseg_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
-        format(cubename, str_zap, line_OIII, *UseSeg)
+    path_3Dseg = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_3DSeg_{}_{}_{}_{}.fits'. \
+        format(cubename, str_zap, line, *UseSeg)
 
-    seg_OII = fits.open(path_3Dseg_OII)[1].data
-    if select_seg_OII:
-        nums_seg_OII = np.setdiff1d(np.arange(1, np.max(seg_OII) + 1), nums_seg_OII)
-    seg_OII_mask = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, -1)
-    image = np.where(seg_OII_mask != -1, image, np.nan)
-
-    if os.path.exists(path_3Dseg_OIII):
-        seg_OIII = fits.open(path_3Dseg_OIII)[1].data
-        if select_seg_OIII:
-            nums_seg_OIII = np.setdiff1d(np.arange(1, np.max(seg_OIII) + 1), nums_seg_OIII)
-        seg_OIII_mask = np.where(~np.isin(seg_OIII, nums_seg_OIII), seg_OIII, -1)
-        image = np.where(seg_OIII_mask != -1, image, np.nan)
+    seg_line = fits.open(path_3Dseg)[1].data
+    if select_seg:
+        nums_seg = np.setdiff1d(np.arange(1, np.max(seg_line) + 1), nums_seg)
+    seg_line = np.where(~np.isin(seg_line, nums_seg), seg_line, 0)
+    seg_line = np.where(seg_line == 0 , seg_line, 1)
+    image = np.where(seg_line == 1, image, np.nan)
 
     # --------------------------------------------------------
     # Pixel coordinates
@@ -256,7 +240,7 @@ def plot_nebula_axes(image, qso_xy, major_pa_deg, minor_pa_deg, lobe1_xy, lobe2_
     plt.tight_layout()
     plt.show()
 
-res = nebula_radio_axis_compare(cubename="3C57",
+res = nebula_radio_axis_compare(cubename="PKS0232-04",
                                 str_zap="",
                                 line="OII",
                                 npixels=20,
