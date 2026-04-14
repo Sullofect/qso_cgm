@@ -37,11 +37,11 @@ rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 
 # Save the asymmetry values
-# path_OII_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_OII_asymmetry.txt'
-# t_OII = Table.read(path_OII_asymmetry, format='ascii.fixed_width')
-#
-# path_OIII_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_OIII_asymmetry.txt'
-# t_OIII = Table.read(path_OIII_asymmetry, format='ascii.fixed_width')
+path_OII_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_OII_asymmetry.txt'
+t_OII = Table.read(path_OII_asymmetry, format='ascii.fixed_width')
+
+path_OIII_asymmetry = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_OIII_asymmetry.txt'
+t_OIII = Table.read(path_OIII_asymmetry, format='ascii.fixed_width')
 
 path_OII_asymmetry_plus = '../../MUSEQuBES+CUBS/asymmetry/CUBS+MUSE_OII_asymmetry_plus_galaxies.txt'
 t_OII_plus = Table.read(path_OII_asymmetry_plus, format='ascii.fixed_width')
@@ -57,8 +57,8 @@ t_Lya = Table.read(path_Lya_asymmetry, format='ascii.fixed_width')
 
 
 # Conduct K-S test
-A_OII, A_OII_shape = t_OII_plus['A_ZQL'], t_OII_plus['A_shape_ZQL']
-A_OIII, A_OIII_shape = t_OIII_plus['A_ZQL'], t_OIII_plus['A_shape_ZQL']
+A_OII, A_OII_shape = t_OII['A_ZQL'], t_OII['A_shape_ZQL']
+A_OIII, A_OIII_shape = t_OIII['A_ZQL'], t_OIII['A_shape_ZQL']
 A_21cm, A_21cm_shape = t_21cm['A_ZQL'], t_21cm['A_shape_ZQL']
 A_Lya, A_Lya_shape = t_Lya['A_ZQL'], t_Lya['A_shape_ZQL']
 
@@ -81,13 +81,13 @@ print('OII and Lyalpha', stat, pval)
 bins = np.linspace(0, 2, 11)
 fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
 fig.subplots_adjust(wspace=0.15)
-ax.hist(A_OII, bins=bins, color='brown', alpha=0.5, histtype='stepfilled', lw=1.2,
+ax.hist(A_OII_shape, bins=bins, color='brown', alpha=0.5, histtype='stepfilled', lw=1.2,
            label=r'$\rm [O\,II]$', zorder=100, weights=np.ones_like(A_OII_shape) / len(A_OII_shape))
 mid = (bins[1:] + bins[:-1]) / 2
 mid = np.append(mid, mid[-1] + mid[-1] - mid[-2])
-counts1, _ = np.histogram(A_21cm, bins=bins, weights=np.ones_like(A_21cm_shape) / len(A_21cm_shape))
+counts1, _ = np.histogram(A_21cm_shape, bins=bins, weights=np.ones_like(A_21cm_shape) / len(A_21cm_shape))
 counts1 = np.append(counts1, counts1[-1])
-counts2, _ = np.histogram(A_Lya, bins=bins, weights=np.ones_like(A_Lya_shape) / len(A_Lya_shape))
+counts2, _ = np.histogram(A_Lya_shape, bins=bins, weights=np.ones_like(A_Lya_shape) / len(A_Lya_shape))
 counts2 = np.append(counts2, counts2[-1])
 plt.step(mid, counts1, where="mid", alpha=0.8, color="blue", linestyle="--", linewidth=2, label=r'$\rm H\,I \, 21 \,cm$')
 plt.step(mid, counts2, where="mid", alpha=0.8, color="red", linestyle="--", linewidth=2, label=r'$\rm Ly \alpha$')

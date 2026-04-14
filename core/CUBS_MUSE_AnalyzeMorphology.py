@@ -29,6 +29,11 @@ rc('ytick.major', size=8)
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 np.random.seed(1)
 
+# Load data
+UseDataSeg = (1.5, 'gauss', None, None)
+UseSeg = (1.5, 'gauss', 1.5, 'gauss')
+line_OII, line_OIII = 'OII', 'OIII'
+
 def CalculateAsymmetry(image=None, mask=None, center=None, sky_asymmetry=None, type='shape'):
     # Rotate around given center
     image_180 = skimage.transform.rotate(image, 180.0, center=center)
@@ -73,11 +78,6 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     data_qso = ascii.read(path_qso, format='fixed_width')
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
-
-    # Load data
-    UseDataSeg = (1.5, 'gauss', None, None)
-    UseSeg = (1.5, 'gauss', 1.5, 'gauss')
-    line_OII, line_OIII = 'OII', 'OIII'
 
     # OII SBs
     if cubename == 'TEX0206-048':
@@ -629,7 +629,7 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
 # AnalyzeMorphology(cubename='J2135-5316', nums_seg_OII=[2, 3, 4, 6, 10, 12, 13, 14, 16, 17, 18, 19],
 #                   nums_seg_OIII=[4, 7, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20])
 # AnalyzeMorphology(cubename='J0119-2010', nums_seg_OII=[3, 4, 6, 7, 10, 11, 12, 14, 16, 17, 18, 20],
-#                   nums_seg_OIII=[7, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20])
+#                   nums_seg_OIII=[2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20])
 # AnalyzeMorphology(cubename='HE0246-4101', nums_seg_OII=[1], select_seg_OII=True)
 # AnalyzeMorphology(cubename='J0028-3305', nums_seg_OII=[2], select_seg_OII=True)
 # AnalyzeMorphology(cubename='HE0419-5657', nums_seg_OII=[2, 4, 5], select_seg_OII=True)
