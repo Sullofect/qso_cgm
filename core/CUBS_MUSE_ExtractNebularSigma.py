@@ -20,6 +20,10 @@ rc('xtick.major', size=8)
 rc('ytick.major', size=8)
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
+# QSO information
+path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
+data_qso = ascii.read(path_qso, format='fixed_width')
+
 c_kms = 2.998e5
 wave_OII3727_vac = 3727.092
 wave_OII3729_vac = 3729.875
@@ -30,18 +34,19 @@ wave_OIII5008_vac = 5008.239
 def Bin(x, y, bins=None):
     n, edges = np.histogram(x, bins=bins)
     len_bins = len(bins) - 1
-    y_mean, y_max, y_min = np.zeros(len_bins), np.zeros(len_bins), np.zeros(len_bins)
+    y_mean, y_max, y_min, y_std = np.zeros(len_bins), np.zeros(len_bins), np.zeros(len_bins), np.zeros(len_bins)
     x_mean = (edges[:-1] + edges[1:]) / 2
     for i in range(len_bins):
         if n[i] == 0:
-            y_mean[i], y_max[i], y_min[i] = np.nan, np.nan, np.nan
+            y_mean[i], y_max[i], y_min[i], y_std[i] = np.nan, np.nan, np.nan, np.nan
         else:
             mask = (x > edges[i]) * (x <= edges[i + 1])
             if len(y[mask]) == 0:
-                y_mean[i], y_max[i], y_min[i] = np.nan, np.nan, np.nan
+                y_mean[i], y_max[i], y_min[i], y_std[i] = np.nan, np.nan, np.nan, np.nan
             else:
-                y_mean[i], y_max[i], y_min[i] = np.nanmean(y[mask]), np.nanmax(y[mask]), np.nanmin(y[mask])
-    return x_mean, y_mean, y_max, y_min
+                y_mean[i], y_max[i], y_min[i], y_std[i] = np.nanmean(y[mask]), np.nanmax(y[mask]), \
+                                                          np.nanmin(y[mask]), np.nanstd(y[mask])
+    return x_mean, y_mean, y_max, y_min, y_std
 
 def CalculateVelocityDifference(cubename=None, zapped=False, NLR='', UseDataSeg=(1.5, 'gauss', None, None)):
     # Fit parameter
@@ -113,15 +118,9 @@ def CalculateVelocityDifference(cubename=None, zapped=False, NLR='', UseDataSeg=
     plt.show()
 
 def ExtractRadialProfile(allFields=None):
-    # QSO information
-    path_qso = '../../MUSEQuBES+CUBS/gal_info/quasars.dat'
-    data_qso = ascii.read(path_qso, format='fixed_width')
-
     r_stack, sigma_stack = [], []
-
     r_L_stack, r_S_stack, r_A_stack = [], [], []
     sigma_L_stack, sigma_S_stack, sigma_A_stack = [], [], []
-
     r_RL_stack, r_RQ_stack, r_RJ_stack = [], [], []
     sigma_RL_stack, sigma_RQ_stack, sigma_RJ_stack = [], [], []
 
@@ -204,7 +203,6 @@ def ExtractRadialProfile(allFields=None):
             v50 = np.where(seg_OIII_mask != -1, v50, np.nan)
             s80 = np.where(seg_OIII_mask != -1, s80, np.nan)
 
-
         # Draw the radial profile
         edge_radii = np.arange(5, 115, 10)
         d_A_kpc = cosmo.angular_diameter_distance(z_qso).value * 1e3
@@ -212,29 +210,10 @@ def ExtractRadialProfile(allFields=None):
         xycen = SkyCoord(ra_qso, dec_qso, unit='deg').to_pixel(w)
         rp = RadialProfile(s80, xycen, edge_radii_pixel, error=None, mask=None)
 
-        # Check the centroid
-        # plt.figure()
-        # plt.imshow(s80, origin='lower', cmap='viridis')
-        # plt.plot(xycen[0], xycen[1], 'ro', ms=15)
-        # plt.show()
-        # raise ValueError('Check the center and the radial profile.')
-
         # Convert from pixel to kpc for plotting
         d_A_kpc = cosmo.angular_diameter_distance(z_qso).value * 1e3
         r_kpc = rp.radius * 0.2 * d_A_kpc / 206265 # Convert from pixel to kpc using the WCS information
         profile = rp.profile
-
-        color = 'grey'
-        # if RL:
-        #     if jet:
-        #         ax[0].plot(r_kpc, profile, '--', color=color, linewidth=1.5, alpha=0.2)
-        #     else:
-        #         ax[0].plot(r_kpc, profile, '-', color=color, linewidth=1.5, alpha=0.2)
-        # else:
-        #     ax[0].plot(r_kpc, profile, '-', color='brown', linewidth=1.5, alpha=0.2)
-
-        # Convert unit from pixel to kpc for stacking
-        # r_kpc_data = rp.data_radius * 0.2 * d_A_kpc / 206265  # Convert from pixel to kpc using the WCS information
 
         # Stack all of them
         r_stack.extend(r_kpc)
@@ -273,42 +252,26 @@ def ExtractRadialProfile(allFields=None):
                                                   np.asarray(sigma_RJ_stack)
 
     # Profile
-    r_mean, sigma_mean, sigma_max, sigma_min = Bin(r_stack, sigma_stack, bins=edge_radii)
-    r_L_mean, sigma_L_mean, sigma_L_max, sigma_L_min = Bin(r_L_stack, sigma_L_stack, bins=edge_radii)
-    r_S_mean, sigma_S_mean, sigma_S_max, sigma_S_min = Bin(r_S_stack, sigma_S_stack, bins=edge_radii)
-    r_A_mean, sigma_A_mean, sigma_A_max, sigma_A_min = Bin(r_A_stack, sigma_A_stack, bins=edge_radii)
-
-    r_RL_mean, sigma_RL_mean, sigma_RL_max, sigma_RL_min = Bin(r_RL_stack, sigma_RL_stack, bins=edge_radii)
-    r_RQ_mean, sigma_RQ_mean, sigma_RQ_max, sigma_RQ_min = Bin(r_RQ_stack, sigma_RQ_stack, bins=edge_radii)
-    r_RJ_mean, sigma_RJ_mean, sigma_RJ_max, sigma_RJ_min = Bin(r_RJ_stack, sigma_RJ_stack, bins=edge_radii)
-
-    palette = {
-        "blue": "#3B5BDB",  # strong but restrained
-        "red": "#C92A2A",  # muted deep red
-        "green": "#2B8A3E",  # forest green
-        "orange": "#E67700",  # warm but not too bright
-        "purple": "#7B2CBF",  # good aggregate / special sample
-        "brown": "#8D6E63",  # useful neutral secondary class
-        "gray": "#495057",  # dark neutral
-    }
-
+    r_mean, sigma_mean, sigma_max, sigma_min, sigma_std = Bin(r_stack, sigma_stack, bins=edge_radii)
+    r_L_mean, sigma_L_mean, sigma_L_max, sigma_L_min, sigma_L_std = Bin(r_L_stack, sigma_L_stack, bins=edge_radii)
+    r_S_mean, sigma_S_mean, sigma_S_max, sigma_S_min, sigma_S_std = Bin(r_S_stack, sigma_S_stack, bins=edge_radii)
+    r_A_mean, sigma_A_mean, sigma_A_max, sigma_A_min, sigma_A_std = Bin(r_A_stack, sigma_A_stack, bins=edge_radii)
+    r_RL_mean, sigma_RL_mean, sigma_RL_max, sigma_RL_min, sigma_RL_std = Bin(r_RL_stack, sigma_RL_stack, bins=edge_radii)
+    r_RQ_mean, sigma_RQ_mean, sigma_RQ_max, sigma_RQ_min, sigma_RQ_std = Bin(r_RQ_stack, sigma_RQ_stack, bins=edge_radii)
+    r_RJ_mean, sigma_RJ_mean, sigma_RJ_max, sigma_RJ_min, sigma_RJ_std = Bin(r_RJ_stack, sigma_RJ_stack, bins=edge_radii)
 
     # Plot the mean profiles
-    ax[1].plot(r_mean, sigma_mean, '-', color='#7d3c98', alpha=0.8, linewidth=2.0, label='All')
-    ax[1].plot(r_L_mean, sigma_L_mean, '-', color='k', alpha=0.8, linewidth=1.7, label='Irregular, large-scale')
-    ax[1].plot(r_S_mean, sigma_S_mean, '-', color=palette['red'], alpha=0.8, linewidth=1.7, label='Host-galaxy-scale')
-    ax[1].plot(r_A_mean, sigma_A_mean, '-', color=palette['blue'], alpha=0.8, linewidth=1.7,
-               label='Complex morphology \n and kinematics')
-
-    # ax[2].plot(r_RL_mean, sigma_RL_mean, '--', color='orange', markersize=15)
-    # ax[2].plot(r_RQ_mean, sigma_RQ_mean, '-.', color='orange', markersize=15)
-    # ax[2].plot(r_RJ_mean, sigma_RJ_mean, '-', color='orange', markersize=15)
-
-    ax[0].plot(r_mean, sigma_mean, '-', color='#7d3c98', alpha=0.8, linewidth=2.0, label='All')
+    ax[0].plot(r_mean, sigma_mean, '-', color='orange', alpha=0.8, linewidth=2.0, label='All')
+    ax[0].errorbar(10, 75, yerr=np.nanmean(sigma_std), fmt='none', ecolor='k', alpha=1.0, capsize=3)
     ax[0].plot(r_RL_mean, sigma_RL_mean, '-', color='darkred', alpha=0.8, linewidth=1.7, label='Radio-loud')
     ax[0].plot(r_RJ_mean, sigma_RJ_mean, '--', color='darkred', alpha=0.8, linewidth=1.7, label='Radio-loud with jet')
-    ax[0].plot(r_RQ_mean, sigma_RQ_mean, '-.', color='darkred', alpha=0.8, linewidth=1.7, label='Radio-quiet')
+    ax[0].plot(r_RQ_mean, sigma_RQ_mean, '-', color='#7B2CBF', alpha=0.8, linewidth=1.7, label='Radio-quiet')
 
+    ax[1].plot(r_mean, sigma_mean, '-', color='orange', alpha=0.8, linewidth=2.0, label='All')
+    ax[1].plot(r_L_mean, sigma_L_mean, '-', color='k', alpha=0.8, linewidth=1.7, label='Irregular, large-scale')
+    ax[1].plot(r_S_mean, sigma_S_mean, '-', color="#C92A2A", alpha=0.8, linewidth=1.7, label='Host-galaxy-scale')
+    ax[1].plot(r_A_mean, sigma_A_mean, '-', color='#3B5BDB', alpha=0.8, linewidth=1.7,
+               label='Complex morphology \n and kinematics')
 
     # Figure
     ax[0].set_title('Radio Classes', size=25, x=0.5, y=0.05)
@@ -320,7 +283,6 @@ def ExtractRadialProfile(allFields=None):
     ax[0].set_ylabel(r'$\rm{Radial \ Profile \ of} \ \sigma \rm \, [km \, s^{-1}]$', size=25)
     ax[0].legend(loc='upper right', fontsize=15)
     ax[1].legend(loc='upper right', fontsize=15)
-    # ax[2].legend(loc='best', fontsize=10)
     plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_SigmaProfile.png', bbox_inches='tight')
 
 L = np.array([["HE0226-4110",     150,  84, [2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], False,
