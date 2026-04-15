@@ -172,6 +172,12 @@ def nebula_radio_axis_compare(cubename, str_zap="", line="OIII", npixels=20, nsi
     d_lobe1_minor = angle_diff_180(lobe1_pa_deg, minor_pa_deg)
     d_lobe2_minor = angle_diff_180(lobe2_pa_deg, minor_pa_deg)
 
+
+    # Lobe PA versus nebula PA results
+    lobe_pa_deg = pa_from_east_ccw(lobe1_xy, lobe2_xy)
+    d_lobe_major = angle_diff_180(lobe_pa_deg, major_pa_deg)
+
+
     results = {"cubename": cubename,
                "path_map": path_map,
                "qso_xy": qso_xy,
@@ -179,12 +185,14 @@ def nebula_radio_axis_compare(cubename, str_zap="", line="OIII", npixels=20, nsi
                "lobe2_xy": lobe2_xy,
                "major_pa_deg": major_pa_deg,
                "minor_pa_deg": minor_pa_deg,
+               "lobe_pa_deg": lobe_pa_deg,
                "lobe1_pa_deg": lobe1_pa_deg,
                "lobe2_pa_deg": lobe2_pa_deg,
                "d_lobe1_major_deg": d_lobe1_major,
                "d_lobe2_major_deg": d_lobe2_major,
                "d_lobe1_minor_deg": d_lobe1_minor,
                "d_lobe2_minor_deg": d_lobe2_minor,
+               "d_lobe_major_deg": d_lobe_major,
                }
 
 
@@ -228,16 +236,17 @@ def plot_nebula_axes(image, qso_xy, major_pa_deg, minor_pa_deg, lobe1_xy, lobe2_
     ax[0].plot([x0, lobe2_xy[0]], [y0, lobe2_xy[1]], color='red', ls='--', lw=1.5)
 
     # Label Lobe 1 and Lobe 2
-    ax[0].text(lobe1_xy[0], lobe1_xy[1], 'Lobe 1', color='red', fontsize=10, ha='left', va='bottom')
-    ax[0].text(lobe2_xy[0], lobe2_xy[1], 'Lobe 2', color='red', fontsize=10, ha='left', va='bottom')
+    ax[0].text(lobe1_xy[0], lobe1_xy[1], 'Lobe Far', color='red', fontsize=10, ha='left', va='bottom')
+    ax[0].text(lobe2_xy[0], lobe2_xy[1], 'Lobe Close', color='red', fontsize=10, ha='left', va='bottom')
 
     ax[0].legend(frameon=False)
     plt.tight_layout()
     plt.show()
 
 # Differences in major axis alignment for all objects
-d_lobe1_major_deg = []
-d_lobe2_major_deg = []
+d_lobe_major_deg_array = []
+d_lobe1_major_deg_array = []
+d_lobe2_major_deg_array = []
 for cubename in allType[:, 0]:
     res = nebula_radio_axis_compare(cubename=cubename,
                                     str_zap="",
@@ -245,14 +254,16 @@ for cubename in allType[:, 0]:
                                     npixels=20,
                                     nsigma=2.0,
                                     )
-
-    d_lobe1_major_deg.append(res["d_lobe1_major_deg"])
-    d_lobe2_major_deg.append(res["d_lobe2_major_deg"])
+    d_lobe_major_deg_array.append(res["d_lobe_major_deg"])
+    d_lobe1_major_deg_array.append(res["d_lobe1_major_deg"])
+    d_lobe2_major_deg_array.append(res["d_lobe2_major_deg"])
 
 
 plt.figure(figsize=(6, 5))
-plt.hist(d_lobe1_major_deg, bins=np.arange(0, 100, 10), color='blue', alpha=0.5, label='Lobe 1')
-plt.hist(d_lobe2_major_deg, bins=np.arange(0, 100, 10), color='red', alpha=0.5, label='Lobe 2')
+# plt.hist(d_lobe_major_deg_array, bins=np.arange(0, 100, 10), color='green', alpha=0.5, label='Lobe PA vs Major PA')
+# plt.hist(d_lobe1_major_deg_array, bins=np.arange(0, 100, 10), color='blue', alpha=0.5, label='Lobe 1')
+# plt.hist(d_lobe2_major_deg_array, bins=np.arange(0, 100, 10), color='red', alpha=0.5, label='Lobe 2')
+plt.plot()
 plt.xlabel('Angle difference (degrees)')
 plt.ylabel('Number of objects')
 plt.title('Angle difference between radio lobes and nebular major axis')
