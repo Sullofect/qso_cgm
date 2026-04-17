@@ -5,10 +5,11 @@ import numpy as np
 import skimage.measure
 import skimage.transform
 import skimage.feature
-import skimage.segmentation
-from statmorph_ZQL import source_morphology
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
+import skimage.segmentation
+from scipy.stats import ks_2samp
+from statmorph_ZQL import source_morphology
 from astropy import units as u
 from astropy.io import ascii
 from matplotlib import rc
@@ -57,13 +58,12 @@ t_Lya = Table.read(path_Lya_asymmetry, format='ascii.fixed_width')
 
 
 # Conduct K-S test
-A_OII, A_OII_shape = t_OII['A_ZQL'], t_OII['A_shape_ZQL']
-A_OIII, A_OIII_shape = t_OIII['A_ZQL'], t_OIII['A_shape_ZQL']
+A_OII, A_OII_shape = t_OII_plus['A_ZQL'], t_OII_plus['A_shape_ZQL']
+A_OIII, A_OIII_shape = t_OIII_plus['A_ZQL'], t_OIII_plus['A_shape_ZQL']
 A_21cm, A_21cm_shape = t_21cm['A_ZQL'], t_21cm['A_shape_ZQL']
 A_Lya, A_Lya_shape = t_Lya['A_ZQL'], t_Lya['A_shape_ZQL']
 
-#
-from scipy.stats import ks_2samp
+# K-S test
 stat, pval = ks_2samp(A_OII_shape, A_21cm_shape)
 print('shape OII and 21', stat, pval)
 
