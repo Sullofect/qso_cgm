@@ -21,4 +21,29 @@ object_aliases = {"J0110-1648": ["Q0110-1648"],
 
 
 
-def switch_astrometry():
+
+
+def switch_astrometry(filename_input=None, filename_output=None):
+    hdul_input = fits.open(filename_input)
+    header_input = hdul_input[1].header
+    data_input = hdul_input[1].data
+
+    # Find the correct Gaia-corrected header
+    cubename = filename_input.split('/')[-1].split('_')[0]
+    cubename_canonical = cubename
+    if cubename in object_aliases:
+        cubename_canonical = cubename
+    else:
+        for canonical_name, aliases in object_aliases.items():
+            if cubename in aliases:
+                cubename_canonical = canonical_name
+                break
+
+    #
+
+
+
+
+
+
+

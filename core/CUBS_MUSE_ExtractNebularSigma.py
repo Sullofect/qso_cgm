@@ -262,7 +262,7 @@ def ExtractRadialProfile(allFields=None):
 
     # Plot the mean profiles
     ax[0].plot(r_mean, sigma_mean, '-', color='orange', alpha=0.8, linewidth=2.0, label='All')
-    ax[0].errorbar(10, 75, yerr=np.nanmean(sigma_std), fmt='none', ecolor='k', alpha=1.0, capsize=3)
+    ax[0].errorbar(10, 275, yerr=np.nanmean(sigma_std) / np.sqrt(27), fmt='none', ecolor='k', alpha=1.0, capsize=3)
     ax[0].plot(r_RL_mean, sigma_RL_mean, '-', color='darkred', alpha=0.8, linewidth=1.7, label='Radio-loud')
     ax[0].plot(r_RJ_mean, sigma_RJ_mean, '--', color='darkred', alpha=0.8, linewidth=1.7, label='Radio-loud with jet')
     ax[0].plot(r_RQ_mean, sigma_RQ_mean, '-', color='#7B2CBF', alpha=0.8, linewidth=1.7, label='Radio-quiet')
