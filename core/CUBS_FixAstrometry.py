@@ -372,6 +372,15 @@ def GenerateF814WImage(cubename):
     hdul_muse_white_gaia.writeto(path_muse_F814W_band_gaia, overwrite=True)
 
 
+def FixAstrometryESO_SDJ(cubename):
+    # Path HST
+    path_HST = '../../MUSEQuBES+CUBS/HST_drizzles/{}_DRIZZLE_FINAL_vac.fits'.format(cubename)
+
+    # Path MUSE
+    path_MUSE = '../../MUSEQuBES+CUBS/CUBS_cubes_gaia/{}_eso_coadd_nosky_sub_ZAP_WHITE_astro.fits'.format(cubename)
+
+
+
 
 
 
@@ -463,4 +472,4 @@ def GenerateF814WImage(cubename):
 # GenerateF814WImage(cubename='HE0331-4112')
 
 # Reveal tidal tail for HE0226-4110 which is a MUSE CUBE
-GenerateF814WImage(cubename='HE0226-4110')
+# GenerateF814WImage(cubename='HE0226-4110')
