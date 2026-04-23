@@ -463,11 +463,11 @@ def FixAstrometryESO_SDJ(cubename):
 
     # Path HST
     if cubename == "J0119-2010":
-        path_HST = '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia.fits'.format(cubename)
+        path_HST = '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_astro.fits'.format(cubename)
     else:
         path_HST = find_existing_file(
             name_candidates,
-            '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci.fits')
+            '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci_astro.fits')
 
     # Path MUSE
     if cubename == 'J0454-6116':
@@ -486,7 +486,7 @@ def FixAstrometryESO_SDJ(cubename):
     hdul_muse, data_muse, hdr_muse, wcs_muse = load_2d_image_and_wcs(path_MUSE, ext=1)
 
     x_hst, y_hst, segm_hst = detect_bright_continuum_source(data_hst, npixels=10, nsigma=5)
-    x_muse, y_muse, segm_muse = detect_bright_continuum_source(data_muse, npixels=10, nsigma=5)
+    x_muse, y_muse, segm_muse = detect_bright_continuum_source(data_muse, npixels=10, nsigma=1)
 
     sky_hst = pixel_to_sky(x_hst, y_hst, wcs_hst)
     sky_muse = pixel_to_sky(x_muse, y_muse, wcs_muse)
@@ -512,15 +512,19 @@ def FixAstrometryESO_SDJ(cubename):
     idx_hst, sep2d_hst, _ = sky_hst.match_to_catalog_sky(coords_ls)
     idx_muse, sep2d_muse, _ = sky_muse.match_to_catalog_sky(coords_ls)
 
+    max_sep = 1 * u.arcsec
+    sep_constraint_hst = sep2d_hst < max_sep
+    sep_constraint_muse = sep2d_muse < max_sep
+
     print('\n=== Nearest LS source ===')
-    print(f'HST -> LS nearest separation:  {np.mean(sep2d_hst.arcsec)}"')
-    print(f'MUSE -> LS nearest separation: {np.mean(sep2d_muse.arcsec)}"')
+    print(f'HST -> LS nearest separation:  {np.mean(sep2d_hst.arcsec[sep_constraint_hst])}"')
+    print(f'MUSE -> LS nearest separation: {np.mean(sep2d_muse.arcsec[sep_constraint_muse])}"')
 
     # =========================
     # HST image
     # =========================
     fig_hst = plt.figure(figsize=(8, 8), dpi=300)
-    f_hst = aplpy.FITSFigure(path_HST, figure=fig_hst, north=True, ext=1)  # use the HST FITS file path
+    f_hst = aplpy.FITSFigure(path_HST, figure=fig_hst, north=True, hdu=1)  # use the HST FITS file path
     f_hst.show_colorscale(cmap='Greys', vmin=-2.353e-2, vmax=4.897e-2)
     f_hst.ticks.set_length(30)
     f_hst.ticks.hide()
@@ -553,7 +557,7 @@ def FixAstrometryESO_SDJ(cubename):
     # MUSE image
     # =========================
     fig_muse = plt.figure(figsize=(8, 8), dpi=300)
-    f_muse = aplpy.FITSFigure(path_MUSE, figure=fig_muse, north=True, ext=1)  # use the MUSE FITS file path
+    f_muse = aplpy.FITSFigure(path_MUSE, figure=fig_muse, north=True, hdu=1)  # use the MUSE FITS file path
     f_muse.show_colorscale(cmap='Greys', vmin=np.nanpercentile(data_muse, 5), vmax=np.nanpercentile(data_muse, 98))
     f_muse.ticks.set_length(30)
     f_muse.ticks.hide()
@@ -602,7 +606,7 @@ def FixDrizzleHSTImages(cubename):
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
     qso_coord = SkyCoord(ra=ra_qso * u.degree, dec=dec_qso * u.degree, frame='icrs')
-    search_radius = 60 * u.arcsec  # adjust as needed
+    search_radius = 100 * u.arcsec  # adjust as needed
 
     ls_coords = SkyCoord(ls_cat['ra'] * u.deg, ls_cat['dec'] * u.deg)
     sep = qso_coord.separation(ls_coords)
@@ -614,14 +618,14 @@ def FixDrizzleHSTImages(cubename):
     path_LS_cut = '../../MUSEQuBES+CUBS/astrometry/LS_{}_cut.txt'.format(cubename)
     ls_cat_cut.write(path_LS_cut, format='csv', overwrite=True)
 
-    # Path HST
+    # # Path HST
     path_HST = find_existing_file(
         name_candidates,
         '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia.fits')
 
     os.system('astrometry {} -c {} -hdul_idx 1 '
-              '--sigma_threshold_for_source_detection {} '
-              '-rot_scale 0 -xy_trafo 0 -high_res True'.format(path_HST, path_LS_cut, 2))
+              '-sigma_threshold_for_source_detection {} '
+              '-vignette_rec 0.9 -rot_scale 0 -xy_trafo 0'.format(path_HST, path_LS, 5))
 
     # if cubename != "J0119-2010":
     #     path_HST_sci = find_existing_file(
@@ -629,7 +633,7 @@ def FixDrizzleHSTImages(cubename):
     #         '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci.fits')
     #
     #     os.system('astrometry {} -c {} -hdul_idx 1 '
-    #               '--sigma_threshold_for_source_detection {} -high_res True'.format(path_HST_sci, path_LS, 20))
+    #               '-sigma_threshold_for_source_detection {}'.format(path_HST_sci, path_LS_cut, 10))
 
 
 # CUBS
@@ -722,21 +726,21 @@ def FixDrizzleHSTImages(cubename):
 
 
 # Redo the astrometry for Drizzles HST Images
-FixDrizzleHSTImages(cubename='J0110-1648')
-# FixDrizzleHSTImages(cubename='J2135-5316')
-# FixDrizzleHSTImages(cubename='J0119-2010')
-# FixDrizzleHSTImages(cubename='HE0246-4101')
+# FixDrizzleHSTImages(cubename='J0110-1648')
+# FixDrizzleHSTImages(cubename='J2135-5316') # done
+# FixDrizzleHSTImages(cubename='J0119-2010') # done
+# FixDrizzleHSTImages(cubename='HE0246-4101') # done
 # FixDrizzleHSTImages(cubename='J0028-3305')
-# FixDrizzleHSTImages(cubename='HE0419-5657')
-# FixDrizzleHSTImages(cubename='PKS2242-498')
-# FixDrizzleHSTImages(cubename='PKS0355-483')
-# FixDrizzleHSTImages(cubename='HE0112-4145')
-# FixDrizzleHSTImages(cubename='J0111-0316')
-# FixDrizzleHSTImages(cubename='HE2336-5540')
-# FixDrizzleHSTImages(cubename='HE2305-5315')
-# FixDrizzleHSTImages(cubename='J0454-6116')
-# FixDrizzleHSTImages(cubename='J0154-0712')
-# FixDrizzleHSTImages(cubename='HE0331-4112')
+# FixDrizzleHSTImages(cubename='HE0419-5657') # done
+FixDrizzleHSTImages(cubename='PKS2242-498') # done
+FixDrizzleHSTImages(cubename='PKS0355-483')
+FixDrizzleHSTImages(cubename='HE0112-4145')
+FixDrizzleHSTImages(cubename='J0111-0316')
+FixDrizzleHSTImages(cubename='HE2336-5540') # done
+FixDrizzleHSTImages(cubename='HE2305-5315') # done
+FixDrizzleHSTImages(cubename='J0454-6116')
+FixDrizzleHSTImages(cubename='J0154-0712')
+FixDrizzleHSTImages(cubename='HE0331-4112')
 
 # Check and Fix the astrometry for the MUSE cubes and the HST/MUSE centroids from ESO SDJ
 # FixAstrometryESO_SDJ(cubename='J0110-1648')
