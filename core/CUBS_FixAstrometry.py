@@ -55,7 +55,6 @@ def FixCubeHeader(cubename=None):
     hdul_muse_white[2].header.remove('CRDER3')
     hdul_muse_white.writeto(path_muse_white, overwrite=True)
 
-
 def FixAstrometry(cubename, str_zap=''):
     # Will be replaced by a table
     path_subcube = '../../MUSEQuBES+CUBS/gal_info/subcubes.dat'
@@ -123,7 +122,6 @@ def FixAstrometry(cubename, str_zap=''):
 
     path_sub_white_gaia = '../../MUSEQuBES+CUBS/fit_kin/{}{}_WCS_subcube.fits'.format(cubename, str_zap)
     sub_muse_white_gaia.write(path_sub_white_gaia)
-
 
 def FixGalaxyCatalog(cubename=None):
     # QSO information
@@ -235,7 +233,6 @@ def FixGalaxyCatalog(cubename=None):
         t.write(filename, format='fits', overwrite=True)
         t.write(filename_txt, format='ascii.fixed_width', overwrite=True)
 
-
 def FixAstrometrySeb(cubename):
 
     if cubename == 'J0110-1648':
@@ -316,7 +313,6 @@ def FixAstrometrySeb(cubename):
 
     hdul_muse_white_gaia.writeto(path_muse_white_gaia_save, overwrite=True)
 
-
 def GenerateF814WImage(cubename):
     if cubename == 'J0110-1648':
         cubename_load = 'Q0110-1648'
@@ -391,7 +387,6 @@ def GenerateF814WImage(cubename):
     hdul_muse_white_gaia[1].data = i_band.data
     hdul_muse_white_gaia.writeto(path_muse_F814W_band_gaia, overwrite=True)
 
-
 def load_2d_image_and_wcs(path, ext=0):
     hdul = fits.open(path)
     data = hdul[ext].data
@@ -402,7 +397,6 @@ def load_2d_image_and_wcs(path, ext=0):
     wcs = WCS(hdr).celestial
 
     return hdul, data, hdr, wcs
-
 
 def detect_bright_continuum_source(data, npixels=10, nsigma=2.5):
     """
@@ -416,11 +410,12 @@ def detect_bright_continuum_source(data, npixels=10, nsigma=2.5):
         med = np.nanmedian(img)
         img[bad] = med
 
-    mean, median, std = sigma_clipped_stats(img, sigma=3.0)
+    mean, median, std = sigma_clipped_stats(img, sigma=5.0)
     img_sub = img - median
 
     threshold = detect_threshold(img_sub, nsigma=nsigma)
     segm = detect_sources(img_sub, threshold, npixels=npixels)
+    segm = deblend_sources(img_sub, segm, npixels=10, nlevels=32, contrast=0.001)
 
     if segm is None:
         raise RuntimeError("No sources detected.")
@@ -433,10 +428,8 @@ def detect_bright_continuum_source(data, npixels=10, nsigma=2.5):
 
     return xcen, ycen, segm
 
-
 def pixel_to_sky(x, y, wcs):
     return wcs.pixel_to_world(x, y)
-
 
 def print_offset(label1, c1, label2, c2):
     dra = (c2.ra - c1.ra).to(u.arcsec)
@@ -447,7 +440,6 @@ def print_offset(label1, c1, label2, c2):
     print(f'{label2}: RA={c2.ra.deg:.8f}, Dec={c2.dec.deg:.8f}')
     print(f'Offset ({label2} - {label1}): dRA={dra.value:.3f}\"  dDec={ddec.value:.3f}\"')
     print(f'Total separation: {sep.value:.3f}\"')
-
 
 def find_existing_file(candidates, template):
     for name in candidates:
@@ -486,7 +478,7 @@ def FixAstrometryESO_SDJ(cubename):
     hdul_muse, data_muse, hdr_muse, wcs_muse = load_2d_image_and_wcs(path_MUSE, ext=1)
 
     x_hst, y_hst, segm_hst = detect_bright_continuum_source(data_hst, npixels=10, nsigma=5)
-    x_muse, y_muse, segm_muse = detect_bright_continuum_source(data_muse, npixels=10, nsigma=1)
+    x_muse, y_muse, segm_muse = detect_bright_continuum_source(data_muse, npixels=10, nsigma=5)
 
     sky_hst = pixel_to_sky(x_hst, y_hst, wcs_hst)
     sky_muse = pixel_to_sky(x_muse, y_muse, wcs_muse)
@@ -606,7 +598,7 @@ def FixDrizzleHSTImages(cubename):
     data_qso = data_qso[data_qso['name'] == cubename]
     ra_qso, dec_qso, z_qso = data_qso['ra_GAIA'][0], data_qso['dec_GAIA'][0], data_qso['redshift'][0]
     qso_coord = SkyCoord(ra=ra_qso * u.degree, dec=dec_qso * u.degree, frame='icrs')
-    search_radius = 100 * u.arcsec  # adjust as needed
+    search_radius = 30 * u.arcsec  # adjust as needed
 
     ls_coords = SkyCoord(ls_cat['ra'] * u.deg, ls_cat['dec'] * u.deg)
     sep = qso_coord.separation(ls_coords)
@@ -619,21 +611,21 @@ def FixDrizzleHSTImages(cubename):
     ls_cat_cut.write(path_LS_cut, format='csv', overwrite=True)
 
     # # Path HST
-    path_HST = find_existing_file(
-        name_candidates,
-        '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia.fits')
-
-    os.system('astrometry {} -c {} -hdul_idx 1 '
-              '-sigma_threshold_for_source_detection {} '
-              '-vignette_rec 0.9 -rot_scale 0 -xy_trafo 0'.format(path_HST, path_LS, 5))
-
-    # if cubename != "J0119-2010":
-    #     path_HST_sci = find_existing_file(
-    #         name_candidates,
-    #         '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci.fits')
+    # path_HST = find_existing_file(
+    #     name_candidates,
+    #     '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia.fits')
     #
-    #     os.system('astrometry {} -c {} -hdul_idx 1 '
-    #               '-sigma_threshold_for_source_detection {}'.format(path_HST_sci, path_LS_cut, 10))
+    # os.system('astrometry {} -c {} -hdul_idx 1 '
+    #           '-sigma_threshold_for_source_detection {} '
+    #           '-vignette_rec 0.9 -rot_scale 0 -xy_trafo 0'.format(path_HST, path_LS, 5))
+
+    if cubename != "J0119-2010":
+        path_HST_sci = find_existing_file(
+            name_candidates,
+            '../../MUSEQuBES+CUBS/HST_drizzles/{}_drc_offset_gaia_sci.fits')
+
+        os.system('astrometry {} -c {} -hdul_idx 1 '
+                  '-sigma_threshold_for_source_detection {}'.format(path_HST_sci, path_LS_cut, 10))
 
 
 # CUBS
@@ -732,15 +724,15 @@ def FixDrizzleHSTImages(cubename):
 # FixDrizzleHSTImages(cubename='HE0246-4101') # done
 # FixDrizzleHSTImages(cubename='J0028-3305')
 # FixDrizzleHSTImages(cubename='HE0419-5657') # done
-FixDrizzleHSTImages(cubename='PKS2242-498') # done
-FixDrizzleHSTImages(cubename='PKS0355-483')
-FixDrizzleHSTImages(cubename='HE0112-4145')
-FixDrizzleHSTImages(cubename='J0111-0316')
-FixDrizzleHSTImages(cubename='HE2336-5540') # done
-FixDrizzleHSTImages(cubename='HE2305-5315') # done
-FixDrizzleHSTImages(cubename='J0454-6116')
-FixDrizzleHSTImages(cubename='J0154-0712')
-FixDrizzleHSTImages(cubename='HE0331-4112')
+# FixDrizzleHSTImages(cubename='PKS2242-498') # done
+# FixDrizzleHSTImages(cubename='PKS0355-483')
+# FixDrizzleHSTImages(cubename='HE0112-4145')
+# FixDrizzleHSTImages(cubename='J0111-0316')
+# FixDrizzleHSTImages(cubename='HE2336-5540') # done
+# FixDrizzleHSTImages(cubename='HE2305-5315') # done
+# FixDrizzleHSTImages(cubename='J0454-6116')
+# FixDrizzleHSTImages(cubename='J0154-0712')
+# FixDrizzleHSTImages(cubename='HE0331-4112')
 
 # Check and Fix the astrometry for the MUSE cubes and the HST/MUSE centroids from ESO SDJ
 # FixAstrometryESO_SDJ(cubename='J0110-1648')
@@ -757,4 +749,4 @@ FixDrizzleHSTImages(cubename='HE0331-4112')
 # FixAstrometryESO_SDJ(cubename='HE2305-5315')
 # FixAstrometryESO_SDJ(cubename='J0454-6116')
 # FixAstrometryESO_SDJ(cubename='J0154-0712')
-# FixAstrometryESO_SDJ(cubename='HE0331-4112')
+FixAstrometryESO_SDJ(cubename='HE0331-4112')
