@@ -17,6 +17,7 @@ from astropy.table import Table
 from astropy.nddata import Cutout2D
 from mpdaf.obj import Cube, WaveCoord, Image
 from astropy.coordinates import SkyCoord
+from astropy.table import Column
 from photutils.background import Background2D, MedianBackground
 from photutils.segmentation import detect_sources, SourceCatalog, deblend_sources
 from astropy.convolution import Kernel, convolve, Gaussian2DKernel
@@ -85,12 +86,16 @@ def extract_hst_image(cubename=None, deblend_hst=True, thr_hst=1):
     segment_map = detect_sources(convolved_data, threshold, npixels=3)
     if deblend_hst:
         segment_map = deblend_sources(convolved_data, segment_map, npixels=3, nlevels=32, contrast=0.001)
-    cat_hb = SourceCatalog(convolved_data, segment_map)
+
+    # Use original image for source detection
+    cat_hb = SourceCatalog(data_hst_gaia, segment_map)
     x_cen, y_cen = cat_hb.xcentroid, cat_hb.ycentroid
 
     # Calculate total counts for each source and magnitude
     segment_flux = cat_hb.segment_flux
-    segment_mag = -2.5 * np.log10(segment_flux) + hdul_hst_gaia[1].header['PHOTZPT']
+    ZP = -2.5 * np.log10(hdul_hst_gaia[1].header['PHOTFLAM']) - 21.10 \
+         - 5 * np.log10(hdul_hst_gaia[1].header['PHOTPLAM']) + 18.6921
+    segment_mag = -2.5 * np.log10(segment_flux) + ZP
 
     # Select range 1743: 3321, 1409: 3017
     if cubename == "J0119-2010":
@@ -114,7 +119,7 @@ def extract_hst_image(cubename=None, deblend_hst=True, thr_hst=1):
     table_hst = Table([ids, c_hst.ra.value, c_hst.dec.value, segment_flux, segment_mag], names=names)
     table_hst.write(path_cat_hst, format='ascii.fixed_width', overwrite=True)
 
-def extract_muse_image(cubename=None, deblend_muse=True, thr_muse=1.5):
+def extract_muse_image(cubename=None, deblend_muse=True, thr_muse=1.25):
     name_candidates = [cubename] + [a for a in object_aliases.get(cubename, []) if a != cubename]
     print(name_candidates)
 
@@ -148,12 +153,14 @@ def extract_muse_image(cubename=None, deblend_muse=True, thr_muse=1.5):
     threshold = thr_muse * bkg.background_rms
     print('shape {}'.format(np.shape(bkg.background_rms)))
     print('5-sigma threshold: {} in count/s'.format(5 * np.median(bkg.background_rms)))
+
     kernel = Gaussian2DKernel(1)
     convolved_data = convolve(data_bkg, kernel)
-    segment_map = detect_sources(convolved_data, threshold, npixels=3)
+    segment_map = detect_sources(convolved_data, threshold, npixels=5)
     if deblend_muse:
-        segment_map = deblend_sources(convolved_data, segment_map, npixels=2, nlevels=32, contrast=0.001)
-    cat_hb = SourceCatalog(convolved_data, segment_map)
+        segment_map = deblend_sources(convolved_data, segment_map, npixels=3, nlevels=32, contrast=0.001)
+
+    cat_hb = SourceCatalog(data_muse_gaia, segment_map)
     x_cen, y_cen = cat_hb.xcentroid, cat_hb.ycentroid
 
     #
@@ -172,6 +179,9 @@ def extract_muse_image(cubename=None, deblend_muse=True, thr_muse=1.5):
     table_hst.write(path_cat_muse, format='ascii.fixed_width', overwrite=True)
 
 def MergeDatFiles(cubename=None):
+    name_candidates = [cubename] + [a for a in object_aliases.get(cubename, []) if a != cubename]
+    print(name_candidates)
+
     # Path MUSE
     if cubename == 'J0454-6116':
         path_dat = "../../MUSEQuBES+CUBS/CUBS_cubes/Q0454-6116_eso_coadd_nc_nosky_sub_ZAP.dat"
@@ -195,78 +205,194 @@ def MergeDatFiles(cubename=None):
     table_new = table_dat.copy()
 
     # Matching radius
-    max_sep = 1.0 * u.arcsec
-
+    max_sep = 2.0 * u.arcsec
     n_hst = 0
     n_muse = 0
     n_unmatched = 0
 
+    # match with HST and MUSE
     for i, entry in enumerate(table_dat):
-        if entry['id'] == '5000X':
-            # match with HST
+        if str(entry['id']).startswith('500'):
             idx, sep2d, _ = coord[i].match_to_catalog_sky(coord_hst)
             if sep2d < max_sep:
-                table_new['ra'][i] = table_hst['ra'][idx]
-                table_new['dec'][i] = table_hst['dec'][idx]
-                table_new['name'][i] =
+                table_new['ra'][i] = np.round(table_hst['RA'][idx], 6)
+                table_new['dec'][i] = np.round(table_hst['DEC'][idx], 6)
                 n_hst += 1
             else:
                 n_unmatched += 1
-
         else:
-            # match with MUSE
             idx, sep2d, _ = coord[i].match_to_catalog_sky(coord_muse)
-
             if sep2d < max_sep:
-                table_new[ra_col][i] = table_muse[ra_col][idx]
-                table_new[dec_col][i] = table_muse[dec_col][idx]
+                table_new['ra'][i] = np.round(table_muse['RA'][idx], 6)
+                table_new['dec'][i] = np.round(table_muse['DEC'][idx], 6)
                 n_muse += 1
             else:
                 n_unmatched += 1
+
+    # Update names for all matches
+    c_macthed = SkyCoord(table_new['ra'], table_new['dec'], unit='deg')
+    ra_str = c_macthed.ra.to_string(unit=u.hour, sep='', precision=2, pad=True)
+    dec_str = c_macthed.dec.to_string(unit=u.deg, sep='', precision=2, alwayssign=True, pad=True)
+    name_str = np.array([f"J{r}{d}" for r, d in zip(ra_str, dec_str)])
+    table_new['name'] = name_str
 
     print(f"HST matches: {n_hst}")
     print(f"MUSE matches: {n_muse}")
     print(f"Unmatched: {n_unmatched}")
     print(f"Total: {len(table_dat)}")
 
+    # Add a new column called F814W mag
+    table_new.add_column(Column(np.full(len(table_new), -99.9), name='mag_F814W'))
+
+    # Match all sources in table_new to the HST catalog
+    idx, sep2d, _ = coord.match_to_catalog_sky(coord_hst)
+    mask = sep2d < max_sep
+
+    # Fill matched magnitudes
+    table_new['mag_F814W'][mask] = table_hst['MAG'][idx[mask]]
+
     # Save
-    outpath = path_dat.replace('.dat', '_gaia.dat')
+    outpath = path_dat.replace('.dat', '_gai_bc.dat')
     table_new.write(outpath, format='ascii.fixed_width', overwrite=True)
+
+    # Also save as a Region file
+    region_outpath = outpath.replace('.dat', '.reg')
+    with open(region_outpath, 'w') as f:
+        f.write("# Region file format: DS9 version 4.1\n")
+        f.write("global color=green dashlist=8 3 width=1 font='helvetica 10 normal roman' select=1 highlite=1 dash=0 "
+                "fixed=0 edit=1 move=1 delete=1 include=1 source=1\n")
+        f.write("fk5\n")
+        for entry in table_new:
+            f.write(f"circle({entry['ra']},{entry['dec']}, 0.6\") # text={{{entry['row']}}} \n")
+
+
+def UpdateDatFromRegion(cubename=None):
+    path_cat_reg_ac = '../../MUSEQuBES+CUBS/CUBS_dats/{}_combined_cat_ac.reg'.format(cubename)
+    regions = Regions.read(path_cat_reg_ac, format='ds9')
+    data = []
+    for r in regions:
+        ra = r.center.ra.deg
+        dec = r.center.dec.deg
+        radius = r.radius.to("arcsec").value
+        label = int(r.meta.get("text"))
+        data.append([label, ra, dec, radius])
+    data = np.asarray(data)
+    data_row = data[:, 0].astype(int)
+
+    # Catalog path
+    path_cat = '../../MUSEQuBES+CUBS/CUBS_dats/{}_combined_cat.dat'.format(cubename)
+    cat = Table.read(path_cat, format='ascii.fixed_width')
+    row, id, name, radius = cat['row'], cat['id'], cat['name'], cat['radius']
+
+    # match with the same row number and use updated positions and radii from the region file
+    row_updated = 1 + np.arange(len(data))
+    ra_updated = np.round(data[:, 1], 6)
+    dec_updated = np.round(data[:, 2], 6)
+    radius_updated = data[:, 3]
+
+    # Match to original catalog by row number
+    idx_cat = np.isin(data_row, row)
+    row_to_id = dict(zip(row, id))
+
+    # Updated IDs
+    id_updated = np.empty(len(data), dtype=object)
+    id_updated[idx_cat] = [row_to_id[r] for r in data_row[idx_cat]]
+    id_updated[~idx_cat] = [60000 + i for i in range(np.sum(~idx_cat))]  # Some manually added sources
+
+    # Recalculate name given the coordinates
+    c_updated = SkyCoord(ra=ra_updated * u.degree, dec=dec_updated * u.degree, frame='icrs')
+    ra_str = c_updated.ra.to_string(unit=u.hour, sep='', precision=2, pad=True)
+    dec_str = c_updated.dec.to_string(unit=u.deg, sep='', precision=2, alwayssign=True, pad=True)
+    name_updated = np.array([f"J{r}{d}" for r, d in zip(ra_str, dec_str)])
+
+    # Determine which name to use
+    if cubename == 'J2135-5316':
+        cubename_save = 'Q2135-5316'
+    elif cubename == 'J0454-6116':
+        cubename_save = 'Q0454-6116'
+    elif cubename == 'J0119-2010':
+        cubename_save = 'Q0119-2010'
+    elif cubename == 'HE0246-4101':
+        cubename_save = 'Q0248-4048'
+    elif cubename == 'HE2336-5540':
+        cubename_save = 'Q2339-5523'
+    elif cubename == 'J0454-6116':
+        cubename_save = 'Q0454-6116'
+    elif cubename == 'HE0419-5657':
+        cubename_save = 'J0420-5650'
+    elif cubename == 'PKS2242-498':
+        cubename_save = 'J2245-4931'
+    elif cubename == 'PKS0355-483':
+        cubename_save = 'J0357-4812'
+    elif cubename == 'HE0112-4145':
+        cubename_save = 'J0114-4129'
+    elif cubename == 'HE2305-5315':
+        cubename_save = 'J2308-5258'
+    elif cubename == 'HE0331-4112':
+        cubename_save = 'J0333-4102'
+    else:
+        cubename_save = cubename
+
+    # Generate .dat files
+    path_cat_updated = '../../MUSEQuBES+CUBS/CUBS_dats/{}_eso_coadd_nosky_sub_ZAP.dat'.format(cubename_save)
+    table_updated = Table([row_updated, id_updated, name_updated, ra_updated, dec_updated, radius_updated],
+                          names=['row', 'id', 'name', 'ra', 'dec', 'radius'])
+    table_updated.write(path_cat_updated, format='ascii.fixed_width', overwrite=True)
 
 
 
 # Continuum detections on HST images for CUBS fields besides J0119-2010
-extract_hst_image(cubename='J0110-1648')
-extract_hst_image(cubename='J2135-5316')
-extract_hst_image(cubename='HE0246-4101')
-extract_hst_image(cubename='J0028-3305')
-extract_hst_image(cubename='HE0419-5657')
-extract_hst_image(cubename='PKS2242-498')
-extract_hst_image(cubename='PKS0355-483')
-extract_hst_image(cubename='HE0112-4145')
-extract_hst_image(cubename='J0111-0316')
-extract_hst_image(cubename='HE2336-5540')
-extract_hst_image(cubename='HE2305-5315')
-extract_hst_image(cubename='J0454-6116')
-extract_hst_image(cubename='J0154-0712')
-extract_hst_image(cubename='J0119-2010', thr_hst=1) # have no sci exposure
-extract_hst_image(cubename='HE0331-4112')
-
-
+# extract_hst_image(cubename='J0110-1648')
+# extract_hst_image(cubename='J2135-5316')
+# extract_hst_image(cubename='HE0246-4101')
+# extract_hst_image(cubename='J0028-3305')
+# extract_hst_image(cubename='HE0419-5657')
+# extract_hst_image(cubename='PKS2242-498')
+# extract_hst_image(cubename='PKS0355-483')
+# extract_hst_image(cubename='HE0112-4145')
+# extract_hst_image(cubename='J0111-0316')
+# extract_hst_image(cubename='HE2336-5540')
+# extract_hst_image(cubename='HE2305-5315')
+# extract_hst_image(cubename='J0454-6116')
+# extract_hst_image(cubename='J0154-0712')
+# extract_hst_image(cubename='J0119-2010', thr_hst=1) # have no sci exposure
+# extract_hst_image(cubename='HE0331-4112')
 
 # Extract MUSE images
-extract_muse_image(cubename='J0110-1648')
-extract_muse_image(cubename='J2135-5316')
-extract_muse_image(cubename='HE0246-4101')
-extract_muse_image(cubename='J0028-3305')
-extract_muse_image(cubename='HE0419-5657')
-extract_muse_image(cubename='PKS2242-498')
-extract_muse_image(cubename='PKS0355-483')
-extract_muse_image(cubename='HE0112-4145')
-extract_muse_image(cubename='J0111-0316')
-extract_muse_image(cubename='HE2336-5540')
-extract_muse_image(cubename='HE2305-5315')
-extract_muse_image(cubename='J0454-6116')
-extract_muse_image(cubename='J0154-0712')
-extract_muse_image(cubename='J0119-2010') # have no sci exposure
-extract_muse_image(cubename='HE0331-4112')
+# extract_muse_image(cubename='J0110-1648')
+# extract_muse_image(cubename='J2135-5316')
+# extract_muse_image(cubename='HE0246-4101')
+# extract_muse_image(cubename='J0028-3305')
+# extract_muse_image(cubename='HE0419-5657')
+# extract_muse_image(cubename='PKS2242-498')
+# extract_muse_image(cubename='PKS0355-483')
+# extract_muse_image(cubename='HE0112-4145')
+# extract_muse_image(cubename='J0111-0316')
+# extract_muse_image(cubename='HE2336-5540')
+# extract_muse_image(cubename='HE2305-5315')
+# extract_muse_image(cubename='J0454-6116')
+# extract_muse_image(cubename='J0154-0712')
+# extract_muse_image(cubename='J0119-2010') # have no sci exposure
+# extract_muse_image(cubename='HE0331-4112')
+
+
+# Merge Dat files
+MergeDatFiles(cubename='J0110-1648')
+MergeDatFiles(cubename='J2135-5316')
+MergeDatFiles(cubename='HE0246-4101')
+MergeDatFiles(cubename='J0028-3305')
+MergeDatFiles(cubename='HE0419-5657')
+MergeDatFiles(cubename='PKS2242-498')
+MergeDatFiles(cubename='PKS0355-483')
+MergeDatFiles(cubename='HE0112-4145')
+MergeDatFiles(cubename='J0111-0316')
+MergeDatFiles(cubename='HE2336-5540')
+MergeDatFiles(cubename='HE2305-5315')
+MergeDatFiles(cubename='J0454-6116')
+MergeDatFiles(cubename='J0154-0712')
+MergeDatFiles(cubename='J0119-2010')
+MergeDatFiles(cubename='HE0331-4112')
+
+
+# Regenerate .dat files after visually inspecting the combined catalogs and removing some spurious sources in DS9
+# Only need to run one time after the visual inspection and cleaning

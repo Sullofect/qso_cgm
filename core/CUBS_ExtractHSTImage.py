@@ -403,24 +403,24 @@ def CopyObjectFile(cubename=None):
 
 
 
-# Continuum detections on HST images for CUBS fields besides J0119-2010
-extract_hst_image(cubename='J0110-1648')
-extract_hst_image(cubename='J2135-5316')
-extract_hst_image(cubename='HE0246-4101')
-extract_hst_image(cubename='J0028-3305')
-extract_hst_image(cubename='HE0419-5657')
-extract_hst_image(cubename='PKS2242-498')
-extract_hst_image(cubename='PKS0355-483')
-extract_hst_image(cubename='HE0112-4145')
-extract_hst_image(cubename='J0111-0316')
-extract_hst_image(cubename='HE2336-5540')
-extract_hst_image(cubename='HE2305-5315')
-extract_hst_image(cubename='J0454-6116')
-extract_hst_image(cubename='J0154-0712')
-extract_hst_image(cubename='HE0331-4112')
-extract_hst_image(cubename='J0119-2010', thr_hst=1)
+# Continuum detections on HST images for CUBS fields
+# extract_hst_image(cubename='J0110-1648')
+# extract_hst_image(cubename='J2135-5316')
+# extract_hst_image(cubename='HE0246-4101')
+# extract_hst_image(cubename='J0028-3305')
+# extract_hst_image(cubename='HE0419-5657')
+# extract_hst_image(cubename='PKS2242-498')
+# extract_hst_image(cubename='PKS0355-483')
+# extract_hst_image(cubename='HE0112-4145')
+# extract_hst_image(cubename='J0111-0316')
+# extract_hst_image(cubename='HE2336-5540')
+# extract_hst_image(cubename='HE2305-5315')
+# extract_hst_image(cubename='J0454-6116')
+# extract_hst_image(cubename='J0154-0712')
+# extract_hst_image(cubename='HE0331-4112')
+# extract_hst_image(cubename='J0119-2010', thr_hst=1)
 
-# Merge the HST and MUSE catalogs for CUBS fields besides J0119-2010
+# Merge the HST and MUSE catalogs for CUBS fields
 # MergeObjectFiles(cubename='J0110-1648')
 # MergeObjectFiles(cubename='J2135-5316')
 # MergeObjectFiles(cubename='HE0246-4101')

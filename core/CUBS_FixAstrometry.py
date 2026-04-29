@@ -749,4 +749,4 @@ def FixDrizzleHSTImages(cubename):
 # FixAstrometryESO_SDJ(cubename='HE2305-5315')
 # FixAstrometryESO_SDJ(cubename='J0454-6116')
 # FixAstrometryESO_SDJ(cubename='J0154-0712')
-FixAstrometryESO_SDJ(cubename='HE0331-4112')
+# FixAstrometryESO_SDJ(cubename='HE0331-4112')
