@@ -46,8 +46,6 @@ object_aliases = {"J0110-1648": ["Q0110-1648"],
                   "HE2336-5540": ["Q2339-5523", "J2339-5523"],
 }
 
-
-
 def FixCubeHeader(cubename=None):
     path_muse_white = '../../MUSEQuBES+CUBS/CUBS/{}_ESO-DEEP_WHITE.fits'.format(cubename)
     hdul_muse_white = fits.open(path_muse_white)
@@ -626,6 +624,61 @@ def FixDrizzleHSTImages(cubename):
 
         os.system('astrometry {} -c {} -hdul_idx 1 '
                   '-sigma_threshold_for_source_detection {}'.format(path_HST_sci, path_LS_cut, 10))
+
+def CopyPasteHeaderIntoCube(cubename):
+    # Copy White light image header and fix MUSE header
+    hdul_muse_white = fits.open(path_muse_white_gaia)
+    try:
+        print(hdul_muse_white[1].header['PC2_1'])
+    except KeyError:
+        print('no rotation copying PC1_1 to PC2_2')
+        hdul_muse_white[1].header.append('PC2_1', 'PC1_2', 'PC2_2')
+        hdul_muse_white[1].header['PC2_1'] = 0
+        hdul_muse_white[1].header['PC1_2'] = 0
+        hdul_muse_white[1].header['PC2_2'] = -1 * hdul_muse_white[1].header['PC1_1']
+    hdul_muse_white[1].header.append('CD1_1')
+    hdul_muse_white[1].header.append('CD1_2')
+    hdul_muse_white[1].header.append('CD2_1')
+    hdul_muse_white[1].header.append('CD2_2')
+    hdul_muse_white[1].header['CD1_1'] = hdul_muse_white[1].header['PC1_1'] * hdul_muse_white[1].header['CDELT1']
+    hdul_muse_white[1].header['CD2_1'] = hdul_muse_white[1].header['PC2_1'] * hdul_muse_white[1].header['CDELT2']
+    hdul_muse_white[1].header['CD1_2'] = hdul_muse_white[1].header['PC1_2'] * hdul_muse_white[1].header['CDELT1']
+    hdul_muse_white[1].header['CD2_2'] = hdul_muse_white[1].header['PC2_2'] * hdul_muse_white[1].header['CDELT2']
+    hdul_muse_white[1].header.remove('PC1_1')
+    hdul_muse_white[1].header.remove('PC1_2')
+    hdul_muse_white[1].header.remove('PC2_1')
+    hdul_muse_white[1].header.remove('PC2_2')
+    hdul_muse_white[1].header.remove('CDELT1')
+    hdul_muse_white[1].header.remove('CDELT2')
+    hdul_muse_white[2].header['CD1_1'] = hdul_muse_white[1].header['CD1_1']
+    hdul_muse_white[2].header['CD2_1'] = hdul_muse_white[1].header['CD2_1']
+    hdul_muse_white[2].header['CD1_2'] = hdul_muse_white[1].header['CD1_2']
+    hdul_muse_white[2].header['CD2_2'] = hdul_muse_white[1].header['CD2_2']
+    hdul_muse_white[2].header['CRVAL1'] = hdul_muse_white[1].header['CRVAL1']
+    hdul_muse_white[2].header['CRVAL2'] = hdul_muse_white[1].header['CRVAL2']
+    hdul_muse_white[2].header['CRPIX1'] = hdul_muse_white[1].header['CRPIX1']
+    hdul_muse_white[2].header['CRPIX2'] = hdul_muse_white[1].header['CRPIX2']
+    hdul_muse_white.writeto(path_muse_white_gaia, overwrite=True)
+    hdul_muse_white = fits.open(path_muse_white_gaia)
+    hdr_muse_white = hdul_muse_white[1].header
+    hdul_muse = fits.open(path_muse)
+    hdul_muse[1].header['CD1_1'] = hdr_muse_white['CD1_1']
+    hdul_muse[1].header['CD2_1'] = hdr_muse_white['CD2_1']
+    hdul_muse[1].header['CD1_2'] = hdr_muse_white['CD1_2']
+    hdul_muse[1].header['CD2_2'] = hdr_muse_white['CD2_2']
+    hdul_muse[1].header['CRVAL1'] = hdr_muse_white['CRVAL1']
+    hdul_muse[1].header['CRVAL2'] = hdr_muse_white['CRVAL2']
+    hdul_muse[1].header['CRPIX1'] = hdr_muse_white['CRPIX1']
+    hdul_muse[1].header['CRPIX2'] = hdr_muse_white['CRPIX2']
+    hdul_muse[2].header['CD1_1'] = hdr_muse_white['CD1_1']
+    hdul_muse[2].header['CD2_1'] = hdr_muse_white['CD2_1']
+    hdul_muse[2].header['CD1_2'] = hdr_muse_white['CD1_2']
+    hdul_muse[2].header['CD2_2'] = hdr_muse_white['CD2_2']
+    hdul_muse[2].header['CRVAL1'] = hdr_muse_white['CRVAL1']
+    hdul_muse[2].header['CRVAL2'] = hdr_muse_white['CRVAL2']
+    hdul_muse[2].header['CRPIX1'] = hdr_muse_white['CRPIX1']
+    hdul_muse[2].header['CRPIX2'] = hdr_muse_white['CRPIX2']
+    hdul_muse.writeto(path_muse_gaia, overwrite=True)
 
 
 # CUBS

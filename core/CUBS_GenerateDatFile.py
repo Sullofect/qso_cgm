@@ -265,10 +265,18 @@ def MergeDatFiles(cubename=None):
         for entry in table_new:
             f.write(f"circle({entry['ra']},{entry['dec']}, 0.6\") # text={{{entry['row']}}} \n")
 
-
 def UpdateDatFromRegion(cubename=None):
-    path_cat_reg_ac = '../../MUSEQuBES+CUBS/CUBS_dats/{}_combined_cat_ac.reg'.format(cubename)
-    regions = Regions.read(path_cat_reg_ac, format='ds9')
+    name_candidates = [cubename] + [a for a in object_aliases.get(cubename, []) if a != cubename]
+    print(name_candidates)
+
+    # Path MUSE
+    if cubename == 'J0454-6116':
+        path_reg = "../../MUSEQuBES+CUBS/CUBS_cubes/Q0454-6116_eso_coadd_nc_nosky_sub_ZAP_gai_aftercheck.reg"
+    else:
+        path_reg = find_existing_file(name_candidates,
+                                      '../../MUSEQuBES+CUBS/CUBS_cubes/{}_eso_coadd_nosky_sub_ZAP_gai_aftercheck.reg')
+
+    regions = Regions.read(path_reg, format='ds9')
     data = []
     for r in regions:
         ra = r.center.ra.deg
@@ -279,8 +287,24 @@ def UpdateDatFromRegion(cubename=None):
     data = np.asarray(data)
     data_row = data[:, 0].astype(int)
 
-    # Catalog path
-    path_cat = '../../MUSEQuBES+CUBS/CUBS_dats/{}_combined_cat.dat'.format(cubename)
+    # Check for duplicates
+    min_sep = 0.2  # change this to whatever threshold you want
+    coords = SkyCoord(ra=data[:, 1] * u.deg, dec=data[:, 2] * u.deg, frame='icrs')
+    idx_i, idx_j, sep2d, _ = coords.search_around_sky(coords, seplimit=min_sep * u.arcsec)
+
+    # remove self-matches and duplicate reversed pairs
+    mask = idx_i < idx_j
+    idx_i = idx_i[mask]
+    idx_j = idx_j[mask]
+    sep2d = sep2d[mask]
+
+    # print results
+    print(f"{cubename}: Number of pairs closer than {min_sep}: {len(idx_i)}")
+    for i, j, sep in zip(idx_i, idx_j, sep2d):
+        print(f"{data[i, 0]} - {data[j, 0]}: sep = {sep.to(u.arcsec).value:.3f} arcsec")
+
+    # Full catalog path
+    path_cat = path_reg.replace('_gai_aftercheck.reg', '_gai_bc.dat')
     cat = Table.read(path_cat, format='ascii.fixed_width')
     row, id, name, radius = cat['row'], cat['id'], cat['name'], cat['radius']
 
@@ -305,36 +329,8 @@ def UpdateDatFromRegion(cubename=None):
     dec_str = c_updated.dec.to_string(unit=u.deg, sep='', precision=2, alwayssign=True, pad=True)
     name_updated = np.array([f"J{r}{d}" for r, d in zip(ra_str, dec_str)])
 
-    # Determine which name to use
-    if cubename == 'J2135-5316':
-        cubename_save = 'Q2135-5316'
-    elif cubename == 'J0454-6116':
-        cubename_save = 'Q0454-6116'
-    elif cubename == 'J0119-2010':
-        cubename_save = 'Q0119-2010'
-    elif cubename == 'HE0246-4101':
-        cubename_save = 'Q0248-4048'
-    elif cubename == 'HE2336-5540':
-        cubename_save = 'Q2339-5523'
-    elif cubename == 'J0454-6116':
-        cubename_save = 'Q0454-6116'
-    elif cubename == 'HE0419-5657':
-        cubename_save = 'J0420-5650'
-    elif cubename == 'PKS2242-498':
-        cubename_save = 'J2245-4931'
-    elif cubename == 'PKS0355-483':
-        cubename_save = 'J0357-4812'
-    elif cubename == 'HE0112-4145':
-        cubename_save = 'J0114-4129'
-    elif cubename == 'HE2305-5315':
-        cubename_save = 'J2308-5258'
-    elif cubename == 'HE0331-4112':
-        cubename_save = 'J0333-4102'
-    else:
-        cubename_save = cubename
-
     # Generate .dat files
-    path_cat_updated = '../../MUSEQuBES+CUBS/CUBS_dats/{}_eso_coadd_nosky_sub_ZAP.dat'.format(cubename_save)
+    path_cat_updated = path_reg.replace('_gai_aftercheck.reg', '_gaia.dat')
     table_updated = Table([row_updated, id_updated, name_updated, ra_updated, dec_updated, radius_updated],
                           names=['row', 'id', 'name', 'ra', 'dec', 'radius'])
     table_updated.write(path_cat_updated, format='ascii.fixed_width', overwrite=True)
@@ -395,3 +391,19 @@ def UpdateDatFromRegion(cubename=None):
 
 # Regenerate .dat files after visually inspecting the combined catalogs and removing some spurious sources in DS9
 # Only need to run one time after the visual inspection and cleaning
+UpdateDatFromRegion(cubename='J0110-1648')
+UpdateDatFromRegion(cubename='J2135-5316')
+UpdateDatFromRegion(cubename='HE0246-4101')
+UpdateDatFromRegion(cubename='J0028-3305')
+UpdateDatFromRegion(cubename='HE0419-5657')
+UpdateDatFromRegion(cubename='PKS2242-498')
+UpdateDatFromRegion(cubename='PKS0355-483')
+UpdateDatFromRegion(cubename='HE0112-4145')
+UpdateDatFromRegion(cubename='J0111-0316')
+UpdateDatFromRegion(cubename='HE2336-5540')
+UpdateDatFromRegion(cubename='HE2305-5315')
+UpdateDatFromRegion(cubename='J0454-6116')
+UpdateDatFromRegion(cubename='J0154-0712')
+UpdateDatFromRegion(cubename='J0119-2010')
+UpdateDatFromRegion(cubename='HE0331-4112')
+
