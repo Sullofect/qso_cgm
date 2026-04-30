@@ -375,23 +375,22 @@ def UpdateDatFromRegion(cubename=None):
 # extract_muse_image(cubename='J0119-2010') # have no sci exposure
 # extract_muse_image(cubename='HE0331-4112')
 
-
 # Merge Dat files
-MergeDatFiles(cubename='J0110-1648')
-MergeDatFiles(cubename='J2135-5316')
-MergeDatFiles(cubename='HE0246-4101')
-MergeDatFiles(cubename='J0028-3305')
-MergeDatFiles(cubename='HE0419-5657')
-MergeDatFiles(cubename='PKS2242-498')
-MergeDatFiles(cubename='PKS0355-483')
-MergeDatFiles(cubename='HE0112-4145')
-MergeDatFiles(cubename='J0111-0316')
-MergeDatFiles(cubename='HE2336-5540')
-MergeDatFiles(cubename='HE2305-5315')
-MergeDatFiles(cubename='J0454-6116')
-MergeDatFiles(cubename='J0154-0712')
-MergeDatFiles(cubename='J0119-2010')
-MergeDatFiles(cubename='HE0331-4112')
+# MergeDatFiles(cubename='J0110-1648')
+# MergeDatFiles(cubename='J2135-5316')
+# MergeDatFiles(cubename='HE0246-4101')
+# MergeDatFiles(cubename='J0028-3305')
+# MergeDatFiles(cubename='HE0419-5657')
+# MergeDatFiles(cubename='PKS2242-498')
+# MergeDatFiles(cubename='PKS0355-483')
+# MergeDatFiles(cubename='HE0112-4145')
+# MergeDatFiles(cubename='J0111-0316')
+# MergeDatFiles(cubename='HE2336-5540')
+# MergeDatFiles(cubename='HE2305-5315')
+# MergeDatFiles(cubename='J0454-6116')
+# MergeDatFiles(cubename='J0154-0712')
+# MergeDatFiles(cubename='J0119-2010')
+# MergeDatFiles(cubename='HE0331-4112')
 
 
 # Regenerate .dat files after visually inspecting the combined catalogs and removing some spurious sources in DS9
