@@ -81,16 +81,91 @@ print('OII and Lyalpha', stat, pval)
 bins = np.linspace(0, 2, 11)
 fig, ax = plt.subplots(1, 1, figsize=(5, 5), dpi=300)
 fig.subplots_adjust(wspace=0.15)
-ax.hist(A_OII_shape, bins=bins, color='brown', alpha=0.5, histtype='stepfilled', lw=1.2,
-           label=r'$\rm [O\,II]$', zorder=100, weights=np.ones_like(A_OII_shape) / len(A_OII_shape))
+
+
+# -------------------------------------------------------
+# Bootstrap confidence intervals for normalized histograms
+# -------------------------------------------------------
+def bootstrap_hist_fraction_ci(data, bins, n_boot=5000, ci=(16, 84), random_seed=42):
+    data = np.asarray(data)
+    data = data[np.isfinite(data)]
+
+    n = len(data)
+    rng = np.random.default_rng(random_seed)
+
+    boot_hists = np.zeros((n_boot, len(bins) - 1))
+
+    for i in range(n_boot):
+        sample = rng.choice(data, size=n, replace=True)
+        counts, _ = np.histogram(sample, bins=bins)
+        boot_hists[i] = counts / n
+
+    lower = np.percentile(boot_hists, ci[0], axis=0)
+    upper = np.percentile(boot_hists, ci[1], axis=0)
+
+    return lower, upper
+
+
+# Compute bootstrap CIs
+low_OII, high_OII = bootstrap_hist_fraction_ci(
+    A_OII_shape, bins, n_boot=5000, ci=(16, 84), random_seed=1
+)
+
+low_21cm, high_21cm = bootstrap_hist_fraction_ci(
+    A_21cm_shape, bins, n_boot=5000, ci=(16, 84), random_seed=2
+)
+
+low_Lya, high_Lya = bootstrap_hist_fraction_ci(
+    A_Lya_shape, bins, n_boot=5000, ci=(16, 84), random_seed=3
+)
+
+
+# More K-S test
+stat, pval = ks_2samp(high_OII, low_Lya)
+print('shape high OII and low Lyman alpha', stat, pval)
+
+
+# Convert to step format for fill_between
+x_step = bins
+
+low_OII_step = np.append(low_OII, low_OII[-1])
+high_OII_step = np.append(high_OII, high_OII[-1])
+
+low_21cm_step = np.append(low_21cm, low_21cm[-1])
+high_21cm_step = np.append(high_21cm, high_21cm[-1])
+
+low_Lya_step = np.append(low_Lya, low_Lya[-1])
+high_Lya_step = np.append(high_Lya, high_Lya[-1])
+
+
+# Plot bootstrap confidence bands
+ax.fill_between(
+    x_step, low_OII_step, high_OII_step,
+    step="post", color="black", alpha=0.20, lw=0, zorder=10
+)
+
+# ax.fill_between(
+#     x_step, low_21cm_step, high_21cm_step,
+#     step="post", color="blue", alpha=0.15, lw=0, zorder=10
+# )
+
+ax.fill_between(
+    x_step, low_Lya_step, high_Lya_step,
+    step="post", color="red", alpha=0.15, lw=0, zorder=10
+)
+# ax.hist(A_OII_shape, bins=bins, color='brown', alpha=0.5, histtype='stepfilled', lw=1.2,
+#            label=r'$\rm [O\,II]$', zorder=100, weights=np.ones_like(A_OII_shape) / len(A_OII_shape))
 mid = (bins[1:] + bins[:-1]) / 2
 mid = np.append(mid, mid[-1] + mid[-1] - mid[-2])
 counts1, _ = np.histogram(A_21cm_shape, bins=bins, weights=np.ones_like(A_21cm_shape) / len(A_21cm_shape))
 counts1 = np.append(counts1, counts1[-1])
 counts2, _ = np.histogram(A_Lya_shape, bins=bins, weights=np.ones_like(A_Lya_shape) / len(A_Lya_shape))
 counts2 = np.append(counts2, counts2[-1])
-plt.step(mid, counts1, where="mid", alpha=0.8, color="blue", linestyle="--", linewidth=2, label=r'$\rm H\,I \, 21 \,cm$')
+counts3, _ = np.histogram(A_OII_shape, bins=bins, weights=np.ones_like(A_OII_shape) / len(A_OII_shape))
+counts3 = np.append(counts3, counts3[-1])
+# plt.step(mid, counts1, where="mid", alpha=0.8, color="blue", linestyle="--", linewidth=2, label=r'$\rm H\,I \, 21 \,cm$')
 plt.step(mid, counts2, where="mid", alpha=0.8, color="red", linestyle="--", linewidth=2, label=r'$\rm Ly \alpha$')
+plt.step(mid, counts3, where="mid", alpha=0.8, color="black", linestyle="--", linewidth=2, label=r'$\rm [O\,II]$')
 ax.set_xlim(0, 2)
 ax.set_xlabel('Asymmetry', size=25)
 ax.set_ylabel(r'Fraction', size=25)
@@ -127,5 +202,27 @@ plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_asymmetry_distribution.png', b
 # ax[0].set_ylabel('N', size=20)
 # ax[0].legend(loc='upper right', fontsize=15)
 # plt.savefig('../../MUSEQuBES+CUBS/plots/CUBS+MUSE_asymmetry_distribution.png', bbox_inches='tight')
+
+
+
+# Bootstrap confidence intervals for the mean asymmetry
+def bootstrap_mean(data, n_bootstrap=1000):
+    boot_means = []
+    for _ in range(n_bootstrap):
+        boot_sample = np.random.choice(data, size=len(data), replace=True)
+        boot_means.append(np.mean(boot_sample))
+    lower = np.percentile(boot_means, 2.5)
+    upper = np.percentile(boot_means, 97.5)
+    return lower, upper
+
+
+# Calculate confidence intervals for each sample
+ci_OII = bootstrap_mean(A_OII_shape)
+ci_21cm = bootstrap_mean(A_21cm_shape)
+ci_Lya = bootstrap_mean(A_Lya_shape)
+
+print(f'[O II] mean asymmetry: {np.mean(A_OII_shape):.3f} (95% CI: {ci_OII[0]:.3f} - {ci_OII[1]:.3f})')
+print(f'21 cm mean asymmetry: {np.mean(A_21cm_shape):.3f} (95% CI: {ci_21cm[0]:.3f} - {ci_21cm[1]:.3f})')
+print(f'Ly alpha mean asymmetry: {np.mean(A_Lya_shape):.3f} (95% CI: {ci_Lya[0]:.3f} - {ci_Lya[1]:.3f})')
 
 

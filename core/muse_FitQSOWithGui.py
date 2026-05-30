@@ -255,8 +255,13 @@ class PlotWindow(QMainWindow):
             mask_seg_OII, mask_seg_OIII = np.sum(seg_3D_OII_ori, axis=0), np.sum(seg_3D_OIII_ori, axis=0)
             flux_seg_OII, flux_seg_OIII = flux_OII * seg_3D_OII_ori, flux_OIII * seg_3D_OIII_ori
             flux_err_seg_OII, flux_err_seg_OIII = flux_err_OII * seg_3D_OII_ori, flux_err_OIII * seg_3D_OIII_ori
-            S_N_OII = np.sum(flux_seg_OII / flux_err_seg_OII, axis=0).filled(np.nan)
-            S_N_OIII = np.sum(flux_seg_OIII / flux_err_seg_OIII, axis=0).filled(np.nan)
+
+            S_N_OII = np.sum(flux_seg_OII, axis=0).filled(np.nan) \
+                      / np.sqrt(np.sum((flux_err_seg_OII) ** 2, axis=0).filled(np.nan))
+            S_N_OIII = np.sum(flux_seg_OIII, axis=0).filled(np.nan) \
+                      / np.sqrt(np.sum((flux_err_seg_OIII) ** 2, axis=0).filled(np.nan))
+            # S_N_OII = np.sqrt(np.sum((flux_seg_OII / flux_err_seg_OII) ** 2, axis=0).filled(np.nan))
+            # S_N_OIII = np.sqrt(np.sum((flux_seg_OIII / flux_err_seg_OIII) ** 2, axis=0).filled(np.nan))
             self.S_N = np.sqrt(np.nan_to_num(S_N_OII, nan=0.0)**2 + np.nan_to_num(S_N_OIII, nan=0.0)**2)
 
             # Extend over
@@ -550,7 +555,7 @@ class PlotWindow(QMainWindow):
 
         # Set param
         self.paramSpec = [dict(name='Select 3rd panel', type='list', values=['chi^2', 'N_comp'], value='chi^2'),
-                          dict(name='S_N=', type='float', value=15, dec=False, readonly=False),
+                          dict(name='S_N=', type='float', value=7, dec=False, readonly=False),
                           dict(name='Fitting ranges', type='group', children=[
                               dict(name='OII', type='group', children=[
                                   dict(name='enabled', type='bool', value=False),
@@ -1174,18 +1179,25 @@ class PlotWindow(QMainWindow):
 
 
         # Fit
-        mask_spec_OII = np.ones(len(self.wave_vac[0]), dtype=bool)
-        mask_spec_OIII = np.ones(len(self.wave_vac[1]), dtype=bool)
+        if self.line == 'OII+OIII':
+            mask_spec_OII = np.ones(len(self.wave_vac[0]), dtype=bool)
+            mask_spec_OIII = np.ones(len(self.wave_vac[1]), dtype=bool)
 
-        # If select wavelength is enabled
-        if self.param['Fitting ranges', 'OII', 'enabled']:
-            mask_spec_OII = (self.wave_vac[0] >= self.param['Fitting ranges', 'OII', 'min']) \
-                            & (self.wave_vac[0] <= self.param['Fitting ranges', 'OII', 'max'])
-        if self.param['Fitting ranges', 'OIII', 'enabled']:
-            mask_spec_OIII = (self.wave_vac[1] >= self.param['Fitting ranges', 'OIII', 'min']) \
-                            & (self.wave_vac[1] <= self.param['Fitting ranges', 'OIII', 'max'])
-        mask_spec = np.hstack((mask_spec_OII, mask_spec_OIII))
-        wave_vac_mask_spec = np.array([self.wave_vac[0][mask_spec_OII], self.wave_vac[1][mask_spec_OIII]], dtype='object')
+            # If select wavelength is enabled
+            if self.param['Fitting ranges', 'OII', 'enabled']:
+                mask_spec_OII = (self.wave_vac[0] >= self.param['Fitting ranges', 'OII', 'min']) \
+                                & (self.wave_vac[0] <= self.param['Fitting ranges', 'OII', 'max'])
+            if self.param['Fitting ranges', 'OIII', 'enabled']:
+                mask_spec_OIII = (self.wave_vac[1] >= self.param['Fitting ranges', 'OIII', 'min']) \
+                                & (self.wave_vac[1] <= self.param['Fitting ranges', 'OIII', 'max'])
+            mask_spec = np.hstack((mask_spec_OII, mask_spec_OIII))
+            wave_vac_mask_spec = np.array([self.wave_vac[0][mask_spec_OII], self.wave_vac[1][mask_spec_OIII]], dtype='object')
+        else:
+            mask_spec = np.ones(len(self.wave_vac), dtype=bool)
+            if self.param['Fitting ranges', self.line, 'enabled']:
+                mask_spec = (self.wave_vac >= self.param['Fitting ranges', self.line, 'min']) \
+                            & (self.wave_vac <= self.param['Fitting ranges', self.line, 'max'])
+            wave_vac_mask_spec = self.wave_vac[mask_spec]
 
         result = self.spec_model.fit(self.flux[:, i, j][mask_spec], wave_vac=wave_vac_mask_spec, params=self.parameters,
                                      weights=1 / self.flux_err[:, i, j][mask_spec])

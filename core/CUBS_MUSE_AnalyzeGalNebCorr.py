@@ -723,7 +723,7 @@ class CalculateGalNebCorr:
             frameon=True,
             fontsize=15,
         )
-
+        plt.yscale('log')
         plt.gca().add_artist(leg1)
         plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
         plt.ylabel(r'CKAF', size=25)
@@ -808,8 +808,8 @@ A = np.array([["J2135-5316",      107,  83, [2, 3, 4, 6, 10, 12, 13, 14, 16, 17,
 # SummarizeCorr(L=L, S_BR=S_BR, S=S, A=A)
 
 func = CalculateGalNebCorr(L=L, S=S, A=A, Ntrial=11000)
+func.SummarizeCorrControl()
 func.SummarizeCorr()
-# func.SummarizeCorrControl()
 # func.ComputeCorrControl(cubename='PKS0405-123')
 # func.ComputeCorrControl(cubename='Q0107-0235')
 # func.ComputeCorrControl(cubename='3C57')
