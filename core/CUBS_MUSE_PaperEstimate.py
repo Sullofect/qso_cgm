@@ -156,8 +156,8 @@ def EstimateKinematics(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_
 
 
 
-
-# CUBS+MUSE host nebula itself
+# The summary kinematics should include everything shown in Figure 1
+# CUBS+MUSE host nebula itself also including galaxy
 EstimateKinematics(cubename='HE0435-5304', nums_seg_OII=[1], nums_seg_OIII=[1])
 # EstimateKinematics(cubename='HE0153-4520')
 EstimateKinematics(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],

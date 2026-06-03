@@ -101,6 +101,13 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     path_savefig_OII_morph = '../../MUSEQuBES+CUBS/plots/{}_{}_morph{}.png'.format(cubename, line_OII, addon)
     path_savefig_OIII_morph = '../../MUSEQuBES+CUBS/plots/{}_{}_morph{}.png'.format(cubename, line_OIII, addon)
 
+
+    # Kinematic measurement
+    path_v50_plot = '../../MUSEQuBES+CUBS/fit_kin/{}_V50_plot.fits'.format(cubename)
+    path_s80_plot = '../../MUSEQuBES+CUBS/fit_kin/{}_S80_plot.fits'.format(cubename)
+    v50 = fits.open(path_v50_plot)[1].data
+    s80 = fits.open(path_s80_plot)[1].data
+
     # Special cases due to sky line
     if cubename == 'PKS0552-640':
         path_cube_OIII = '../../MUSEQuBES+CUBS/SB/{}_ESO-DEEP{}_subtracted_{}_{}_{}_{}_{}_plot.fits'. \
@@ -159,6 +166,11 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     seg_OII = np.where(~np.isin(seg_OII, nums_seg_OII), seg_OII, 0)
     seg_OII = np.where(seg_OII == 0 , seg_OII, 1)
 
+    # Mask against the kinematics figure
+    # Testing only
+    # Bad choice
+    # seg_OII = np.where(~np.isnan(v50), seg_OII, 0)
+
     # bkgrd_OII = np.where(seg_OII_mask == 0, SB_OII, np.nan)
     # bkgrd_OII_random = np.random.choice(bkgrd_OII.flatten()[~np.isnan(bkgrd_OII.flatten())],
     #                                     bkgrd_OII.shape, replace=True).reshape(bkgrd_OII.shape)
@@ -192,11 +204,11 @@ def AnalyzeMorphology(cubename=None, nums_seg_OII=[], nums_seg_OIII=[], select_s
     A_ZQL_3 = CalculateAsymmetry(image=seg_OII_cutout, mask=morph._mask_stamp, center=morph._asymmetry_center, type='shape')
 
 
-    # testing
-    plt.figure()
-    plt.imshow(seg_OII_cutout, origin='lower', cmap='viridis')
-    plt.show()
-    raise ValueError('Testing asymmetry calculation')
+    # Testing
+    # plt.figure()
+    # plt.imshow(seg_OII_cutout, origin='lower', cmap='viridis')
+    # plt.show()
+    # raise ValueError('Testing asymmetry calculation')
 
     # Print the asymmetry values
     # print('OII A_ZQL_shape_ori', A_ZQL)
@@ -621,7 +633,7 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
 
 # CUBS+MUSE host nebula itself
 # AnalyzeMorphology(cubename='HE0435-5304', nums_seg_OII=[1], nums_seg_OIII=[1])
-# # AnalyzeMorphology(cubename='HE0153-4520')
+# AnalyzeMorphology(cubename='HE0153-4520')
 # AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
 #                   nums_seg_OIII=[1, 5, 6, 8, 9, 10, 11, 16, 19])
 # AnalyzeMorphology(cubename='PKS0405-123', nums_seg_OII=[5, 7, 10, 11, 13, 16, 17, 20], nums_seg_OIII=[15])
@@ -659,12 +671,12 @@ def AnalyzeLyaMorphology(cubename=None, savefig=False):
 # AnalyzeMorphology(cubename='PKS0232-04', nums_seg_OII=[2, 4, 5, 7])
 
 # CUBS+MUSE host nebula plus galaxies
-# AnalyzeMorphology(cubename='HE0435-5304', addon='_plus_galaxies')
+AnalyzeMorphology(cubename='HE0435-5304', addon='_plus_galaxies')
 # AnalyzeMorphology(cubename='HE0153-4520', addon='_plus_galaxies')
-# AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[12, 14, 15, 16, 17, 20],
-#                   nums_seg_OIII=[5, 11, 16, 19], addon='_plus_galaxies', savefig=True)
-# AnalyzeMorphology(cubename='PKS0405-123', nums_seg_OII=[5], nums_seg_OIII=[15], addon='_plus_galaxies')
-# AnalyzeMorphology(cubename='HE0238-1904', addon='_plus_galaxies')
+AnalyzeMorphology(cubename='HE0226-4110', nums_seg_OII=[12, 14, 15, 16, 17, 20],
+                  nums_seg_OIII=[5, 11, 16, 19], addon='_plus_galaxies', savefig=True)
+AnalyzeMorphology(cubename='PKS0405-123', nums_seg_OII=[5], nums_seg_OIII=[15], addon='_plus_galaxies')
+AnalyzeMorphology(cubename='HE0238-1904', addon='_plus_galaxies')
 AnalyzeMorphology(cubename='3C57', addon='_plus_galaxies')
 AnalyzeMorphology(cubename='PKS0552-640', nums_seg_OII=[2, 6, 7, 9, 10, 14, 18],
                   nums_seg_OIII=[7, 9, 12, 19, 20], addon='_plus_galaxies')
@@ -695,7 +707,7 @@ AnalyzeMorphology(cubename='Q1354+048', addon='_plus_galaxies')
 AnalyzeMorphology(cubename='J0154-0712', addon='_plus_galaxies')
 AnalyzeMorphology(cubename='LBQS1435-0134', addon='_plus_galaxies')
 AnalyzeMorphology(cubename='PG1522+101', nums_seg_OII=[6, 12], addon='_plus_galaxies')
-AnalyzeMorphology(cubename='HE2336-5540', ddon='_plus_galaxies')
+# AnalyzeMorphology(cubename='HE2336-5540', ddon='_plus_galaxies')
 AnalyzeMorphology(cubename='PKS0232-04', nums_seg_OII=[4, 5, 7], addon='_plus_galaxies')
 
 # HI 21 cm

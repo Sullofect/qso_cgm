@@ -723,7 +723,7 @@ class CalculateGalNebCorr:
             frameon=True,
             fontsize=15,
         )
-        # plt.yscale('log')
+        plt.yscale('log')
         plt.gca().add_artist(leg1)
         plt.xlabel(r'$\rm Size \, [kpc]$', size=25)
         plt.ylabel(r'CKAF', size=25)
